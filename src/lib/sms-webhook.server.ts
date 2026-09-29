@@ -108,7 +108,7 @@ export async function handleIncomingSms(request: Request): Promise<Response> {
   };
   const { data: existing } = await db.from("user_payments").select("id").eq("reference", fields.reference!).limit(1);
   const { error } = existing && existing.length
-    ? await db.from("user_payments").update(paymentRow).eq("id", existing[0].id)
+    ? await db.from("user_payments").update(paymentRow).eq("id", existing[0]!.id)
     : await db.from("user_payments").insert({ id: crypto.randomUUID(), status: "PENDING", tokens_granted: 0, ...paymentRow });
   if (error) return json({ success: false, received: true, stored: true, status: "FAILED", error: error.message }, 502);
 

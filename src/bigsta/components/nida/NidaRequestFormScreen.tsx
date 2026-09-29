@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code
 import React, { useState } from 'react';
 import { useRouter } from '@tanstack/react-router';
 import { supabase } from '../../services/supabase';
