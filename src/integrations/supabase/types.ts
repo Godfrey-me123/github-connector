@@ -139,34 +139,61 @@ export type Database = {
       }
       nida_requests: {
         Row: {
+          admin_message: string | null
           created_at: string
           district_of_birth: string | null
           id: string
           mother_name: string | null
           nida_no: string | null
           request_type: string | null
+          requester_key: string | null
+          requester_name: string | null
+          responded_at: string | null
+          response_file_name: string | null
+          response_file_path: string | null
+          status: string
           street_village: string | null
+          updated_at: string
           ward_of_residence: string | null
+          whatsapp_number: string | null
         }
         Insert: {
+          admin_message?: string | null
           created_at?: string
           district_of_birth?: string | null
           id?: string
           mother_name?: string | null
           nida_no?: string | null
           request_type?: string | null
+          requester_key?: string | null
+          requester_name?: string | null
+          responded_at?: string | null
+          response_file_name?: string | null
+          response_file_path?: string | null
+          status?: string
           street_village?: string | null
+          updated_at?: string
           ward_of_residence?: string | null
+          whatsapp_number?: string | null
         }
         Update: {
+          admin_message?: string | null
           created_at?: string
           district_of_birth?: string | null
           id?: string
           mother_name?: string | null
           nida_no?: string | null
           request_type?: string | null
+          requester_key?: string | null
+          requester_name?: string | null
+          responded_at?: string | null
+          response_file_name?: string | null
+          response_file_path?: string | null
+          status?: string
           street_village?: string | null
+          updated_at?: string
           ward_of_residence?: string | null
+          whatsapp_number?: string | null
         }
         Relationships: []
       }
