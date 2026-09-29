@@ -5,7 +5,11 @@ export const Route = createFileRoute("/api/public/payment-sms")({
   server: {
     handlers: {
       GET: async () =>
-        Response.json({ service: "BIGsta Ingestion Pipeline", status: "ACTIVE", timestamp: new Date().toISOString() }),
+        Response.json({
+          service: "BIGsta Ingestion Pipeline",
+          status: "ACTIVE",
+          timestamp: new Date().toISOString(),
+        }),
       POST: async ({ request }) => handleIncomingSms(request),
     },
   },

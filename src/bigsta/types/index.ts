@@ -1,19 +1,40 @@
-export type ActiveScreen = 'home' | 'upload' | 'editor' | 'templates' | 'nida' | 'nida_request' | 'preview' | 'downloads' | 'driving_license' | 'nhif' | 'admin-payments' | 'billing' | 'settings';
+export type ActiveScreen =
+  | "home"
+  | "upload"
+  | "editor"
+  | "templates"
+  | "nida"
+  | "nida_request"
+  | "preview"
+  | "downloads"
+  | "driving_license"
+  | "nhif"
+  | "admin-payments"
+  | "billing"
+  | "settings";
 
-export type Unit = 'px' | 'mm' | 'cm' | 'in';
+export type Unit = "px" | "mm" | "cm" | "in";
 
-export type CardType = 'National ID' | 'Employee ID' | 'Student ID' | 'Membership Card' | 'NHIF Membership Card' | 'Access Badge' | 'Driving License' | 'Other';
-export type CardSide = 'Front Side' | 'Back Side' | 'Full Card' | 'Single Side';
+export type CardType =
+  | "National ID"
+  | "Employee ID"
+  | "Student ID"
+  | "Membership Card"
+  | "NHIF Membership Card"
+  | "Access Badge"
+  | "Driving License"
+  | "Other";
+export type CardSide = "Front Side" | "Back Side" | "Full Card" | "Single Side";
 
-export type LayerType = 'text' | 'image' | 'placeholder' | 'shape' | 'barcode' | 'qrcode' | 'group';
+export type LayerType = "text" | "image" | "placeholder" | "shape" | "barcode" | "qrcode" | "group";
 
-export type ShapeType = 'rectangle' | 'circle' | 'line' | 'polygon';
+export type ShapeType = "rectangle" | "circle" | "line" | "polygon";
 
-export type BarcodeType = 'Code128' | 'PDF417' | 'EAN13';
+export type BarcodeType = "Code128" | "PDF417" | "EAN13";
 
 export interface Guide {
   id: string;
-  type: 'horizontal' | 'vertical';
+  type: "horizontal" | "vertical";
   position: number; // Stored in mm
   color: string;
   locked: boolean;
@@ -26,12 +47,12 @@ export interface UploadedBackground {
   src: string;
   originalWidthPx: number;
   originalHeightPx: number;
-  orientation: 'landscape' | 'portrait';
+  orientation: "landscape" | "portrait";
   createdAt: string;
 }
 
 export interface SmartGuide {
-  type: 'x' | 'y' | 'rect' | 'distance';
+  type: "x" | "y" | "rect" | "distance";
   position?: number; // in canvas px
   label?: string;
   line?: { x1: number; y1: number; x2: number; y2: number };
@@ -51,21 +72,21 @@ export interface BaseLayer {
   hidden: boolean;
   groupId?: string;
   fieldName?: string; // e.g. "firstName", "lastName", "dateOfBirth", "gender", "nidaNumber", "photo", "signature"
-  fieldId?: string;   // e.g. "firstName", "lastName", "dateOfBirth", "gender", "nidaNumber", "photo", "signature"
+  fieldId?: string; // e.g. "firstName", "lastName", "dateOfBirth", "gender", "nidaNumber", "photo", "signature"
   fieldType?: string; // e.g. "firstName", "lastName", "dateOfBirth", "gender", "nidaNumber", "photo", "signature"
-  bindingKey?: string;// e.g. "FIRST_NAME", "LAST_NAME", "DOB", "GENDER", "NIDA_NUMBER", "PHOTO", "SIGNATURE"
+  bindingKey?: string; // e.g. "FIRST_NAME", "LAST_NAME", "DOB", "GENDER", "NIDA_NUMBER", "PHOTO", "SIGNATURE"
 }
 
 export interface TextLayer extends BaseLayer {
-  type: 'text';
+  type: "text";
   text: string; // e.g. "{{first_name}}" or "JOHN DOE"
   fontFamily: string;
   fontSize: number; // in pt or mm
   fontStyle: string; // e.g. 'normal', 'bold', 'italic', 'bold italic', '700', etc.
   fontWeight?: number; // e.g. 300, 400, 500, 600, 700, 800, 900
-  textDecoration: 'none' | 'underline';
+  textDecoration: "none" | "underline";
   color: string;
-  align: 'left' | 'center' | 'right' | 'justify';
+  align: "left" | "center" | "right" | "justify";
   letterSpacing: number; // mm
   lineHeight: number;
 
@@ -91,37 +112,37 @@ export interface TextLayer extends BaseLayer {
   shadowOffsetY?: number; // in mm
 
   // Text Case Control (Prompt 6)
-  textCase?: 'original' | 'uppercase' | 'lowercase' | 'capitalize';
+  textCase?: "original" | "uppercase" | "lowercase" | "capitalize";
 
   // Bold Simulation (Prompt 7)
-  boldSimulation?: 'normal' | 'bold' | 'simulated_bold';
+  boldSimulation?: "normal" | "bold" | "simulated_bold";
 
   // Condensed / Expanded Width Presets (Prompt 8)
-  widthPreset?: 'normal' | 'condensed' | 'semi_condensed' | 'expanded' | 'semi_expanded';
+  widthPreset?: "normal" | "condensed" | "semi_condensed" | "expanded" | "semi_expanded";
 
   // Driving License Specific Custom Properties
   licenseCategoryGroup?: string; // A, A1, A2, A3, B, C, C1, C2, C3, D, E, F, G
-  licenseCategoryDateType?: 'issueDate' | 'expiryDate';
-  licenseCategoriesSeparator?: 'spaceSeparated' | 'commaSeparated' | 'slashSeparated';
+  licenseCategoryDateType?: "issueDate" | "expiryDate";
+  licenseCategoriesSeparator?: "spaceSeparated" | "commaSeparated" | "slashSeparated";
 }
 
 export interface ImageLayer extends BaseLayer {
-  type: 'image';
+  type: "image";
   src: string; // base64 or url
   aspectRatioLocked?: boolean;
 }
 
 export interface PlaceholderLayer extends BaseLayer {
-  type: 'placeholder';
+  type: "placeholder";
   placeholderKey: string; // e.g. "photo", "signature", "logo"
   label: string; // e.g. "Passport Photo"
-  placeholderType: 'photo' | 'signature' | 'badge';
+  placeholderType: "photo" | "signature" | "badge";
   borderColor: string;
   backgroundColor: string;
 }
 
 export interface ShapeLayer extends BaseLayer {
-  type: 'shape';
+  type: "shape";
   shapeType: ShapeType;
   fill: string;
   stroke: string;
@@ -131,7 +152,7 @@ export interface ShapeLayer extends BaseLayer {
 }
 
 export interface BarcodeLayer extends BaseLayer {
-  type: 'barcode';
+  type: "barcode";
   barcodeType: BarcodeType;
   data: string; // e.g. "{{id_number}}" or "12345678"
   lineColor: string;
@@ -140,28 +161,22 @@ export interface BarcodeLayer extends BaseLayer {
 }
 
 export interface QRCodeLayer extends BaseLayer {
-  type: 'qrcode';
+  type: "qrcode";
   data: string; // e.g. "ID: {{id_number}} | Name: {{first_name}}"
   colorDark: string;
   colorLight: string;
 }
 
 export interface GroupLayer extends BaseLayer {
-  type: 'group';
+  type: "group";
   childrenIds: string[];
 }
 
 export type Layer =
-  | TextLayer
-  | ImageLayer
-  | PlaceholderLayer
-  | ShapeLayer
-  | BarcodeLayer
-  | QRCodeLayer
-  | GroupLayer;
+  TextLayer | ImageLayer | PlaceholderLayer | ShapeLayer | BarcodeLayer | QRCodeLayer | GroupLayer;
 
 export interface BackgroundConfig {
-  type: 'image' | 'color';
+  type: "image" | "color";
   src?: string; // base64 / URL if image
   color?: string; // hex color
   aspectRatio?: number;
@@ -200,12 +215,12 @@ export interface CardTemplate {
   cardHeight: number; // mm (e.g., 53.98)
   unit: Unit; // default 'mm'
   dpi: number; // default 300
-  orientation: 'landscape' | 'portrait';
+  orientation: "landscape" | "portrait";
   background: BackgroundConfig;
   layers: Layer[];
   guides: Guide[];
-  visibility?: 'private' | 'universal';
-  status?: 'draft' | 'private' | 'published';
+  visibility?: "private" | "universal";
+  status?: "draft" | "private" | "published";
   publishedAt?: string;
   publishedBy?: string;
   version?: number;
@@ -238,15 +253,15 @@ export interface NidaSubmissionRecord {
   middleName?: string;
   lastName: string;
   dateOfBirth: string;
-  gender: 'M' | 'F';
+  gender: "M" | "F";
   nidaNumber: string;
   photo?: string | null;
   signature?: string | null;
   submittedAt: string;
 }
 
-export type PaymentStatus = 'pending' | 'verified' | 'rejected' | 'used' | 'suspended';
-export type VerificationType = 'auto' | 'manual' | 'ocr';
+export type PaymentStatus = "pending" | "verified" | "rejected" | "used" | "suspended";
+export type VerificationType = "auto" | "manual" | "ocr";
 
 export interface PaymentRecord {
   id: string;
@@ -304,7 +319,7 @@ export interface TokenTransaction {
 export interface PaymentSettings {
   webhookUrl: string;
   deviceName: string;
-  forwardingStatus: 'active' | 'inactive';
+  forwardingStatus: "active" | "inactive";
   lastSmsReceived?: string;
   lastVerification?: string;
 }
@@ -315,7 +330,7 @@ export interface ConfigurablePaymentMethod {
   number: string;
   accountName: string;
   instructions: string;
-  status: 'active' | 'inactive';
+  status: "active" | "inactive";
 }
 
 export interface UserProfileSettings {
@@ -326,9 +341,9 @@ export interface UserProfileSettings {
 }
 
 export interface UserPreferences {
-  theme: 'light' | 'dark' | 'system';
-  language: 'en' | 'sw';
-  fontSize: 'compact' | 'standard' | 'large';
+  theme: "light" | "dark" | "system";
+  language: "en" | "sw";
+  fontSize: "compact" | "standard" | "large";
   paymentAlerts: boolean;
   downloadAlerts: boolean;
   systemAlerts: boolean;
@@ -369,7 +384,7 @@ export interface UserPaymentSubmission {
   reference: string;
   date: string;
   submittedAt: string;
-  status: 'pending' | 'verified' | 'rejected';
+  status: "pending" | "verified" | "rejected";
   extractedData: ExtractedPaymentData;
   rejectionReason?: string;
   tokensGranted?: number;

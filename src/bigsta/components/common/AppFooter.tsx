@@ -1,6 +1,6 @@
-import React from 'react';
+import React from "react";
 
-export const AppFooter: React.FC<{ className?: string }> = ({ className = '' }) => {
+export const AppFooter: React.FC<{ className?: string }> = ({ className = "" }) => {
   return (
     <footer
       id="app-global-footer"

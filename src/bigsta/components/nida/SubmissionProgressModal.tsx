@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   CheckCircle2,
   Loader2,
@@ -9,8 +9,8 @@ import {
   X,
   FileCheck,
   Check,
-} from 'lucide-react';
-import { WorkflowStep, SubmissionStepId } from './submissionWorkflow';
+} from "lucide-react";
+import { WorkflowStep, SubmissionStepId } from "./submissionWorkflow";
 
 interface SubmissionProgressModalProps {
   isOpen: boolean;
@@ -31,11 +31,11 @@ export const SubmissionProgressModal: React.FC<SubmissionProgressModalProps> = (
   error,
   onRetry,
   onClose,
-  title = 'Form Submission Workflow',
+  title = "Form Submission Workflow",
 }) => {
   if (!isOpen) return null;
 
-  const completedCount = steps.filter((s) => s.status === 'completed').length;
+  const completedCount = steps.filter((s) => s.status === "completed").length;
   const progressPercent = Math.round((completedCount / steps.length) * 100);
 
   return (
@@ -85,10 +85,10 @@ export const SubmissionProgressModal: React.FC<SubmissionProgressModalProps> = (
           <div
             className={`h-full transition-all duration-300 ${
               error
-                ? 'bg-rose-500'
+                ? "bg-rose-500"
                 : isCompleted
-                ? 'bg-emerald-500'
-                : 'bg-gradient-to-r from-[#47A5FF] via-sky-400 to-[#2563eb]'
+                  ? "bg-emerald-500"
+                  : "bg-gradient-to-r from-[#47A5FF] via-sky-400 to-[#2563eb]"
             }`}
             style={{ width: `${error ? 100 : progressPercent}%` }}
           />
@@ -102,13 +102,17 @@ export const SubmissionProgressModal: React.FC<SubmissionProgressModalProps> = (
             <span
               className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md ${
                 error
-                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
+                  ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
                   : isCompleted
-                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                  : 'bg-[#47A5FF]/15 text-[#47A5FF] border border-[#47A5FF]/30'
+                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                    : "bg-[#47A5FF]/15 text-[#47A5FF] border border-[#47A5FF]/30"
               }`}
             >
-              {error ? 'Action Needed' : isCompleted ? '9/9 Completed' : `${completedCount} of 9 Completed`}
+              {error
+                ? "Action Needed"
+                : isCompleted
+                  ? "9/9 Completed"
+                  : `${completedCount} of 9 Completed`}
             </span>
           </div>
 
@@ -116,20 +120,20 @@ export const SubmissionProgressModal: React.FC<SubmissionProgressModalProps> = (
           <div className="space-y-2">
             {steps.map((step) => {
               const isCurrent = step.id === currentStepId;
-              const isDone = step.status === 'completed';
-              const isFailed = step.status === 'failed';
+              const isDone = step.status === "completed";
+              const isFailed = step.status === "failed";
 
               return (
                 <div
                   key={step.id}
                   className={`p-2.5 sm:p-3 rounded-xl border transition-all duration-200 flex items-start gap-3 ${
                     isFailed
-                      ? 'bg-rose-500/10 border-rose-500/40 text-rose-300'
+                      ? "bg-rose-500/10 border-rose-500/40 text-rose-300"
                       : isDone
-                      ? 'bg-[#121820]/90 border-emerald-500/30 text-slate-200'
-                      : isCurrent
-                      ? 'bg-[#47A5FF]/10 border-[#47A5FF]/50 text-white shadow-[0_0_15px_rgba(71,165,255,0.1)]'
-                      : 'bg-[#14171C]/50 border-[#4C5055]/30 text-[#7D8287] opacity-70'
+                        ? "bg-[#121820]/90 border-emerald-500/30 text-slate-200"
+                        : isCurrent
+                          ? "bg-[#47A5FF]/10 border-[#47A5FF]/50 text-white shadow-[0_0_15px_rgba(71,165,255,0.1)]"
+                          : "bg-[#14171C]/50 border-[#4C5055]/30 text-[#7D8287] opacity-70"
                   }`}
                 >
                   {/* Step Status Icon / Number */}
@@ -233,7 +237,11 @@ export const SubmissionProgressModal: React.FC<SubmissionProgressModalProps> = (
             <div className="w-full flex items-center justify-between text-xs text-[#A0A4A8]">
               <div className="flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin text-[#47A5FF]" />
-                <span className="text-white font-medium">Processing Step {currentStepId ? steps.find(s => s.id === currentStepId)?.stepNumber || 1 : 1} of 9...</span>
+                <span className="text-white font-medium">
+                  Processing Step{" "}
+                  {currentStepId ? steps.find((s) => s.id === currentStepId)?.stepNumber || 1 : 1}{" "}
+                  of 9...
+                </span>
               </div>
               <span className="text-[11px] text-[#7D8287] font-mono">Please wait</span>
             </div>

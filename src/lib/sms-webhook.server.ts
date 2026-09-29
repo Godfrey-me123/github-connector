@@ -9,7 +9,11 @@ async function admin() {
 
 export async function getWebhookSecret(): Promise<string> {
   const db = await admin();
-  const { data } = await db.from("system_settings").select("config_value").eq("id", SECRET_KEY).maybeSingle();
+  const { data } = await db
+    .from("system_settings")
+    .select("config_value")
+    .eq("id", SECRET_KEY)
+    .maybeSingle();
   const stored = (data?.config_value as { secret?: string } | null)?.secret;
   if (stored) return stored;
   if (process.env["WEBHOOK_SECRET_KEY"]) return process.env["WEBHOOK_SECRET_KEY"]!;
@@ -21,7 +25,12 @@ export async function regenerateWebhookSecret(): Promise<string> {
   const secret = "BIGsta_SEC_" + crypto.randomUUID().replace(/-/g, "");
   const { error } = await db
     .from("system_settings")
-    .upsert({ id: SECRET_KEY, config_key: SECRET_KEY, config_value: { secret }, updated_at: new Date().toISOString() });
+    .upsert({
+      id: SECRET_KEY,
+      config_key: SECRET_KEY,
+      config_value: { secret },
+      updated_at: new Date().toISOString(),
+    });
   if (error) throw new Error(error.message);
   return secret;
 }
@@ -30,7 +39,12 @@ export async function saveWebhookSettings(value: Record<string, unknown>) {
   const db = await admin();
   const { error } = await db
     .from("system_settings")
-    .upsert({ id: "webhook_settings", config_key: "webhook_settings", config_value: value as never, updated_at: new Date().toISOString() });
+    .upsert({
+      id: "webhook_settings",
+      config_key: "webhook_settings",
+      config_value: value as never,
+      updated_at: new Date().toISOString(),
+    });
   if (error) throw new Error(error.message);
 }
 
@@ -57,7 +71,8 @@ export async function handleIncomingSms(request: Request): Promise<Response> {
     const error = !payload.secret ? "Missing Secret" : "Invalid Secret";
     return json({ success: false, received: true, status: "FAILED", error }, 401);
   }
-  if (!rawSms.trim()) return json({ success: false, received: true, status: "FAILED", error: "Empty SMS body" }, 400);
+  if (!rawSms.trim())
+    return json({ success: false, received: true, status: "FAILED", error: "Empty SMS body" }, 400);
 
   const db = await admin();
   const fields = extractPaymentFields(sender, rawSms);
@@ -90,10 +105,22 @@ export async function handleIncomingSms(request: Request): Promise<Response> {
   if (insErr?.code === "23505") return json({ success: true, received: true, status: "DUPLICATE" });
   if (insErr || !row) {
     console.error("[SMS] insert failed", insErr);
-    return json({ success: false, received: true, status: "FAILED", error: insErr?.message || "Not stored" }, 502);
+    return json(
+      { success: false, received: true, status: "FAILED", error: insErr?.message || "Not stored" },
+      502,
+    );
   }
   if (!parsed) {
-    return json({ success: false, received: true, stored: true, status: "PARSE_FAILED", error: "Unsupported SMS format: stored for manual review" }, 422);
+    return json(
+      {
+        success: false,
+        received: true,
+        stored: true,
+        status: "PARSE_FAILED",
+        error: "Unsupported SMS format: stored for manual review",
+      },
+      422,
+    );
   }
 
   const name = fields.payerName || "Mobile Money User";
@@ -106,11 +133,22 @@ export async function handleIncomingSms(request: Request): Promise<Response> {
     reference: fields.reference,
     payment_date: receivedAt,
   };
-  const { data: existing } = await db.from("user_payments").select("id").eq("reference", fields.reference!).limit(1);
-  const { error } = existing && existing.length
-    ? await db.from("user_payments").update(paymentRow).eq("id", existing[0]!.id)
-    : await db.from("user_payments").insert({ id: crypto.randomUUID(), status: "PENDING", tokens_granted: 0, ...paymentRow });
-  if (error) return json({ success: false, received: true, stored: true, status: "FAILED", error: error.message }, 502);
+  const { data: existing } = await db
+    .from("user_payments")
+    .select("id")
+    .eq("reference", fields.reference!)
+    .limit(1);
+  const { error } =
+    existing && existing.length
+      ? await db.from("user_payments").update(paymentRow).eq("id", existing[0]!.id)
+      : await db
+          .from("user_payments")
+          .insert({ id: crypto.randomUUID(), status: "PENDING", tokens_granted: 0, ...paymentRow });
+  if (error)
+    return json(
+      { success: false, received: true, stored: true, status: "FAILED", error: error.message },
+      502,
+    );
 
   return json({ success: true, received: true, status: "COMPLETED", trace_id: row.id });
 }
@@ -119,7 +157,9 @@ export async function smsStats() {
   const db = await admin();
   const { data, error } = await db
     .from("sms_logs")
-    .select("id, received_at, sender, raw_sms, device_id, processing_state, status, amount, reference")
+    .select(
+      "id, received_at, sender, raw_sms, device_id, processing_state, status, amount, reference",
+    )
     .eq("source", "webhook")
     .order("received_at", { ascending: false })
     .limit(100);

@@ -1,7 +1,7 @@
-import React from 'react';
-import { useTemplateStore } from '../store/useTemplateStore';
-import { convertFromMm, formatUnitValue, mmToPx } from '../utils/units';
-import { MousePointer, Crosshair, Magnet, Layers } from 'lucide-react';
+import React from "react";
+import { useTemplateStore } from "../store/useTemplateStore";
+import { convertFromMm, formatUnitValue, mmToPx } from "../utils/units";
+import { MousePointer, Crosshair, Magnet, Layers } from "lucide-react";
 
 export const BottomStatusBar: React.FC = () => {
   const {
@@ -36,7 +36,8 @@ export const BottomStatusBar: React.FC = () => {
 
         <div className="hidden sm:flex items-center gap-1 text-slate-400">
           <span>
-            Card: {currentTemplate.cardWidth} × {currentTemplate.cardHeight} mm ({cardPxW} × {cardPxH} px @ {currentTemplate.dpi} DPI)
+            Card: {currentTemplate.cardWidth} × {currentTemplate.cardHeight} mm ({cardPxW} ×{" "}
+            {cardPxH} px @ {currentTemplate.dpi} DPI)
           </span>
         </div>
       </div>
@@ -51,8 +52,12 @@ export const BottomStatusBar: React.FC = () => {
         )}
 
         <div className="flex items-center gap-1 text-slate-300">
-          <Magnet className={`w-3 h-3 ${snapSettings.snapToObjects ? 'text-emerald-400' : 'text-slate-500'}`} />
-          <span>Snap: {snapSettings.snapToObjects || snapSettings.snapToGuides ? 'ON' : 'OFF'}</span>
+          <Magnet
+            className={`w-3 h-3 ${snapSettings.snapToObjects ? "text-emerald-400" : "text-slate-500"}`}
+          />
+          <span>
+            Snap: {snapSettings.snapToObjects || snapSettings.snapToGuides ? "ON" : "OFF"}
+          </span>
         </div>
 
         <button

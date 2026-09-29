@@ -1,6 +1,6 @@
-import React from 'react';
-import { Sparkles, CheckCircle2 } from 'lucide-react';
-import { useTemplateStore } from '../../store/useTemplateStore';
+import React from "react";
+import { Sparkles, CheckCircle2 } from "lucide-react";
+import { useTemplateStore } from "../../store/useTemplateStore";
 
 export const SuccessActivationModal: React.FC = () => {
   const { successActivationMessage, setSuccessActivationMessage } = useTemplateStore();
@@ -24,7 +24,7 @@ export const SuccessActivationModal: React.FC = () => {
         <div className="space-y-1">
           <h3 className="text-2xl font-black text-slate-900 tracking-tight">Congratulations!</h3>
           <p className="text-sm font-semibold text-emerald-700">
-            {successActivationMessage || 'Your package has been activated successfully.'}
+            {successActivationMessage || "Your package has been activated successfully."}
           </p>
         </div>
 

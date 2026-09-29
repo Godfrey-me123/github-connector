@@ -12,18 +12,18 @@
  */
 
 export const MONTH_ABBREVIATIONS = [
-  'JAN',
-  'FEB',
-  'MAR',
-  'APR',
-  'MAY',
-  'JUN',
-  'JUL',
-  'AUG',
-  'SEP',
-  'OCT',
-  'NOV',
-  'DEC',
+  "JAN",
+  "FEB",
+  "MAR",
+  "APR",
+  "MAY",
+  "JUN",
+  "JUL",
+  "AUG",
+  "SEP",
+  "OCT",
+  "NOV",
+  "DEC",
 ] as const;
 
 export type MonthAbbr = (typeof MONTH_ABBREVIATIONS)[number];
@@ -48,17 +48,17 @@ const MONTH_INDEX_MAP: Record<string, number> = {
  * e.g., 01 MAR 1998
  */
 export function validateDdMmmYyyy(input: string): { isValid: boolean; error?: string } {
-  if (!input || input.trim() === '') {
-    return { isValid: false, error: 'Date of birth is required.' };
+  if (!input || input.trim() === "") {
+    return { isValid: false, error: "Date of birth is required." };
   }
 
   const trimmed = input.trim().toUpperCase();
-  const parts = trimmed.split(' ');
+  const parts = trimmed.split(" ");
 
   if (parts.length !== 3) {
     return {
       isValid: false,
-      error: 'Date must follow strict format: DD MMM YYYY (e.g., 01 MAR 1998)',
+      error: "Date must follow strict format: DD MMM YYYY (e.g., 01 MAR 1998)",
     };
   }
 
@@ -66,7 +66,7 @@ export function validateDdMmmYyyy(input: string): { isValid: boolean; error?: st
 
   // Day check
   if (!/^\d{2}$/.test(dayStr)) {
-    return { isValid: false, error: 'Day must be exactly 2 digits (e.g., 01, 15).' };
+    return { isValid: false, error: "Day must be exactly 2 digits (e.g., 01, 15)." };
   }
   const day = parseInt(dayStr, 10);
 
@@ -74,14 +74,14 @@ export function validateDdMmmYyyy(input: string): { isValid: boolean; error?: st
   if (!MONTH_ABBREVIATIONS.includes(monthStr as MonthAbbr)) {
     return {
       isValid: false,
-      error: `Month must be 3-letter uppercase code (${MONTH_ABBREVIATIONS.join(', ')}).`,
+      error: `Month must be 3-letter uppercase code (${MONTH_ABBREVIATIONS.join(", ")}).`,
     };
   }
   const monthIndex = MONTH_INDEX_MAP[monthStr];
 
   // Year check
   if (!/^\d{4}$/.test(yearStr)) {
-    return { isValid: false, error: 'Year must be exactly 4 digits (e.g., 1998).' };
+    return { isValid: false, error: "Year must be exactly 4 digits (e.g., 1998)." };
   }
   const year = parseInt(yearStr, 10);
   const currentYear = new Date().getFullYear();
@@ -117,7 +117,7 @@ export function convertNidaDobBlockToDdMmmYyyy(dobBlock: string): string | null 
 
   if (month < 1 || month > 12) return null;
   const monthAbbr = MONTH_ABBREVIATIONS[month - 1];
-  const dayStr = day.toString().padStart(2, '0');
+  const dayStr = day.toString().padStart(2, "0");
 
   return `${dayStr} ${monthAbbr} ${year}`;
 }
@@ -128,7 +128,7 @@ export function convertNidaDobBlockToDdMmmYyyy(dobBlock: string): string | null 
  */
 export function convertIsoToDdMmmYyyy(isoDate: string): string | null {
   if (!isoDate) return null;
-  const parts = isoDate.split('-');
+  const parts = isoDate.split("-");
   if (parts.length !== 3) return null;
 
   const year = parseInt(parts[0], 10);
@@ -139,7 +139,7 @@ export function convertIsoToDdMmmYyyy(isoDate: string): string | null {
   if (month < 1 || month > 12) return null;
 
   const monthAbbr = MONTH_ABBREVIATIONS[month - 1];
-  const dayStr = day.toString().padStart(2, '0');
+  const dayStr = day.toString().padStart(2, "0");
 
   return `${dayStr} ${monthAbbr} ${year}`;
 }
@@ -150,7 +150,7 @@ export function convertIsoToDdMmmYyyy(isoDate: string): string | null {
  */
 export function convertIsoToDdMmYyyy(isoDate: string): string | null {
   if (!isoDate) return null;
-  const parts = isoDate.split('-');
+  const parts = isoDate.split("-");
   if (parts.length !== 3) return null;
 
   const year = parseInt(parts[0], 10);
@@ -160,8 +160,8 @@ export function convertIsoToDdMmYyyy(isoDate: string): string | null {
   if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
   if (month < 1 || month > 12) return null;
 
-  const dayStr = day.toString().padStart(2, '0');
-  const monthStr = month.toString().padStart(2, '0');
+  const dayStr = day.toString().padStart(2, "0");
+  const monthStr = month.toString().padStart(2, "0");
 
   return `${dayStr}/${monthStr}/${year}`;
 }
@@ -171,9 +171,9 @@ export function convertIsoToDdMmYyyy(isoDate: string): string | null {
  * to strict Driving Licence format: DD/MM/YYYY (e.g. 23/08/2021, 15/09/2027)
  */
 export function formatToDdMmYyyy(val: string | null | undefined): string {
-  if (!val || typeof val !== 'string') return '';
+  if (!val || typeof val !== "string") return "";
   const trimmed = val.trim();
-  if (!trimmed) return '';
+  if (!trimmed) return "";
 
   // Already DD/MM/YYYY
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
@@ -182,7 +182,7 @@ export function formatToDdMmYyyy(val: string | null | undefined): string {
 
   // DD-MM-YYYY
   if (/^\d{2}-\d{2}-\d{4}$/.test(trimmed)) {
-    const parts = trimmed.split('-');
+    const parts = trimmed.split("-");
     return `${parts[0]}/${parts[1]}/${parts[2]}`;
   }
 
@@ -193,13 +193,13 @@ export function formatToDdMmYyyy(val: string | null | undefined): string {
   }
 
   // DD MMM YYYY (e.g. 23 AUG 2021 or 01 MAR 1998)
-  const parts = trimmed.toUpperCase().split(' ');
+  const parts = trimmed.toUpperCase().split(" ");
   if (parts.length === 3) {
     const [dayStr, monthStr, yearStr] = parts;
     const mIdx = MONTH_ABBREVIATIONS.indexOf(monthStr as MonthAbbr);
     if (mIdx !== -1 && /^\d{1,2}$/.test(dayStr) && /^\d{4}$/.test(yearStr)) {
-      const day = parseInt(dayStr, 10).toString().padStart(2, '0');
-      const month = (mIdx + 1).toString().padStart(2, '0');
+      const day = parseInt(dayStr, 10).toString().padStart(2, "0");
+      const month = (mIdx + 1).toString().padStart(2, "0");
       return `${day}/${month}/${yearStr}`;
     }
   }
@@ -219,9 +219,9 @@ export function formatToDdMmYyyy(val: string | null | undefined): string {
  * Converts any date format to ISO YYYY-MM-DD for native <input type="date">
  */
 export function convertAnyDateToIso(val: string | null | undefined): string {
-  if (!val || typeof val !== 'string') return '';
+  if (!val || typeof val !== "string") return "";
   const trimmed = val.trim();
-  if (!trimmed) return '';
+  if (!trimmed) return "";
 
   // If already YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
@@ -230,30 +230,30 @@ export function convertAnyDateToIso(val: string | null | undefined): string {
 
   // If DD/MM/YYYY
   if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
-    const parts = trimmed.split('/');
-    const dd = parts[0].padStart(2, '0');
-    const mm = parts[1].padStart(2, '0');
+    const parts = trimmed.split("/");
+    const dd = parts[0].padStart(2, "0");
+    const mm = parts[1].padStart(2, "0");
     const yyyy = parts[2];
     return `${yyyy}-${mm}-${dd}`;
   }
 
   // If DD-MM-YYYY
   if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(trimmed)) {
-    const parts = trimmed.split('-');
-    const dd = parts[0].padStart(2, '0');
-    const mm = parts[1].padStart(2, '0');
+    const parts = trimmed.split("-");
+    const dd = parts[0].padStart(2, "0");
+    const mm = parts[1].padStart(2, "0");
     const yyyy = parts[2];
     return `${yyyy}-${mm}-${dd}`;
   }
 
   // If DD MMM YYYY
-  const parts = trimmed.toUpperCase().split(' ');
+  const parts = trimmed.toUpperCase().split(" ");
   if (parts.length === 3) {
     const [dayStr, monthStr, yearStr] = parts;
     const mIdx = MONTH_ABBREVIATIONS.indexOf(monthStr as MonthAbbr);
     if (mIdx !== -1 && /^\d{1,2}$/.test(dayStr) && /^\d{4}$/.test(yearStr)) {
-      const dd = parseInt(dayStr, 10).toString().padStart(2, '0');
-      const mm = (mIdx + 1).toString().padStart(2, '0');
+      const dd = parseInt(dayStr, 10).toString().padStart(2, "0");
+      const mm = (mIdx + 1).toString().padStart(2, "0");
       return `${yearStr}-${mm}-${dd}`;
     }
   }
@@ -266,32 +266,32 @@ export function convertAnyDateToIso(val: string | null | undefined): string {
     return `${yyyy}-${mm}-${dd}`;
   }
 
-  return '';
+  return "";
 }
 
 /**
  * Validates strict DD/MM/YYYY format
  */
 export function validateDdMmYyyy(input: string): { isValid: boolean; error?: string } {
-  if (!input || input.trim() === '') {
-    return { isValid: false, error: 'Date is required.' };
+  if (!input || input.trim() === "") {
+    return { isValid: false, error: "Date is required." };
   }
 
   const trimmed = input.trim();
   if (!/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
     return {
       isValid: false,
-      error: 'Date must follow DD/MM/YYYY format (e.g. 23/08/2021)',
+      error: "Date must follow DD/MM/YYYY format (e.g. 23/08/2021)",
     };
   }
 
-  const [dayStr, monthStr, yearStr] = trimmed.split('/');
+  const [dayStr, monthStr, yearStr] = trimmed.split("/");
   const day = parseInt(dayStr, 10);
   const month = parseInt(monthStr, 10);
   const year = parseInt(yearStr, 10);
 
   if (month < 1 || month > 12) {
-    return { isValid: false, error: 'Month must be between 01 and 12.' };
+    return { isValid: false, error: "Month must be between 01 and 12." };
   }
 
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -306,7 +306,7 @@ export function validateDdMmYyyy(input: string): { isValid: boolean; error?: str
  * Normalizes user input into DD MMM YYYY if possible
  */
 export function normalizeDateInput(val: string): string {
-  if (!val) return '';
+  if (!val) return "";
   // If already strict DD MMM YYYY:
   const upper = val.trim().toUpperCase();
   if (/^\d{2}\s[A-Z]{3}\s\d{4}$/.test(upper)) {
@@ -327,7 +327,7 @@ export function normalizeDateInput(val: string): string {
  * to ISO YYYY-MM-DD for native HTML5 date input binding.
  */
 export function convertDateToIso(val: string): string {
-  if (!val) return '';
+  if (!val) return "";
   const trimmed = val.trim();
 
   // Already ISO YYYY-MM-DD
@@ -335,13 +335,13 @@ export function convertDateToIso(val: string): string {
 
   // DD/MM/YYYY
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
-    const [d, m, y] = trimmed.split('/');
+    const [d, m, y] = trimmed.split("/");
     return `${y}-${m}-${d}`;
   }
 
   // DD-MM-YYYY
   if (/^\d{2}-\d{2}-\d{4}$/.test(trimmed)) {
-    const [d, m, y] = trimmed.split('-');
+    const [d, m, y] = trimmed.split("-");
     return `${y}-${m}-${d}`;
   }
 
@@ -351,28 +351,28 @@ export function convertDateToIso(val: string): string {
     const [dayStr, monthStr, yearStr] = parts;
     const mIndex = MONTH_ABBREVIATIONS.indexOf(monthStr as MonthAbbr);
     if (mIndex !== -1) {
-      const dd = dayStr.padStart(2, '0');
-      const mm = (mIndex + 1).toString().padStart(2, '0');
+      const dd = dayStr.padStart(2, "0");
+      const mm = (mIndex + 1).toString().padStart(2, "0");
       return `${yearStr}-${mm}-${dd}`;
     }
   }
 
-  return '';
+  return "";
 }
 
 /**
  * Converts any string to Title Case (e.g. "JOHN MICHAEL SAMPLE" -> "John Michael Sample")
  */
 export function toTitleCase(val: string | null | undefined): string {
-  if (!val || typeof val !== 'string') return '';
+  if (!val || typeof val !== "string") return "";
   const trimmed = val.trim();
-  if (!trimmed) return '';
+  if (!trimmed) return "";
 
   return trimmed
     .toLowerCase()
     .split(/\s+/)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+    .join(" ");
 }
 
 /**
@@ -380,11 +380,24 @@ export function toTitleCase(val: string | null | undefined): string {
  * to NHIF format: MMM DD, YYYY (e.g. Jun 16, 1981, Jan 01, 2000)
  */
 export function formatToMmmDdYyyy(val: string | null | undefined): string {
-  if (!val || typeof val !== 'string') return '';
+  if (!val || typeof val !== "string") return "";
   const trimmed = val.trim();
-  if (!trimmed) return '';
+  if (!trimmed) return "";
 
-  const MONTH_TITLES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const MONTH_TITLES = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
 
   // Already MMM DD, YYYY (e.g., Jun 16, 1981)
   const mmmDdYyyyMatch = /^([A-Za-z]{3})\s+(\d{1,2}),?\s+(\d{4})$/.exec(trimmed);
@@ -393,7 +406,7 @@ export function formatToMmmDdYyyy(val: string | null | undefined): string {
     const mIdx = MONTH_TITLES.findIndex((m) => m.toLowerCase() === mStr);
     if (mIdx !== -1) {
       const monthTitle = MONTH_TITLES[mIdx];
-      const day = parseInt(mmmDdYyyyMatch[2], 10).toString().padStart(2, '0');
+      const day = parseInt(mmmDdYyyyMatch[2], 10).toString().padStart(2, "0");
       const year = mmmDdYyyyMatch[3];
       return `${monthTitle} ${day}, ${year}`;
     }
@@ -402,7 +415,7 @@ export function formatToMmmDdYyyy(val: string | null | undefined): string {
   // DD MMM YYYY (e.g. 16 JUN 1981 or 16 Jun 1981)
   const ddMmmYyyyMatch = /^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/.exec(trimmed);
   if (ddMmmYyyyMatch) {
-    const day = parseInt(ddMmmYyyyMatch[1], 10).toString().padStart(2, '0');
+    const day = parseInt(ddMmmYyyyMatch[1], 10).toString().padStart(2, "0");
     const mStr = ddMmmYyyyMatch[2].toLowerCase();
     const mIdx = MONTH_TITLES.findIndex((m) => m.toLowerCase() === mStr);
     const year = ddMmmYyyyMatch[3];
@@ -413,10 +426,10 @@ export function formatToMmmDdYyyy(val: string | null | undefined): string {
 
   // ISO YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-    const parts = trimmed.split('-');
+    const parts = trimmed.split("-");
     const year = parts[0];
     const mIdx = parseInt(parts[1], 10) - 1;
-    const day = parseInt(parts[2], 10).toString().padStart(2, '0');
+    const day = parseInt(parts[2], 10).toString().padStart(2, "0");
     if (mIdx >= 0 && mIdx < 12) {
       return `${MONTH_TITLES[mIdx]} ${day}, ${year}`;
     }
@@ -425,7 +438,7 @@ export function formatToMmmDdYyyy(val: string | null | undefined): string {
   // DD/MM/YYYY or DD-MM-YYYY
   if (/^\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4}$/.test(trimmed)) {
     const parts = trimmed.split(/[\/\-]/);
-    const day = parseInt(parts[0], 10).toString().padStart(2, '0');
+    const day = parseInt(parts[0], 10).toString().padStart(2, "0");
     const mIdx = parseInt(parts[1], 10) - 1;
     const year = parts[2];
     if (mIdx >= 0 && mIdx < 12) {
@@ -437,7 +450,7 @@ export function formatToMmmDdYyyy(val: string | null | undefined): string {
   if (/^\d{8}$/.test(trimmed)) {
     const year = trimmed.slice(0, 4);
     const mIdx = parseInt(trimmed.slice(4, 6), 10) - 1;
-    const day = parseInt(trimmed.slice(6, 8), 10).toString().padStart(2, '0');
+    const day = parseInt(trimmed.slice(6, 8), 10).toString().padStart(2, "0");
     if (mIdx >= 0 && mIdx < 12) {
       return `${MONTH_TITLES[mIdx]} ${day}, ${year}`;
     }

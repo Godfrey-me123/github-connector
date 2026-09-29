@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   X,
   Search,
@@ -9,16 +9,16 @@ import {
   Sparkles,
   CreditCard,
   CheckCircle2,
-} from 'lucide-react';
-import { CardTemplate, CardSide } from '../../types';
-import { SAMPLE_TEMPLATES } from '../../utils/sampleTemplates';
-import { useTemplateStore } from '../../store/useTemplateStore';
-import { renderTemplateToCanvas } from '../../utils/export';
+} from "lucide-react";
+import { CardTemplate, CardSide } from "../../types";
+import { SAMPLE_TEMPLATES } from "../../utils/sampleTemplates";
+import { useTemplateStore } from "../../store/useTemplateStore";
+import { renderTemplateToCanvas } from "../../utils/export";
 
 interface NidaTemplatePickerModalProps {
   isOpen: boolean;
   onClose: () => void;
-  targetSide: 'front' | 'back';
+  targetSide: "front" | "back";
   selectedTemplateId: string | null;
   onSelectTemplate: (template: CardTemplate) => void;
 }
@@ -32,8 +32,8 @@ export const NidaTemplatePickerModal: React.FC<NidaTemplatePickerModalProps> = (
 }) => {
   const { loadSavedTemplates, setActiveScreen } = useTemplateStore();
   const [allTemplates, setAllTemplates] = useState<CardTemplate[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<'all' | 'matching' | 'samples' | 'saved'>('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState<"all" | "matching" | "samples" | "saved">("all");
   const [previewTemplate, setPreviewTemplate] = useState<CardTemplate | null>(null);
   const [previewImgUrl, setPreviewImgUrl] = useState<string | null>(null);
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
@@ -49,11 +49,11 @@ export const NidaTemplatePickerModal: React.FC<NidaTemplatePickerModalProps> = (
             .then((canvas) => {
               setThumbnails((prev) => ({
                 ...prev,
-                [tpl.id]: canvas.toDataURL('image/png'),
+                [tpl.id]: canvas.toDataURL("image/png"),
               }));
             })
             .catch((err) => {
-              console.warn('Could not generate thumbnail for', tpl.id, err);
+              console.warn("Could not generate thumbnail for", tpl.id, err);
             });
         });
       });
@@ -65,10 +65,10 @@ export const NidaTemplatePickerModal: React.FC<NidaTemplatePickerModalProps> = (
     if (previewTemplate) {
       renderTemplateToCanvas(previewTemplate, {}, 200)
         .then((canvas) => {
-          setPreviewImgUrl(canvas.toDataURL('image/png'));
+          setPreviewImgUrl(canvas.toDataURL("image/png"));
         })
         .catch((err) => {
-          console.warn('Could not generate preview for', previewTemplate.id, err);
+          console.warn("Could not generate preview for", previewTemplate.id, err);
           setPreviewImgUrl(null);
         });
     } else {
@@ -78,7 +78,7 @@ export const NidaTemplatePickerModal: React.FC<NidaTemplatePickerModalProps> = (
 
   if (!isOpen) return null;
 
-  const targetLabel = targetSide === 'front' ? 'Front Side' : 'Back Side';
+  const targetLabel = targetSide === "front" ? "Front Side" : "Back Side";
 
   const filteredTemplates = allTemplates.filter((tpl) => {
     const matchesSearch =
@@ -88,13 +88,13 @@ export const NidaTemplatePickerModal: React.FC<NidaTemplatePickerModalProps> = (
     if (!matchesSearch) return false;
 
     const isTargetSide =
-      targetSide === 'front'
-        ? tpl.side === 'Front Side' || !tpl.id.toLowerCase().includes('back')
-        : tpl.side === 'Back Side' || tpl.id.toLowerCase().includes('back');
+      targetSide === "front"
+        ? tpl.side === "Front Side" || !tpl.id.toLowerCase().includes("back")
+        : tpl.side === "Back Side" || tpl.id.toLowerCase().includes("back");
 
-    if (activeFilter === 'matching') return isTargetSide;
-    if (activeFilter === 'samples') return tpl.id.startsWith('sample_');
-    if (activeFilter === 'saved') return !tpl.id.startsWith('sample_');
+    if (activeFilter === "matching") return isTargetSide;
+    if (activeFilter === "samples") return tpl.id.startsWith("sample_");
+    if (activeFilter === "saved") return !tpl.id.startsWith("sample_");
     return true;
   });
 
@@ -102,10 +102,10 @@ export const NidaTemplatePickerModal: React.FC<NidaTemplatePickerModalProps> = (
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -168,44 +168,44 @@ export const NidaTemplatePickerModal: React.FC<NidaTemplatePickerModalProps> = (
           <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
             <button
               type="button"
-              onClick={() => setActiveFilter('all')}
+              onClick={() => setActiveFilter("all")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
-                activeFilter === 'all'
-                  ? 'bg-[#101010] text-[#FFFFFF]'
-                  : 'bg-[#FFFFFF] text-[#101010]/70 hover:text-[#101010] hover:bg-[#F5F2EF]'
+                activeFilter === "all"
+                  ? "bg-[#101010] text-[#FFFFFF]"
+                  : "bg-[#FFFFFF] text-[#101010]/70 hover:text-[#101010] hover:bg-[#F5F2EF]"
               }`}
             >
               All ({allTemplates.length})
             </button>
             <button
               type="button"
-              onClick={() => setActiveFilter('matching')}
+              onClick={() => setActiveFilter("matching")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
-                activeFilter === 'matching'
-                  ? 'bg-[#101010] text-[#FFFFFF]'
-                  : 'bg-[#FFFFFF] text-[#101010]/70 hover:text-[#101010] hover:bg-[#F5F2EF]'
+                activeFilter === "matching"
+                  ? "bg-[#101010] text-[#FFFFFF]"
+                  : "bg-[#FFFFFF] text-[#101010]/70 hover:text-[#101010] hover:bg-[#F5F2EF]"
               }`}
             >
               Recommended {targetLabel}
             </button>
             <button
               type="button"
-              onClick={() => setActiveFilter('samples')}
+              onClick={() => setActiveFilter("samples")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
-                activeFilter === 'samples'
-                  ? 'bg-[#101010] text-[#FFFFFF]'
-                  : 'bg-[#FFFFFF] text-[#101010]/70 hover:text-[#101010] hover:bg-[#F5F2EF]'
+                activeFilter === "samples"
+                  ? "bg-[#101010] text-[#FFFFFF]"
+                  : "bg-[#FFFFFF] text-[#101010]/70 hover:text-[#101010] hover:bg-[#F5F2EF]"
               }`}
             >
               Samples
             </button>
             <button
               type="button"
-              onClick={() => setActiveFilter('saved')}
+              onClick={() => setActiveFilter("saved")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
-                activeFilter === 'saved'
-                  ? 'bg-[#101010] text-[#FFFFFF]'
-                  : 'bg-[#FFFFFF] text-[#101010]/70 hover:text-[#101010] hover:bg-[#F5F2EF]'
+                activeFilter === "saved"
+                  ? "bg-[#101010] text-[#FFFFFF]"
+                  : "bg-[#FFFFFF] text-[#101010]/70 hover:text-[#101010] hover:bg-[#F5F2EF]"
               }`}
             >
               My Saved
@@ -223,7 +223,7 @@ export const NidaTemplatePickerModal: React.FC<NidaTemplatePickerModalProps> = (
                 type="button"
                 onClick={() => {
                   onClose();
-                  setActiveScreen('upload');
+                  setActiveScreen("upload");
                 }}
                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#47A5FF]/15 text-[#47A5FF] border border-[#47A5FF]/30 text-xs font-bold hover:bg-[#47A5FF]/25 transition-colors cursor-pointer"
               >
@@ -236,7 +236,9 @@ export const NidaTemplatePickerModal: React.FC<NidaTemplatePickerModalProps> = (
               {filteredTemplates.map((tpl, idx) => {
                 const isSelected = selectedTemplateId === tpl.id;
                 const thumb = thumbnails[tpl.id];
-                const isNida = tpl.id.toLowerCase().includes('nida') || tpl.templateName.toLowerCase().includes('nida');
+                const isNida =
+                  tpl.id.toLowerCase().includes("nida") ||
+                  tpl.templateName.toLowerCase().includes("nida");
 
                 return (
                   <div
@@ -247,8 +249,8 @@ export const NidaTemplatePickerModal: React.FC<NidaTemplatePickerModalProps> = (
                     }}
                     className={`group relative flex flex-col bg-[#161B22] border rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:scale-[1.01] hover:shadow-lg ${
                       isSelected
-                        ? 'border-[#47A5FF] shadow-[0_0_20px_rgba(71,165,255,0.25)] ring-1 ring-[#47A5FF]'
-                        : 'border-[#30363D] hover:border-[#47A5FF]/60'
+                        ? "border-[#47A5FF] shadow-[0_0_20px_rgba(71,165,255,0.25)] ring-1 ring-[#47A5FF]"
+                        : "border-[#30363D] hover:border-[#47A5FF]/60"
                     }`}
                   >
                     {/* Thumbnail Display */}
@@ -300,13 +302,16 @@ export const NidaTemplatePickerModal: React.FC<NidaTemplatePickerModalProps> = (
                             </span>
                           )}
                           <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#47A5FF]/15 text-[#47A5FF] border border-[#47A5FF]/30">
-                            {tpl.side || (tpl.id.includes('back') ? 'Back Side' : 'Front Side')}
+                            {tpl.side || (tpl.id.includes("back") ? "Back Side" : "Front Side")}
                           </span>
                           <span className="text-[10px] text-[#8B949E]">
                             {tpl.layers.length} layers
                           </span>
                         </div>
-                        <h3 className="text-xs font-bold text-white truncate" title={tpl.templateName}>
+                        <h3
+                          className="text-xs font-bold text-white truncate"
+                          title={tpl.templateName}
+                        >
                           {tpl.templateName}
                         </h3>
                       </div>
@@ -325,11 +330,11 @@ export const NidaTemplatePickerModal: React.FC<NidaTemplatePickerModalProps> = (
                           }}
                           className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                             isSelected
-                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                              : 'bg-[#47A5FF] text-black hover:bg-[#388CE0]'
+                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
+                              : "bg-[#47A5FF] text-black hover:bg-[#388CE0]"
                           }`}
                         >
-                          {isSelected ? 'Selected' : 'Use Template'}
+                          {isSelected ? "Selected" : "Use Template"}
                         </button>
                       </div>
                     </div>
@@ -350,7 +355,7 @@ export const NidaTemplatePickerModal: React.FC<NidaTemplatePickerModalProps> = (
               type="button"
               onClick={() => {
                 onClose();
-                setActiveScreen('upload');
+                setActiveScreen("upload");
               }}
               className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-[#30363D] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
@@ -376,7 +381,8 @@ export const NidaTemplatePickerModal: React.FC<NidaTemplatePickerModalProps> = (
               <div>
                 <h3 className="text-base font-bold text-white">{previewTemplate.templateName}</h3>
                 <p className="text-xs text-[#8B949E]">
-                  {previewTemplate.cardWidth} × {previewTemplate.cardHeight} mm • {previewTemplate.layers.length} Layers
+                  {previewTemplate.cardWidth} × {previewTemplate.cardHeight} mm •{" "}
+                  {previewTemplate.layers.length} Layers
                 </p>
               </div>
               <button

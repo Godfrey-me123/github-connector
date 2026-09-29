@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   CreditCard,
   CheckCircle2,
@@ -13,12 +13,12 @@ import {
   FolderOpen,
   Info,
   ChevronRight,
-} from 'lucide-react';
-import { CardTemplate } from '../../types';
-import { useTemplateStore } from '../../store/useTemplateStore';
-import { SAMPLE_TEMPLATES } from '../../utils/sampleTemplates';
-import { renderTemplateToCanvas } from '../../utils/export';
-import { NidaTemplatePickerModal } from './NidaTemplatePickerModal';
+} from "lucide-react";
+import { CardTemplate } from "../../types";
+import { useTemplateStore } from "../../store/useTemplateStore";
+import { SAMPLE_TEMPLATES } from "../../utils/sampleTemplates";
+import { renderTemplateToCanvas } from "../../utils/export";
+import { NidaTemplatePickerModal } from "./NidaTemplatePickerModal";
 
 interface NidaTemplateSelectionStepProps {
   onContinueToForm: (frontTemplate: CardTemplate, backTemplate: CardTemplate) => void;
@@ -47,7 +47,7 @@ export const NidaTemplateSelectionStep: React.FC<NidaTemplateSelectionStepProps>
   const [frontThumb, setFrontThumb] = useState<string | null>(null);
   const [backThumb, setBackThumb] = useState<string | null>(null);
 
-  const [pickerSide, setPickerSide] = useState<'front' | 'back' | null>(null);
+  const [pickerSide, setPickerSide] = useState<"front" | "back" | null>(null);
   const [universalSaveToast, setUniversalSaveToast] = useState<string | null>(null);
 
   // Load all templates (sample + saved)
@@ -57,10 +57,10 @@ export const NidaTemplateSelectionStep: React.FC<NidaTemplateSelectionStepProps>
 
       // Resolve Front Template
       const targetFrontId =
-        selectedFrontTemplateId || defaultNidaFrontTemplateId || 'sample_tanzania_nida';
+        selectedFrontTemplateId || defaultNidaFrontTemplateId || "sample_tanzania_nida";
       const foundFront =
         saved.find((t) => t.id === targetFrontId) ||
-        saved.find((t) => !t.id.includes('back')) ||
+        saved.find((t) => !t.id.includes("back")) ||
         saved[0];
 
       if (foundFront) {
@@ -70,10 +70,10 @@ export const NidaTemplateSelectionStep: React.FC<NidaTemplateSelectionStepProps>
 
       // Resolve Back Template
       const targetBackId =
-        selectedBackTemplateId || defaultNidaBackTemplateId || 'sample_tanzania_nida_back';
+        selectedBackTemplateId || defaultNidaBackTemplateId || "sample_tanzania_nida_back";
       const foundBack =
         saved.find((t) => t.id === targetBackId) ||
-        saved.find((t) => t.id.includes('back')) ||
+        saved.find((t) => t.id.includes("back")) ||
         saved[1] ||
         saved[0];
 
@@ -96,7 +96,7 @@ export const NidaTemplateSelectionStep: React.FC<NidaTemplateSelectionStepProps>
   useEffect(() => {
     if (frontTemplate) {
       renderTemplateToCanvas(frontTemplate, {}, 96)
-        .then((canvas) => setFrontThumb(canvas.toDataURL('image/png')))
+        .then((canvas) => setFrontThumb(canvas.toDataURL("image/png")))
         .catch(() => setFrontThumb(null));
     }
   }, [frontTemplate]);
@@ -104,17 +104,17 @@ export const NidaTemplateSelectionStep: React.FC<NidaTemplateSelectionStepProps>
   useEffect(() => {
     if (backTemplate) {
       renderTemplateToCanvas(backTemplate, {}, 96)
-        .then((canvas) => setBackThumb(canvas.toDataURL('image/png')))
+        .then((canvas) => setBackThumb(canvas.toDataURL("image/png")))
         .catch(() => setBackThumb(null));
     }
   }, [backTemplate]);
 
   // Handle template selection from picker modal
   const handleSelectTemplate = (template: CardTemplate) => {
-    if (pickerSide === 'front') {
+    if (pickerSide === "front") {
       setFrontTemplate(template);
       setSelectedFrontTemplateId(template.id);
-    } else if (pickerSide === 'back') {
+    } else if (pickerSide === "back") {
       setBackTemplate(template);
       setSelectedBackTemplateId(template.id);
     }
@@ -130,7 +130,7 @@ export const NidaTemplateSelectionStep: React.FC<NidaTemplateSelectionStepProps>
     if (frontTemplate && backTemplate) {
       setUniversalDefaultNidaTemplates(frontTemplate.id, backTemplate.id);
       setUniversalSaveToast(
-        `Universal Defaults Saved! "${frontTemplate.templateName}" and "${backTemplate.templateName}" will automatically preselect on every session.`
+        `Universal Defaults Saved! "${frontTemplate.templateName}" and "${backTemplate.templateName}" will automatically preselect on every session.`,
       );
       setTimeout(() => setUniversalSaveToast(null), 4000);
     }
@@ -177,12 +177,14 @@ export const NidaTemplateSelectionStep: React.FC<NidaTemplateSelectionStepProps>
           disabled={!canContinue}
           className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
             isUniversalDefault
-              ? 'bg-emerald-100 border-emerald-300 text-emerald-900'
-              : 'bg-[#E7E2DE] hover:bg-[#dcd6d1] border-[#C8C2BE] text-[#101010]'
+              ? "bg-emerald-100 border-emerald-300 text-emerald-900"
+              : "bg-[#E7E2DE] hover:bg-[#dcd6d1] border-[#C8C2BE] text-[#101010]"
           }`}
           title="Save this Front + Back pair as your permanent universal default"
         >
-          <Star className={`w-3.5 h-3.5 ${isUniversalDefault ? 'fill-emerald-700 text-emerald-700' : 'text-[#FF6839]'}`} />
+          <Star
+            className={`w-3.5 h-3.5 ${isUniversalDefault ? "fill-emerald-700 text-emerald-700" : "text-[#FF6839]"}`}
+          />
           <span>Default</span>
         </button>
       </div>
@@ -197,7 +199,6 @@ export const NidaTemplateSelectionStep: React.FC<NidaTemplateSelectionStepProps>
 
       {/* TWO SEPARATE TEMPLATE SLOTS: FRONT & BACK */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        
         {/* SLOT 1: FRONT TEMPLATE */}
         <div className="p-4 rounded-2xl bg-[#B5A5FF]/20 border border-[#B5A5FF]/50 flex flex-col justify-between space-y-3 relative group hover:border-[#101010] transition-all shadow-xs">
           <div>
@@ -216,7 +217,7 @@ export const NidaTemplateSelectionStep: React.FC<NidaTemplateSelectionStepProps>
               {frontThumb ? (
                 <img
                   src={frontThumb}
-                  alt={frontTemplate?.templateName || 'Front Template'}
+                  alt={frontTemplate?.templateName || "Front Template"}
                   className="w-full h-full object-contain"
                   referrerPolicy="no-referrer"
                 />
@@ -237,13 +238,16 @@ export const NidaTemplateSelectionStep: React.FC<NidaTemplateSelectionStepProps>
 
             {/* Template Info */}
             <div className="mt-3">
-              <h3 className="text-sm font-bold text-[#101010] truncate" title={frontTemplate?.templateName}>
-                {frontTemplate ? frontTemplate.templateName : 'Select Front Template'}
+              <h3
+                className="text-sm font-bold text-[#101010] truncate"
+                title={frontTemplate?.templateName}
+              >
+                {frontTemplate ? frontTemplate.templateName : "Select Front Template"}
               </h3>
               <p className="text-[11px] text-[#101010]/70 mt-0.5 font-medium">
                 {frontTemplate
-                  ? `${frontTemplate.layers.length} layers • ${frontTemplate.cardType || 'National ID'}`
-                  : 'Requires identity variables: Name, DOB, Sex (M/F), NIDA, Photo'}
+                  ? `${frontTemplate.layers.length} layers • ${frontTemplate.cardType || "National ID"}`
+                  : "Requires identity variables: Name, DOB, Sex (M/F), NIDA, Photo"}
               </p>
             </div>
           </div>
@@ -252,7 +256,7 @@ export const NidaTemplateSelectionStep: React.FC<NidaTemplateSelectionStepProps>
           <div className="pt-2 border-t border-[#C8C2BE] flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setPickerSide('front')}
+              onClick={() => setPickerSide("front")}
               className="flex-1 px-3 py-2 rounded-xl bg-[#101010] hover:bg-[#252525] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
               <FolderOpen className="w-3.5 h-3.5 text-white" />
@@ -279,7 +283,7 @@ export const NidaTemplateSelectionStep: React.FC<NidaTemplateSelectionStepProps>
               {backThumb ? (
                 <img
                   src={backThumb}
-                  alt={backTemplate?.templateName || 'Back Template'}
+                  alt={backTemplate?.templateName || "Back Template"}
                   className="w-full h-full object-contain"
                   referrerPolicy="no-referrer"
                 />
@@ -300,13 +304,16 @@ export const NidaTemplateSelectionStep: React.FC<NidaTemplateSelectionStepProps>
 
             {/* Template Info */}
             <div className="mt-3">
-              <h3 className="text-sm font-bold text-[#101010] truncate" title={backTemplate?.templateName}>
-                {backTemplate ? backTemplate.templateName : 'Select Back Template'}
+              <h3
+                className="text-sm font-bold text-[#101010] truncate"
+                title={backTemplate?.templateName}
+              >
+                {backTemplate ? backTemplate.templateName : "Select Back Template"}
               </h3>
               <p className="text-[11px] text-[#101010]/70 mt-0.5 font-medium">
                 {backTemplate
-                  ? `${backTemplate.layers.length} layers • ${backTemplate.cardType || 'National ID Back'}`
-                  : 'Populates NIDA number, barcode & security details'}
+                  ? `${backTemplate.layers.length} layers • ${backTemplate.cardType || "National ID Back"}`
+                  : "Populates NIDA number, barcode & security details"}
               </p>
             </div>
           </div>
@@ -315,7 +322,7 @@ export const NidaTemplateSelectionStep: React.FC<NidaTemplateSelectionStepProps>
           <div className="pt-2 border-t border-[#C8C2BE] flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setPickerSide('back')}
+              onClick={() => setPickerSide("back")}
               className="flex-1 px-3 py-2 rounded-xl bg-[#101010] hover:bg-[#252525] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
               <FolderOpen className="w-3.5 h-3.5 text-white" />
@@ -323,7 +330,6 @@ export const NidaTemplateSelectionStep: React.FC<NidaTemplateSelectionStepProps>
             </button>
           </div>
         </div>
-
       </div>
 
       {/* Auxiliary Actions & Continue Button */}
@@ -339,7 +345,7 @@ export const NidaTemplateSelectionStep: React.FC<NidaTemplateSelectionStepProps>
           </button>
           <button
             type="button"
-            onClick={() => setActiveScreen('templates')}
+            onClick={() => setActiveScreen("templates")}
             className="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-white hover:bg-[#F5F2EF] text-[#101010] border border-[#C8C2BE] text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-xs"
           >
             <FolderOpen className="w-3.5 h-3.5 text-[#101010]" />
@@ -354,8 +360,8 @@ export const NidaTemplateSelectionStep: React.FC<NidaTemplateSelectionStepProps>
           disabled={!canContinue}
           className={`w-full sm:w-auto px-6 py-3 rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer ${
             canContinue
-              ? 'bg-[#101010] hover:bg-[#252525] text-white hover:scale-[1.02]'
-              : 'bg-[#C8C2BE] text-[#101010]/50 cursor-not-allowed border border-[#C8C2BE]'
+              ? "bg-[#101010] hover:bg-[#252525] text-white hover:scale-[1.02]"
+              : "bg-[#C8C2BE] text-[#101010]/50 cursor-not-allowed border border-[#C8C2BE]"
           }`}
         >
           <span>Continue</span>
@@ -368,7 +374,9 @@ export const NidaTemplateSelectionStep: React.FC<NidaTemplateSelectionStepProps>
         <NidaTemplatePickerModal
           isOpen={!!pickerSide}
           targetSide={pickerSide}
-          selectedTemplateId={pickerSide === 'front' ? frontTemplate?.id || null : backTemplate?.id || null}
+          selectedTemplateId={
+            pickerSide === "front" ? frontTemplate?.id || null : backTemplate?.id || null
+          }
           onClose={() => setPickerSide(null)}
           onSelectTemplate={handleSelectTemplate}
         />

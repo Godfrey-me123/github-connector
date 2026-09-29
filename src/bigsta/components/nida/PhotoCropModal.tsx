@@ -1,6 +1,6 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import React, { useState, useRef, useEffect } from 'react';
-import { ZoomIn, ZoomOut, RotateCw, Check, X, Move, Sparkles } from 'lucide-react';
+import React, { useState, useRef, useEffect } from "react";
+import { ZoomIn, ZoomOut, RotateCw, Check, X, Move, Sparkles } from "lucide-react";
 
 interface PhotoCropModalProps {
   imageSrc: string;
@@ -82,20 +82,20 @@ export const PhotoCropModal: React.FC<PhotoCropModalProps> = ({
     const container = containerRef.current;
     const containerRect = container.getBoundingClientRect();
 
-    const canvas = document.createElement('canvas');
+    const canvas = document.createElement("canvas");
     canvas.width = OUTPUT_WIDTH;
     canvas.height = OUTPUT_HEIGHT;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     // Preserve transparency if PNG; do not fill with white
-    const isPng = imageSrc.startsWith('data:image/png');
-    const isWebp = imageSrc.startsWith('data:image/webp');
+    const isPng = imageSrc.startsWith("data:image/png");
+    const isWebp = imageSrc.startsWith("data:image/webp");
 
     if (isPng) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     } else {
-      ctx.fillStyle = '#FFFFFF';
+      ctx.fillStyle = "#FFFFFF";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
@@ -132,18 +132,20 @@ export const PhotoCropModal: React.FC<PhotoCropModalProps> = ({
     ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
     ctx.restore();
 
-    const outputMime = isPng ? 'image/png' : isWebp ? 'image/webp' : 'image/jpeg';
-    const resultDataUrl = isPng ? canvas.toDataURL('image/png') : canvas.toDataURL(outputMime, 0.95);
+    const outputMime = isPng ? "image/png" : isWebp ? "image/webp" : "image/jpeg";
+    const resultDataUrl = isPng
+      ? canvas.toDataURL("image/png")
+      : canvas.toDataURL(outputMime, 0.95);
     onCropComplete(resultDataUrl);
   };
 
   // Escape key listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCancel();
+      if (e.key === "Escape") onCancel();
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onCancel]);
 
   return (
@@ -185,14 +187,14 @@ export const PhotoCropModal: React.FC<PhotoCropModalProps> = ({
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
             className="relative w-[245px] h-[315px] sm:w-[280px] sm:h-[360px] rounded-xl overflow-hidden border-2 border-[#47A5FF] shadow-[0_0_25px_rgba(71,165,255,0.25)] cursor-grab active:cursor-grabbing bg-slate-950 flex items-center justify-center"
-            style={{ touchAction: 'none' }}
+            style={{ touchAction: "none" }}
           >
             {/* The Image being cropped */}
             <div
               style={{
                 transform: `translate(${position.x}px, ${position.y}px) scale(${scale}) rotate(${rotation}deg)`,
-                transformOrigin: 'center center',
-                transition: isDragging ? 'none' : 'transform 0.1s ease-out',
+                transformOrigin: "center center",
+                transition: isDragging ? "none" : "transform 0.1s ease-out",
               }}
               className="w-full h-full flex items-center justify-center pointer-events-none"
             >

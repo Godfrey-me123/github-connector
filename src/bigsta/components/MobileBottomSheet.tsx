@@ -1,22 +1,33 @@
-import React, { useState } from 'react';
-import { X, Layers, PlusCircle, Palette, Sliders, ChevronUp, ChevronDown } from 'lucide-react';
-import { useTemplateStore } from '../store/useTemplateStore';
-import { ElementsPanel } from './ElementsPanel';
-import { LayersList } from './LayersList';
-import { BackgroundsPanel } from './BackgroundsPanel';
-import { RightPanel } from './RightPanel';
+import React, { useState } from "react";
+import { X, Layers, PlusCircle, Palette, Sliders, ChevronUp, ChevronDown } from "lucide-react";
+import { useTemplateStore } from "../store/useTemplateStore";
+import { ElementsPanel } from "./ElementsPanel";
+import { LayersList } from "./LayersList";
+import { BackgroundsPanel } from "./BackgroundsPanel";
+import { RightPanel } from "./RightPanel";
 
 export const MobileBottomSheet: React.FC = () => {
-  const { activeMobileSheet, setActiveMobileSheet, selectedLayerIds, currentTemplate } = useTemplateStore();
+  const { activeMobileSheet, setActiveMobileSheet, selectedLayerIds, currentTemplate } =
+    useTemplateStore();
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (!activeMobileSheet) return null;
 
-  const tabs: { id: 'elements' | 'layers' | 'backgrounds' | 'properties'; label: string; icon: React.ReactNode; badge?: number }[] = [
-    { id: 'elements', label: 'Elements', icon: <PlusCircle className="w-3.5 h-3.5" /> },
-    { id: 'layers', label: 'Layers', icon: <Layers className="w-3.5 h-3.5" />, badge: currentTemplate.layers.length },
-    { id: 'backgrounds', label: 'Background', icon: <Palette className="w-3.5 h-3.5" /> },
-    { id: 'properties', label: 'Properties', icon: <Sliders className="w-3.5 h-3.5" /> },
+  const tabs: {
+    id: "elements" | "layers" | "backgrounds" | "properties";
+    label: string;
+    icon: React.ReactNode;
+    badge?: number;
+  }[] = [
+    { id: "elements", label: "Elements", icon: <PlusCircle className="w-3.5 h-3.5" /> },
+    {
+      id: "layers",
+      label: "Layers",
+      icon: <Layers className="w-3.5 h-3.5" />,
+      badge: currentTemplate.layers.length,
+    },
+    { id: "backgrounds", label: "Background", icon: <Palette className="w-3.5 h-3.5" /> },
+    { id: "properties", label: "Properties", icon: <Sliders className="w-3.5 h-3.5" /> },
   ];
 
   return (
@@ -30,7 +41,7 @@ export const MobileBottomSheet: React.FC = () => {
       {/* Slide-Up Bottom Drawer */}
       <div
         className={`relative z-10 bg-slate-900 border-t border-slate-700/80 rounded-t-3xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-200 pointer-events-auto transition-all ${
-          isExpanded ? 'h-[72vh] max-h-[calc(100dvh-4rem)]' : 'h-[48vh] max-h-[calc(100dvh-4rem)]'
+          isExpanded ? "h-[72vh] max-h-[calc(100dvh-4rem)]" : "h-[48vh] max-h-[calc(100dvh-4rem)]"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -46,8 +57,8 @@ export const MobileBottomSheet: React.FC = () => {
                   onClick={() => setActiveMobileSheet(tab.id)}
                   className={`min-h-[34px] px-2.5 py-1 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all whitespace-nowrap ${
                     isActive
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-700/50"
                   }`}
                 >
                   {tab.icon}
@@ -55,7 +66,7 @@ export const MobileBottomSheet: React.FC = () => {
                   {tab.badge !== undefined && tab.badge > 0 && (
                     <span
                       className={`text-[9px] font-bold px-1 rounded-full ${
-                        isActive ? 'bg-white/20 text-white' : 'bg-slate-700 text-slate-300'
+                        isActive ? "bg-white/20 text-white" : "bg-slate-700 text-slate-300"
                       }`}
                     >
                       {tab.badge}
@@ -71,7 +82,7 @@ export const MobileBottomSheet: React.FC = () => {
             <button
               onClick={() => setIsExpanded(!isExpanded)}
               className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 flex items-center justify-center transition-colors"
-              title={isExpanded ? 'Compact View' : 'Expand View'}
+              title={isExpanded ? "Compact View" : "Expand View"}
             >
               {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
             </button>
@@ -87,10 +98,10 @@ export const MobileBottomSheet: React.FC = () => {
 
         {/* Drawer Scrollable Body */}
         <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-2.5 text-slate-200">
-          {activeMobileSheet === 'elements' && <ElementsPanel />}
-          {activeMobileSheet === 'layers' && <LayersList isMobile onLayerSelected={() => {}} />}
-          {activeMobileSheet === 'backgrounds' && <BackgroundsPanel />}
-          {activeMobileSheet === 'properties' && <RightPanel isMobileDrawer />}
+          {activeMobileSheet === "elements" && <ElementsPanel />}
+          {activeMobileSheet === "layers" && <LayersList isMobile onLayerSelected={() => {}} />}
+          {activeMobileSheet === "backgrounds" && <BackgroundsPanel />}
+          {activeMobileSheet === "properties" && <RightPanel isMobileDrawer />}
         </div>
       </div>
     </div>

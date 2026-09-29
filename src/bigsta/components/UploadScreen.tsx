@@ -1,5 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 import {
   Upload,
   Image as ImageIcon,
@@ -12,14 +12,14 @@ import {
   Trash2,
   Copy,
   Home,
-} from 'lucide-react';
-import { useTemplateStore } from '../store/useTemplateStore';
-import { CardTemplate } from '../types';
-import { SAMPLE_TEMPLATES } from '../utils/sampleTemplates';
-import { TemplateBadge } from './TemplateBadge';
-import { renderTemplateToCanvas } from '../utils/export';
-import { AppFooter } from './common/AppFooter';
-import { UniversalBackButton } from './common/UniversalBackButton';
+} from "lucide-react";
+import { useTemplateStore } from "../store/useTemplateStore";
+import { CardTemplate } from "../types";
+import { SAMPLE_TEMPLATES } from "../utils/sampleTemplates";
+import { TemplateBadge } from "./TemplateBadge";
+import { renderTemplateToCanvas } from "../utils/export";
+import { AppFooter } from "./common/AppFooter";
+import { UniversalBackButton } from "./common/UniversalBackButton";
 
 export const UploadScreen: React.FC = () => {
   const {
@@ -35,8 +35,12 @@ export const UploadScreen: React.FC = () => {
 
   const [dragActive, setDragActive] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [imageMeta, setImageMeta] = useState<{ width: number; height: number; name: string } | null>(null);
-  const [customName, setCustomName] = useState('My Custom ID Card');
+  const [imageMeta, setImageMeta] = useState<{
+    width: number;
+    height: number;
+    name: string;
+  } | null>(null);
+  const [customName, setCustomName] = useState("My Custom ID Card");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Saved templates state
@@ -52,7 +56,7 @@ export const UploadScreen: React.FC = () => {
     for (const tpl of list) {
       try {
         const canvas = await renderTemplateToCanvas(tpl, {}, 100);
-        previewMap[tpl.id] = canvas.toDataURL('image/png');
+        previewMap[tpl.id] = canvas.toDataURL("image/png");
       } catch {
         // Fallback silently
       }
@@ -65,8 +69,8 @@ export const UploadScreen: React.FC = () => {
   }, [loadSavedTemplates]);
 
   const handleFile = (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      alert('Please upload a valid image file (PNG, JPG, WEBP)');
+    if (!file.type.startsWith("image/")) {
+      alert("Please upload a valid image file (PNG, JPG, WEBP)");
       return;
     }
 
@@ -79,9 +83,9 @@ export const UploadScreen: React.FC = () => {
         setImageMeta({
           width: img.width,
           height: img.height,
-          name: file.name.replace(/\.[^/.]+$/, ''),
+          name: file.name.replace(/\.[^/.]+$/, ""),
         });
-        setCustomName(file.name.replace(/\.[^/.]+$/, '') + ' Template');
+        setCustomName(file.name.replace(/\.[^/.]+$/, "") + " Template");
       };
       img.src = src;
     };
@@ -119,30 +123,30 @@ export const UploadScreen: React.FC = () => {
     if (previewImage && imageMeta) {
       const isPortrait = imageMeta.height > imageMeta.width;
       await addUploadedBackground({
-        name: imageMeta.name || 'Uploaded Background',
+        name: imageMeta.name || "Uploaded Background",
         src: previewImage,
         originalWidthPx: imageMeta.width,
         originalHeightPx: imageMeta.height,
-        orientation: isPortrait ? 'portrait' : 'landscape',
+        orientation: isPortrait ? "portrait" : "landscape",
       });
 
       createNewTemplate(
         {
-          type: 'image',
+          type: "image",
           src: previewImage,
           originalWidthPx: imageMeta.width,
           originalHeightPx: imageMeta.height,
         },
-        customName || 'Custom ID Template'
+        customName || "Custom ID Template",
       );
     } else {
       // Create with clean default background
       createNewTemplate(
         {
-          type: 'color',
-          color: '#ffffff',
+          type: "color",
+          color: "#ffffff",
         },
-        'Blank ID Template'
+        "Blank ID Template",
       );
     }
   };
@@ -150,7 +154,7 @@ export const UploadScreen: React.FC = () => {
   const handleOpenEdit = (tpl: CardTemplate, e?: React.MouseEvent) => {
     e?.stopPropagation();
     loadTemplate(tpl);
-    setActiveScreen('editor');
+    setActiveScreen("editor");
   };
 
   const handleUseInGenerator = (tpl: CardTemplate, e: React.MouseEvent) => {
@@ -161,7 +165,7 @@ export const UploadScreen: React.FC = () => {
 
   const handleDeleteTemplate = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('Are you sure you want to delete this saved template?')) {
+    if (confirm("Are you sure you want to delete this saved template?")) {
       await deleteSavedTemplate(id);
       await fetchSaved();
     }
@@ -171,7 +175,7 @@ export const UploadScreen: React.FC = () => {
     e.stopPropagation();
     const copy: CardTemplate = {
       ...JSON.parse(JSON.stringify(tpl)),
-      id: 'template_' + Date.now(),
+      id: "template_" + Date.now(),
       templateName: `${tpl.templateName} Copy`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -199,7 +203,7 @@ export const UploadScreen: React.FC = () => {
 
             {/* Saved Templates Section Button on First Screen */}
             <button
-              onClick={() => setActiveScreen('templates')}
+              onClick={() => setActiveScreen("templates")}
               className="flex items-center gap-2 px-4 py-2 bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#E7E9EB] text-[#000000] rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer"
             >
               <FolderOpen className="w-4 h-4 text-[#000000]" />
@@ -217,7 +221,8 @@ export const UploadScreen: React.FC = () => {
           Upload Card Background
         </h1>
         <p className="text-[#555555] text-sm sm:text-base mb-8 max-w-md mx-auto font-medium">
-          Start designing a reusable ID card template. Automatic orientation and dimension detection.
+          Start designing a reusable ID card template. Automatic orientation and dimension
+          detection.
         </p>
 
         {/* Drag & Drop Area */}
@@ -228,10 +233,10 @@ export const UploadScreen: React.FC = () => {
           onClick={() => fileInputRef.current?.click()}
           className={`relative border-2 border-dashed rounded-xl p-8 sm:p-12 transition-all cursor-pointer flex flex-col items-center justify-center ${
             dragActive
-              ? 'border-[#000000] bg-[#E7E9EB]'
+              ? "border-[#000000] bg-[#E7E9EB]"
               : previewImage
-              ? 'border-[#000000] bg-[#FFFFFF]'
-              : 'border-[#E7E9EB] hover:border-[#000000] bg-[#FFFFFF] hover:bg-[#F8FAFC]'
+                ? "border-[#000000] bg-[#FFFFFF]"
+                : "border-[#E7E9EB] hover:border-[#000000] bg-[#FFFFFF] hover:bg-[#F8FAFC]"
           }`}
         >
           <input
@@ -245,22 +250,26 @@ export const UploadScreen: React.FC = () => {
           {previewImage ? (
             <div className="flex flex-col items-center gap-4">
               <div className="relative group max-w-xs max-h-48 overflow-hidden rounded-lg border border-[#E7E9EB] shadow-xs">
-                <img src={previewImage} alt="Background preview" className="object-contain max-h-44" />
+                <img
+                  src={previewImage}
+                  alt="Background preview"
+                  className="object-contain max-h-44"
+                />
               </div>
               <div className="text-xs text-[#000000] font-mono bg-[#E7E9EB] px-3 py-1.5 rounded-md border border-[#E7E9EB] font-bold">
                 Auto Detected: {imageMeta?.width} × {imageMeta?.height} px (
-                {imageMeta && imageMeta.height > imageMeta.width ? 'Portrait' : 'Landscape'})
+                {imageMeta && imageMeta.height > imageMeta.width ? "Portrait" : "Landscape"})
               </div>
-              <p className="text-xs text-[#000000] font-bold hover:underline">Click or drop to replace image</p>
+              <p className="text-xs text-[#000000] font-bold hover:underline">
+                Click or drop to replace image
+              </p>
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3">
               <div className="p-4 rounded-full bg-[#E7E9EB] text-[#000000]">
                 <Upload className="w-8 h-8" />
               </div>
-              <div className="text-sm sm:text-base font-bold text-[#000000]">
-                Drag Image Here
-              </div>
+              <div className="text-sm sm:text-base font-bold text-[#000000]">Drag Image Here</div>
               <div className="text-xs text-[#777777] font-bold uppercase tracking-wider">OR</div>
               <button
                 type="button"
@@ -311,7 +320,7 @@ export const UploadScreen: React.FC = () => {
                 <span>Your Saved Templates ({savedTemplates.length})</span>
               </div>
               <button
-                onClick={() => setActiveScreen('templates')}
+                onClick={() => setActiveScreen("templates")}
                 className="text-xs text-[#000000] hover:underline font-bold flex items-center gap-1 cursor-pointer"
               >
                 <span>View All Saved Templates</span>
@@ -336,7 +345,9 @@ export const UploadScreen: React.FC = () => {
                           className="max-h-full max-w-full object-contain rounded shadow-xs"
                         />
                       ) : (
-                        <div className="text-[#666666] text-xs font-mono font-bold">Loading Preview...</div>
+                        <div className="text-[#666666] text-xs font-mono font-bold">
+                          Loading Preview...
+                        </div>
                       )}
                     </div>
 
