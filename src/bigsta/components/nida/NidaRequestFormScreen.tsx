@@ -1,55 +1,62 @@
 // @ts-nocheck -- imported legacy BIGsta code
 import React, { useState } from 'react';
-import { useRouter } from '@tanstack/react-router';
 import { supabase } from '../../services/supabase';
+import { useTemplateStore } from '../../store/useTemplateStore';
 import { FloatingInput } from './FloatingInput';
-import { FloatingSelect } from './FloatingSelect';
 import { ArrowLeft } from 'lucide-react';
 
 export const NidaRequestFormScreen: React.FC = () => {
+  const [nidaNo, setNidaNo] = useState('');
   const [motherName, setMotherName] = useState('');
   const [ward, setWard] = useState('');
   const [district, setDistrict] = useState('');
   const [place, setPlace] = useState('');
   const [type, setType] = useState<'picture' | 'signature' | 'both'>('picture');
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+
+  const handleBack = () => {
+    const store = useTemplateStore.getState();
+    if (typeof store.goBack === 'function') store.goBack();
+    else store.setActiveScreen('home');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!nidaNo.trim()) {
+      alert('Please enter your NIDA number.');
+      return;
+    }
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    
     const { error } = await supabase.from('nida_requests').insert({
-      user_id: user?.id,
-      mother_name: motherName,
-      ward_of_residence: ward,
-      district_of_birth: district,
-      nida_registration_place: place,
-      request_type: type
+      nida_no: nidaNo.trim(),
+      mother_name: motherName.trim(),
+      ward_of_residence: ward.trim(),
+      district_of_birth: district.trim(),
+      street_village: place.trim(),
+      request_type: type,
     });
-
     setLoading(false);
     if (error) {
       alert('Error submitting request: ' + error.message);
     } else {
       alert('Request submitted successfully!');
-      router.navigate({ to: '/' });
+      useTemplateStore.getState().setActiveScreen('home');
     }
   };
 
   return (
     <div className="p-6 max-w-lg mx-auto bg-white min-h-screen">
-      <button onClick={() => router.history.back()} className="mb-6 flex items-center gap-2 text-gray-500">
+      <button type="button" onClick={handleBack} className="mb-6 flex items-center gap-2 text-gray-500">
         <ArrowLeft size={20} /> Back
       </button>
       <h2 className="text-2xl font-bold mb-6">Request NIDA Info</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
+        <FloatingInput label="NIDA No." inputMode="numeric" value={nidaNo} onChange={(e) => setNidaNo((e.target as HTMLInputElement).value)} />
         <FloatingInput label="Mother's Name" value={motherName} onChange={(e) => setMotherName((e.target as HTMLInputElement).value)} />
         <FloatingInput label="Ward of Residence" value={ward} onChange={(e) => setWard((e.target as HTMLInputElement).value)} />
         <FloatingInput label="District of Birth" value={district} onChange={(e) => setDistrict((e.target as HTMLInputElement).value)} />
         <FloatingInput label="Street/Village of NIDA Registration" value={place} onChange={(e) => setPlace((e.target as HTMLInputElement).value)} />
-        
+
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">Choose what you need</label>
           <div className="flex gap-4">
