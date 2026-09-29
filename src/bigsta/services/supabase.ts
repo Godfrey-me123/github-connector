@@ -13,14 +13,15 @@ const supabaseUrl =
   procEnv.VITE_SUPABASE_URL ||
   procEnv.NEXT_PUBLIC_SUPABASE_URL ||
   procEnv.SUPABASE_URL ||
-  SUPABASE_PUBLIC_URL;
+  '';
 const supabaseAnonKey =
   metaEnv.VITE_SUPABASE_ANON_KEY ||
   metaEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   procEnv.VITE_SUPABASE_ANON_KEY ||
   procEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   procEnv.SUPABASE_ANON_KEY ||
-  SUPABASE_PUBLIC_ANON_KEY;
+  metaEnv.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  '';
 
 // Devices that used the app before the move to the current Supabase project may
 // still hold cached template/background URLs pointing at the retired project.

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from '@tanstack/react-router';
 import { supabase } from '../../services/supabase';
 import { FloatingInput } from './FloatingInput';
 import { FloatingSelect } from './FloatingSelect';
@@ -12,7 +12,7 @@ export const NidaRequestFormScreen: React.FC = () => {
   const [place, setPlace] = useState('');
   const [type, setType] = useState<'picture' | 'signature' | 'both'>('picture');
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,13 +33,13 @@ export const NidaRequestFormScreen: React.FC = () => {
       alert('Error submitting request: ' + error.message);
     } else {
       alert('Request submitted successfully!');
-      navigate('/');
+      router.navigate({ to: '/' });
     }
   };
 
   return (
     <div className="p-6 max-w-lg mx-auto bg-white min-h-screen">
-      <button onClick={() => navigate(-1)} className="mb-6 flex items-center gap-2 text-gray-500">
+      <button onClick={() => router.history.back()} className="mb-6 flex items-center gap-2 text-gray-500">
         <ArrowLeft size={20} /> Back
       </button>
       <h2 className="text-2xl font-bold mb-6">Request NIDA Info</h2>
