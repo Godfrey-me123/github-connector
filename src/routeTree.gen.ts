@@ -10,33 +10,141 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiHealthRouteImport } from './routes/api/health'
+import { Route as ApiPaymentSmsRouteImport } from './routes/api/payment-sms'
+import { Route as ApiAdminSmsMonitorRouteImport } from './routes/api/admin/sms-monitor'
+import { Route as ApiAdminWebhookDebugRouteImport } from './routes/api/admin/webhook-debug'
+import { Route as ApiAdminWebhookSecretRouteImport } from './routes/api/admin/webhook-secret'
+import { Route as ApiAdminWebhookSettingsRouteImport } from './routes/api/admin/webhook-settings'
+import { Route as ApiPublicPaymentSmsRouteImport } from './routes/api/public/payment-sms'
+import { Route as ApiAdminWebhookSecretRegenerateRouteImport } from './routes/api/admin/webhook-secret.regenerate'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPaymentSmsRoute = ApiPaymentSmsRouteImport.update({
+  id: '/api/payment-sms',
+  path: '/api/payment-sms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminSmsMonitorRoute = ApiAdminSmsMonitorRouteImport.update({
+  id: '/api/admin/sms-monitor',
+  path: '/api/admin/sms-monitor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminWebhookDebugRoute = ApiAdminWebhookDebugRouteImport.update({
+  id: '/api/admin/webhook-debug',
+  path: '/api/admin/webhook-debug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminWebhookSecretRoute = ApiAdminWebhookSecretRouteImport.update({
+  id: '/api/admin/webhook-secret',
+  path: '/api/admin/webhook-secret',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminWebhookSettingsRoute = ApiAdminWebhookSettingsRouteImport.update({
+  id: '/api/admin/webhook-settings',
+  path: '/api/admin/webhook-settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicPaymentSmsRoute = ApiPublicPaymentSmsRouteImport.update({
+  id: '/api/public/payment-sms',
+  path: '/api/public/payment-sms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminWebhookSecretRegenerateRoute =
+  ApiAdminWebhookSecretRegenerateRouteImport.update({
+    id: '/regenerate',
+    path: '/regenerate',
+    getParentRoute: () => ApiAdminWebhookSecretRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/payment-sms': typeof ApiPaymentSmsRoute
+  '/api/admin/sms-monitor': typeof ApiAdminSmsMonitorRoute
+  '/api/admin/webhook-debug': typeof ApiAdminWebhookDebugRoute
+  '/api/admin/webhook-secret': typeof ApiAdminWebhookSecretRouteWithChildren
+  '/api/admin/webhook-settings': typeof ApiAdminWebhookSettingsRoute
+  '/api/public/payment-sms': typeof ApiPublicPaymentSmsRoute
+  '/api/admin/webhook-secret/regenerate': typeof ApiAdminWebhookSecretRegenerateRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/payment-sms': typeof ApiPaymentSmsRoute
+  '/api/admin/sms-monitor': typeof ApiAdminSmsMonitorRoute
+  '/api/admin/webhook-debug': typeof ApiAdminWebhookDebugRoute
+  '/api/admin/webhook-secret': typeof ApiAdminWebhookSecretRouteWithChildren
+  '/api/admin/webhook-settings': typeof ApiAdminWebhookSettingsRoute
+  '/api/public/payment-sms': typeof ApiPublicPaymentSmsRoute
+  '/api/admin/webhook-secret/regenerate': typeof ApiAdminWebhookSecretRegenerateRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/payment-sms': typeof ApiPaymentSmsRoute
+  '/api/admin/sms-monitor': typeof ApiAdminSmsMonitorRoute
+  '/api/admin/webhook-debug': typeof ApiAdminWebhookDebugRoute
+  '/api/admin/webhook-secret': typeof ApiAdminWebhookSecretRouteWithChildren
+  '/api/admin/webhook-settings': typeof ApiAdminWebhookSettingsRoute
+  '/api/public/payment-sms': typeof ApiPublicPaymentSmsRoute
+  '/api/admin/webhook-secret/regenerate': typeof ApiAdminWebhookSecretRegenerateRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/api/health'
+    | '/api/payment-sms'
+    | '/api/admin/sms-monitor'
+    | '/api/admin/webhook-debug'
+    | '/api/admin/webhook-secret'
+    | '/api/admin/webhook-settings'
+    | '/api/public/payment-sms'
+    | '/api/admin/webhook-secret/regenerate'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/api/health'
+    | '/api/payment-sms'
+    | '/api/admin/sms-monitor'
+    | '/api/admin/webhook-debug'
+    | '/api/admin/webhook-secret'
+    | '/api/admin/webhook-settings'
+    | '/api/public/payment-sms'
+    | '/api/admin/webhook-secret/regenerate'
+  id:
+    | '__root__'
+    | '/'
+    | '/api/health'
+    | '/api/payment-sms'
+    | '/api/admin/sms-monitor'
+    | '/api/admin/webhook-debug'
+    | '/api/admin/webhook-secret'
+    | '/api/admin/webhook-settings'
+    | '/api/public/payment-sms'
+    | '/api/admin/webhook-secret/regenerate'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiHealthRoute: typeof ApiHealthRoute
+  ApiPaymentSmsRoute: typeof ApiPaymentSmsRoute
+  ApiAdminSmsMonitorRoute: typeof ApiAdminSmsMonitorRoute
+  ApiAdminWebhookDebugRoute: typeof ApiAdminWebhookDebugRoute
+  ApiAdminWebhookSecretRoute: typeof ApiAdminWebhookSecretRouteWithChildren
+  ApiAdminWebhookSettingsRoute: typeof ApiAdminWebhookSettingsRoute
+  ApiPublicPaymentSmsRoute: typeof ApiPublicPaymentSmsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +156,87 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/payment-sms': {
+      id: '/api/payment-sms'
+      path: '/api/payment-sms'
+      fullPath: '/api/payment-sms'
+      preLoaderRoute: typeof ApiPaymentSmsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/sms-monitor': {
+      id: '/api/admin/sms-monitor'
+      path: '/api/admin/sms-monitor'
+      fullPath: '/api/admin/sms-monitor'
+      preLoaderRoute: typeof ApiAdminSmsMonitorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/webhook-debug': {
+      id: '/api/admin/webhook-debug'
+      path: '/api/admin/webhook-debug'
+      fullPath: '/api/admin/webhook-debug'
+      preLoaderRoute: typeof ApiAdminWebhookDebugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/webhook-secret': {
+      id: '/api/admin/webhook-secret'
+      path: '/api/admin/webhook-secret'
+      fullPath: '/api/admin/webhook-secret'
+      preLoaderRoute: typeof ApiAdminWebhookSecretRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/webhook-settings': {
+      id: '/api/admin/webhook-settings'
+      path: '/api/admin/webhook-settings'
+      fullPath: '/api/admin/webhook-settings'
+      preLoaderRoute: typeof ApiAdminWebhookSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/payment-sms': {
+      id: '/api/public/payment-sms'
+      path: '/api/public/payment-sms'
+      fullPath: '/api/public/payment-sms'
+      preLoaderRoute: typeof ApiPublicPaymentSmsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/webhook-secret/regenerate': {
+      id: '/api/admin/webhook-secret/regenerate'
+      path: '/regenerate'
+      fullPath: '/api/admin/webhook-secret/regenerate'
+      preLoaderRoute: typeof ApiAdminWebhookSecretRegenerateRouteImport
+      parentRoute: typeof ApiAdminWebhookSecretRoute
+    }
   }
 }
 
+interface ApiAdminWebhookSecretRouteChildren {
+  ApiAdminWebhookSecretRegenerateRoute: typeof ApiAdminWebhookSecretRegenerateRoute
+}
+
+const ApiAdminWebhookSecretRouteChildren: ApiAdminWebhookSecretRouteChildren = {
+  ApiAdminWebhookSecretRegenerateRoute: ApiAdminWebhookSecretRegenerateRoute,
+}
+
+const ApiAdminWebhookSecretRouteWithChildren =
+  ApiAdminWebhookSecretRoute._addFileChildren(
+    ApiAdminWebhookSecretRouteChildren,
+  )
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiHealthRoute: ApiHealthRoute,
+  ApiPaymentSmsRoute: ApiPaymentSmsRoute,
+  ApiAdminSmsMonitorRoute: ApiAdminSmsMonitorRoute,
+  ApiAdminWebhookDebugRoute: ApiAdminWebhookDebugRoute,
+  ApiAdminWebhookSecretRoute: ApiAdminWebhookSecretRouteWithChildren,
+  ApiAdminWebhookSettingsRoute: ApiAdminWebhookSettingsRoute,
+  ApiPublicPaymentSmsRoute: ApiPublicPaymentSmsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
