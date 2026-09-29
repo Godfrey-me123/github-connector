@@ -6,7 +6,7 @@ export const Route = createFileRoute("/api/admin/sms-monitor")({
     handlers: {
       GET: async () => {
         const rows = await smsStats();
-        const logs = rows.map((r) => ({
+        const logs = rows.map((r: any) => ({
           id: r.id,
           received_at: r.received_at,
           sender: r.sender,
@@ -16,7 +16,7 @@ export const Route = createFileRoute("/api/admin/sms-monitor")({
           status: r.processing_state === "PARSED" ? "COMPLETED" : "FAILED",
           trace: [],
         }));
-        const completed = logs.filter((l) => l.status === "COMPLETED").length;
+        const completed = logs.filter((l: any) => l.status === "COMPLETED").length;
         return Response.json({
           stats: { total: logs.length, completed, failed: logs.length - completed, duplicates: 0, pending: 0 },
           logs,

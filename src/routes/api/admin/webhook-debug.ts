@@ -6,7 +6,7 @@ export const Route = createFileRoute("/api/admin/webhook-debug")({
     handlers: {
       GET: async () => {
         const rows = await smsStats();
-        const ok = rows.filter((r) => r.processing_state === "PARSED");
+        const ok = rows.filter((r: any) => r.processing_state === "PARSED");
         const last = rows[0] ?? null;
         return Response.json({
           count: rows.length,
@@ -19,7 +19,7 @@ export const Route = createFileRoute("/api/admin/webhook-debug")({
           lastTestStatus: null,
           lastRequestTime: last?.received_at ?? null,
           lastPayload: last,
-          requests: rows.map((r) => ({
+          requests: rows.map((r: any) => ({
             id: r.id,
             timestamp: r.received_at,
             ip: "",

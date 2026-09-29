@@ -37,7 +37,7 @@ export async function saveWebhookSettings(value: Record<string, unknown>) {
 const json = (body: unknown, status = 200) => Response.json(body, { status });
 
 export async function handleIncomingSms(request: Request): Promise<Response> {
-  let payload: Record<string, any> = {};
+  let payload: any = {};
   try {
     const ct = request.headers.get("content-type") || "";
     payload = ct.includes("application/json")
