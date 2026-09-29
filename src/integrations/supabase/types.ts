@@ -308,6 +308,69 @@ export type Database = {
         }
         Relationships: []
       }
+      sms_logs: {
+        Row: {
+          amount: number | null
+          balance: number | null
+          created_at: string
+          device_id: string
+          id: string
+          network: string | null
+          payer_name: string | null
+          payer_phone: string | null
+          processing_state: string
+          raw_sms: string
+          received_at: string
+          receiver: string | null
+          reference: string | null
+          sender: string
+          sms_hash: string
+          source: string
+          status: string
+          transaction_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          balance?: number | null
+          created_at?: string
+          device_id: string
+          id?: string
+          network?: string | null
+          payer_name?: string | null
+          payer_phone?: string | null
+          processing_state?: string
+          raw_sms: string
+          received_at?: string
+          receiver?: string | null
+          reference?: string | null
+          sender: string
+          sms_hash: string
+          source?: string
+          status?: string
+          transaction_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          balance?: number | null
+          created_at?: string
+          device_id?: string
+          id?: string
+          network?: string | null
+          payer_name?: string | null
+          payer_phone?: string | null
+          processing_state?: string
+          raw_sms?: string
+          received_at?: string
+          receiver?: string | null
+          reference?: string | null
+          sender?: string
+          sms_hash?: string
+          source?: string
+          status?: string
+          transaction_id?: string | null
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           config_key: string | null
