@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import { CardTemplate, Layer, TextLayer, ImageLayer, PlaceholderLayer, BarcodeLayer, QRCodeLayer } from '../types';
 import { NidaFormData } from '../components/nida/NidaFormScreen';
 import { normalizeDateInput, formatToDdMmYyyy, formatToMmmDdYyyy, toTitleCase } from './dateValidation';

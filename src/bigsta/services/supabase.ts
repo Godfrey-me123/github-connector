@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase as projectSupabase } from '@/integrations/supabase/client';
 

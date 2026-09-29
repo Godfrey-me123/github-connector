@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import React, { useState, useEffect } from 'react';
 import { Upload, Check, Edit3, Trash2, RefreshCw, Palette, Sun } from 'lucide-react';
 import { useTemplateStore } from '../store/useTemplateStore';

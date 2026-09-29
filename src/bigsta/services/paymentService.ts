@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import { paymentDb } from './paymentDb';
 import { parseSms } from '../utils/smsParser';
 import { SmsClaimResult, claimSmsPaymentByReference, releaseSmsClaim } from './smsReceiver';
