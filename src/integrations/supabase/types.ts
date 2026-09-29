@@ -137,6 +137,39 @@ export type Database = {
         }
         Relationships: []
       }
+      nida_requests: {
+        Row: {
+          created_at: string
+          district_of_birth: string | null
+          id: string
+          mother_name: string | null
+          nida_no: string | null
+          request_type: string | null
+          street_village: string | null
+          ward_of_residence: string | null
+        }
+        Insert: {
+          created_at?: string
+          district_of_birth?: string | null
+          id?: string
+          mother_name?: string | null
+          nida_no?: string | null
+          request_type?: string | null
+          street_village?: string | null
+          ward_of_residence?: string | null
+        }
+        Update: {
+          created_at?: string
+          district_of_birth?: string | null
+          id?: string
+          mother_name?: string | null
+          nida_no?: string | null
+          request_type?: string | null
+          street_village?: string | null
+          ward_of_residence?: string | null
+        }
+        Relationships: []
+      }
       passkeys: {
         Row: {
           active: boolean | null
