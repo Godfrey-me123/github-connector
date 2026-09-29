@@ -1480,7 +1480,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       const current = get().activeScreen;
 
       // 1. Any service form (nida, driving_license, nhif) must ALWAYS navigate directly to 'home' when back is pressed!
-      if (current === 'nida' || current === 'driving_license' || current === 'nhif') {
+      if (current === 'nida' || current === 'nida_request' || current === 'driving_license' || current === 'nhif') {
         const cleanedHistory = get().navigationHistory.filter(
           (h) => h.screen !== 'preview' && h.screen !== 'downloads' && h.screen !== current
         );
