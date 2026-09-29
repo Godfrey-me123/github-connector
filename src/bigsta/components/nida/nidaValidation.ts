@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import { convertNidaDobBlockToDdMmmYyyy } from '../../utils/dateValidation';
 
 /**

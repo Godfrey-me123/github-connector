@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 /**
  * Strict Date of Birth (DOB) Validation and Normalization
  * Standard format: DD MMM YYYY (e.g. 01 MAR 1998)

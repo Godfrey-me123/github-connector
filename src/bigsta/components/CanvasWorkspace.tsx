@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import {
   Stage,

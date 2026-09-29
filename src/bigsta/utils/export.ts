@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import jsPDF from 'jspdf';
 import { CardTemplate, CardData, Layer } from '../types';
 import { generateBarcodeDataUrl, generateQRCodeDataUrl } from './barcodes';

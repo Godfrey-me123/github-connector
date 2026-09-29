@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   PenTool,

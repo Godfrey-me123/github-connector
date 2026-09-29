@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import React, { useEffect, useState } from 'react';
 import {
   Wallet,

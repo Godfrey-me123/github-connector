@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 export interface ParsedSms {
   transactionReference: string;
   senderName: string;

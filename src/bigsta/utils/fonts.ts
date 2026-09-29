@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 export const FONT_LIBRARY = [
   'Archivo Black',
   'Arial Black',

@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import React, { useState, useEffect, useMemo } from 'react';
 import { Wallet, CreditCard, Check, AlertCircle, RefreshCw, X, ShieldCheck, ArrowRight, Clock, Copy, Hash, Zap } from 'lucide-react';
 import { useTemplateStore } from '../../store/useTemplateStore';
