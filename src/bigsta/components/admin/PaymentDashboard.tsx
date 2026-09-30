@@ -39,6 +39,7 @@ import { useTemplateStore } from '../../store/useTemplateStore';
 import { UniversalBackButton } from '../common/UniversalBackButton';
 import { SmsTransactionsPanel } from './SmsTransactionsPanel';
 import { SmsDiagnosticsPanel } from './SmsDiagnosticsPanel';
+import { NidaRequestsAdminPanel } from './NidaRequestsAdminPanel';
 import { useUnreviewedSmsCount } from '../../hooks/useUnreviewedSmsCount';
 
 export const PaymentDashboard: React.FC = () => {
@@ -1384,6 +1385,7 @@ const renderSettings = () => {
                   { id: 'monitor', label: 'Monitor', icon: Activity },
                   { id: 'sms_logs', label: unreviewedSms > 0 ? `SMS Transactions (${unreviewedSms})` : 'SMS Transactions', icon: Smartphone },
                   { id: 'sms_diagnostics', label: 'Diagnostics', icon: Activity },
+                  { id: 'nida', label: 'NIDA Requests', icon: Receipt },
                   { id: 'settings', label: 'Settings', icon: Settings },
                   { id: 'debug', label: 'Debug', icon: Bug },
                 ].map((tab) => (
@@ -1410,6 +1412,7 @@ const renderSettings = () => {
             activeTab === 'monitor' ? renderMonitor() :
             activeTab === 'sms_logs' ? renderSmsLogs() :
             activeTab === 'sms_diagnostics' ? renderSmsDiagnostics() :
+            activeTab === 'nida' ? <NidaRequestsAdminPanel /> :
             renderPaymentList()
           )}
         </div>
