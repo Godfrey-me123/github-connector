@@ -1,4 +1,4 @@
-declare module "bwip-js" {
+declare module 'bwip-js' {
   export interface ToCanvasOptions {
     bcid: string;
     text: string;
@@ -12,12 +12,6 @@ declare module "bwip-js" {
     [key: string]: any;
   }
 
-  export function toCanvas(
-    canvas: HTMLCanvasElement | string,
-    options: ToCanvasOptions,
-  ): HTMLCanvasElement;
-  export function toBuffer(
-    options: ToCanvasOptions,
-    callback?: (err: Error, png: Buffer) => void,
-  ): void;
+  export function toCanvas(canvas: HTMLCanvasElement | string, options: ToCanvasOptions): HTMLCanvasElement;
+  export function toBuffer(options: ToCanvasOptions, callback?: (err: Error, png: Buffer) => void): void;
 }

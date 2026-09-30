@@ -1,4 +1,4 @@
-import { Unit } from "../types";
+import { Unit } from '../types';
 
 export const DEFAULT_DPI = 300;
 export const MM_PER_INCH = 25.4;
@@ -7,25 +7,21 @@ export const CM_PER_INCH = 2.54;
 /**
  * Standard ID Card Dimensions (CR80)
  */
-export const CR80_WIDTH_MM = 85.6;
+export const CR80_WIDTH_MM = 85.60;
 export const CR80_HEIGHT_MM = 53.98;
 
 /**
  * Convert value from Millimeters (mm) to target Unit
  */
-export function convertFromMm(
-  valueMm: number,
-  targetUnit: Unit,
-  dpi: number = DEFAULT_DPI,
-): number {
+export function convertFromMm(valueMm: number, targetUnit: Unit, dpi: number = DEFAULT_DPI): number {
   switch (targetUnit) {
-    case "mm":
+    case 'mm':
       return Number(valueMm.toFixed(2));
-    case "cm":
+    case 'cm':
       return Number((valueMm / 10).toFixed(3));
-    case "in":
+    case 'in':
       return Number((valueMm / MM_PER_INCH).toFixed(3));
-    case "px":
+    case 'px':
       return Number(((valueMm / MM_PER_INCH) * dpi).toFixed(1));
     default:
       return valueMm;
@@ -37,13 +33,13 @@ export function convertFromMm(
  */
 export function convertToMm(value: number, sourceUnit: Unit, dpi: number = DEFAULT_DPI): number {
   switch (sourceUnit) {
-    case "mm":
+    case 'mm':
       return value;
-    case "cm":
+    case 'cm':
       return value * 10;
-    case "in":
+    case 'in':
       return value * MM_PER_INCH;
-    case "px":
+    case 'px':
       return (value / dpi) * MM_PER_INCH;
     default:
       return value;
@@ -70,13 +66,13 @@ export function mmToPx(mm: number, dpi: number = DEFAULT_DPI): number {
 export function formatUnitValue(valueMm: number, unit: Unit, dpi: number = DEFAULT_DPI): string {
   const converted = convertFromMm(valueMm, unit, dpi);
   switch (unit) {
-    case "mm":
+    case 'mm':
       return `${converted.toFixed(1)} mm`;
-    case "cm":
+    case 'cm':
       return `${converted.toFixed(2)} cm`;
-    case "in":
+    case 'in':
       return `${converted.toFixed(2)} in`;
-    case "px":
+    case 'px':
       return `${Math.round(converted)} px`;
   }
 }
@@ -88,7 +84,7 @@ export function calculateCanvasPxSize(
   cardWidthMm: number,
   cardHeightMm: number,
   maxDisplayWidthPx: number = 800,
-  maxDisplayHeightPx: number = 600,
+  maxDisplayHeightPx: number = 600
 ): { pxWidth: number; pxHeight: number; screenScale: number; dpi: number } {
   // Base rendering DPI for crisp display
   const targetDpi = 300;

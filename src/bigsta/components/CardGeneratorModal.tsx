@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Sparkles,
@@ -11,21 +11,18 @@ import {
   ShieldCheck,
   Check,
   RefreshCw,
-} from "lucide-react";
-import { useTemplateStore } from "../store/useTemplateStore";
-import { CardTemplate } from "../types";
+} from 'lucide-react';
+import { useTemplateStore } from '../store/useTemplateStore';
+import { CardTemplate } from '../types';
 import {
   renderTemplateToCanvas,
   downloadPNG,
   downloadJPG,
   downloadPDF,
   download2In1PDF,
-} from "../utils/export";
-import { SAMPLE_TEMPLATES } from "../utils/sampleTemplates";
-import {
-  applyTemplateMapping,
-  formatDrivingLicenceCategoriesFront,
-} from "../utils/templateMappingEngine";
+} from '../utils/export';
+import { SAMPLE_TEMPLATES } from '../utils/sampleTemplates';
+import { applyTemplateMapping, formatDrivingLicenceCategoriesFront } from '../utils/templateMappingEngine';
 
 export const CardGeneratorModal: React.FC = () => {
   const {
@@ -42,34 +39,32 @@ export const CardGeneratorModal: React.FC = () => {
     getUniversalBackTemplate,
   } = useTemplateStore();
 
-  const [outputType, setOutputType] = useState<"single" | "merge">("merge");
-  const [activeSide, setActiveSide] = useState<"front" | "back">("front");
+  const [outputType, setOutputType] = useState<'single' | 'merge'>('merge');
+  const [activeSide, setActiveSide] = useState<'front' | 'back'>('front');
 
   // Previews
-  const [singlePreviewUrl, setSinglePreviewUrl] = useState<string>("");
-  const [frontPreviewUrl, setFrontPreviewUrl] = useState<string>("");
-  const [backPreviewUrl, setBackPreviewUrl] = useState<string>("");
+  const [singlePreviewUrl, setSinglePreviewUrl] = useState<string>('');
+  const [frontPreviewUrl, setFrontPreviewUrl] = useState<string>('');
+  const [backPreviewUrl, setBackPreviewUrl] = useState<string>('');
   const [isRendering, setIsRendering] = useState<boolean>(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
-  const [downloadState, setDownloadState] = useState<
-    "IDLE" | "QUEUED" | "GENERATING" | "READY" | "DOWNLOADING" | "COMPLETED" | "FAILED"
-  >("IDLE");
-  const [downloadError, setDownloadError] = useState<string>("");
+  const [downloadState, setDownloadState] = useState<'IDLE' | 'QUEUED' | 'GENERATING' | 'READY' | 'DOWNLOADING' | 'COMPLETED' | 'FAILED'>('IDLE');
+  const [downloadError, setDownloadError] = useState<string>('');
 
   const isDL =
-    activeServiceId === "driving_license" || currentTemplate?.cardType === "Driving License";
+    activeServiceId === 'driving_license' ||
+    currentTemplate?.cardType === 'Driving License';
 
-  const submittedData: any =
-    activeServiceId === "nhif"
-      ? lastNhifFormData || {}
-      : isDL
-        ? lastDrivingLicenseFormData || {}
-        : lastNidaFormData || {};
+  const submittedData: any = activeServiceId === 'nhif'
+    ? (lastNhifFormData || {})
+    : isDL
+    ? (lastDrivingLicenseFormData || {})
+    : (lastNidaFormData || {});
 
   // Resolve front & back templates
   const resolvedFrontTemplate: CardTemplate = React.useMemo(() => {
     if (frontPopulatedTemplate) return frontPopulatedTemplate;
-    if (currentTemplate && (!currentTemplate.side || currentTemplate.side === "Front Side")) {
+    if (currentTemplate && (!currentTemplate.side || currentTemplate.side === 'Front Side')) {
       return currentTemplate;
     }
     const defaultFront = getUniversalFrontTemplate(activeServiceId);
@@ -79,17 +74,11 @@ export const CardGeneratorModal: React.FC = () => {
       return res.populatedTemplate || defaultFront;
     }
     return defaultFront;
-  }, [
-    frontPopulatedTemplate,
-    currentTemplate,
-    activeServiceId,
-    getUniversalFrontTemplate,
-    submittedData,
-  ]);
+  }, [frontPopulatedTemplate, currentTemplate, activeServiceId, getUniversalFrontTemplate, submittedData]);
 
   const resolvedBackTemplate: CardTemplate = React.useMemo(() => {
     if (backPopulatedTemplate) return backPopulatedTemplate;
-    if (currentTemplate && currentTemplate.side === "Back Side") {
+    if (currentTemplate && currentTemplate.side === 'Back Side') {
       return currentTemplate;
     }
     const defaultBack = getUniversalBackTemplate(activeServiceId);
@@ -99,16 +88,10 @@ export const CardGeneratorModal: React.FC = () => {
       return res.populatedTemplate || defaultBack;
     }
     return defaultBack;
-  }, [
-    backPopulatedTemplate,
-    currentTemplate,
-    activeServiceId,
-    getUniversalBackTemplate,
-    submittedData,
-  ]);
+  }, [backPopulatedTemplate, currentTemplate, activeServiceId, getUniversalBackTemplate, submittedData]);
 
   // Current single preview template
-  const activeSingleTemplate = activeSide === "back" ? resolvedBackTemplate : resolvedFrontTemplate;
+  const activeSingleTemplate = activeSide === 'back' ? resolvedBackTemplate : resolvedFrontTemplate;
 
   // Render live preview canvases whenever modal is opened or selection changes
   useEffect(() => {
@@ -117,11 +100,11 @@ export const CardGeneratorModal: React.FC = () => {
     let isMounted = true;
     setIsRendering(true);
 
-    if (outputType === "single") {
+    if (outputType === 'single') {
       renderTemplateToCanvas(activeSingleTemplate, submittedData, 200)
         .then((canvas) => {
           if (isMounted) {
-            setSinglePreviewUrl(canvas.toDataURL("image/png"));
+            setSinglePreviewUrl(canvas.toDataURL('image/png'));
             setIsRendering(false);
           }
         })
@@ -135,8 +118,8 @@ export const CardGeneratorModal: React.FC = () => {
       ])
         .then(([frontCanvas, backCanvas]) => {
           if (isMounted) {
-            setFrontPreviewUrl(frontCanvas.toDataURL("image/png"));
-            setBackPreviewUrl(backCanvas.toDataURL("image/png"));
+            setFrontPreviewUrl(frontCanvas.toDataURL('image/png'));
+            setBackPreviewUrl(backCanvas.toDataURL('image/png'));
             setIsRendering(false);
           }
         })
@@ -162,109 +145,84 @@ export const CardGeneratorModal: React.FC = () => {
   useEffect(() => {
     if (!isCardGeneratorOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setCardGeneratorOpen(false);
+      if (e.key === 'Escape') setCardGeneratorOpen(false);
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isCardGeneratorOpen, setCardGeneratorOpen]);
 
   if (!isCardGeneratorOpen) return null;
 
   // Format cardholder details for read-only summary badge
   const cardholderName = isDL
-    ? [submittedData.firstName, submittedData.secondName, submittedData.thirdName]
-        .filter(Boolean)
-        .join(" ") || "Driver Record"
-    : [submittedData.firstName, submittedData.middleName, submittedData.lastName]
-        .filter(Boolean)
-        .join(" ") || "Citizen Record";
+    ? [submittedData.firstName, submittedData.secondName, submittedData.thirdName].filter(Boolean).join(' ') || 'Driver Record'
+    : [submittedData.firstName, submittedData.middleName, submittedData.lastName].filter(Boolean).join(' ') || 'Citizen Record';
 
   const identifierNumber = isDL
-    ? submittedData.licenceNumber || "DL-PENDING"
-    : submittedData.nidaNumber || "NIDA-PENDING";
+    ? submittedData.licenceNumber || 'DL-PENDING'
+    : submittedData.nidaNumber || 'NIDA-PENDING';
 
   const secondaryIdentifier = isDL
-    ? submittedData.pinNumber
-      ? `PIN: ${submittedData.pinNumber}`
-      : null
-    : submittedData.dateOfBirth
-      ? `DOB: ${submittedData.dateOfBirth}`
-      : null;
+    ? submittedData.pinNumber ? `PIN: ${submittedData.pinNumber}` : null
+    : submittedData.dateOfBirth ? `DOB: ${submittedData.dateOfBirth}` : null;
 
-  const categoriesFormatted =
-    isDL && submittedData.classes
-      ? formatDrivingLicenceCategoriesFront(submittedData.classes)
-      : null;
+  const categoriesFormatted = isDL && submittedData.classes
+    ? formatDrivingLicenceCategoriesFront(submittedData.classes)
+    : null;
 
   // Download states (Prompt 24)
-  const executeSecureExport = async (
-    format: "pdf" | "png" | "jpg" | "pdf_merge",
-    description: string,
-    exportFn: () => Promise<void>,
-  ) => {
+  const executeSecureExport = async (format: 'pdf' | 'png' | 'jpg' | 'pdf_merge', description: string, exportFn: () => Promise<void>) => {
     const store = useTemplateStore.getState();
     const val = store.validateExportAccess(format);
     if (!val.allowed) {
-      alert(val.reason || "Export access not allowed. Please top up tokens.");
+      alert(val.reason || 'Export access not allowed. Please top up tokens.');
       return;
     }
 
-    setDownloadState("QUEUED");
-    setDownloadError("");
+    setDownloadState('QUEUED');
+    setDownloadError('');
     setIsExporting(true);
 
     try {
       // 1. GENERATING
-      setDownloadState("GENERATING");
-      await new Promise((r) => setTimeout(r, 150));
+      setDownloadState('GENERATING');
+      await new Promise(r => setTimeout(r, 150));
 
       // Generate export file & verify existence / size > 0
       await exportFn();
 
       // 2 & 3. READY
-      setDownloadState("READY");
-      await new Promise((r) => setTimeout(r, 150));
+      setDownloadState('READY');
+      await new Promise(r => setTimeout(r, 150));
 
       // 4 & 5. DOWNLOADING (Create download URL & deliver file)
-      setDownloadState("DOWNLOADING");
-      await new Promise((r) => setTimeout(r, 200));
+      setDownloadState('DOWNLOADING');
+      await new Promise(r => setTimeout(r, 200));
 
       // 6. COMPLETED (Confirm successful download)
-      setDownloadState("COMPLETED");
+      setDownloadState('COMPLETED');
 
       // 7. Only then consume token
       store.consumeUsage(description, undefined, 1);
     } catch (e: any) {
-      console.error("Export failed:", e);
-      setDownloadState("FAILED");
-      setDownloadError(e?.message || "Export generation failed. Token was NOT consumed.");
-      alert("Export failed: " + (e?.message || "Unknown error") + ". Token remains intact.");
+      console.error('Export failed:', e);
+      setDownloadState('FAILED');
+      setDownloadError(e?.message || 'Export generation failed. Token was NOT consumed.');
+      alert('Export failed: ' + (e?.message || 'Unknown error') + '. Token remains intact.');
     } finally {
       setIsExporting(false);
     }
   };
 
   // Single card print/download handlers
-  const handleExportSinglePDF = () =>
-    executeSecureExport("pdf", "Single Card PDF Export", () =>
-      downloadPDF(activeSingleTemplate, submittedData),
-    );
-  const handleExportSinglePNG = () =>
-    executeSecureExport("png", "Single Card PNG Export", () =>
-      downloadPNG(activeSingleTemplate, submittedData),
-    );
-  const handleExportSingleJPG = () =>
-    executeSecureExport("jpg", "Single Card JPG Export", () =>
-      downloadJPG(activeSingleTemplate, submittedData),
-    );
-  const handleExportMergePDF = () =>
-    executeSecureExport("pdf_merge", "2-in-1 Sheet PDF Export", () =>
-      download2In1PDF(resolvedFrontTemplate, resolvedBackTemplate, submittedData),
-    );
+  const handleExportSinglePDF = () => executeSecureExport('pdf', 'Single Card PDF Export', () => downloadPDF(activeSingleTemplate, submittedData));
+  const handleExportSinglePNG = () => executeSecureExport('png', 'Single Card PNG Export', () => downloadPNG(activeSingleTemplate, submittedData));
+  const handleExportSingleJPG = () => executeSecureExport('jpg', 'Single Card JPG Export', () => downloadJPG(activeSingleTemplate, submittedData));
+  const handleExportMergePDF = () => executeSecureExport('pdf_merge', '2-in-1 Sheet PDF Export', () => download2In1PDF(resolvedFrontTemplate, resolvedBackTemplate, submittedData));
 
   // Direct print handler
   const handleDirectPrint = async () => {
-    if (outputType === "merge") {
+    if (outputType === 'merge') {
       await handleExportMergePDF();
     } else {
       await handleExportSinglePDF();
@@ -290,11 +248,8 @@ export const CardGeneratorModal: React.FC = () => {
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h2
-                id="generator-title"
-                className="text-base sm:text-lg font-bold text-[#101010] tracking-tight"
-              >
-                {isDL ? "Driving Licence Generation" : "Card Generation & Export"}
+              <h2 id="generator-title" className="text-base sm:text-lg font-bold text-[#101010] tracking-tight">
+                {isDL ? 'Driving Licence Generation' : 'Card Generation & Export'}
               </h2>
               <p className="text-xs text-[#101010]/70 font-medium">
                 Generates high-resolution vector cards directly from your submitted form data
@@ -320,11 +275,11 @@ export const CardGeneratorModal: React.FC = () => {
             <div className="inline-flex items-center bg-[#F0ECE9] p-1 rounded-xl border border-[#E0DBD6]">
               <button
                 type="button"
-                onClick={() => setOutputType("single")}
+                onClick={() => setOutputType('single')}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  outputType === "single"
-                    ? "bg-[#101010] text-white shadow-xs"
-                    : "text-[#101010] hover:bg-[#E2DDD8]"
+                  outputType === 'single'
+                    ? 'bg-[#101010] text-white shadow-xs'
+                    : 'text-[#101010] hover:bg-[#E2DDD8]'
                 }`}
               >
                 <CreditCard className="w-3.5 h-3.5" />
@@ -333,11 +288,11 @@ export const CardGeneratorModal: React.FC = () => {
 
               <button
                 type="button"
-                onClick={() => setOutputType("merge")}
+                onClick={() => setOutputType('merge')}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                  outputType === "merge"
-                    ? "bg-[#101010] text-amber-400 shadow-xs"
-                    : "text-[#101010] hover:bg-[#E2DDD8]"
+                  outputType === 'merge'
+                    ? 'bg-[#101010] text-amber-400 shadow-xs'
+                    : 'text-[#101010] hover:bg-[#E2DDD8]'
                 }`}
               >
                 <Layers className="w-3.5 h-3.5" />
@@ -354,6 +309,7 @@ export const CardGeneratorModal: React.FC = () => {
 
         {/* Content Split: Generation Options vs Live WYSIWYG Preview */}
         <div className="flex-1 overflow-y-auto p-5 sm:p-7 grid grid-cols-1 lg:grid-cols-2 gap-6 bg-[#FAF8F6]">
+          
           {/* Left Column: Generation & Record Specifications (NO data-entry fields) */}
           <div className="space-y-5">
             {/* Submitted Form Record Summary Card */}
@@ -373,17 +329,21 @@ export const CardGeneratorModal: React.FC = () => {
               <div className="space-y-2.5 text-xs">
                 <div>
                   <span className="text-[10px] uppercase font-bold text-[#101010]/60 block">
-                    {isDL ? "Driver Name" : "Cardholder Name"}
+                    {isDL ? 'Driver Name' : 'Cardholder Name'}
                   </span>
-                  <span className="font-bold text-[#101010] text-sm block">{cardholderName}</span>
+                  <span className="font-bold text-[#101010] text-sm block">
+                    {cardholderName}
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 pt-1">
                   <div>
                     <span className="text-[10px] uppercase font-bold text-[#101010]/60 block">
-                      {isDL ? "Licence Number" : "NIDA Number"}
+                      {isDL ? 'Licence Number' : 'NIDA Number'}
                     </span>
-                    <span className="font-mono font-bold text-[#101010]">{identifierNumber}</span>
+                    <span className="font-mono font-bold text-[#101010]">
+                      {identifierNumber}
+                    </span>
                   </div>
 
                   {secondaryIdentifier && (
@@ -415,13 +375,17 @@ export const CardGeneratorModal: React.FC = () => {
                       <span className="text-[10px] uppercase font-bold text-[#101010]/60 block">
                         Date of Issue
                       </span>
-                      <span className="font-mono text-[#101010]">{submittedData.dateOfIssue}</span>
+                      <span className="font-mono text-[#101010]">
+                        {submittedData.dateOfIssue}
+                      </span>
                     </div>
                     <div>
                       <span className="text-[10px] uppercase font-bold text-[#101010]/60 block">
                         Date of Expiry
                       </span>
-                      <span className="font-mono text-[#101010]">{submittedData.dateOfExpiry}</span>
+                      <span className="font-mono text-[#101010]">
+                        {submittedData.dateOfExpiry}
+                      </span>
                     </div>
                   </div>
                 )}
@@ -439,37 +403,29 @@ export const CardGeneratorModal: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div className="p-2.5 rounded-xl bg-[#F8F6F4] border border-[#E7E2DE]">
-                  <span className="text-[10px] uppercase font-bold text-[#101010]/60 block">
-                    Paper Size
-                  </span>
+                  <span className="text-[10px] uppercase font-bold text-[#101010]/60 block">Paper Size</span>
                   <span className="font-bold text-[#101010]">Standard A4 (210 × 297 mm)</span>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-[#F8F6F4] border border-[#E7E2DE]">
-                  <span className="text-[10px] uppercase font-bold text-[#101010]/60 block">
-                    Card Standard
-                  </span>
+                  <span className="text-[10px] uppercase font-bold text-[#101010]/60 block">Card Standard</span>
                   <span className="font-bold text-[#101010]">CR80 (85.60 × 53.98 mm)</span>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-[#F8F6F4] border border-[#E7E2DE]">
-                  <span className="text-[10px] uppercase font-bold text-[#101010]/60 block">
-                    Print Separation
-                  </span>
+                  <span className="text-[10px] uppercase font-bold text-[#101010]/60 block">Print Separation</span>
                   <span className="font-bold text-[#101010]">12 mm Vertical Gap</span>
                 </div>
 
                 <div className="p-2.5 rounded-xl bg-[#F8F6F4] border border-[#E7E2DE]">
-                  <span className="text-[10px] uppercase font-bold text-[#101010]/60 block">
-                    Resolution
-                  </span>
+                  <span className="text-[10px] uppercase font-bold text-[#101010]/60 block">Resolution</span>
                   <span className="font-bold text-[#101010]">300 DPI Vector High-Res</span>
                 </div>
               </div>
             </div>
 
             {/* Single Card Side Selector (Only when Single Card output is selected) */}
-            {outputType === "single" && (
+            {outputType === 'single' && (
               <div className="p-4 bg-[#FFFFFF] rounded-2xl border border-[#C8C2BE] shadow-xs space-y-2.5">
                 <div className="text-xs font-bold uppercase tracking-wider text-[#101010]">
                   Select Card Face to Export:
@@ -477,11 +433,11 @@ export const CardGeneratorModal: React.FC = () => {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setActiveSide("front")}
+                    onClick={() => setActiveSide('front')}
                     className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 border transition-all cursor-pointer ${
-                      activeSide === "front"
-                        ? "bg-[#101010] text-amber-400 border-[#101010] shadow-xs"
-                        : "bg-[#F8F6F4] text-[#101010] border-[#E7E2DE] hover:bg-[#EDE8E4]"
+                      activeSide === 'front'
+                        ? 'bg-[#101010] text-amber-400 border-[#101010] shadow-xs'
+                        : 'bg-[#F8F6F4] text-[#101010] border-[#E7E2DE] hover:bg-[#EDE8E4]'
                     }`}
                   >
                     <CreditCard className="w-3.5 h-3.5" />
@@ -490,11 +446,11 @@ export const CardGeneratorModal: React.FC = () => {
 
                   <button
                     type="button"
-                    onClick={() => setActiveSide("back")}
+                    onClick={() => setActiveSide('back')}
                     className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 border transition-all cursor-pointer ${
-                      activeSide === "back"
-                        ? "bg-[#101010] text-amber-400 border-[#101010] shadow-xs"
-                        : "bg-[#F8F6F4] text-[#101010] border-[#E7E2DE] hover:bg-[#EDE8E4]"
+                      activeSide === 'back'
+                        ? 'bg-[#101010] text-amber-400 border-[#101010] shadow-xs'
+                        : 'bg-[#F8F6F4] text-[#101010] border-[#E7E2DE] hover:bg-[#EDE8E4]'
                     }`}
                   >
                     <CreditCard className="w-3.5 h-3.5" />
@@ -509,9 +465,9 @@ export const CardGeneratorModal: React.FC = () => {
           <div className="flex flex-col items-center justify-between bg-[#FFFFFF] p-5 sm:p-6 rounded-2xl border border-[#C8C2BE] shadow-xs">
             <div className="w-full flex flex-col items-center">
               <div className="text-xs font-bold text-[#101010] uppercase tracking-wider mb-4 text-center">
-                {outputType === "single"
-                  ? `Live Card Preview — ${activeSide === "front" ? "Front Side" : "Back Side"}`
-                  : "Front + Back Merge 2-in-1 Print Sheet Layout"}
+                {outputType === 'single'
+                  ? `Live Card Preview — ${activeSide === 'front' ? 'Front Side' : 'Back Side'}`
+                  : 'Front + Back Merge 2-in-1 Print Sheet Layout'}
               </div>
 
               {isRendering ? (
@@ -519,7 +475,7 @@ export const CardGeneratorModal: React.FC = () => {
                   <RefreshCw className="w-6 h-6 animate-spin text-amber-600" />
                   <span>Rendering card with submitted data...</span>
                 </div>
-              ) : outputType === "single" ? (
+              ) : outputType === 'single' ? (
                 /* Single Card Preview */
                 singlePreviewUrl ? (
                   <div className="flex justify-center my-2 w-full">
@@ -587,34 +543,28 @@ export const CardGeneratorModal: React.FC = () => {
                 Generation & Export Options
               </div>
 
-              {downloadState !== "IDLE" && (
-                <div
-                  className={`p-2.5 rounded-xl text-xs font-bold flex items-center justify-between ${
-                    downloadState === "COMPLETED"
-                      ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
-                      : downloadState === "FAILED"
-                        ? "bg-red-50 text-red-800 border border-red-200"
-                        : "bg-amber-50 text-amber-800 border border-amber-200"
-                  }`}
-                >
-                  <span>
-                    Export State: <span className="uppercase font-black">{downloadState}</span>
-                  </span>
+              {downloadState !== 'IDLE' && (
+                <div className={`p-2.5 rounded-xl text-xs font-bold flex items-center justify-between ${
+                  downloadState === 'COMPLETED' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
+                  downloadState === 'FAILED' ? 'bg-red-50 text-red-800 border border-red-200' :
+                  'bg-amber-50 text-amber-800 border border-amber-200'
+                }`}>
+                  <span>Export State: <span className="uppercase font-black">{downloadState}</span></span>
                   <div className="flex items-center gap-3">
                     <span className="text-[10px] opacity-85">
-                      {downloadState === "QUEUED" && "Queued for generation..."}
-                      {downloadState === "GENERATING" && "Generating high-res file..."}
-                      {downloadState === "READY" && "File verified (Size > 0)..."}
-                      {downloadState === "DOWNLOADING" && "Delivering file download..."}
-                      {downloadState === "COMPLETED" && "Download complete! Token consumed."}
-                      {downloadState === "FAILED" && "Export failed. Token NOT consumed."}
+                      {downloadState === 'QUEUED' && 'Queued for generation...'}
+                      {downloadState === 'GENERATING' && 'Generating high-res file...'}
+                      {downloadState === 'READY' && 'File verified (Size > 0)...'}
+                      {downloadState === 'DOWNLOADING' && 'Delivering file download...'}
+                      {downloadState === 'COMPLETED' && 'Download complete! Token consumed.'}
+                      {downloadState === 'FAILED' && 'Export failed. Token NOT consumed.'}
                     </span>
-                    {isExporting && downloadState !== "COMPLETED" && (
+                    {isExporting && downloadState !== 'COMPLETED' && (
                       <button
                         type="button"
                         onClick={() => {
                           setIsExporting(false);
-                          setDownloadState("IDLE");
+                          setDownloadState('IDLE');
                         }}
                         className="px-2 py-0.5 bg-white/20 hover:bg-white/30 rounded text-[9px] font-black uppercase tracking-wider transition-colors"
                       >
@@ -625,7 +575,7 @@ export const CardGeneratorModal: React.FC = () => {
                 </div>
               )}
 
-              {outputType === "single" ? (
+              {outputType === 'single' ? (
                 <div className="space-y-2">
                   <button
                     type="button"
@@ -634,7 +584,7 @@ export const CardGeneratorModal: React.FC = () => {
                     className="w-full py-3 px-4 bg-[#101010] hover:bg-[#252525] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer whitespace-nowrap"
                   >
                     <Printer className="w-4 h-4 text-amber-400" />
-                    <span>{isExporting ? "Generating PDF..." : "Download Single Card (PDF)"}</span>
+                    <span>{isExporting ? 'Generating PDF...' : 'Download Single Card (PDF)'}</span>
                   </button>
 
                   <div className="grid grid-cols-2 gap-2">
@@ -665,11 +615,7 @@ export const CardGeneratorModal: React.FC = () => {
                     className="w-full py-3.5 px-4 bg-[#101010] hover:bg-[#252525] text-amber-400 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg cursor-pointer whitespace-nowrap"
                   >
                     <Printer className="w-4 h-4" />
-                    <span>
-                      {isExporting
-                        ? "Generating 2-in-1 PDF..."
-                        : "Download Front + Back 2-in-1 PDF (A4 Sheet)"}
-                    </span>
+                    <span>{isExporting ? 'Generating 2-in-1 PDF...' : 'Download Front + Back 2-in-1 PDF (A4 Sheet)'}</span>
                   </button>
 
                   <button

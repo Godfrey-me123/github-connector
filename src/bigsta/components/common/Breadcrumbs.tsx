@@ -1,7 +1,7 @@
-import React from "react";
-import { ChevronRight, Home, Layout, FileText, Layers, Eye, Download } from "lucide-react";
-import { useTemplateStore } from "../../store/useTemplateStore";
-import { UniversalBackButton } from "./UniversalBackButton";
+import React from 'react';
+import { ChevronRight, Home, Layout, FileText, Layers, Eye, Download } from 'lucide-react';
+import { useTemplateStore } from '../../store/useTemplateStore';
+import { UniversalBackButton } from './UniversalBackButton';
 
 interface BreadcrumbsProps {
   className?: string;
@@ -9,22 +9,21 @@ interface BreadcrumbsProps {
 }
 
 export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
-  className = "",
+  className = '',
   showBackButton = true,
 }) => {
-  const { activeScreen, activeServiceId, currentTemplate, navigateSafely, authRole } =
-    useTemplateStore();
+  const { activeScreen, activeServiceId, currentTemplate, navigateSafely, authRole } = useTemplateStore();
 
   const serviceNames: Record<string, string> = {
-    nida: "Tanzania NIDA",
-    driving_license: "Driving Licence",
-    passport: "Passport",
-    birth_certificate: "Birth Certificate",
-    tin: "TIN Certificate",
-    business_license: "Business License",
-    heslb: "HESLB",
-    nhif: "NHIF Health Card",
-    ajira: "Ajira Portal",
+    nida: 'Tanzania NIDA',
+    driving_license: 'Driving Licence',
+    passport: 'Passport',
+    birth_certificate: 'Birth Certificate',
+    tin: 'TIN Certificate',
+    business_license: 'Business License',
+    heslb: 'HESLB',
+    nhif: 'NHIF Health Card',
+    ajira: 'Ajira Portal',
   };
 
   const currentServiceName = serviceNames[activeServiceId] || activeServiceId.toUpperCase();
@@ -32,17 +31,17 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
   // Generate Breadcrumb Items
   const items: Array<{ label: string; action?: () => void; icon?: React.ReactNode }> = [];
 
-  const rootLabel = authRole === "admin" ? "Admin Dashboard" : "User Dashboard";
+  const rootLabel = authRole === 'admin' ? 'Admin Dashboard' : 'User Dashboard';
   items.push({
     label: rootLabel,
-    action: () => navigateSafely("home"),
+    action: () => navigateSafely('home'),
     icon: <Home className="w-3 h-3" />,
   });
 
-  if (activeScreen === "editor") {
+  if (activeScreen === 'editor') {
     items.push({
-      label: "Studio",
-      action: () => navigateSafely("editor"),
+      label: 'Studio',
+      action: () => navigateSafely('editor'),
       icon: <Layout className="w-3 h-3" />,
     });
     items.push({
@@ -53,59 +52,57 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
         label: currentTemplate.templateName,
       });
     }
-  } else if (activeScreen === "templates") {
+  } else if (activeScreen === 'templates') {
     items.push({
-      label: "Template Library",
-      action: () => navigateSafely("templates"),
+      label: 'Template Library',
+      action: () => navigateSafely('templates'),
       icon: <Layers className="w-3 h-3" />,
     });
     items.push({
       label: currentServiceName,
     });
-  } else if (activeScreen === "upload") {
+  } else if (activeScreen === 'upload') {
     items.push({
-      label: "Upload Studio",
-      action: () => navigateSafely("upload"),
+      label: 'Upload Studio',
+      action: () => navigateSafely('upload'),
     });
-  } else if (activeScreen === "nida") {
+  } else if (activeScreen === 'nida') {
     items.push({
-      label: "NIDA Form",
-      action: () => navigateSafely("nida"),
+      label: 'NIDA Form',
+      action: () => navigateSafely('nida'),
       icon: <FileText className="w-3 h-3" />,
     });
-  } else if (activeScreen === "driving_license") {
+  } else if (activeScreen === 'driving_license') {
     items.push({
-      label: "Driving Licence Form",
-      action: () => navigateSafely("driving_license"),
+      label: 'Driving Licence Form',
+      action: () => navigateSafely('driving_license'),
       icon: <FileText className="w-3 h-3" />,
     });
-  } else if ((activeScreen as string) === "nhif") {
+  } else if ((activeScreen as string) === 'nhif') {
     items.push({
-      label: "NHIF Membership Form",
-      action: () => navigateSafely("nhif" as any),
+      label: 'NHIF Membership Form',
+      action: () => navigateSafely('nhif' as any),
       icon: <FileText className="w-3 h-3" />,
     });
-  } else if (activeScreen === "preview") {
+  } else if (activeScreen === 'preview') {
     items.push({
       label: currentServiceName,
     });
     items.push({
-      label: "Card Preview",
-      action: () => navigateSafely("preview"),
+      label: 'Card Preview',
+      action: () => navigateSafely('preview'),
       icon: <Eye className="w-3 h-3" />,
     });
-  } else if (activeScreen === "downloads") {
+  } else if (activeScreen === 'downloads') {
     items.push({
-      label: "Downloads",
-      action: () => navigateSafely("downloads"),
+      label: 'Downloads',
+      action: () => navigateSafely('downloads'),
       icon: <Download className="w-3 h-3" />,
     });
   }
 
   return (
-    <div
-      className={`flex items-center gap-2 overflow-x-auto py-1 px-2 text-xs font-medium text-[#555555] bg-[#F8FAFC] border-b border-[#E7E9EB] ${className}`}
-    >
+    <div className={`flex items-center gap-2 overflow-x-auto py-1 px-2 text-xs font-medium text-[#555555] bg-[#F8FAFC] border-b border-[#E7E9EB] ${className}`}>
       {showBackButton && <UniversalBackButton className="mr-1" />}
 
       <nav aria-label="Breadcrumb" className="flex items-center gap-1 shrink-0">

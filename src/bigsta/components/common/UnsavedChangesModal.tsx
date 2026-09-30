@@ -1,19 +1,18 @@
-import React from "react";
-import { AlertTriangle, Save, Trash2, X } from "lucide-react";
-import { useTemplateStore } from "../../store/useTemplateStore";
+import React from 'react';
+import { AlertTriangle, Save, Trash2, X } from 'lucide-react';
+import { useTemplateStore } from '../../store/useTemplateStore';
 
 export const UnsavedChangesModal: React.FC = () => {
-  const { isUnsavedModalOpen, confirmPendingNavigation, cancelPendingNavigation } =
-    useTemplateStore();
+  const { isUnsavedModalOpen, confirmPendingNavigation, cancelPendingNavigation } = useTemplateStore();
 
   // Escape key listener
   React.useEffect(() => {
     if (!isUnsavedModalOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") cancelPendingNavigation();
+      if (e.key === 'Escape') cancelPendingNavigation();
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isUnsavedModalOpen, cancelPendingNavigation]);
 
   if (!isUnsavedModalOpen) return null;
@@ -48,8 +47,7 @@ export const UnsavedChangesModal: React.FC = () => {
         </div>
 
         <p className="text-xs text-[#333333] leading-relaxed bg-[#F8FAFC] p-3 rounded-xl border border-[#E7E9EB]">
-          Leaving now without saving will lose your recent element edits, style updates, or
-          background changes.
+          Leaving now without saving will lose your recent element edits, style updates, or background changes.
         </p>
 
         {/* Action Buttons */}

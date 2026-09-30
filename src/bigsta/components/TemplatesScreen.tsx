@@ -1,5 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from 'react';
 import {
   FolderOpen,
   Plus,
@@ -22,13 +22,13 @@ import {
   Printer,
   ChevronRight,
   Home,
-} from "lucide-react";
-import { useTemplateStore } from "../store/useTemplateStore";
-import { CardTemplate, CardType, CardSide } from "../types";
-import { downloadJSON, renderTemplateToCanvas } from "../utils/export";
-import { TemplateBadge } from "./TemplateBadge";
-import { AppFooter } from "./common/AppFooter";
-import { UniversalBackButton } from "./common/UniversalBackButton";
+} from 'lucide-react';
+import { useTemplateStore } from '../store/useTemplateStore';
+import { CardTemplate, CardType, CardSide } from '../types';
+import { downloadJSON, renderTemplateToCanvas } from '../utils/export';
+import { TemplateBadge } from './TemplateBadge';
+import { AppFooter } from './common/AppFooter';
+import { UniversalBackButton } from './common/UniversalBackButton';
 
 export const TemplatesScreen: React.FC = () => {
   const {
@@ -45,15 +45,15 @@ export const TemplatesScreen: React.FC = () => {
 
   const [templates, setTemplates] = useState<CardTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [sortBy, setSortBy] = useState<"name" | "created" | "modified" | "type">("modified");
-
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [sortBy, setSortBy] = useState<'name' | 'created' | 'modified' | 'type'>('modified');
+  
   // Renaming state
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editType, setEditType] = useState<CardType>("National ID");
-  const [editSide, setEditSide] = useState<CardSide>("Front Side");
+  const [editName, setEditName] = useState('');
+  const [editType, setEditType] = useState<CardType>('National ID');
+  const [editSide, setEditSide] = useState<CardSide>('Front Side');
 
   // Preview canvases cache
   const [previews, setPreviews] = useState<Record<string, string>>({});
@@ -70,7 +70,7 @@ export const TemplatesScreen: React.FC = () => {
       for (const tpl of list) {
         try {
           const canvas = await renderTemplateToCanvas(tpl, {}, 100);
-          previewMap[tpl.id] = canvas.toDataURL("image/png");
+          previewMap[tpl.id] = canvas.toDataURL('image/png');
         } catch {
           // Fallback
         }
@@ -87,7 +87,7 @@ export const TemplatesScreen: React.FC = () => {
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm("Are you sure you want to delete this saved template?")) {
+    if (confirm('Are you sure you want to delete this saved template?')) {
       await deleteSavedTemplate(id);
       await fetchTemplates();
     }
@@ -97,7 +97,7 @@ export const TemplatesScreen: React.FC = () => {
     e.stopPropagation();
     const copy: CardTemplate = {
       ...JSON.parse(JSON.stringify(tpl)),
-      id: "template_" + Date.now(),
+      id: 'template_' + Date.now(),
       templateName: `${tpl.templateName} Copy`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -110,7 +110,7 @@ export const TemplatesScreen: React.FC = () => {
   const handleOpenEdit = (tpl: CardTemplate, e?: React.MouseEvent) => {
     e?.stopPropagation();
     loadTemplate(tpl);
-    setActiveScreen("editor");
+    setActiveScreen('editor');
   };
 
   const handleUseInGenerator = (tpl: CardTemplate, e: React.MouseEvent) => {
@@ -129,8 +129,8 @@ export const TemplatesScreen: React.FC = () => {
     e.stopPropagation();
     setEditingId(tpl.id);
     setEditName(tpl.templateName);
-    setEditType(tpl.cardType || "National ID");
-    setEditSide(tpl.side || "Front Side");
+    setEditType(tpl.cardType || 'National ID');
+    setEditSide(tpl.side || 'Front Side');
   };
 
   const saveRename = async (tpl: CardTemplate, e: React.MouseEvent) => {
@@ -157,16 +157,16 @@ export const TemplatesScreen: React.FC = () => {
           const parsed = JSON.parse(event.target?.result as string);
           if (parsed.cardWidth && parsed.cardHeight && Array.isArray(parsed.layers)) {
             const imported: CardTemplate = {
-              id: "template_" + Date.now(),
-              templateName: parsed.templateName || "Imported Template",
-              cardType: parsed.cardType || "National ID",
-              side: parsed.side || "Front Side",
+              id: 'template_' + Date.now(),
+              templateName: parsed.templateName || 'Imported Template',
+              cardType: parsed.cardType || 'National ID',
+              side: parsed.side || 'Front Side',
               cardWidth: parsed.cardWidth,
               cardHeight: parsed.cardHeight,
-              unit: parsed.unit || "mm",
+              unit: parsed.unit || 'mm',
               dpi: parsed.dpi || 300,
-              orientation: parsed.cardWidth >= parsed.cardHeight ? "landscape" : "portrait",
-              background: parsed.background || { type: "color", color: "#ffffff" },
+              orientation: parsed.cardWidth >= parsed.cardHeight ? 'landscape' : 'portrait',
+              background: parsed.background || { type: 'color', color: '#ffffff' },
               layers: parsed.layers,
               guides: parsed.guides || [],
               createdAt: new Date().toISOString(),
@@ -177,10 +177,10 @@ export const TemplatesScreen: React.FC = () => {
             await saveCurrentTemplate();
             await fetchTemplates();
           } else {
-            alert("Invalid JSON template format.");
+            alert('Invalid JSON template format.');
           }
         } catch {
-          alert("Could not parse JSON file.");
+          alert('Could not parse JSON file.');
         }
       };
       reader.readAsText(e.target.files[0]);
@@ -191,16 +191,16 @@ export const TemplatesScreen: React.FC = () => {
   const filtered = templates.filter((t) => {
     const matchesSearch = t.templateName.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory =
-      selectedCategory === "All" ||
+      selectedCategory === 'All' ||
       (t.cardType && t.cardType.toLowerCase() === selectedCategory.toLowerCase());
     return matchesSearch && matchesCategory;
   });
 
   const sorted = [...filtered].sort((a, b) => {
-    if (sortBy === "name") return a.templateName.localeCompare(b.templateName);
-    if (sortBy === "created")
+    if (sortBy === 'name') return a.templateName.localeCompare(b.templateName);
+    if (sortBy === 'created')
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    if (sortBy === "type") return (a.cardType || "").localeCompare(b.cardType || "");
+    if (sortBy === 'type') return (a.cardType || '').localeCompare(b.cardType || '');
     return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
   });
 
@@ -239,7 +239,7 @@ export const TemplatesScreen: React.FC = () => {
           </button>
 
           <button
-            onClick={() => setActiveScreen("editor")}
+            onClick={() => setActiveScreen('editor')}
             className="px-4 py-2 bg-[#000000] hover:bg-[#222222] text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -264,14 +264,14 @@ export const TemplatesScreen: React.FC = () => {
 
         {/* Categories Pills */}
         <div className="flex items-center justify-center sm:justify-start gap-1.5 overflow-x-auto py-1 scrollbar-none w-full sm:w-auto">
-          {["All", "National ID", "Employee ID", "Student ID", "Membership Card"].map((cat) => (
+          {['All', 'National ID', 'Employee ID', 'Student ID', 'Membership Card'].map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                 selectedCategory === cat
-                  ? "bg-[#000000] text-white shadow-xs"
-                  : "bg-[#E7E9EB] hover:bg-[#dadcdc] text-[#000000]"
+                  ? 'bg-[#000000] text-white shadow-xs'
+                  : 'bg-[#E7E9EB] hover:bg-[#dadcdc] text-[#000000]'
               }`}
             >
               {cat}
@@ -317,8 +317,7 @@ export const TemplatesScreen: React.FC = () => {
             </div>
             <h3 className="text-base font-bold text-[#000000]">No Templates Found</h3>
             <p className="text-xs text-[#555555] font-medium max-w-sm">
-              Try clearing your search filters or click "New Design" to start crafting your first ID
-              template!
+              Try clearing your search filters or click "New Design" to start crafting your first ID template!
             </p>
           </div>
         ) : (
@@ -356,10 +355,7 @@ export const TemplatesScreen: React.FC = () => {
                 <div className="space-y-2 mb-3">
                   {editingId === tpl.id ? (
                     /* Inline Rename Form */
-                    <div
-                      className="space-y-2 p-2 bg-[#E7E9EB] rounded-xl border border-[#000000]"
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                    <div className="space-y-2 p-2 bg-[#E7E9EB] rounded-xl border border-[#000000]" onClick={(e) => e.stopPropagation()}>
                       <input
                         type="text"
                         value={editName}
@@ -403,10 +399,8 @@ export const TemplatesScreen: React.FC = () => {
                           disabled={isSaving}
                           className="px-2.5 py-1 bg-[#000000] text-white rounded text-[10px] font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                         >
-                          {isSaving && (
-                            <div className="w-2.5 h-2.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                          )}
-                          {isSaving ? "Saving..." : "Save"}
+                          {isSaving && <div className="w-2.5 h-2.5 border-2 border-white border-t-transparent rounded-full animate-spin" />}
+                          {isSaving ? 'Saving...' : 'Save'}
                         </button>
                       </div>
                     </div>

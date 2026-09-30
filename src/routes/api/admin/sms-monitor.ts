@@ -18,13 +18,7 @@ export const Route = createFileRoute("/api/admin/sms-monitor")({
         }));
         const completed = logs.filter((l: any) => l.status === "COMPLETED").length;
         return Response.json({
-          stats: {
-            total: logs.length,
-            completed,
-            failed: logs.length - completed,
-            duplicates: 0,
-            pending: 0,
-          },
+          stats: { total: logs.length, completed, failed: logs.length - completed, duplicates: 0, pending: 0 },
           logs,
         });
       },

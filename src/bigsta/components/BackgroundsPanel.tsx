@@ -1,8 +1,8 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import React, { useState, useEffect } from "react";
-import { Upload, Check, Edit3, Trash2, RefreshCw, Palette, Sun } from "lucide-react";
-import { useTemplateStore } from "../store/useTemplateStore";
-import { isBackSideTemplate } from "../utils/templateMappingEngine";
+import React, { useState, useEffect } from 'react';
+import { Upload, Check, Edit3, Trash2, RefreshCw, Palette, Sun } from 'lucide-react';
+import { useTemplateStore } from '../store/useTemplateStore';
+import { isBackSideTemplate } from '../utils/templateMappingEngine';
 
 interface BackgroundsPanelProps {
   onBackgroundSelected?: () => void;
@@ -24,7 +24,7 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
   } = useTemplateStore();
 
   const [editingBgId, setEditingBgId] = useState<string | null>(null);
-  const [editingBgName, setEditingBgName] = useState("");
+  const [editingBgName, setEditingBgName] = useState('');
 
   useEffect(() => {
     loadUploadedBackgrounds();
@@ -41,9 +41,9 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
       const img = new Image();
       img.onload = async () => {
         try {
-          const orientation = img.height > img.width ? "portrait" : "landscape";
+          const orientation = img.height > img.width ? 'portrait' : 'landscape';
           const newBg = await addUploadedBackground({
-            name: file.name.split(".")[0] || "Card Background",
+            name: file.name.split('.')[0] || 'Card Background',
             src,
             originalWidthPx: img.width,
             originalHeightPx: img.height,
@@ -54,7 +54,7 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
 
           // Set as active background
           const backgroundConfig = {
-            type: "image" as const,
+            type: 'image' as const,
             src: finalSrc,
             originalWidthPx: img.width,
             originalHeightPx: img.height,
@@ -67,12 +67,12 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
           // AUTO-SYNC TO CLOUD: If this is a universal template, push background change to Supabase immediately
           if (currentTemplate.isUniversal) {
             const sideIsBack = isBackSideTemplate(currentTemplate);
-            const sId = currentTemplate.serviceId || activeServiceId || "nida";
-
+            const sId = currentTemplate.serviceId || activeServiceId || 'nida';
+            
             const updatedTpl = {
               ...currentTemplate,
               background: backgroundConfig,
-              updatedAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
             };
 
             if (sideIsBack) {
@@ -90,7 +90,7 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
       img.src = src;
     };
     reader.readAsDataURL(file);
-    e.target.value = "";
+    e.target.value = '';
   };
 
   const handleReplaceBg = (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,7 +104,7 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
       const img = new Image();
       img.onload = async () => {
         try {
-          const orientation = img.height > img.width ? "portrait" : "landscape";
+          const orientation = img.height > img.width ? 'portrait' : 'landscape';
           const updatedBg = await updateUploadedBackground(id, {
             src,
             originalWidthPx: img.width,
@@ -113,12 +113,9 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
           });
 
           // If we updated a library background that is currently in use, sync it to the active template
-          if (
-            currentTemplate.background.src === src ||
-            currentTemplate.background.src?.includes(id)
-          ) {
+          if (currentTemplate.background.src === src || currentTemplate.background.src?.includes(id)) {
             const backgroundConfig = {
-              type: "image" as const,
+              type: 'image' as const,
               src,
               originalWidthPx: img.width,
               originalHeightPx: img.height,
@@ -131,12 +128,12 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
             // AUTO-SYNC TO CLOUD: Push change to Supabase if it's the active universal template
             if (currentTemplate.isUniversal) {
               const sideIsBack = isBackSideTemplate(currentTemplate);
-              const sId = currentTemplate.serviceId || activeServiceId || "nida";
-
+              const sId = currentTemplate.serviceId || activeServiceId || 'nida';
+              
               const updatedTpl = {
                 ...currentTemplate,
                 background: backgroundConfig,
-                updatedAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
               };
 
               if (sideIsBack) {
@@ -153,20 +150,20 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
       img.src = src;
     };
     reader.readAsDataURL(file);
-    e.target.value = "";
+    e.target.value = '';
   };
 
   const presetColors = [
-    "#ffffff",
-    "#f8fafc",
-    "#f1f5f9",
-    "#0f172a",
-    "#1e293b",
-    "#1e3a8a",
-    "#065f46",
-    "#831843",
-    "#4c1d95",
-    "#fef08a",
+    '#ffffff',
+    '#f8fafc',
+    '#f1f5f9',
+    '#0f172a',
+    '#1e293b',
+    '#1e3a8a',
+    '#065f46',
+    '#831843',
+    '#4c1d95',
+    '#fef08a',
   ];
 
   return (
@@ -181,16 +178,16 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
         <div className="flex items-center gap-2">
           <input
             type="color"
-            value={currentTemplate.background?.color || "#ffffff"}
+            value={currentTemplate.background?.color || '#ffffff'}
             onChange={(e) =>
               updateTemplateMeta({
-                background: { type: "color", color: e.target.value },
+                background: { type: 'color', color: e.target.value },
               })
             }
             className="w-9 h-9 rounded-lg border border-slate-700 cursor-pointer bg-transparent"
           />
           <span className="font-mono text-xs text-slate-200 uppercase">
-            {currentTemplate.background?.color || "#ffffff"}
+            {currentTemplate.background?.color || '#ffffff'}
           </span>
         </div>
 
@@ -201,11 +198,7 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
               key={col}
               onClick={() =>
                 updateTemplateMeta({
-                  background: {
-                    type: "color",
-                    color: col,
-                    opacity: currentTemplate.background?.opacity,
-                  },
+                  background: { type: 'color', color: col, opacity: currentTemplate.background?.opacity },
                 })
               }
               className="w-6 h-6 rounded-md border border-slate-700/80 shadow-sm transition-transform hover:scale-110 flex items-center justify-center"
@@ -215,9 +208,9 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
               {currentTemplate.background?.color === col && (
                 <Check
                   className={`w-3.5 h-3.5 ${
-                    col === "#ffffff" || col === "#f8fafc" || col === "#fef08a"
-                      ? "text-slate-900"
-                      : "text-white"
+                    col === '#ffffff' || col === '#f8fafc' || col === '#fef08a'
+                      ? 'text-slate-900'
+                      : 'text-white'
                   }`}
                 />
               )}
@@ -227,7 +220,7 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
       </div>
 
       {/* Background Image Opacity Control (when background is an image) */}
-      {currentTemplate.background?.type === "image" && (
+      {currentTemplate.background?.type === 'image' && (
         <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/60 space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
@@ -275,8 +268,8 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
                 }
                 className={`flex-1 py-1 text-[10px] font-mono font-bold rounded transition-colors ${
                   Math.round((currentTemplate.background.opacity ?? 1) * 100) === preset
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "bg-slate-700/60 text-slate-300 hover:bg-slate-700"
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : 'bg-slate-700/60 text-slate-300 hover:bg-slate-700'
                 }`}
               >
                 {preset}%
@@ -306,8 +299,7 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
 
         {uploadedBackgrounds.length === 0 ? (
           <div className="text-center py-6 text-xs text-slate-500">
-            No image backgrounds stored yet. Upload an image template (front/back design) to use it
-            as card canvas background.
+            No image backgrounds stored yet. Upload an image template (front/back design) to use it as card canvas background.
           </div>
         ) : (
           <div className="space-y-2">
@@ -320,14 +312,18 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
                   key={bg.id}
                   className={`p-2.5 rounded-xl border flex flex-col gap-2 transition-all ${
                     isActive
-                      ? "bg-blue-950/40 border-blue-500/80 shadow-md shadow-blue-900/20 ring-1 ring-blue-500/40"
-                      : "bg-slate-800/60 border-slate-700/60 hover:bg-slate-800"
+                      ? 'bg-blue-950/40 border-blue-500/80 shadow-md shadow-blue-900/20 ring-1 ring-blue-500/40'
+                      : 'bg-slate-800/60 border-slate-700/60 hover:bg-slate-800'
                   }`}
                 >
                   {/* Thumbnail & Info */}
                   <div className="flex items-start gap-2.5">
                     <div className="w-14 h-10 rounded-lg border border-slate-700 bg-slate-950 overflow-hidden flex items-center justify-center shrink-0">
-                      <img src={bg.src} alt={bg.name} className="object-cover w-full h-full" />
+                      <img
+                        src={bg.src}
+                        alt={bg.name}
+                        className="object-cover w-full h-full"
+                      />
                     </div>
 
                     <div className="flex-1 min-w-0 text-xs">
@@ -343,9 +339,7 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
                           <button
                             onClick={async () => {
                               if (editingBgName.trim()) {
-                                await updateUploadedBackground(bg.id, {
-                                  name: editingBgName.trim(),
-                                });
+                                await updateUploadedBackground(bg.id, { name: editingBgName.trim() });
                               }
                               setEditingBgId(null);
                             }}
@@ -356,7 +350,9 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
                         </div>
                       ) : (
                         <div className="flex items-center justify-between gap-1 mb-0.5">
-                          <span className="font-semibold text-slate-200 truncate">{bg.name}</span>
+                          <span className="font-semibold text-slate-200 truncate">
+                            {bg.name}
+                          </span>
                           {isActive && (
                             <span className="px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/30">
                               ACTIVE
@@ -376,7 +372,7 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
                     <button
                       onClick={async () => {
                         const backgroundConfig = {
-                          type: "image" as const,
+                          type: 'image' as const,
                           src: bg.src,
                           originalWidthPx: bg.originalWidthPx,
                           originalHeightPx: bg.originalHeightPx,
@@ -391,12 +387,12 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
                           setIsSaving(true);
                           try {
                             const sideIsBack = isBackSideTemplate(currentTemplate);
-                            const sId = currentTemplate.serviceId || activeServiceId || "nida";
-
+                            const sId = currentTemplate.serviceId || activeServiceId || 'nida';
+                            
                             const updatedTpl = {
                               ...currentTemplate,
                               background: backgroundConfig,
-                              updatedAt: new Date().toISOString(),
+                              updatedAt: new Date().toISOString()
                             };
 
                             if (sideIsBack) {
@@ -414,12 +410,12 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
                       disabled={isActive}
                       className={`min-h-[32px] px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center gap-1 ${
                         isActive
-                          ? "bg-slate-800 text-slate-500 cursor-default"
-                          : "bg-blue-600 hover:bg-blue-500 text-white"
+                          ? 'bg-slate-800 text-slate-500 cursor-default'
+                          : 'bg-blue-600 hover:bg-blue-500 text-white'
                       }`}
                     >
                       <Check className="w-3 h-3" />
-                      <span>{isActive ? "In Use" : "Apply Background"}</span>
+                      <span>{isActive ? 'In Use' : 'Apply Background'}</span>
                     </button>
 
                     <div className="flex items-center gap-1 text-slate-400">

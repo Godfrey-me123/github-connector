@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { Key, Phone, Shield, X, CheckCircle2, AlertCircle, ArrowRight, Lock } from "lucide-react";
-import { useTemplateStore } from "../../store/useTemplateStore";
+import React, { useState, useEffect } from 'react';
+import { Key, Phone, Shield, X, CheckCircle2, AlertCircle, ArrowRight, Lock } from 'lucide-react';
+import { useTemplateStore } from '../../store/useTemplateStore';
 
 interface ForgotPasskeyModalProps {
   isOpen: boolean;
@@ -15,56 +15,56 @@ export const ForgotPasskeyModal: React.FC<ForgotPasskeyModalProps> = ({
 }) => {
   const { recoverPasskey } = useTemplateStore();
 
-  const [phone, setPhone] = useState("");
-  const [newPasskey, setNewPasskey] = useState("");
-  const [confirmPasskey, setConfirmPasskey] = useState("");
+  const [phone, setPhone] = useState('');
+  const [newPasskey, setNewPasskey] = useState('');
+  const [confirmPasskey, setConfirmPasskey] = useState('');
   const [showPasskey, setShowPasskey] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === 'Escape') onClose();
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
   if (!isOpen) return null;
 
   const validateTzPhone = (p: string) => {
-    const cleaned = p.trim().replace(/\s+/g, "");
+    const cleaned = p.trim().replace(/\s+/g, '');
     return /^(?:\+255|255|0)[67]\d{8}$/.test(cleaned);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage("");
-    setSuccessMessage("");
+    setErrorMessage('');
+    setSuccessMessage('');
 
     if (!phone.trim()) {
-      setErrorMessage("Please enter your registered phone number");
+      setErrorMessage('Please enter your registered phone number');
       return;
     }
 
     if (!validateTzPhone(phone)) {
-      setErrorMessage("Invalid phone number format (e.g., 0712345678 or +255712345678)");
+      setErrorMessage('Invalid phone number format (e.g., 0712345678 or +255712345678)');
       return;
     }
 
     if (!newPasskey.trim()) {
-      setErrorMessage("Please enter a new passkey");
+      setErrorMessage('Please enter a new passkey');
       return;
     }
 
     if (newPasskey.length < 4) {
-      setErrorMessage("Passkey must be at least 4 characters long");
+      setErrorMessage('Passkey must be at least 4 characters long');
       return;
     }
 
     if (newPasskey !== confirmPasskey) {
-      setErrorMessage("Passkeys do not match");
+      setErrorMessage('Passkeys do not match');
       return;
     }
 
@@ -86,7 +86,7 @@ export const ForgotPasskeyModal: React.FC<ForgotPasskeyModalProps> = ({
       }, 1200);
     } catch (err: any) {
       setIsSubmitting(false);
-      setErrorMessage(err?.message || "Failed to recover passkey");
+      setErrorMessage(err?.message || 'Failed to recover passkey');
     }
   };
 
@@ -106,7 +106,9 @@ export const ForgotPasskeyModal: React.FC<ForgotPasskeyModalProps> = ({
               <Key className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-extrabold text-white tracking-tight">Reset Passkey</h2>
+              <h2 className="text-lg font-extrabold text-white tracking-tight">
+                Reset Passkey
+              </h2>
               <p className="text-xs text-slate-300">
                 Enter your registered phone number to set a new Passkey
               </p>
@@ -136,7 +138,7 @@ export const ForgotPasskeyModal: React.FC<ForgotPasskeyModalProps> = ({
                 value={phone}
                 onChange={(e) => {
                   setPhone(e.target.value);
-                  if (errorMessage) setErrorMessage("");
+                  if (errorMessage) setErrorMessage('');
                 }}
                 placeholder="0712345678 or +255712345678"
                 className="w-full pl-10 pr-4 py-3 bg-[#0B132B] border border-white/15 rounded-xl text-white placeholder-slate-500 text-sm font-mono focus:outline-none focus:border-[#47A5FF] focus:ring-2 focus:ring-[#47A5FF]/20 transition-all"
@@ -153,11 +155,11 @@ export const ForgotPasskeyModal: React.FC<ForgotPasskeyModalProps> = ({
             <div className="relative flex items-center">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3.5" />
               <input
-                type={showPasskey ? "text" : "password"}
+                type={showPasskey ? 'text' : 'password'}
                 value={newPasskey}
                 onChange={(e) => {
                   setNewPasskey(e.target.value);
-                  if (errorMessage) setErrorMessage("");
+                  if (errorMessage) setErrorMessage('');
                 }}
                 placeholder="Enter new passkey (at least 4 characters)"
                 className="w-full pl-10 pr-10 py-3 bg-[#0B132B] border border-white/15 rounded-xl text-white placeholder-slate-500 text-sm font-mono focus:outline-none focus:border-[#47A5FF] focus:ring-2 focus:ring-[#47A5FF]/20 transition-all"
@@ -174,11 +176,11 @@ export const ForgotPasskeyModal: React.FC<ForgotPasskeyModalProps> = ({
             <div className="relative flex items-center">
               <Lock className="w-4 h-4 text-slate-400 absolute left-3.5" />
               <input
-                type={showPasskey ? "text" : "password"}
+                type={showPasskey ? 'text' : 'password'}
                 value={confirmPasskey}
                 onChange={(e) => {
                   setConfirmPasskey(e.target.value);
-                  if (errorMessage) setErrorMessage("");
+                  if (errorMessage) setErrorMessage('');
                 }}
                 placeholder="Re-enter new passkey"
                 className="w-full pl-10 pr-10 py-3 bg-[#0B132B] border border-white/15 rounded-xl text-white placeholder-slate-500 text-sm font-mono focus:outline-none focus:border-[#47A5FF] focus:ring-2 focus:ring-[#47A5FF]/20 transition-all"
@@ -211,20 +213,8 @@ export const ForgotPasskeyModal: React.FC<ForgotPasskeyModalProps> = ({
             {isSubmitting ? (
               <span className="inline-flex items-center gap-2">
                 <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
                 Updating Passkey...
               </span>

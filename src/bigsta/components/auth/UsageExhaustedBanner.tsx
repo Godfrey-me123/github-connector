@@ -1,16 +1,19 @@
-import React from "react";
-import { ShieldAlert, CreditCard } from "lucide-react";
-import { useTemplateStore } from "../../store/useTemplateStore";
+import React from 'react';
+import { ShieldAlert, CreditCard } from 'lucide-react';
+import { useTemplateStore } from '../../store/useTemplateStore';
 
 export const UsageExhaustedBanner: React.FC = () => {
   const { authRole, currentAuthKey, activePasskeys, setRechargeModalOpen } = useTemplateStore();
 
   // Find active user passkey
   const userKey = activePasskeys.find(
-    (p) => p.role === "user" && p.key.toLowerCase() === (currentAuthKey || "").toLowerCase(),
+    (p) => p.role === 'user' && p.key.toLowerCase() === (currentAuthKey || '').toLowerCase()
   );
 
-  const isExhausted = authRole === "user" && userKey && (userKey.remainingUsages ?? 0) <= 0;
+  const isExhausted =
+    authRole === 'user' &&
+    userKey &&
+    (userKey.remainingUsages ?? 0) <= 0;
 
   if (!isExhausted || !userKey) return null;
 

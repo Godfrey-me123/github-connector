@@ -1,6 +1,6 @@
-import React from "react";
-import { CheckCircle2, AlertTriangle, ArrowRight, Eye, Layers, ShieldCheck, X } from "lucide-react";
-import { PopulatedTemplateResult } from "../../utils/templateMappingEngine";
+import React from 'react';
+import { CheckCircle2, AlertTriangle, ArrowRight, Eye, Layers, ShieldCheck, X } from 'lucide-react';
+import { PopulatedTemplateResult } from '../../utils/templateMappingEngine';
 
 export interface MappingResultModalProps {
   isOpen: boolean;
@@ -65,13 +65,11 @@ export const MappingResultModal: React.FC<MappingResultModalProps> = ({
               </div>
             </div>
 
-            <div
-              className={`p-3 rounded-xl border flex items-center gap-2.5 ${
-                warnings.length > 0
-                  ? "bg-amber-500/10 border-amber-500/20 text-amber-300"
-                  : "bg-blue-500/10 border-blue-500/20 text-blue-300"
-              }`}
-            >
+            <div className={`p-3 rounded-xl border flex items-center gap-2.5 ${
+              warnings.length > 0
+                ? 'bg-amber-500/10 border-amber-500/20 text-amber-300'
+                : 'bg-blue-500/10 border-blue-500/20 text-blue-300'
+            }`}>
               <AlertTriangle className="w-4 h-4 shrink-0" />
               <div>
                 <div className="text-[11px] text-[#A0A4A8]">Missing Placeholders</div>
@@ -113,9 +111,7 @@ export const MappingResultModal: React.FC<MappingResultModalProps> = ({
                     <span className="text-[#A0A4A8]">{m.layerName}</span>
                   </div>
                   <span className="text-[11px] font-medium text-white max-w-[140px] truncate text-right">
-                    {m.newValue
-                      ? m.newValue.slice(0, 20) + (m.newValue.length > 20 ? "..." : "")
-                      : "(empty)"}
+                    {m.newValue ? m.newValue.slice(0, 20) + (m.newValue.length > 20 ? '...' : '') : '(empty)'}
                   </span>
                 </div>
               ))}

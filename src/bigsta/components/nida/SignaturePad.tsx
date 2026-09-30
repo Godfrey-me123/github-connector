@@ -1,5 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   PenTool,
   Upload,
@@ -11,10 +11,10 @@ import {
   FileSignature,
   Sparkles,
   Save,
-} from "lucide-react";
+} from 'lucide-react';
 
 const MAX_SIG_SIZE = 10 * 1024 * 1024; // 10MB
-const ALLOWED_SIG_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+const ALLOWED_SIG_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
 interface SignaturePadProps {
   value?: string | null;
@@ -30,7 +30,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
   onChange,
   disabled = false,
 }) => {
-  const [activeMethod, setActiveMethod] = useState<"draw" | "upload">("draw");
+  const [activeMethod, setActiveMethod] = useState<'draw' | 'upload'>('draw');
   const [error, setError] = useState<string | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [strokeCount, setStrokeCount] = useState(0);
@@ -75,11 +75,11 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
 
     // Export at high resolution (2x for crisp anti-aliased lines)
     const scale = 2;
-    const exportCanvas = document.createElement("canvas");
+    const exportCanvas = document.createElement('canvas');
     exportCanvas.width = rawWidth * scale;
     exportCanvas.height = rawHeight * scale;
 
-    const ctx = exportCanvas.getContext("2d");
+    const ctx = exportCanvas.getContext('2d');
     if (!ctx) return null;
 
     // Strict No-Background / Pure Alpha Transparency
@@ -87,11 +87,11 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
     ctx.scale(scale, scale);
 
     // High quality dark ink stroke
-    ctx.strokeStyle = "#050608";
-    ctx.fillStyle = "#050608";
+    ctx.strokeStyle = '#050608';
+    ctx.fillStyle = '#050608';
     ctx.lineWidth = 3.2;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
     const offsetX = -minX + padding;
     const offsetY = -minY + padding;
@@ -122,14 +122,14 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
     });
 
     // Export as transparent PNG
-    return exportCanvas.toDataURL("image/png");
+    return exportCanvas.toDataURL('image/png');
   }, []);
 
   // Helper: Redraw all strokes on interactive canvas
   const redrawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     // Clear canvas maintaining transform
@@ -139,11 +139,11 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
     ctx.restore();
 
     // Signature visual stroke style on pad
-    ctx.strokeStyle = "#050608";
-    ctx.fillStyle = "#050608";
+    ctx.strokeStyle = '#050608';
+    ctx.fillStyle = '#050608';
     ctx.lineWidth = 3;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
     strokesRef.current.forEach((stroke) => {
       if (stroke.length === 0) return;
@@ -189,7 +189,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
     canvas.style.width = `${displayWidth}px`;
     canvas.style.height = `${displayHeight}px`;
 
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
@@ -199,7 +199,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
 
   // Setup ResizeObserver for robust layout adaptation on mobile orientation / keyboards
   useEffect(() => {
-    if (activeMethod !== "draw") return;
+    if (activeMethod !== 'draw') return;
 
     const container = containerRef.current;
     if (!container) return;
@@ -211,119 +211,110 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
     });
     resizeObserver.observe(container);
 
-    window.addEventListener("resize", resizeAndSetupCanvas);
-    window.addEventListener("orientationchange", resizeAndSetupCanvas);
+    window.addEventListener('resize', resizeAndSetupCanvas);
+    window.addEventListener('orientationchange', resizeAndSetupCanvas);
 
     return () => {
       resizeObserver.disconnect();
-      window.removeEventListener("resize", resizeAndSetupCanvas);
-      window.removeEventListener("orientationchange", resizeAndSetupCanvas);
+      window.removeEventListener('resize', resizeAndSetupCanvas);
+      window.removeEventListener('orientationchange', resizeAndSetupCanvas);
     };
   }, [activeMethod, resizeAndSetupCanvas]);
 
   // Direct calibrated coordinates calculation
-  const getCanvasCoordinates = useCallback(
-    (e: MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent): Point | null => {
-      const canvas = canvasRef.current;
-      if (!canvas) return null;
-      const rect = canvas.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0) return null;
+  const getCanvasCoordinates = useCallback((e: MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent): Point | null => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return null;
 
-      let clientX = 0;
-      let clientY = 0;
+    let clientX = 0;
+    let clientY = 0;
 
-      if ("touches" in e && e.touches && e.touches.length > 0) {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
-      } else if ("changedTouches" in e && e.changedTouches && e.changedTouches.length > 0) {
-        clientX = e.changedTouches[0].clientX;
-        clientY = e.changedTouches[0].clientY;
-      } else if ("clientX" in e && "clientY" in e) {
-        clientX = (e as MouseEvent).clientX;
-        clientY = (e as MouseEvent).clientY;
-      } else {
-        return null;
-      }
+    if ('touches' in e && e.touches && e.touches.length > 0) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    } else if ('changedTouches' in e && e.changedTouches && e.changedTouches.length > 0) {
+      clientX = e.changedTouches[0].clientX;
+      clientY = e.changedTouches[0].clientY;
+    } else if ('clientX' in e && 'clientY' in e) {
+      clientX = (e as MouseEvent).clientX;
+      clientY = (e as MouseEvent).clientY;
+    } else {
+      return null;
+    }
 
-      // Precise canvas-local coordinates accounting for rect position and CSS scaling
-      const scaleX = canvas.clientWidth > 0 ? canvas.clientWidth / rect.width : 1;
-      const scaleY = canvas.clientHeight > 0 ? canvas.clientHeight / rect.height : 1;
+    // Precise canvas-local coordinates accounting for rect position and CSS scaling
+    const scaleX = canvas.clientWidth > 0 ? canvas.clientWidth / rect.width : 1;
+    const scaleY = canvas.clientHeight > 0 ? canvas.clientHeight / rect.height : 1;
 
-      const x = (clientX - rect.left) * scaleX;
-      const y = (clientY - rect.top) * scaleY;
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
 
-      // Constrain within visible canvas
-      return {
-        x: Math.max(0, Math.min(x, canvas.clientWidth)),
-        y: Math.max(0, Math.min(y, canvas.clientHeight)),
-      };
-    },
-    [],
-  );
+    // Constrain within visible canvas
+    return {
+      x: Math.max(0, Math.min(x, canvas.clientWidth)),
+      y: Math.max(0, Math.min(y, canvas.clientHeight)),
+    };
+  }, []);
 
   // Drawing start handler
-  const handleStart = useCallback(
-    (e: MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent) => {
-      if (disabled) return;
-      const pt = getCanvasCoordinates(e);
-      if (!pt) return;
+  const handleStart = useCallback((e: MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent) => {
+    if (disabled) return;
+    const pt = getCanvasCoordinates(e);
+    if (!pt) return;
 
-      isDrawingRef.current = true;
-      setIsDrawing(true);
-      setError(null);
-      setSaveSuccess(false);
+    isDrawingRef.current = true;
+    setIsDrawing(true);
+    setError(null);
+    setSaveSuccess(false);
 
-      currentStrokeRef.current = [pt];
+    currentStrokeRef.current = [pt];
 
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-      ctx.strokeStyle = "#050608";
-      ctx.fillStyle = "#050608";
-      ctx.lineWidth = 3;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
+    ctx.strokeStyle = '#050608';
+    ctx.fillStyle = '#050608';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
-      ctx.beginPath();
-      ctx.arc(pt.x, pt.y, 1.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(pt.x, pt.y);
-    },
-    [disabled, getCanvasCoordinates],
-  );
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(pt.x, pt.y);
+  }, [disabled, getCanvasCoordinates]);
 
   // Drawing move handler
-  const handleMove = useCallback(
-    (e: MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent) => {
-      if (!isDrawingRef.current || disabled) return;
-      const pt = getCanvasCoordinates(e);
-      if (!pt) return;
+  const handleMove = useCallback((e: MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent) => {
+    if (!isDrawingRef.current || disabled) return;
+    const pt = getCanvasCoordinates(e);
+    if (!pt) return;
 
-      currentStrokeRef.current.push(pt);
+    currentStrokeRef.current.push(pt);
 
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-      const stroke = currentStrokeRef.current;
-      if (stroke.length > 2) {
-        const p1 = stroke[stroke.length - 2];
-        const p2 = stroke[stroke.length - 1];
-        const midPointX = (p1.x + p2.x) / 2;
-        const midPointY = (p1.y + p2.y) / 2;
-        ctx.quadraticCurveTo(p1.x, p1.y, midPointX, midPointY);
-        ctx.stroke();
-      } else if (stroke.length === 2) {
-        ctx.lineTo(pt.x, pt.y);
-        ctx.stroke();
-      }
-    },
-    [disabled, getCanvasCoordinates],
-  );
+    const stroke = currentStrokeRef.current;
+    if (stroke.length > 2) {
+      const p1 = stroke[stroke.length - 2];
+      const p2 = stroke[stroke.length - 1];
+      const midPointX = (p1.x + p2.x) / 2;
+      const midPointY = (p1.y + p2.y) / 2;
+      ctx.quadraticCurveTo(p1.x, p1.y, midPointX, midPointY);
+      ctx.stroke();
+    } else if (stroke.length === 2) {
+      ctx.lineTo(pt.x, pt.y);
+      ctx.stroke();
+    }
+  }, [disabled, getCanvasCoordinates]);
 
   // Drawing end handler (Direct application)
   const handleEnd = useCallback(() => {
@@ -348,7 +339,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
   // Attach native non-passive touch listeners to guarantee zero lag and NO page scrolling while drawing
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas || activeMethod !== "draw") return;
+    if (!canvas || activeMethod !== 'draw') return;
 
     const onTouchStart = (e: TouchEvent) => {
       e.preventDefault();
@@ -370,16 +361,16 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
       handleEnd();
     };
 
-    canvas.addEventListener("touchstart", onTouchStart, { passive: false });
-    canvas.addEventListener("touchmove", onTouchMove, { passive: false });
-    canvas.addEventListener("touchend", onTouchEnd, { passive: false });
-    canvas.addEventListener("touchcancel", onTouchCancel, { passive: false });
+    canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', onTouchMove, { passive: false });
+    canvas.addEventListener('touchend', onTouchEnd, { passive: false });
+    canvas.addEventListener('touchcancel', onTouchCancel, { passive: false });
 
     return () => {
-      canvas.removeEventListener("touchstart", onTouchStart);
-      canvas.removeEventListener("touchmove", onTouchMove);
-      canvas.removeEventListener("touchend", onTouchEnd);
-      canvas.removeEventListener("touchcancel", onTouchCancel);
+      canvas.removeEventListener('touchstart', onTouchStart);
+      canvas.removeEventListener('touchmove', onTouchMove);
+      canvas.removeEventListener('touchend', onTouchEnd);
+      canvas.removeEventListener('touchcancel', onTouchCancel);
     };
   }, [activeMethod, handleStart, handleMove, handleEnd]);
 
@@ -414,7 +405,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
   // Explicit Save / Confirm button (Provides instant feedback)
   const handleExplicitSave = () => {
     if (strokesRef.current.length === 0) {
-      setError("Please draw your signature before saving.");
+      setError('Please draw your signature before saving.');
       return;
     }
     const transparentDataUrl = exportTransparentSignature(strokesRef.current);
@@ -433,12 +424,12 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
     if (!file) return;
 
     if (!ALLOWED_SIG_TYPES.includes(file.type.toLowerCase())) {
-      setError("Unsupported signature format. Please upload JPG, JPEG, PNG, or WEBP.");
+      setError('Unsupported signature format. Please upload JPG, JPEG, PNG, or WEBP.');
       return;
     }
 
     if (file.size > MAX_SIG_SIZE) {
-      setError("Signature file is too large. Maximum allowed size is 10MB.");
+      setError('Signature file is too large. Maximum allowed size is 10MB.');
       return;
     }
 
@@ -453,7 +444,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
     reader.readAsDataURL(file);
 
     if (uploadInputRef.current) {
-      uploadInputRef.current.value = "";
+      uploadInputRef.current.value = '';
     }
   };
 
@@ -494,13 +485,13 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
             <button
               type="button"
               onClick={() => {
-                setActiveMethod("draw");
+                setActiveMethod('draw');
                 setError(null);
               }}
               className={`px-3 py-1 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer min-h-[32px] ${
-                activeMethod === "draw"
-                  ? "bg-[#101010] text-white shadow-xs"
-                  : "text-[#101010]/70 hover:text-[#101010]"
+                activeMethod === 'draw'
+                  ? 'bg-[#101010] text-white shadow-xs'
+                  : 'text-[#101010]/70 hover:text-[#101010]'
               }`}
             >
               <PenTool className="w-3.5 h-3.5" />
@@ -510,13 +501,13 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
             <button
               type="button"
               onClick={() => {
-                setActiveMethod("upload");
+                setActiveMethod('upload');
                 setError(null);
               }}
               className={`px-3 py-1 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer min-h-[32px] ${
-                activeMethod === "upload"
-                  ? "bg-[#101010] text-white shadow-xs"
-                  : "text-[#101010]/70 hover:text-[#101010]"
+                activeMethod === 'upload'
+                  ? 'bg-[#101010] text-white shadow-xs'
+                  : 'text-[#101010]/70 hover:text-[#101010]'
               }`}
             >
               <Upload className="w-3.5 h-3.5" />
@@ -526,12 +517,12 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
         </div>
 
         {/* DRAW MODE (Calibrated touch canvas with instant direct apply & explicit controls) */}
-        {activeMethod === "draw" ? (
+        {activeMethod === 'draw' ? (
           <div className="space-y-3">
             <div
               ref={containerRef}
               className="relative bg-white rounded-2xl overflow-hidden border border-[#C8C2BE] shadow-xs select-none h-36 sm:h-44"
-              style={{ touchAction: "none" }}
+              style={{ touchAction: 'none' }}
             >
               <canvas
                 ref={canvasRef}
@@ -540,7 +531,7 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
                 onMouseUp={handleEnd}
                 onMouseLeave={handleEnd}
                 className="w-full h-full cursor-crosshair block"
-                style={{ touchAction: "none" }}
+                style={{ touchAction: 'none' }}
               />
 
               {/* Signature Baseline Guide */}
@@ -551,7 +542,9 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
 
               {/* Top status indicator */}
               <div className="absolute top-2.5 left-3 pointer-events-none text-[10px] font-sans flex items-center gap-1.5">
-                {strokeCount > 0 ? null : (
+                {strokeCount > 0 ? (
+                  null
+                ) : (
                   <span className="text-slate-500 font-medium flex items-center gap-1">
                     <PenTool className="w-3 h-3 text-[#101010]" />
                     <span>Touch or click to sign (tracks finger directly)</span>
@@ -597,8 +590,8 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
                   disabled={disabled || strokeCount === 0}
                   className={`min-h-[38px] py-1.5 px-3.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 ${
                     saveSuccess
-                      ? "bg-emerald-700 text-white shadow-md"
-                      : "bg-[#101010] hover:bg-[#252525] text-white disabled:opacity-40"
+                      ? 'bg-emerald-700 text-white shadow-md'
+                      : 'bg-[#101010] hover:bg-[#252525] text-white disabled:opacity-40'
                   }`}
                   title="Save signature stroke"
                 >
@@ -618,7 +611,9 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
 
               {/* Direct status badge */}
               <div className="text-[11px] text-[#101010]/70 font-semibold flex items-center gap-1.5 ml-auto">
-                {value ? null : (
+                {value ? (
+                  null
+                ) : (
                   <span className="text-[#101010]/60 font-medium">Ready to sign</span>
                 )}
               </div>
@@ -636,9 +631,9 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
                     className="absolute inset-0 opacity-15 pointer-events-none"
                     style={{
                       backgroundImage:
-                        "linear-gradient(45deg, #000 25%, transparent 25%), linear-gradient(-45deg, #000 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #000 75%), linear-gradient(-45deg, transparent 75%, #000 75%)",
-                      backgroundSize: "16px 16px",
-                      backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
+                        'linear-gradient(45deg, #000 25%, transparent 25%), linear-gradient(-45deg, #000 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #000 75%), linear-gradient(-45deg, transparent 75%, #000 75%)',
+                      backgroundSize: '16px 16px',
+                      backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
                     }}
                   />
 
@@ -694,7 +689,9 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
                   <div className="w-12 h-12 rounded-2xl bg-[#E7E2DE] border border-[#C8C2BE] group-hover:border-[#101010] flex items-center justify-center mb-2.5 shadow-xs">
                     <Upload className="w-5 h-5 text-[#101010] group-hover:scale-110 transition-transform" />
                   </div>
-                  <h4 className="text-xs font-bold text-[#101010]">Upload Signature Image File</h4>
+                  <h4 className="text-xs font-bold text-[#101010]">
+                    Upload Signature Image File
+                  </h4>
                   <p className="text-[11px] text-[#101010]/70 mt-0.5 font-medium">
                     PNG, JPG, JPEG, or WEBP. If signature has no background, it will not be altered.
                   </p>
@@ -725,3 +722,4 @@ export const SignaturePad: React.FC<SignaturePadProps> = ({
     </div>
   );
 };
+

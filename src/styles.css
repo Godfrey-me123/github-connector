@@ -156,29 +156,26 @@
 }
 
 :root {
-  --bg-primary: #d8d2ce;
-  --bg-secondary: #e7e2de;
+  --bg-primary: #D8D2CE;
+  --bg-secondary: #E7E2DE;
   --text-primary: #101010;
   --text-secondary: rgba(16, 16, 16, 0.75);
-  --accent-nida: #b5a5ff;
-  --accent-urgent: #ff6839;
-  --accent-highlight: #ff9a5a;
+  --accent-nida: #B5A5FF;
+  --accent-urgent: #FF6839;
+  --accent-highlight: #FF9A5A;
 }
 
-.dark,
-[data-theme="dark"] {
-  --bg-primary: #14171a;
-  --bg-secondary: #1e2328;
-  --text-primary: #f3f4f6;
+.dark, [data-theme="dark"] {
+  --bg-primary: #14171A;
+  --bg-secondary: #1E2328;
+  --text-primary: #F3F4F6;
   --text-secondary: rgba(243, 244, 246, 0.75);
-  --accent-nida: #8b78ea;
-  --accent-urgent: #ea580c;
-  --accent-highlight: #f97316;
+  --accent-nida: #8B78EA;
+  --accent-urgent: #EA580C;
+  --accent-highlight: #F97316;
 }
 
-*,
-*::before,
-*::after {
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
@@ -204,15 +201,13 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   -webkit-overflow-scrolling: touch;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   box-sizing: border-box;
 }
 
-.dark body,
-body.dark {
-  background-color: #14171a;
-  color: #f3f4f6;
+.dark body, body.dark {
+  background-color: #14171A;
+  color: #F3F4F6;
 }
 
 #root {
@@ -227,15 +222,12 @@ body.dark {
 }
 
 .dark #root {
-  background-color: #14171a;
-  color: #f3f4f6;
+  background-color: #14171A;
+  color: #F3F4F6;
 }
 
 /* Prevent double-tap browser zoom on canvas buttons */
-button,
-select,
-input,
-textarea {
+button, select, input, textarea {
   touch-action: manipulation;
 }
 
@@ -254,8 +246,7 @@ textarea {
 }
 
 /* Search & Filter Bar Styling */
-.search-input,
-.filter-chip {
+.search-input, .filter-chip {
   background-color: var(--bg-secondary);
   border: 1px solid rgba(16, 16, 16, 0.08);
   border-radius: 20px;
@@ -264,20 +255,19 @@ textarea {
   color: var(--text-primary);
 }
 
-.dark .search-input,
-.dark .filter-chip {
+.dark .search-input, .dark .filter-chip {
   border-color: rgba(255, 255, 255, 0.12);
-  background-color: #1e2328;
-  color: #f3f4f6;
+  background-color: #1E2328;
+  color: #F3F4F6;
 }
 
 .filter-chip.active {
   background-color: #101010;
-  color: #ffffff;
+  color: #FFFFFF;
 }
 
 .dark .filter-chip.active {
-  background-color: #f3f4f6;
+  background-color: #F3F4F6;
   color: #101010;
 }
 
@@ -297,40 +287,40 @@ textarea {
 
 /* Default / Inactive Card Surface */
 .card-default {
-  background-color: #e7e2de;
+  background-color: #E7E2DE;
 }
 
 .dark .card-default {
-  background-color: #1e2328;
+  background-color: #1E2328;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* Featured Service Cards (Color Variations) */
 .card-nida {
-  background-color: #b5a5ff; /* Soft Lavender/Periwinkle */
+  background-color: #B5A5FF; /* Soft Lavender/Periwinkle */
 }
 
 .dark .card-nida {
-  background-color: #2d2845;
-  border: 1px solid #4d4178;
+  background-color: #2D2845;
+  border: 1px solid #4D4178;
 }
 
 .card-urgent {
-  background-color: #ff6839; /* Coral Orange */
+  background-color: #FF6839; /* Coral Orange */
 }
 
 .dark .card-urgent {
-  background-color: #381f17;
-  border: 1px solid #6e2d1b;
+  background-color: #381F17;
+  border: 1px solid #6E2D1B;
 }
 
 .card-highlight {
-  background-color: #ff9a5a; /* Soft Peach/Orange */
+  background-color: #FF9A5A; /* Soft Peach/Orange */
 }
 
 .dark .card-highlight {
-  background-color: #3b2416;
-  border: 1px solid #733e1d;
+  background-color: #3B2416;
+  border: 1px solid #733E1D;
 }
 
 /* Typography Scale Up */
@@ -342,7 +332,7 @@ textarea {
 }
 
 .dark .card-title {
-  color: #f3f4f6;
+  color: #F3F4F6;
 }
 
 .card-description {
@@ -360,7 +350,7 @@ textarea {
   width: 44px;
   height: 44px;
   background-color: #101010;
-  color: #ffffff;
+  color: #FFFFFF;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -371,7 +361,7 @@ textarea {
 }
 
 .dark .card-arrow-btn {
-  background-color: #f3f4f6;
+  background-color: #F3F4F6;
   color: #101010;
 }
 

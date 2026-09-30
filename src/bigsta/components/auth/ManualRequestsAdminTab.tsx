@@ -1,28 +1,15 @@
-import React, { useState } from "react";
-import {
-  Phone,
-  MessageSquare,
-  User,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  Trash2,
-  Check,
-  AlertCircle,
-  ExternalLink,
-  Shield,
-} from "lucide-react";
-import { useTemplateStore, ManualRequestItem } from "../../store/useTemplateStore";
+import React, { useState } from 'react';
+import { Phone, MessageSquare, User, Calendar, CheckCircle2, Clock, Trash2, Check, AlertCircle, ExternalLink, Shield } from 'lucide-react';
+import { useTemplateStore, ManualRequestItem } from '../../store/useTemplateStore';
 
 export const ManualRequestsAdminTab: React.FC = () => {
-  const { manualRequests, updateManualRequestStatus, deleteManualRequest, currentAuthKey } =
-    useTemplateStore();
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const { manualRequests, updateManualRequestStatus, deleteManualRequest, currentAuthKey } = useTemplateStore();
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const filteredRequests = manualRequests.filter((req) => {
-    const matchesStatus = filterStatus === "all" || req.status === filterStatus;
-    const callNum = req.normalCallNumber || req.normalNumber || "";
+    const matchesStatus = filterStatus === 'all' || req.status === filterStatus;
+    const callNum = req.normalCallNumber || req.normalNumber || '';
     const matchesSearch =
       req.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       req.serviceName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -31,38 +18,18 @@ export const ManualRequestsAdminTab: React.FC = () => {
     return matchesStatus && matchesSearch;
   });
 
-  const getStatusBadge = (status: ManualRequestItem["status"]) => {
+  const getStatusBadge = (status: ManualRequestItem['status']) => {
     switch (status) {
-      case "PENDING":
-        return (
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300">
-            PENDING
-          </span>
-        );
-      case "PROCESSING":
-        return (
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-900 border border-blue-300">
-            PROCESSING
-          </span>
-        );
-      case "APPROVED":
-        return (
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-indigo-100 text-indigo-900 border border-indigo-300">
-            APPROVED
-          </span>
-        );
-      case "COMPLETED":
-        return (
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-900 border border-emerald-300">
-            COMPLETED
-          </span>
-        );
-      case "REJECTED":
-        return (
-          <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-900 border border-rose-300">
-            REJECTED
-          </span>
-        );
+      case 'PENDING':
+        return <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300">PENDING</span>;
+      case 'PROCESSING':
+        return <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-900 border border-blue-300">PROCESSING</span>;
+      case 'APPROVED':
+        return <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-indigo-100 text-indigo-900 border border-indigo-300">APPROVED</span>;
+      case 'COMPLETED':
+        return <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-900 border border-emerald-300">COMPLETED</span>;
+      case 'REJECTED':
+        return <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-900 border border-rose-300">REJECTED</span>;
       default:
         return null;
     }
@@ -77,8 +44,7 @@ export const ManualRequestsAdminTab: React.FC = () => {
             Manual Application Requests ({manualRequests.length})
           </h3>
           <p className="text-xs text-gray-500 mt-0.5">
-            Manage incoming manual service applications submitted by users for offline or assisted
-            processing.
+            Manage incoming manual service applications submitted by users for offline or assisted processing.
           </p>
         </div>
 
@@ -111,8 +77,7 @@ export const ManualRequestsAdminTab: React.FC = () => {
           </div>
           <h4 className="text-sm font-bold text-gray-800">No Manual Requests Found</h4>
           <p className="text-xs text-gray-500 max-w-sm mx-auto">
-            When users submit manual application requests from service info modals, they will appear
-            here with contact details and timestamps.
+            When users submit manual application requests from service info modals, they will appear here with contact details and timestamps.
           </p>
         </div>
       ) : (
@@ -138,13 +103,10 @@ export const ManualRequestsAdminTab: React.FC = () => {
                 <div className="flex items-center gap-4 text-xs font-medium text-gray-600 flex-wrap">
                   <div className="flex items-center gap-1.5">
                     <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>
-                      WhatsApp:{" "}
-                      <strong className="text-gray-900">{req.whatsappNumber || "N/A"}</strong>
-                    </span>
+                    <span>WhatsApp: <strong className="text-gray-900">{req.whatsappNumber || 'N/A'}</strong></span>
                     {req.whatsappNumber && (
                       <a
-                        href={`https://wa.me/${req.whatsappNumber.replace(/[^0-9]/g, "")}?text=Hello%20${encodeURIComponent(req.fullName)},%20regarding%20your%20manual%20application%20for%20${encodeURIComponent(req.serviceName)}:`}
+                        href={`https://wa.me/${req.whatsappNumber.replace(/[^0-9]/g, '')}?text=Hello%20${encodeURIComponent(req.fullName)},%20regarding%20your%20manual%20application%20for%20${encodeURIComponent(req.serviceName)}:`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-[11px] text-emerald-600 hover:underline inline-flex items-center gap-0.5 ml-1 font-bold"
@@ -156,12 +118,7 @@ export const ManualRequestsAdminTab: React.FC = () => {
 
                   <div className="flex items-center gap-1.5">
                     <Phone className="w-3.5 h-3.5 text-blue-600" />
-                    <span>
-                      Call:{" "}
-                      <strong className="text-gray-900">
-                        {req.normalCallNumber || req.normalNumber || "N/A"}
-                      </strong>
-                    </span>
+                    <span>Call: <strong className="text-gray-900">{req.normalCallNumber || req.normalNumber || 'N/A'}</strong></span>
                   </div>
                 </div>
 

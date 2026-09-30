@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { LucideIcon, ChevronDown } from "lucide-react";
+import React, { useState } from 'react';
+import { LucideIcon, ChevronDown } from 'lucide-react';
 
 export interface SelectOption {
   value: string;
@@ -22,14 +22,14 @@ export const FloatingSelect: React.FC<FloatingSelectProps> = ({
   helperText,
   value,
   id,
-  className = "",
+  className = '',
   disabled,
   onFocus,
   onBlur,
   ...props
 }) => {
   const [isFocused, setIsFocused] = useState(false);
-  const selectId = id || `floating-select-${label.toLowerCase().replace(/\s+/g, "-")}`;
+  const selectId = id || `floating-select-${label.toLowerCase().replace(/\s+/g, '-')}`;
 
   const hasValue = value !== undefined && value !== null && value.toString().length > 0;
   const isFloating = isFocused || hasValue;
@@ -45,20 +45,20 @@ export const FloatingSelect: React.FC<FloatingSelectProps> = ({
   };
 
   const borderColorClass = error
-    ? "border-rose-500 focus-within:border-rose-500 focus-within:ring-2 focus-within:ring-rose-500/20"
-    : "border-[#C8C2BE] hover:border-[#101010] focus-within:border-[#101010] focus-within:ring-2 focus-within:ring-[#101010]/10";
+    ? 'border-rose-500 focus-within:border-rose-500 focus-within:ring-2 focus-within:ring-rose-500/20'
+    : 'border-[#C8C2BE] hover:border-[#101010] focus-within:border-[#101010] focus-within:ring-2 focus-within:ring-[#101010]/10';
 
   const labelColorClass = error
-    ? "text-rose-600"
+    ? 'text-rose-600'
     : isFocused
-      ? "text-[#101010]"
-      : "text-[#101010]/60";
+    ? 'text-[#101010]'
+    : 'text-[#101010]/60';
 
   return (
     <div className="w-full space-y-1.5 font-sans">
       <div
         className={`relative flex items-center bg-[#FFFFFF] border rounded-xl transition-all duration-200 ${borderColorClass} ${
-          disabled ? "opacity-50 cursor-not-allowed bg-[#E7E2DE]" : ""
+          disabled ? 'opacity-50 cursor-not-allowed bg-[#E7E2DE]' : ''
         }`}
       >
         {/* Leading Icon */}
@@ -66,7 +66,7 @@ export const FloatingSelect: React.FC<FloatingSelectProps> = ({
           <div className="pl-3.5 pr-1 flex items-center pointer-events-none text-[#101010]/60">
             <Icon
               className={`w-4 h-4 transition-colors duration-200 ${
-                isFocused ? "text-[#101010]" : error ? "text-rose-600" : "text-[#101010]/50"
+                isFocused ? 'text-[#101010]' : error ? 'text-rose-600' : 'text-[#101010]/50'
               }`}
             />
           </div>
@@ -79,7 +79,7 @@ export const FloatingSelect: React.FC<FloatingSelectProps> = ({
             className={`absolute left-3.5 transition-all duration-200 pointer-events-none select-none font-medium tracking-wide ${
               isFloating
                 ? `top-1.5 text-[10px] uppercase font-bold ${labelColorClass}`
-                : "top-3.5 text-sm text-[#101010]/60"
+                : 'top-3.5 text-sm text-[#101010]/60'
             }`}
           >
             {label}
@@ -98,11 +98,7 @@ export const FloatingSelect: React.FC<FloatingSelectProps> = ({
               Select {label}
             </option>
             {options.map((opt) => (
-              <option
-                key={opt.value}
-                value={opt.value}
-                className="bg-[#FFFFFF] text-[#101010] py-1 font-medium"
-              >
+              <option key={opt.value} value={opt.value} className="bg-[#FFFFFF] text-[#101010] py-1 font-medium">
                 {opt.label}
               </option>
             ))}

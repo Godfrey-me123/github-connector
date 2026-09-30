@@ -1,5 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   Sliders,
   Type,
@@ -42,18 +42,18 @@ import {
   CheckCircle2,
   Sun,
   Image as ImageIcon,
-} from "lucide-react";
-import { useTemplateStore } from "../store/useTemplateStore";
-import { convertFromMm, convertToMm } from "../utils/units";
-import { getTemplateValidationIssues, ValidationIssue } from "../utils/templateMappingEngine";
+} from 'lucide-react';
+import { useTemplateStore } from '../store/useTemplateStore';
+import { convertFromMm, convertToMm } from '../utils/units';
+import { getTemplateValidationIssues, ValidationIssue } from '../utils/templateMappingEngine';
 import {
   FONT_LIBRARY,
   FontScope,
   getAvailableWeightsForFont,
   getClosestValidWeight,
-} from "../utils/fonts";
-import { FontChangeModal } from "./FontChangeModal";
-import { WeightChangeModal } from "./WeightChangeModal";
+} from '../utils/fonts';
+import { FontChangeModal } from './FontChangeModal';
+import { WeightChangeModal } from './WeightChangeModal';
 
 interface CollapsibleSectionProps {
   id: string;
@@ -134,7 +134,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
   };
 
   const [isFontModalOpen, setIsFontModalOpen] = useState(false);
-  const [pendingFont, setPendingFont] = useState("Arial Black");
+  const [pendingFont, setPendingFont] = useState('Arial Black');
   const [pendingLayerId, setPendingLayerId] = useState<string | undefined>(undefined);
 
   const [isWeightModalOpen, setIsWeightModalOpen] = useState(false);
@@ -182,30 +182,27 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
   };
 
   const variableOptions = [
-    { label: "First Name + Middle Name", val: "{{first_middle_name}}" },
-    { label: "First Name", val: "{{first_name}}" },
-    { label: "Middle Name", val: "{{middle_name}}" },
-    { label: "Last Name", val: "{{last_name}}" },
-    { label: "ID Number", val: "{{id_number}}" },
-    { label: "Date of Birth", val: "{{dob}}" },
-    { label: "Gender / Sex", val: "{{gender}}" },
-    { label: "Nationality", val: "{{nationality}}" },
-    { label: "Issue Date", val: "{{issue_date}}" },
-    { label: "Expiry Date", val: "{{expiry_date}}" },
-    { label: "Issuing Authority", val: "{{issuing_authority}}" },
-    { label: "Region / Residence", val: "{{region}}" },
-    { label: "PIN Number", val: "{{pin_number}}" },
-    { label: "Department / Role", val: "{{role}}" },
+    { label: 'First Name + Middle Name', val: '{{first_middle_name}}' },
+    { label: 'First Name', val: '{{first_name}}' },
+    { label: 'Middle Name', val: '{{middle_name}}' },
+    { label: 'Last Name', val: '{{last_name}}' },
+    { label: 'ID Number', val: '{{id_number}}' },
+    { label: 'Date of Birth', val: '{{dob}}' },
+    { label: 'Gender / Sex', val: '{{gender}}' },
+    { label: 'Nationality', val: '{{nationality}}' },
+    { label: 'Issue Date', val: '{{issue_date}}' },
+    { label: 'Expiry Date', val: '{{expiry_date}}' },
+    { label: 'Issuing Authority', val: '{{issuing_authority}}' },
+    { label: 'Region / Residence', val: '{{region}}' },
+    { label: 'PIN Number', val: '{{pin_number}}' },
+    { label: 'Department / Role', val: '{{role}}' },
   ];
 
-  if (!currentTemplate.side || !currentTemplate.side.toLowerCase().includes("back")) {
-    variableOptions.unshift({ label: "Front Field 9 (Categories)", val: "{{categories_field9}}" });
+  if (!currentTemplate.side || !currentTemplate.side.toLowerCase().includes('back')) {
+    variableOptions.unshift({ label: 'Front Field 9 (Categories)', val: '{{categories_field9}}' });
   }
-  if (currentTemplate.side && currentTemplate.side.toLowerCase().includes("back")) {
-    variableOptions.unshift({
-      label: "Back Categories Table",
-      val: "{{driving_licence_categories}}",
-    });
+  if (currentTemplate.side && currentTemplate.side.toLowerCase().includes('back')) {
+    variableOptions.unshift({ label: 'Back Categories Table', val: '{{driving_licence_categories}}' });
   }
 
   // Quick actions header for Save, Generate, and Export
@@ -215,11 +212,11 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
         onClick={handleSave}
         disabled={isSaving}
         className={`flex-1 py-1.5 px-2 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1.5 border shadow-xs ${
-          isSaving
-            ? "bg-[#E7E9EB] border-[#dadcdc] text-[#888888] cursor-not-allowed"
+          isSaving 
+            ? 'bg-[#E7E9EB] border-[#dadcdc] text-[#888888] cursor-not-allowed'
             : isSavedNotice
-              ? "bg-[#CEE9B9] border-[#CEE9B9] text-[#000000] font-bold cursor-pointer"
-              : "bg-[#FFFFFF] hover:bg-[#dadcdc] border-[#dadcdc] text-[#000000] cursor-pointer"
+            ? 'bg-[#CEE9B9] border-[#CEE9B9] text-[#000000] font-bold cursor-pointer'
+            : 'bg-[#FFFFFF] hover:bg-[#dadcdc] border-[#dadcdc] text-[#000000] cursor-pointer'
         }`}
         title="Save Template"
       >
@@ -228,7 +225,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
         ) : (
           <Save className="w-3.5 h-3.5 text-[#000000] shrink-0" />
         )}
-        <span>{isSaving ? "Saving..." : isSavedNotice ? "Saved!" : "Save"}</span>
+        <span>{isSaving ? 'Saving...' : isSavedNotice ? 'Saved!' : 'Save'}</span>
       </button>
 
       <button
@@ -265,7 +262,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
   // Helper container wrapper
   const renderPanelWrapper = (content: React.ReactNode) => {
     const validationIssues = getTemplateValidationIssues(currentTemplate);
-    const errorsCount = validationIssues.filter((i) => i.type === "error").length;
+    const errorsCount = validationIssues.filter((i) => i.type === 'error').length;
 
     const validationPanel = (
       <div className="border border-[#E7E9EB] rounded-xl bg-[#FFFFFF] overflow-hidden shadow-xs flex flex-col">
@@ -275,10 +272,10 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
           onClick={() => setIsValidationExpanded(!isValidationExpanded)}
           className={`w-full px-3 py-2 flex items-center justify-between transition-colors select-none cursor-pointer ${
             validationIssues.length === 0
-              ? "bg-[#F4FAF0] hover:bg-[#ebf5e6]"
+              ? 'bg-[#F4FAF0] hover:bg-[#ebf5e6]'
               : errorsCount > 0
-                ? "bg-red-50/50 hover:bg-red-50"
-                : "bg-amber-50/50 hover:bg-amber-50"
+                ? 'bg-red-50/50 hover:bg-red-50'
+                : 'bg-amber-50/50 hover:bg-amber-50'
           }`}
         >
           <div className="flex items-center gap-1.5 min-w-0">
@@ -290,18 +287,14 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
               <ShieldAlert className="w-3.5 h-3.5 text-amber-500 shrink-0" />
             )}
             <span className="text-[11px] font-bold text-[#000000] truncate">Integrity Guard</span>
-            <span
-              className={`text-[9px] px-1.5 py-0.2 rounded font-bold shrink-0 ${
-                validationIssues.length === 0
-                  ? "bg-[#CEE9B9] text-[#2d5713] border border-[#b8df9c]"
-                  : errorsCount > 0
-                    ? "bg-red-100 text-red-800 border border-red-200"
-                    : "bg-amber-100 text-amber-800 border border-amber-200"
-              }`}
-            >
-              {validationIssues.length === 0
-                ? "Verified"
-                : `${validationIssues.length} alert${validationIssues.length === 1 ? "" : "s"}`}
+            <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold shrink-0 ${
+              validationIssues.length === 0
+                ? 'bg-[#CEE9B9] text-[#2d5713] border border-[#b8df9c]'
+                : errorsCount > 0
+                  ? 'bg-red-100 text-red-800 border border-red-200'
+                  : 'bg-amber-100 text-amber-800 border border-amber-200'
+            }`}>
+              {validationIssues.length === 0 ? 'Verified' : `${validationIssues.length} alert${validationIssues.length === 1 ? '' : 's'}`}
             </span>
           </div>
           {isValidationExpanded ? (
@@ -318,22 +311,22 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
               <div className="text-[11px] text-[#2d5713] leading-relaxed flex items-start gap-1.5">
                 <Check className="w-3.5 h-3.5 text-[#43961b] shrink-0 mt-0.5" />
                 <div>
-                  <span className="font-bold block text-[#1a3809] mb-0.5">
-                    Template is render-safe
-                  </span>
+                  <span className="font-bold block text-[#1a3809] mb-0.5">Template is render-safe</span>
                   All dynamic variables match the NIDA profile. Zero injection errors detected.
                 </div>
               </div>
             ) : (
               <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                 {validationIssues.map((issue, idx) => {
-                  const isError = issue.type === "error";
-                  const layerObj = currentTemplate.layers.find((l) => l.id === issue.layerId);
+                  const isError = issue.type === 'error';
+                  const layerObj = currentTemplate.layers.find(l => l.id === issue.layerId);
                   return (
                     <div
                       key={`${issue.layerId}_${idx}`}
                       className={`p-2 rounded-lg border text-xs flex flex-col gap-1 ${
-                        isError ? "bg-red-50/20 border-red-100" : "bg-amber-50/20 border-amber-100"
+                        isError
+                          ? 'bg-red-50/20 border-red-100'
+                          : 'bg-amber-50/20 border-amber-100'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2 min-w-0">
@@ -351,14 +344,14 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                           {issue.layerType}
                         </span>
                       </div>
-
-                      <p className="text-slate-700 leading-snug text-[10px]">{issue.message}</p>
-
+                      
+                      <p className="text-slate-700 leading-snug text-[10px]">
+                        {issue.message}
+                      </p>
+                      
                       <div className="bg-white/80 border border-slate-100 p-1.5 rounded text-[9px] text-slate-600 space-y-1.5">
-                        <span className="block leading-tight text-[9px] font-medium text-slate-500">
-                          💡 {issue.suggestedFix}
-                        </span>
-
+                        <span className="block leading-tight text-[9px] font-medium text-slate-500">💡 {issue.suggestedFix}</span>
+                        
                         <div className="flex gap-1.5 flex-wrap pt-0.5">
                           <button
                             type="button"
@@ -367,24 +360,18 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                           >
                             Edit Layer
                           </button>
-
+                          
                           {issue.suggestedReplacement && (
                             <button
                               type="button"
                               onClick={() => {
                                 if (!layerObj) return;
-                                if (layerObj.type === "text") {
+                                if (layerObj.type === 'text') {
                                   const textLayer = layerObj as any;
-                                  const oldText = textLayer.text || "";
-                                  const newText = oldText.replace(
-                                    issue.variable,
-                                    issue.suggestedReplacement!,
-                                  );
+                                  const oldText = textLayer.text || '';
+                                  const newText = oldText.replace(issue.variable, issue.suggestedReplacement!);
                                   updateLayer(layerObj.id, { text: newText });
-                                } else if (
-                                  layerObj.type === "barcode" ||
-                                  layerObj.type === "qrcode"
-                                ) {
+                                } else if (layerObj.type === 'barcode' || layerObj.type === 'qrcode') {
                                   updateLayer(layerObj.id, { data: issue.suggestedReplacement });
                                 }
                               }}
@@ -394,22 +381,19 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                               Apply: {issue.suggestedReplacement}
                             </button>
                           )}
-
-                          {!issue.suggestedReplacement &&
-                            (issue.layerType === "placeholder" || issue.layerType === "image") && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  updateLayer(issue.layerId, {
-                                    name: `Cardholder ${issue.variable === "PHOTO" ? "Photo" : "Signature"}`,
-                                  });
-                                }}
-                                className="px-1.5 py-0.5 bg-[#CEE9B9] hover:opacity-90 text-[#000000] rounded text-[8px] font-bold transition-colors flex items-center gap-0.5 cursor-pointer border border-[#b8df9c]"
-                              >
-                                <Sparkles className="w-2.5 h-2.5 shrink-0 text-slate-800" />
-                                Auto-Bind {issue.variable}
-                              </button>
-                            )}
+                          
+                          {!issue.suggestedReplacement && (issue.layerType === 'placeholder' || issue.layerType === 'image') && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                updateLayer(issue.layerId, { name: `Cardholder ${issue.variable === 'PHOTO' ? 'Photo' : 'Signature'}` });
+                              }}
+                              className="px-1.5 py-0.5 bg-[#CEE9B9] hover:opacity-90 text-[#000000] rounded text-[8px] font-bold transition-colors flex items-center gap-0.5 cursor-pointer border border-[#b8df9c]"
+                            >
+                              <Sparkles className="w-2.5 h-2.5 shrink-0 text-slate-800" />
+                              Auto-Bind {issue.variable}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -434,7 +418,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
             onClose={() => setIsFontModalOpen(false)}
             onApply={handleApplyFont}
             selectedLayerName={selectedLayer?.name || (selectedLayer as any)?.text}
-            textLayers={currentTemplate.layers.filter((l) => l.type === "text")}
+            textLayers={currentTemplate.layers.filter((l) => l.type === 'text')}
           />
           <WeightChangeModal
             isOpen={isWeightModalOpen}
@@ -442,7 +426,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
             onClose={() => setIsWeightModalOpen(false)}
             onApply={handleApplyWeight}
             selectedLayerName={selectedLayer?.name || (selectedLayer as any)?.text}
-            textLayers={currentTemplate.layers.filter((l) => l.type === "text")}
+            textLayers={currentTemplate.layers.filter((l) => l.type === 'text')}
           />
         </div>
       );
@@ -454,9 +438,11 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
           {quickActionsHeader}
           {content}
         </div>
-
+        
         {/* Validation Panel anchored at bottom */}
-        <div className="shrink-0 border-t border-[#E7E9EB] pt-3 bg-white">{validationPanel}</div>
+        <div className="shrink-0 border-t border-[#E7E9EB] pt-3 bg-white">
+          {validationPanel}
+        </div>
 
         <FontChangeModal
           isOpen={isFontModalOpen}
@@ -464,7 +450,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
           onClose={() => setIsFontModalOpen(false)}
           onApply={handleApplyFont}
           selectedLayerName={selectedLayer?.name || (selectedLayer as any)?.text}
-          textLayers={currentTemplate.layers.filter((l) => l.type === "text")}
+          textLayers={currentTemplate.layers.filter((l) => l.type === 'text')}
         />
         <WeightChangeModal
           isOpen={isWeightModalOpen}
@@ -472,7 +458,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
           onClose={() => setIsWeightModalOpen(false)}
           onApply={handleApplyWeight}
           selectedLayerName={selectedLayer?.name || (selectedLayer as any)?.text}
-          textLayers={currentTemplate.layers.filter((l) => l.type === "text")}
+          textLayers={currentTemplate.layers.filter((l) => l.type === 'text')}
         />
       </aside>
     );
@@ -495,7 +481,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
             icon={<Square className="w-3.5 h-3.5 text-[#000000]" />}
             badge={`${currentTemplate.cardWidth} × ${currentTemplate.cardHeight} mm`}
             isOpen={openSections.cardSettings}
-            onToggle={() => toggleSection("cardSettings")}
+            onToggle={() => toggleSection('cardSettings')}
           >
             <div className="grid grid-cols-2 gap-2">
               <div>
@@ -537,12 +523,12 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
               <div className="flex items-center gap-2">
                 <input
                   type="color"
-                  value={currentTemplate.background?.color || "#ffffff"}
+                  value={currentTemplate.background?.color || '#ffffff'}
                   onChange={(e) =>
                     updateTemplateMeta({
                       background: {
                         ...currentTemplate.background,
-                        type: "color",
+                        type: 'color',
                         color: e.target.value,
                       },
                     })
@@ -550,7 +536,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                   className="w-8 h-8 rounded-lg border border-[#dadcdc] cursor-pointer bg-transparent"
                 />
                 <span className="font-mono text-[#000000] text-xs uppercase font-bold">
-                  {currentTemplate.background?.color || "#ffffff"}
+                  {currentTemplate.background?.color || '#ffffff'}
                 </span>
               </div>
             </div>
@@ -563,24 +549,18 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                     Template Active Status
                   </span>
                   <span className="text-[9px] text-[#555555]">
-                    {currentTemplate.isActive
-                      ? "Visible to users for generation"
-                      : "Hidden from user generation engine"}
+                    {currentTemplate.isActive ? 'Visible to users for generation' : 'Hidden from user generation engine'}
                   </span>
                 </div>
-                <div
-                  onClick={() =>
-                    toggleTemplateActive(currentTemplate.id, !currentTemplate.isActive)
-                  }
+                <div 
+                  onClick={() => toggleTemplateActive(currentTemplate.id, !currentTemplate.isActive)}
                   className={`relative inline-flex h-5 w-10 items-center rounded-full transition-all duration-300 ${
-                    currentTemplate.isActive
-                      ? "bg-blue-600 shadow-sm shadow-blue-600/30"
-                      : "bg-slate-300"
+                    currentTemplate.isActive ? 'bg-blue-600 shadow-sm shadow-blue-600/30' : 'bg-slate-300'
                   }`}
                 >
                   <span
                     className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform duration-300 ${
-                      currentTemplate.isActive ? "translate-x-5.5" : "translate-x-1"
+                      currentTemplate.isActive ? 'translate-x-5.5' : 'translate-x-1'
                     }`}
                   />
                 </div>
@@ -588,9 +568,8 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
               <div className="mt-2 p-1.5 bg-amber-50 border border-amber-100 rounded-md">
                 <p className="text-[9px] text-amber-800 leading-tight">
                   <AlertTriangle className="w-2.5 h-2.5 inline-block mr-1 -mt-0.5" />
-                  <strong>Rule:</strong> Activating this will automatically deactivate any previous
-                  active
-                  {currentTemplate.side?.toLowerCase().includes("back") ? " BACK " : " FRONT "}
+                  <strong>Rule:</strong> Activating this will automatically deactivate any previous active 
+                  {currentTemplate.side?.toLowerCase().includes('back') ? ' BACK ' : ' FRONT '} 
                   template for <strong>{currentTemplate.serviceId?.toUpperCase()}</strong>.
                 </p>
               </div>
@@ -602,7 +581,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
             id="templateFont"
             title="Batch Font & Boldness"
             icon={<Type className="w-3.5 h-3.5 text-[#000000]" />}
-            badge={`${currentTemplate.layers.filter((l) => l.type === "text").length} text layers`}
+            badge={`${currentTemplate.layers.filter((l) => l.type === 'text').length} text layers`}
             isOpen={true}
             onToggle={() => {}}
           >
@@ -620,7 +599,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                 onChange={(e) => {
                   if (e.target.value) {
                     handleFontSelectRequest(e.target.value, undefined);
-                    e.target.value = "";
+                    e.target.value = '';
                   }
                 }}
                 className="w-full px-2.5 py-2 bg-[#E7E9EB] border border-[#dadcdc] rounded-lg text-xs font-semibold text-[#000000] cursor-pointer focus:outline-none focus:border-[#000000]"
@@ -648,7 +627,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                     if (!isNaN(weightVal)) {
                       handleWeightSelectRequest(weightVal, undefined);
                     }
-                    e.target.value = "";
+                    e.target.value = '';
                   }
                 }}
                 className="w-full px-2.5 py-2 bg-[#E7E9EB] border border-[#dadcdc] rounded-lg text-xs font-semibold text-[#000000] cursor-pointer focus:outline-none focus:border-[#000000]"
@@ -697,11 +676,11 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
             title="Align Selection"
             icon={<AlignStartVertical className="w-3.5 h-3.5 text-[#000000]" />}
             isOpen={openSections.alignTools}
-            onToggle={() => toggleSection("alignTools")}
+            onToggle={() => toggleSection('alignTools')}
           >
             <div className="grid grid-cols-3 gap-1 bg-[#E7E9EB] p-1.5 rounded-lg border border-[#dadcdc]">
               <button
-                onClick={() => alignSelectedLayers("left")}
+                onClick={() => alignSelectedLayers('left')}
                 className="p-2 hover:bg-[#dadcdc] rounded flex flex-col items-center gap-1 text-[#000000] cursor-pointer"
                 title="Align Left"
               >
@@ -709,7 +688,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                 <span className="text-[9px]">Left</span>
               </button>
               <button
-                onClick={() => alignSelectedLayers("center")}
+                onClick={() => alignSelectedLayers('center')}
                 className="p-2 hover:bg-[#dadcdc] rounded flex flex-col items-center gap-1 text-[#000000] cursor-pointer"
                 title="Align Center"
               >
@@ -717,7 +696,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                 <span className="text-[9px]">Center</span>
               </button>
               <button
-                onClick={() => alignSelectedLayers("right")}
+                onClick={() => alignSelectedLayers('right')}
                 className="p-2 hover:bg-[#dadcdc] rounded flex flex-col items-center gap-1 text-[#000000] cursor-pointer"
                 title="Align Right"
               >
@@ -726,7 +705,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
               </button>
 
               <button
-                onClick={() => alignSelectedLayers("top")}
+                onClick={() => alignSelectedLayers('top')}
                 className="p-2 hover:bg-[#dadcdc] rounded flex flex-col items-center gap-1 text-[#000000] cursor-pointer"
                 title="Align Top"
               >
@@ -734,7 +713,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                 <span className="text-[9px]">Top</span>
               </button>
               <button
-                onClick={() => alignSelectedLayers("middle")}
+                onClick={() => alignSelectedLayers('middle')}
                 className="p-2 hover:bg-[#dadcdc] rounded flex flex-col items-center gap-1 text-[#000000] cursor-pointer"
                 title="Align Middle"
               >
@@ -742,7 +721,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                 <span className="text-[9px]">Middle</span>
               </button>
               <button
-                onClick={() => alignSelectedLayers("bottom")}
+                onClick={() => alignSelectedLayers('bottom')}
                 className="p-2 hover:bg-[#dadcdc] rounded flex flex-col items-center gap-1 text-[#000000] cursor-pointer"
                 title="Align Bottom"
               >
@@ -762,7 +741,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
           >
             <div className="grid grid-cols-2 gap-1.5 bg-[#E7E9EB] p-1.5 rounded-lg border border-[#dadcdc]">
               <button
-                onClick={() => distributeSelectedLayers("horizontal")}
+                onClick={() => distributeSelectedLayers('horizontal')}
                 className="p-2 hover:bg-[#dadcdc] rounded flex items-center justify-center gap-2 text-[#000000] cursor-pointer"
                 title="Equal Horizontal Spacing"
               >
@@ -770,7 +749,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                 <span className="text-[10px] font-medium">Horizontal</span>
               </button>
               <button
-                onClick={() => distributeSelectedLayers("vertical")}
+                onClick={() => distributeSelectedLayers('vertical')}
                 className="p-2 hover:bg-[#dadcdc] rounded flex items-center justify-center gap-2 text-[#000000] cursor-pointer"
                 title="Equal Vertical Spacing"
               >
@@ -795,9 +774,9 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
   const hDisplay = Number(convertFromMm(selectedLayer.height, activeUnit).toFixed(2));
 
   const stepSize =
-    activeUnit === "mm" ? 0.5 : activeUnit === "cm" ? 0.05 : activeUnit === "in" ? 0.02 : 2;
+    activeUnit === 'mm' ? 0.5 : activeUnit === 'cm' ? 0.05 : activeUnit === 'in' ? 0.02 : 2;
 
-  const handlePositionChange = (field: "x" | "y" | "width" | "height", val: number) => {
+  const handlePositionChange = (field: 'x' | 'y' | 'width' | 'height', val: number) => {
     const valInMm = convertToMm(val, activeUnit);
     updateLayer(selectedLayer.id, { [field]: Math.max(0.1, valInMm) });
   };
@@ -832,14 +811,14 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
         </div>
 
         {/* 1. COMPACT UNIFIED TEXT PROPERTIES SECTION (User requirement) */}
-        {selectedLayer.type === "text" && (
+        {selectedLayer.type === 'text' && (
           <CollapsibleSection
             id="textProps"
             title="Text Appearance"
             icon={<Type className="w-3.5 h-3.5 text-[#000000]" />}
-            badge={selectedLayer.fontFamily || "Helvetica"}
+            badge={selectedLayer.fontFamily || 'Helvetica'}
             isOpen={openSections.textProps}
-            onToggle={() => toggleSection("textProps")}
+            onToggle={() => toggleSection('textProps')}
           >
             {/* Quick Variable Picker & Text Content */}
             <div className="space-y-1.5">
@@ -849,24 +828,22 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                   onChange={(e) => {
                     if (e.target.value) {
                       const valToInsert = e.target.value;
-                      const updatedText = selectedLayer.text
-                        ? selectedLayer.text + " " + valToInsert
-                        : valToInsert;
+                      const updatedText = selectedLayer.text ? selectedLayer.text + ' ' + valToInsert : valToInsert;
                       let newBinding = (selectedLayer as any).bindingKey;
-                      if (valToInsert.includes("first_middle_name")) {
-                        newBinding = "FIRST_MIDDLE_NAME";
-                      } else if (valToInsert.includes("first_name")) {
-                        newBinding = "FIRST_NAME";
-                      } else if (valToInsert.includes("middle_name")) {
-                        newBinding = "MIDDLE_NAME";
-                      } else if (valToInsert.includes("last_name")) {
-                        newBinding = "LAST_NAME";
+                      if (valToInsert.includes('first_middle_name')) {
+                        newBinding = 'FIRST_MIDDLE_NAME';
+                      } else if (valToInsert.includes('first_name')) {
+                        newBinding = 'FIRST_NAME';
+                      } else if (valToInsert.includes('middle_name')) {
+                        newBinding = 'MIDDLE_NAME';
+                      } else if (valToInsert.includes('last_name')) {
+                        newBinding = 'LAST_NAME';
                       }
                       updateLayer(selectedLayer.id, {
                         text: updatedText,
                         bindingKey: newBinding || (selectedLayer as any).bindingKey,
                       });
-                      e.target.value = "";
+                      e.target.value = '';
                     }
                   }}
                   className="px-2 py-0.5 bg-[#E7E9EB] border border-[#dadcdc] rounded text-[11px] text-[#000000] font-semibold cursor-pointer"
@@ -888,7 +865,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
             </div>
 
             {/* Driving License Properties */}
-            {currentTemplate.cardType === "Driving License" && (
+            {currentTemplate.cardType === 'Driving License' && (
               <div className="border-t border-[#dadcdc] pt-3 mt-3 space-y-3">
                 <span className="text-[10px] font-bold tracking-wider uppercase text-[#555] block">
                   DRIVING LICENCE CUSTOM SETTINGS
@@ -904,10 +881,10 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                       onChange={(e) => {
                         if (e.target.checked) {
                           updateLayer(selectedLayer.id, {
-                            licenseCategoryGroup: "A",
-                            licenseCategoryDateType: "issueDate",
+                            licenseCategoryGroup: 'A',
+                            licenseCategoryDateType: 'issueDate',
                             licenseCategoriesSeparator: undefined,
-                            text: "12/05/2026",
+                            text: '12/05/2026',
                           });
                         } else {
                           updateLayer(selectedLayer.id, {
@@ -918,10 +895,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                       }}
                       className="rounded border-[#dadcdc] text-amber-600 focus:ring-amber-500 cursor-pointer"
                     />
-                    <label
-                      htmlFor="is-group-date-checkbox"
-                      className="text-xs font-bold text-[#000000] cursor-pointer"
-                    >
+                    <label htmlFor="is-group-date-checkbox" className="text-xs font-bold text-[#000000] cursor-pointer">
                       Is Category Group Date
                     </label>
                   </div>
@@ -933,30 +907,12 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                           Group
                         </label>
                         <select
-                          value={(selectedLayer as any).licenseCategoryGroup || "A"}
-                          onChange={(e) =>
-                            updateLayer(selectedLayer.id, { licenseCategoryGroup: e.target.value })
-                          }
+                          value={(selectedLayer as any).licenseCategoryGroup || 'A'}
+                          onChange={(e) => updateLayer(selectedLayer.id, { licenseCategoryGroup: e.target.value })}
                           className="w-full px-2 py-1 bg-[#E7E9EB] border border-[#dadcdc] rounded text-xs text-[#000000] font-semibold focus:outline-none focus:border-[#000000]"
                         >
-                          {[
-                            "A",
-                            "A1",
-                            "A2",
-                            "A3",
-                            "B",
-                            "C",
-                            "C1",
-                            "C2",
-                            "C3",
-                            "D",
-                            "E",
-                            "F",
-                            "G",
-                          ].map((grp) => (
-                            <option key={grp} value={grp}>
-                              {grp}
-                            </option>
+                          {['A', 'A1', 'A2', 'A3', 'B', 'C', 'C1', 'C2', 'C3', 'D', 'E', 'F', 'G'].map((grp) => (
+                            <option key={grp} value={grp}>{grp}</option>
                           ))}
                         </select>
                       </div>
@@ -966,12 +922,8 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                           Date Type
                         </label>
                         <select
-                          value={(selectedLayer as any).licenseCategoryDateType || "issueDate"}
-                          onChange={(e) =>
-                            updateLayer(selectedLayer.id, {
-                              licenseCategoryDateType: e.target.value as any,
-                            })
-                          }
+                          value={(selectedLayer as any).licenseCategoryDateType || 'issueDate'}
+                          onChange={(e) => updateLayer(selectedLayer.id, { licenseCategoryDateType: e.target.value as any })}
                           className="w-full px-2 py-1 bg-[#E7E9EB] border border-[#dadcdc] rounded text-xs text-[#000000] font-semibold focus:outline-none focus:border-[#000000]"
                         >
                           <option value="issueDate">Issue Date</option>
@@ -992,10 +944,10 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                       onChange={(e) => {
                         if (e.target.checked) {
                           updateLayer(selectedLayer.id, {
-                            licenseCategoriesSeparator: "spaceSeparated",
+                            licenseCategoriesSeparator: 'spaceSeparated',
                             licenseCategoryGroup: undefined,
                             licenseCategoryDateType: undefined,
-                            text: "A B D E G",
+                            text: 'A B D E G',
                           });
                         } else {
                           updateLayer(selectedLayer.id, {
@@ -1005,10 +957,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                       }}
                       className="rounded border-[#dadcdc] text-purple-600 focus:ring-purple-500 cursor-pointer"
                     />
-                    <label
-                      htmlFor="is-categories-checkbox"
-                      className="text-xs font-bold text-[#000000] cursor-pointer"
-                    >
+                    <label htmlFor="is-categories-checkbox" className="text-xs font-bold text-[#000000] cursor-pointer">
                       Is Licence Categories List
                     </label>
                   </div>
@@ -1019,14 +968,8 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                         Separator Style
                       </label>
                       <select
-                        value={
-                          (selectedLayer as any).licenseCategoriesSeparator || "spaceSeparated"
-                        }
-                        onChange={(e) =>
-                          updateLayer(selectedLayer.id, {
-                            licenseCategoriesSeparator: e.target.value as any,
-                          })
-                        }
+                        value={(selectedLayer as any).licenseCategoriesSeparator || 'spaceSeparated'}
+                        onChange={(e) => updateLayer(selectedLayer.id, { licenseCategoriesSeparator: e.target.value as any })}
                         className="w-full px-2 py-1 bg-[#E7E9EB] border border-[#dadcdc] rounded text-xs text-[#000000] font-semibold focus:outline-none focus:border-[#000000]"
                       >
                         <option value="spaceSeparated">Space Separated (e.g. A B D E G)</option>
@@ -1041,9 +984,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
 
             {/* FONT SUBSECTION */}
             <div className="border-t border-[#dadcdc] pt-3 mt-3">
-              <span className="text-[10px] font-bold tracking-wider uppercase text-[#555] block mb-2">
-                FONT
-              </span>
+              <span className="text-[10px] font-bold tracking-wider uppercase text-[#555] block mb-2">FONT</span>
               <div className="space-y-2.5">
                 {/* Font Family & Font Size */}
                 <div className="grid grid-cols-2 gap-2">
@@ -1052,7 +993,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                       Font Family
                     </label>
                     <select
-                      value={selectedLayer.fontFamily || "Helvetica"}
+                      value={selectedLayer.fontFamily || 'Helvetica'}
                       onChange={(e) => handleFontSelectRequest(e.target.value, selectedLayer.id)}
                       className="w-full px-2 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded-lg text-xs cursor-pointer text-[#000000] font-semibold focus:outline-none focus:border-[#000000]"
                     >
@@ -1107,17 +1048,17 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                 {/* Font Weight Control */}
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-[#000000] font-semibold text-[11px]">Font Weight</label>
+                    <label className="text-[#000000] font-semibold text-[11px]">
+                      Font Weight
+                    </label>
                     <span className="text-[10px] text-[#000000] font-mono font-bold">
-                      {selectedLayer.fontWeight ??
-                        (selectedLayer.fontStyle?.includes("bold") ? 700 : 400)}
+                      {selectedLayer.fontWeight ?? (selectedLayer.fontStyle?.includes('bold') ? 700 : 400)}
                     </span>
                   </div>
                   <select
                     value={getClosestValidWeight(
-                      selectedLayer.fontFamily || "Helvetica",
-                      selectedLayer.fontWeight ??
-                        (selectedLayer.fontStyle?.includes("bold") ? 700 : 400),
+                      selectedLayer.fontFamily || 'Helvetica',
+                      selectedLayer.fontWeight ?? (selectedLayer.fontStyle?.includes('bold') ? 700 : 400)
                     )}
                     onChange={(e) => {
                       const val = parseInt(e.target.value, 10);
@@ -1127,13 +1068,11 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                     }}
                     className="w-full px-2.5 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded-lg text-xs cursor-pointer text-[#000000] font-semibold focus:outline-none focus:border-[#000000]"
                   >
-                    {getAvailableWeightsForFont(selectedLayer.fontFamily || "Helvetica").map(
-                      (w) => (
-                        <option key={w.value} value={w.value}>
-                          {w.label}
-                        </option>
-                      ),
-                    )}
+                    {getAvailableWeightsForFont(selectedLayer.fontFamily || 'Helvetica').map((w) => (
+                      <option key={w.value} value={w.value}>
+                        {w.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -1143,12 +1082,12 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                   <div className="flex items-center gap-1.5">
                     <input
                       type="color"
-                      value={selectedLayer.color || "#000000"}
+                      value={selectedLayer.color || '#000000'}
                       onChange={(e) => updateLayer(selectedLayer.id, { color: e.target.value })}
                       className="w-7 h-7 rounded border border-[#dadcdc] cursor-pointer bg-transparent"
                     />
                     <span className="font-mono text-[10px] text-[#000000] font-bold uppercase">
-                      {selectedLayer.color || "#000000"}
+                      {selectedLayer.color || '#000000'}
                     </span>
                   </div>
 
@@ -1157,11 +1096,11 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                     <button
                       onClick={() => {
                         const availableWeights = getAvailableWeightsForFont(
-                          selectedLayer.fontFamily || "Helvetica",
+                          selectedLayer.fontFamily || 'Helvetica'
                         );
                         const currentWeight =
                           selectedLayer.fontWeight ??
-                          (selectedLayer.fontStyle?.includes("bold") ? 700 : 400);
+                          (selectedLayer.fontStyle?.includes('bold') ? 700 : 400);
                         const isBoldNow = currentWeight >= 600;
 
                         let targetWeight: number;
@@ -1177,12 +1116,12 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                             : maxWeight;
                         }
 
-                        const isItalic = selectedLayer.fontStyle?.includes("italic");
+                        const isItalic = selectedLayer.fontStyle?.includes('italic');
                         const newIsBold = targetWeight >= 600;
-                        let newStyle = "normal";
-                        if (newIsBold && isItalic) newStyle = "bold italic";
-                        else if (newIsBold) newStyle = "bold";
-                        else if (isItalic) newStyle = "italic";
+                        let newStyle = 'normal';
+                        if (newIsBold && isItalic) newStyle = 'bold italic';
+                        else if (newIsBold) newStyle = 'bold';
+                        else if (isItalic) newStyle = 'italic';
 
                         updateLayer(selectedLayer.id, {
                           fontWeight: targetWeight,
@@ -1192,9 +1131,9 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                       title="Quick Bold Toggle"
                       className={`p-1.5 rounded transition-colors cursor-pointer ${
                         (selectedLayer.fontWeight ??
-                          (selectedLayer.fontStyle?.includes("bold") ? 700 : 400)) >= 600
-                          ? "bg-[#000000] text-[#FFFFFF] font-bold"
-                          : "text-[#000000] hover:bg-[#dadcdc]"
+                          (selectedLayer.fontStyle?.includes('bold') ? 700 : 400)) >= 600
+                          ? 'bg-[#000000] text-[#FFFFFF] font-bold'
+                          : 'text-[#000000] hover:bg-[#dadcdc]'
                       }`}
                     >
                       <Bold className="w-3.5 h-3.5" />
@@ -1202,21 +1141,21 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
 
                     <button
                       onClick={() => {
-                        const isItalic = selectedLayer.fontStyle?.includes("italic");
+                        const isItalic = selectedLayer.fontStyle?.includes('italic');
                         const isBold =
-                          selectedLayer.fontStyle?.includes("bold") ||
+                          selectedLayer.fontStyle?.includes('bold') ||
                           (selectedLayer.fontWeight ?? 400) >= 600;
-                        let newStyle = "normal";
-                        if (isBold && !isItalic) newStyle = "bold italic";
-                        else if (!isBold && !isItalic) newStyle = "italic";
-                        else if (isBold && isItalic) newStyle = "bold";
+                        let newStyle = 'normal';
+                        if (isBold && !isItalic) newStyle = 'bold italic';
+                        else if (!isBold && !isItalic) newStyle = 'italic';
+                        else if (isBold && isItalic) newStyle = 'bold';
                         updateLayer(selectedLayer.id, { fontStyle: newStyle });
                       }}
                       title="Italic"
                       className={`p-1.5 rounded transition-colors cursor-pointer ${
-                        selectedLayer.fontStyle?.includes("italic")
-                          ? "bg-[#000000] text-[#FFFFFF]"
-                          : "text-[#000000] hover:bg-[#dadcdc]"
+                        selectedLayer.fontStyle?.includes('italic')
+                          ? 'bg-[#000000] text-[#FFFFFF]'
+                          : 'text-[#000000] hover:bg-[#dadcdc]'
                       }`}
                     >
                       <Italic className="w-3.5 h-3.5" />
@@ -1226,14 +1165,14 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                       onClick={() =>
                         updateLayer(selectedLayer.id, {
                           textDecoration:
-                            selectedLayer.textDecoration === "underline" ? "none" : "underline",
+                            selectedLayer.textDecoration === 'underline' ? 'none' : 'underline',
                         })
                       }
                       title="Underline"
                       className={`p-1.5 rounded transition-colors cursor-pointer ${
-                        selectedLayer.textDecoration === "underline"
-                          ? "bg-[#000000] text-[#FFFFFF]"
-                          : "text-[#000000] hover:bg-[#dadcdc]"
+                        selectedLayer.textDecoration === 'underline'
+                          ? 'bg-[#000000] text-[#FFFFFF]'
+                          : 'text-[#000000] hover:bg-[#dadcdc]'
                       }`}
                     >
                       <Underline className="w-3.5 h-3.5" />
@@ -1243,33 +1182,33 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                   {/* Text Alignment */}
                   <div className="flex items-center bg-[#E7E9EB] rounded-lg p-0.5 border border-[#dadcdc]">
                     <button
-                      onClick={() => updateLayer(selectedLayer.id, { align: "left" })}
+                      onClick={() => updateLayer(selectedLayer.id, { align: 'left' })}
                       className={`p-1.5 rounded cursor-pointer ${
-                        selectedLayer.align === "left"
-                          ? "bg-[#000000] text-[#FFFFFF]"
-                          : "text-[#000000] hover:bg-[#dadcdc]"
+                        selectedLayer.align === 'left'
+                          ? 'bg-[#000000] text-[#FFFFFF]'
+                          : 'text-[#000000] hover:bg-[#dadcdc]'
                       }`}
                       title="Left"
                     >
                       <AlignLeft className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      onClick={() => updateLayer(selectedLayer.id, { align: "center" })}
+                      onClick={() => updateLayer(selectedLayer.id, { align: 'center' })}
                       className={`p-1.5 rounded cursor-pointer ${
-                        selectedLayer.align === "center"
-                          ? "bg-[#000000] text-[#FFFFFF]"
-                          : "text-[#000000] hover:bg-[#dadcdc]"
+                        selectedLayer.align === 'center'
+                          ? 'bg-[#000000] text-[#FFFFFF]'
+                          : 'text-[#000000] hover:bg-[#dadcdc]'
                       }`}
                       title="Center"
                     >
                       <AlignCenter className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      onClick={() => updateLayer(selectedLayer.id, { align: "right" })}
+                      onClick={() => updateLayer(selectedLayer.id, { align: 'right' })}
                       className={`p-1.5 rounded cursor-pointer ${
-                        selectedLayer.align === "right"
-                          ? "bg-[#000000] text-[#FFFFFF]"
-                          : "text-[#000000] hover:bg-[#dadcdc]"
+                        selectedLayer.align === 'right'
+                          ? 'bg-[#000000] text-[#FFFFFF]'
+                          : 'text-[#000000] hover:bg-[#dadcdc]'
                       }`}
                       title="Right"
                     >
@@ -1282,9 +1221,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
 
             {/* TRANSFORM SUBSECTION */}
             <div className="border-t border-[#dadcdc] pt-3 mt-3">
-              <span className="text-[10px] font-bold tracking-wider uppercase text-[#555] block mb-2">
-                TRANSFORM
-              </span>
+              <span className="text-[10px] font-bold tracking-wider uppercase text-[#555] block mb-2">TRANSFORM</span>
               <div className="space-y-3.5">
                 {/* Width Preset Selector */}
                 <div className="space-y-1">
@@ -1292,10 +1229,8 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                     Condensed / Expanded Width Preset
                   </label>
                   <select
-                    value={(selectedLayer as any).widthPreset || "normal"}
-                    onChange={(e) =>
-                      updateLayer(selectedLayer.id, { widthPreset: e.target.value as any })
-                    }
+                    value={(selectedLayer as any).widthPreset || 'normal'}
+                    onChange={(e) => updateLayer(selectedLayer.id, { widthPreset: e.target.value as any })}
                     className="w-full px-2.5 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded-lg text-xs cursor-pointer text-[#000000] font-semibold focus:outline-none focus:border-[#000000]"
                   >
                     <option value="condensed">Condensed (75%)</option>
@@ -1310,9 +1245,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-semibold text-[#000000]">Vertical Scale</span>
-                    <span className="text-[10px] font-mono text-[#000000] font-bold">
-                      {((selectedLayer as any).verticalScale ?? 1).toFixed(1)}x
-                    </span>
+                    <span className="text-[10px] font-mono text-[#000000] font-bold">{((selectedLayer as any).verticalScale ?? 1).toFixed(1)}x</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <input
@@ -1321,25 +1254,12 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                       max="3"
                       step="0.1"
                       value={(selectedLayer as any).verticalScale ?? 1}
-                      onChange={(e) =>
-                        updateLayer(selectedLayer.id, {
-                          verticalScale: parseFloat(e.target.value) || 1,
-                        })
-                      }
+                      onChange={(e) => updateLayer(selectedLayer.id, { verticalScale: parseFloat(e.target.value) || 1 })}
                       className="flex-1 accent-[#000000] cursor-pointer"
                     />
                     <div className="flex items-center gap-0.5 border border-[#dadcdc] rounded-lg bg-[#E7E9EB] p-0.5">
                       <button
-                        onClick={() =>
-                          updateLayer(selectedLayer.id, {
-                            verticalScale: Math.max(
-                              0.5,
-                              parseFloat(
-                                (((selectedLayer as any).verticalScale ?? 1) - 0.1).toFixed(1),
-                              ),
-                            ),
-                          })
-                        }
+                        onClick={() => updateLayer(selectedLayer.id, { verticalScale: Math.max(0.5, parseFloat((((selectedLayer as any).verticalScale ?? 1) - 0.1).toFixed(1))) })}
                         className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                       >
                         <Minus className="w-2.5 h-2.5" />
@@ -1348,24 +1268,11 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                         type="number"
                         step="0.1"
                         value={parseFloat(((selectedLayer as any).verticalScale ?? 1).toFixed(1))}
-                        onChange={(e) =>
-                          updateLayer(selectedLayer.id, {
-                            verticalScale: parseFloat(e.target.value) || 1,
-                          })
-                        }
+                        onChange={(e) => updateLayer(selectedLayer.id, { verticalScale: parseFloat(e.target.value) || 1 })}
                         className="w-10 bg-transparent text-center text-[11px] font-mono font-bold text-[#000000] focus:outline-none"
                       />
                       <button
-                        onClick={() =>
-                          updateLayer(selectedLayer.id, {
-                            verticalScale: Math.min(
-                              3,
-                              parseFloat(
-                                (((selectedLayer as any).verticalScale ?? 1) + 0.1).toFixed(1),
-                              ),
-                            ),
-                          })
-                        }
+                        onClick={() => updateLayer(selectedLayer.id, { verticalScale: Math.min(3, parseFloat((((selectedLayer as any).verticalScale ?? 1) + 0.1).toFixed(1))) })}
                         className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                       >
                         <Plus className="w-2.5 h-2.5" />
@@ -1377,12 +1284,8 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                 {/* Horizontal Scale */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-semibold text-[#000000]">
-                      Horizontal Scale
-                    </span>
-                    <span className="text-[10px] font-mono text-[#000000] font-bold">
-                      {((selectedLayer as any).horizontalScale ?? 1).toFixed(1)}x
-                    </span>
+                    <span className="text-[11px] font-semibold text-[#000000]">Horizontal Scale</span>
+                    <span className="text-[10px] font-mono text-[#000000] font-bold">{((selectedLayer as any).horizontalScale ?? 1).toFixed(1)}x</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <input
@@ -1391,25 +1294,12 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                       max="3"
                       step="0.1"
                       value={(selectedLayer as any).horizontalScale ?? 1}
-                      onChange={(e) =>
-                        updateLayer(selectedLayer.id, {
-                          horizontalScale: parseFloat(e.target.value) || 1,
-                        })
-                      }
+                      onChange={(e) => updateLayer(selectedLayer.id, { horizontalScale: parseFloat(e.target.value) || 1 })}
                       className="flex-1 accent-[#000000] cursor-pointer"
                     />
                     <div className="flex items-center gap-0.5 border border-[#dadcdc] rounded-lg bg-[#E7E9EB] p-0.5">
                       <button
-                        onClick={() =>
-                          updateLayer(selectedLayer.id, {
-                            horizontalScale: Math.max(
-                              0.5,
-                              parseFloat(
-                                (((selectedLayer as any).horizontalScale ?? 1) - 0.1).toFixed(1),
-                              ),
-                            ),
-                          })
-                        }
+                        onClick={() => updateLayer(selectedLayer.id, { horizontalScale: Math.max(0.5, parseFloat((((selectedLayer as any).horizontalScale ?? 1) - 0.1).toFixed(1))) })}
                         className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                       >
                         <Minus className="w-2.5 h-2.5" />
@@ -1418,24 +1308,11 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                         type="number"
                         step="0.1"
                         value={parseFloat(((selectedLayer as any).horizontalScale ?? 1).toFixed(1))}
-                        onChange={(e) =>
-                          updateLayer(selectedLayer.id, {
-                            horizontalScale: parseFloat(e.target.value) || 1,
-                          })
-                        }
+                        onChange={(e) => updateLayer(selectedLayer.id, { horizontalScale: parseFloat(e.target.value) || 1 })}
                         className="w-10 bg-transparent text-center text-[11px] font-mono font-bold text-[#000000] focus:outline-none"
                       />
                       <button
-                        onClick={() =>
-                          updateLayer(selectedLayer.id, {
-                            horizontalScale: Math.min(
-                              3,
-                              parseFloat(
-                                (((selectedLayer as any).horizontalScale ?? 1) + 0.1).toFixed(1),
-                              ),
-                            ),
-                          })
-                        }
+                        onClick={() => updateLayer(selectedLayer.id, { horizontalScale: Math.min(3, parseFloat((((selectedLayer as any).horizontalScale ?? 1) + 0.1).toFixed(1))) })}
                         className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                       >
                         <Plus className="w-2.5 h-2.5" />
@@ -1448,19 +1325,13 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
 
             {/* SPACING SUBSECTION */}
             <div className="border-t border-[#dadcdc] pt-3 mt-3">
-              <span className="text-[10px] font-bold tracking-wider uppercase text-[#555] block mb-2">
-                SPACING
-              </span>
+              <span className="text-[10px] font-bold tracking-wider uppercase text-[#555] block mb-2">SPACING</span>
               <div className="space-y-3.5">
                 {/* Letter Spacing */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-semibold text-[#000000]">
-                      Letter Spacing (mm)
-                    </span>
-                    <span className="text-[10px] font-mono text-[#000000] font-bold">
-                      {((selectedLayer as any).letterSpacing || 0).toFixed(2)} mm
-                    </span>
+                    <span className="text-[11px] font-semibold text-[#000000]">Letter Spacing (mm)</span>
+                    <span className="text-[10px] font-mono text-[#000000] font-bold">{((selectedLayer as any).letterSpacing || 0).toFixed(2)} mm</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <input
@@ -1469,25 +1340,12 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                       max="10"
                       step="0.1"
                       value={(selectedLayer as any).letterSpacing || 0}
-                      onChange={(e) =>
-                        updateLayer(selectedLayer.id, {
-                          letterSpacing: parseFloat(e.target.value) || 0,
-                        })
-                      }
+                      onChange={(e) => updateLayer(selectedLayer.id, { letterSpacing: parseFloat(e.target.value) || 0 })}
                       className="flex-1 accent-[#000000] cursor-pointer"
                     />
                     <div className="flex items-center gap-0.5 border border-[#dadcdc] rounded-lg bg-[#E7E9EB] p-0.5">
                       <button
-                        onClick={() =>
-                          updateLayer(selectedLayer.id, {
-                            letterSpacing: Math.max(
-                              -2,
-                              parseFloat(
-                                (((selectedLayer as any).letterSpacing || 0) - 0.1).toFixed(2),
-                              ),
-                            ),
-                          })
-                        }
+                        onClick={() => updateLayer(selectedLayer.id, { letterSpacing: Math.max(-2, parseFloat((((selectedLayer as any).letterSpacing || 0) - 0.1).toFixed(2))) })}
                         className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                       >
                         <Minus className="w-2.5 h-2.5" />
@@ -1496,24 +1354,11 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                         type="number"
                         step="0.1"
                         value={parseFloat(((selectedLayer as any).letterSpacing || 0).toFixed(2))}
-                        onChange={(e) =>
-                          updateLayer(selectedLayer.id, {
-                            letterSpacing: parseFloat(e.target.value) || 0,
-                          })
-                        }
+                        onChange={(e) => updateLayer(selectedLayer.id, { letterSpacing: parseFloat(e.target.value) || 0 })}
                         className="w-10 bg-transparent text-center text-[11px] font-mono font-bold text-[#000000] focus:outline-none"
                       />
                       <button
-                        onClick={() =>
-                          updateLayer(selectedLayer.id, {
-                            letterSpacing: Math.min(
-                              10,
-                              parseFloat(
-                                (((selectedLayer as any).letterSpacing || 0) + 0.1).toFixed(2),
-                              ),
-                            ),
-                          })
-                        }
+                        onClick={() => updateLayer(selectedLayer.id, { letterSpacing: Math.min(10, parseFloat((((selectedLayer as any).letterSpacing || 0) + 0.1).toFixed(2))) })}
                         className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                       >
                         <Plus className="w-2.5 h-2.5" />
@@ -1525,12 +1370,8 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                 {/* Word Spacing */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-semibold text-[#000000]">
-                      Word Spacing (mm)
-                    </span>
-                    <span className="text-[10px] font-mono text-[#000000] font-bold">
-                      {((selectedLayer as any).wordSpacing || 0).toFixed(2)} mm
-                    </span>
+                    <span className="text-[11px] font-semibold text-[#000000]">Word Spacing (mm)</span>
+                    <span className="text-[10px] font-mono text-[#000000] font-bold">{((selectedLayer as any).wordSpacing || 0).toFixed(2)} mm</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <input
@@ -1539,25 +1380,12 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                       max="15"
                       step="0.1"
                       value={(selectedLayer as any).wordSpacing || 0}
-                      onChange={(e) =>
-                        updateLayer(selectedLayer.id, {
-                          wordSpacing: parseFloat(e.target.value) || 0,
-                        })
-                      }
+                      onChange={(e) => updateLayer(selectedLayer.id, { wordSpacing: parseFloat(e.target.value) || 0 })}
                       className="flex-1 accent-[#000000] cursor-pointer"
                     />
                     <div className="flex items-center gap-0.5 border border-[#dadcdc] rounded-lg bg-[#E7E9EB] p-0.5">
                       <button
-                        onClick={() =>
-                          updateLayer(selectedLayer.id, {
-                            wordSpacing: Math.max(
-                              -2,
-                              parseFloat(
-                                (((selectedLayer as any).wordSpacing || 0) - 0.1).toFixed(2),
-                              ),
-                            ),
-                          })
-                        }
+                        onClick={() => updateLayer(selectedLayer.id, { wordSpacing: Math.max(-2, parseFloat((((selectedLayer as any).wordSpacing || 0) - 0.1).toFixed(2))) })}
                         className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                       >
                         <Minus className="w-2.5 h-2.5" />
@@ -1566,24 +1394,11 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                         type="number"
                         step="0.1"
                         value={parseFloat(((selectedLayer as any).wordSpacing || 0).toFixed(2))}
-                        onChange={(e) =>
-                          updateLayer(selectedLayer.id, {
-                            wordSpacing: parseFloat(e.target.value) || 0,
-                          })
-                        }
+                        onChange={(e) => updateLayer(selectedLayer.id, { wordSpacing: parseFloat(e.target.value) || 0 })}
                         className="w-10 bg-transparent text-center text-[11px] font-mono font-bold text-[#000000] focus:outline-none"
                       />
                       <button
-                        onClick={() =>
-                          updateLayer(selectedLayer.id, {
-                            wordSpacing: Math.min(
-                              15,
-                              parseFloat(
-                                (((selectedLayer as any).wordSpacing || 0) + 0.1).toFixed(2),
-                              ),
-                            ),
-                          })
-                        }
+                        onClick={() => updateLayer(selectedLayer.id, { wordSpacing: Math.min(15, parseFloat((((selectedLayer as any).wordSpacing || 0) + 0.1).toFixed(2))) })}
                         className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                       >
                         <Plus className="w-2.5 h-2.5" />
@@ -1596,9 +1411,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-semibold text-[#000000]">Line Height</span>
-                    <span className="text-[10px] font-mono text-[#000000] font-bold">
-                      {((selectedLayer as any).lineHeight || 1.1).toFixed(2)}
-                    </span>
+                    <span className="text-[10px] font-mono text-[#000000] font-bold">{((selectedLayer as any).lineHeight || 1.1).toFixed(2)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <input
@@ -1607,25 +1420,12 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                       max="3"
                       step="0.1"
                       value={(selectedLayer as any).lineHeight || 1.1}
-                      onChange={(e) =>
-                        updateLayer(selectedLayer.id, {
-                          lineHeight: parseFloat(e.target.value) || 1.1,
-                        })
-                      }
+                      onChange={(e) => updateLayer(selectedLayer.id, { lineHeight: parseFloat(e.target.value) || 1.1 })}
                       className="flex-1 accent-[#000000] cursor-pointer"
                     />
                     <div className="flex items-center gap-0.5 border border-[#dadcdc] rounded-lg bg-[#E7E9EB] p-0.5">
                       <button
-                        onClick={() =>
-                          updateLayer(selectedLayer.id, {
-                            lineHeight: Math.max(
-                              0.5,
-                              parseFloat(
-                                (((selectedLayer as any).lineHeight || 1.1) - 0.1).toFixed(2),
-                              ),
-                            ),
-                          })
-                        }
+                        onClick={() => updateLayer(selectedLayer.id, { lineHeight: Math.max(0.5, parseFloat((((selectedLayer as any).lineHeight || 1.1) - 0.1).toFixed(2))) })}
                         className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                       >
                         <Minus className="w-2.5 h-2.5" />
@@ -1634,24 +1434,11 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                         type="number"
                         step="0.1"
                         value={parseFloat(((selectedLayer as any).lineHeight || 1.1).toFixed(2))}
-                        onChange={(e) =>
-                          updateLayer(selectedLayer.id, {
-                            lineHeight: parseFloat(e.target.value) || 1.1,
-                          })
-                        }
+                        onChange={(e) => updateLayer(selectedLayer.id, { lineHeight: parseFloat(e.target.value) || 1.1 })}
                         className="w-10 bg-transparent text-center text-[11px] font-mono font-bold text-[#000000] focus:outline-none"
                       />
                       <button
-                        onClick={() =>
-                          updateLayer(selectedLayer.id, {
-                            lineHeight: Math.min(
-                              3,
-                              parseFloat(
-                                (((selectedLayer as any).lineHeight || 1.1) + 0.1).toFixed(2),
-                              ),
-                            ),
-                          })
-                        }
+                        onClick={() => updateLayer(selectedLayer.id, { lineHeight: Math.min(3, parseFloat((((selectedLayer as any).lineHeight || 1.1) + 0.1).toFixed(2))) })}
                         className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                       >
                         <Plus className="w-2.5 h-2.5" />
@@ -1664,20 +1451,14 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
 
             {/* STYLE SUBSECTION */}
             <div className="border-t border-[#dadcdc] pt-3 mt-3">
-              <span className="text-[10px] font-bold tracking-wider uppercase text-[#555] block mb-2">
-                STYLE
-              </span>
+              <span className="text-[10px] font-bold tracking-wider uppercase text-[#555] block mb-2">STYLE</span>
               <div className="space-y-4">
                 {/* Text Case Control */}
                 <div className="space-y-1">
-                  <label className="block text-[#000000] font-semibold text-[11px]">
-                    Text Case
-                  </label>
+                  <label className="block text-[#000000] font-semibold text-[11px]">Text Case</label>
                   <select
-                    value={(selectedLayer as any).textCase || "original"}
-                    onChange={(e) =>
-                      updateLayer(selectedLayer.id, { textCase: e.target.value as any })
-                    }
+                    value={(selectedLayer as any).textCase || 'original'}
+                    onChange={(e) => updateLayer(selectedLayer.id, { textCase: e.target.value as any })}
                     className="w-full px-2.5 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded-lg text-xs cursor-pointer text-[#000000] font-semibold focus:outline-none focus:border-[#000000]"
                   >
                     <option value="original">Original</option>
@@ -1689,14 +1470,10 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
 
                 {/* Bold Simulation */}
                 <div className="space-y-1">
-                  <label className="block text-[#000000] font-semibold text-[11px]">
-                    Bold Simulation Option
-                  </label>
+                  <label className="block text-[#000000] font-semibold text-[11px]">Bold Simulation Option</label>
                   <select
-                    value={(selectedLayer as any).boldSimulation || "normal"}
-                    onChange={(e) =>
-                      updateLayer(selectedLayer.id, { boldSimulation: e.target.value as any })
-                    }
+                    value={(selectedLayer as any).boldSimulation || 'normal'}
+                    onChange={(e) => updateLayer(selectedLayer.id, { boldSimulation: e.target.value as any })}
                     className="w-full px-2.5 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded-lg text-xs cursor-pointer text-[#000000] font-semibold focus:outline-none focus:border-[#000000]"
                   >
                     <option value="normal">Normal</option>
@@ -1709,9 +1486,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-semibold text-[#000000]">Opacity</span>
-                    <span className="text-[10px] font-mono text-[#000000] font-bold">
-                      {Math.round(((selectedLayer as any).textOpacity ?? 1) * 100)}%
-                    </span>
+                    <span className="text-[10px] font-mono text-[#000000] font-bold">{Math.round(((selectedLayer as any).textOpacity ?? 1) * 100)}%</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <input
@@ -1720,23 +1495,12 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                       max="1"
                       step="0.05"
                       value={(selectedLayer as any).textOpacity ?? 1}
-                      onChange={(e) =>
-                        updateLayer(selectedLayer.id, { textOpacity: parseFloat(e.target.value) })
-                      }
+                      onChange={(e) => updateLayer(selectedLayer.id, { textOpacity: parseFloat(e.target.value) })}
                       className="flex-1 accent-[#000000] cursor-pointer"
                     />
                     <div className="flex items-center gap-0.5 border border-[#dadcdc] rounded-lg bg-[#E7E9EB] p-0.5">
                       <button
-                        onClick={() =>
-                          updateLayer(selectedLayer.id, {
-                            textOpacity: Math.max(
-                              0,
-                              parseFloat(
-                                (((selectedLayer as any).textOpacity ?? 1) - 0.05).toFixed(2),
-                              ),
-                            ),
-                          })
-                        }
+                        onClick={() => updateLayer(selectedLayer.id, { textOpacity: Math.max(0, parseFloat((((selectedLayer as any).textOpacity ?? 1) - 0.05).toFixed(2))) })}
                         className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                       >
                         <Minus className="w-2.5 h-2.5" />
@@ -1745,25 +1509,11 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                         type="number"
                         step="5"
                         value={Math.round(((selectedLayer as any).textOpacity ?? 1) * 100)}
-                        onChange={(e) =>
-                          updateLayer(selectedLayer.id, {
-                            textOpacity:
-                              Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)) / 100,
-                          })
-                        }
+                        onChange={(e) => updateLayer(selectedLayer.id, { textOpacity: Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)) / 100 })}
                         className="w-10 bg-transparent text-center text-[11px] font-mono font-bold text-[#000000] focus:outline-none"
                       />
                       <button
-                        onClick={() =>
-                          updateLayer(selectedLayer.id, {
-                            textOpacity: Math.min(
-                              1,
-                              parseFloat(
-                                (((selectedLayer as any).textOpacity ?? 1) + 0.05).toFixed(2),
-                              ),
-                            ),
-                          })
-                        }
+                        onClick={() => updateLayer(selectedLayer.id, { textOpacity: Math.min(1, parseFloat((((selectedLayer as any).textOpacity ?? 1) + 0.05).toFixed(2))) })}
                         className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                       >
                         <Plus className="w-2.5 h-2.5" />
@@ -1779,9 +1529,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                     <input
                       type="checkbox"
                       checked={(selectedLayer as any).strokeEnabled ?? false}
-                      onChange={(e) =>
-                        updateLayer(selectedLayer.id, { strokeEnabled: e.target.checked })
-                      }
+                      onChange={(e) => updateLayer(selectedLayer.id, { strokeEnabled: e.target.checked })}
                       className="w-4 h-4 accent-[#000000] cursor-pointer"
                     />
                   </div>
@@ -1789,32 +1537,24 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                   {(selectedLayer as any).strokeEnabled && (
                     <div className="space-y-2.5 pt-1.5 border-t border-[#dadcdc]">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[11px] font-semibold text-[#000000]">
-                          Stroke Color
-                        </span>
+                        <span className="text-[11px] font-semibold text-[#000000]">Stroke Color</span>
                         <div className="flex items-center gap-1.5">
                           <input
                             type="color"
-                            value={(selectedLayer as any).strokeColor || "#000000"}
-                            onChange={(e) =>
-                              updateLayer(selectedLayer.id, { strokeColor: e.target.value })
-                            }
+                            value={(selectedLayer as any).strokeColor || '#000000'}
+                            onChange={(e) => updateLayer(selectedLayer.id, { strokeColor: e.target.value })}
                             className="w-7 h-7 rounded border border-[#dadcdc] cursor-pointer bg-transparent"
                           />
                           <span className="font-mono text-[10px] text-[#000000] font-bold uppercase">
-                            {(selectedLayer as any).strokeColor || "#000000"}
+                            {(selectedLayer as any).strokeColor || '#000000'}
                           </span>
                         </div>
                       </div>
 
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-semibold text-[#000000]">
-                            Stroke Thickness (mm)
-                          </span>
-                          <span className="text-[10px] font-mono text-[#000000] font-bold">
-                            {((selectedLayer as any).strokeWidth ?? 0.5).toFixed(2)} mm
-                          </span>
+                          <span className="text-[11px] font-semibold text-[#000000]">Stroke Thickness (mm)</span>
+                          <span className="text-[10px] font-mono text-[#000000] font-bold">{((selectedLayer as any).strokeWidth ?? 0.5).toFixed(2)} mm</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <input
@@ -1823,27 +1563,12 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                             max="4"
                             step="0.05"
                             value={(selectedLayer as any).strokeWidth ?? 0.5}
-                            onChange={(e) =>
-                              updateLayer(selectedLayer.id, {
-                                strokeWidth: parseFloat(e.target.value) || 0.1,
-                              })
-                            }
+                            onChange={(e) => updateLayer(selectedLayer.id, { strokeWidth: parseFloat(e.target.value) || 0.1 })}
                             className="flex-1 accent-[#000000] cursor-pointer"
                           />
                           <div className="flex items-center gap-0.5 border border-[#dadcdc] rounded-lg bg-[#E7E9EB] p-0.5">
                             <button
-                              onClick={() =>
-                                updateLayer(selectedLayer.id, {
-                                  strokeWidth: Math.max(
-                                    0.1,
-                                    parseFloat(
-                                      (((selectedLayer as any).strokeWidth ?? 0.5) - 0.05).toFixed(
-                                        2,
-                                      ),
-                                    ),
-                                  ),
-                                })
-                              }
+                              onClick={() => updateLayer(selectedLayer.id, { strokeWidth: Math.max(0.1, parseFloat((((selectedLayer as any).strokeWidth ?? 0.5) - 0.05).toFixed(2))) })}
                               className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                             >
                               <Minus className="w-2.5 h-2.5" />
@@ -1851,29 +1576,12 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                             <input
                               type="number"
                               step="0.05"
-                              value={parseFloat(
-                                ((selectedLayer as any).strokeWidth ?? 0.5).toFixed(2),
-                              )}
-                              onChange={(e) =>
-                                updateLayer(selectedLayer.id, {
-                                  strokeWidth: parseFloat(e.target.value) || 0.1,
-                                })
-                              }
+                              value={parseFloat(((selectedLayer as any).strokeWidth ?? 0.5).toFixed(2))}
+                              onChange={(e) => updateLayer(selectedLayer.id, { strokeWidth: parseFloat(e.target.value) || 0.1 })}
                               className="w-10 bg-transparent text-center text-[11px] font-mono font-bold text-[#000000] focus:outline-none"
                             />
                             <button
-                              onClick={() =>
-                                updateLayer(selectedLayer.id, {
-                                  strokeWidth: Math.min(
-                                    4,
-                                    parseFloat(
-                                      (((selectedLayer as any).strokeWidth ?? 0.5) + 0.05).toFixed(
-                                        2,
-                                      ),
-                                    ),
-                                  ),
-                                })
-                              }
+                              onClick={() => updateLayer(selectedLayer.id, { strokeWidth: Math.min(4, parseFloat((((selectedLayer as any).strokeWidth ?? 0.5) + 0.05).toFixed(2))) })}
                               className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                             >
                               <Plus className="w-2.5 h-2.5" />
@@ -1892,9 +1600,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                     <input
                       type="checkbox"
                       checked={(selectedLayer as any).shadowEnabled ?? false}
-                      onChange={(e) =>
-                        updateLayer(selectedLayer.id, { shadowEnabled: e.target.checked })
-                      }
+                      onChange={(e) => updateLayer(selectedLayer.id, { shadowEnabled: e.target.checked })}
                       className="w-4 h-4 accent-[#000000] cursor-pointer"
                     />
                   </div>
@@ -1902,32 +1608,24 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                   {(selectedLayer as any).shadowEnabled && (
                     <div className="space-y-3.5 pt-1.5 border-t border-[#dadcdc]">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[11px] font-semibold text-[#000000]">
-                          Shadow Color
-                        </span>
+                        <span className="text-[11px] font-semibold text-[#000000]">Shadow Color</span>
                         <div className="flex items-center gap-1.5">
                           <input
                             type="color"
-                            value={(selectedLayer as any).shadowColor || "#000000"}
-                            onChange={(e) =>
-                              updateLayer(selectedLayer.id, { shadowColor: e.target.value })
-                            }
+                            value={(selectedLayer as any).shadowColor || '#000000'}
+                            onChange={(e) => updateLayer(selectedLayer.id, { shadowColor: e.target.value })}
                             className="w-7 h-7 rounded border border-[#dadcdc] cursor-pointer bg-transparent"
                           />
                           <span className="font-mono text-[10px] text-[#000000] font-bold uppercase">
-                            {(selectedLayer as any).shadowColor || "#000000"}
+                            {(selectedLayer as any).shadowColor || '#000000'}
                           </span>
                         </div>
                       </div>
 
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-semibold text-[#000000]">
-                            Shadow Opacity
-                          </span>
-                          <span className="text-[10px] font-mono text-[#000000] font-bold">
-                            {(selectedLayer as any).shadowOpacity ?? 50}%
-                          </span>
+                          <span className="text-[11px] font-semibold text-[#000000]">Shadow Opacity</span>
+                          <span className="text-[10px] font-mono text-[#000000] font-bold">{(selectedLayer as any).shadowOpacity ?? 50}%</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <input
@@ -1936,23 +1634,12 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                             max="100"
                             step="5"
                             value={(selectedLayer as any).shadowOpacity ?? 50}
-                            onChange={(e) =>
-                              updateLayer(selectedLayer.id, {
-                                shadowOpacity: parseInt(e.target.value, 10) || 0,
-                              })
-                            }
+                            onChange={(e) => updateLayer(selectedLayer.id, { shadowOpacity: parseInt(e.target.value, 10) || 0 })}
                             className="flex-1 accent-[#000000] cursor-pointer"
                           />
                           <div className="flex items-center gap-0.5 border border-[#dadcdc] rounded-lg bg-[#E7E9EB] p-0.5">
                             <button
-                              onClick={() =>
-                                updateLayer(selectedLayer.id, {
-                                  shadowOpacity: Math.max(
-                                    0,
-                                    ((selectedLayer as any).shadowOpacity ?? 50) - 5,
-                                  ),
-                                })
-                              }
+                              onClick={() => updateLayer(selectedLayer.id, { shadowOpacity: Math.max(0, ((selectedLayer as any).shadowOpacity ?? 50) - 5) })}
                               className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                             >
                               <Minus className="w-2.5 h-2.5" />
@@ -1960,25 +1647,11 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                             <input
                               type="number"
                               value={(selectedLayer as any).shadowOpacity ?? 50}
-                              onChange={(e) =>
-                                updateLayer(selectedLayer.id, {
-                                  shadowOpacity: Math.min(
-                                    100,
-                                    Math.max(0, parseInt(e.target.value, 10) || 0),
-                                  ),
-                                })
-                              }
+                              onChange={(e) => updateLayer(selectedLayer.id, { shadowOpacity: Math.min(100, Math.max(0, parseInt(e.target.value, 10) || 0)) })}
                               className="w-10 bg-transparent text-center text-[11px] font-mono font-bold text-[#000000] focus:outline-none"
                             />
                             <button
-                              onClick={() =>
-                                updateLayer(selectedLayer.id, {
-                                  shadowOpacity: Math.min(
-                                    100,
-                                    ((selectedLayer as any).shadowOpacity ?? 50) + 5,
-                                  ),
-                                })
-                              }
+                              onClick={() => updateLayer(selectedLayer.id, { shadowOpacity: Math.min(100, ((selectedLayer as any).shadowOpacity ?? 50) + 5) })}
                               className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                             >
                               <Plus className="w-2.5 h-2.5" />
@@ -1989,12 +1662,8 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
 
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-semibold text-[#000000]">
-                            Blur Radius (mm)
-                          </span>
-                          <span className="text-[10px] font-mono text-[#000000] font-bold">
-                            {((selectedLayer as any).shadowBlur ?? 1.0).toFixed(2)} mm
-                          </span>
+                          <span className="text-[11px] font-semibold text-[#000000]">Blur Radius (mm)</span>
+                          <span className="text-[10px] font-mono text-[#000000] font-bold">{((selectedLayer as any).shadowBlur ?? 1.0).toFixed(2)} mm</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <input
@@ -2003,27 +1672,12 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                             max="5"
                             step="0.05"
                             value={(selectedLayer as any).shadowBlur ?? 1.0}
-                            onChange={(e) =>
-                              updateLayer(selectedLayer.id, {
-                                shadowBlur: parseFloat(e.target.value) || 0,
-                              })
-                            }
+                            onChange={(e) => updateLayer(selectedLayer.id, { shadowBlur: parseFloat(e.target.value) || 0 })}
                             className="flex-1 accent-[#000000] cursor-pointer"
                           />
                           <div className="flex items-center gap-0.5 border border-[#dadcdc] rounded-lg bg-[#E7E9EB] p-0.5">
                             <button
-                              onClick={() =>
-                                updateLayer(selectedLayer.id, {
-                                  shadowBlur: Math.max(
-                                    0,
-                                    parseFloat(
-                                      (((selectedLayer as any).shadowBlur ?? 1.0) - 0.05).toFixed(
-                                        2,
-                                      ),
-                                    ),
-                                  ),
-                                })
-                              }
+                              onClick={() => updateLayer(selectedLayer.id, { shadowBlur: Math.max(0, parseFloat((((selectedLayer as any).shadowBlur ?? 1.0) - 0.05).toFixed(2))) })}
                               className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                             >
                               <Minus className="w-2.5 h-2.5" />
@@ -2031,29 +1685,12 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                             <input
                               type="number"
                               step="0.05"
-                              value={parseFloat(
-                                ((selectedLayer as any).shadowBlur ?? 1.0).toFixed(2),
-                              )}
-                              onChange={(e) =>
-                                updateLayer(selectedLayer.id, {
-                                  shadowBlur: parseFloat(e.target.value) || 0,
-                                })
-                              }
+                              value={parseFloat(((selectedLayer as any).shadowBlur ?? 1.0).toFixed(2))}
+                              onChange={(e) => updateLayer(selectedLayer.id, { shadowBlur: parseFloat(e.target.value) || 0 })}
                               className="w-10 bg-transparent text-center text-[11px] font-mono font-bold text-[#000000] focus:outline-none"
                             />
                             <button
-                              onClick={() =>
-                                updateLayer(selectedLayer.id, {
-                                  shadowBlur: Math.min(
-                                    5,
-                                    parseFloat(
-                                      (((selectedLayer as any).shadowBlur ?? 1.0) + 0.05).toFixed(
-                                        2,
-                                      ),
-                                    ),
-                                  ),
-                                })
-                              }
+                              onClick={() => updateLayer(selectedLayer.id, { shadowBlur: Math.min(5, parseFloat((((selectedLayer as any).shadowBlur ?? 1.0) + 0.05).toFixed(2))) })}
                               className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                             >
                               <Plus className="w-2.5 h-2.5" />
@@ -2064,12 +1701,8 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
 
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-semibold text-[#000000]">
-                            X Offset (mm)
-                          </span>
-                          <span className="text-[10px] font-mono text-[#000000] font-bold">
-                            {((selectedLayer as any).shadowOffsetX ?? 0.5).toFixed(2)} mm
-                          </span>
+                          <span className="text-[11px] font-semibold text-[#000000]">X Offset (mm)</span>
+                          <span className="text-[10px] font-mono text-[#000000] font-bold">{((selectedLayer as any).shadowOffsetX ?? 0.5).toFixed(2)} mm</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <input
@@ -2078,27 +1711,12 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                             max="5"
                             step="0.05"
                             value={(selectedLayer as any).shadowOffsetX ?? 0.5}
-                            onChange={(e) =>
-                              updateLayer(selectedLayer.id, {
-                                shadowOffsetX: parseFloat(e.target.value) || 0,
-                              })
-                            }
+                            onChange={(e) => updateLayer(selectedLayer.id, { shadowOffsetX: parseFloat(e.target.value) || 0 })}
                             className="flex-1 accent-[#000000] cursor-pointer"
                           />
                           <div className="flex items-center gap-0.5 border border-[#dadcdc] rounded-lg bg-[#E7E9EB] p-0.5">
                             <button
-                              onClick={() =>
-                                updateLayer(selectedLayer.id, {
-                                  shadowOffsetX: Math.max(
-                                    -5,
-                                    parseFloat(
-                                      (
-                                        ((selectedLayer as any).shadowOffsetX ?? 0.5) - 0.05
-                                      ).toFixed(2),
-                                    ),
-                                  ),
-                                })
-                              }
+                              onClick={() => updateLayer(selectedLayer.id, { shadowOffsetX: Math.max(-5, parseFloat((((selectedLayer as any).shadowOffsetX ?? 0.5) - 0.05).toFixed(2))) })}
                               className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                             >
                               <Minus className="w-2.5 h-2.5" />
@@ -2106,29 +1724,12 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                             <input
                               type="number"
                               step="0.05"
-                              value={parseFloat(
-                                ((selectedLayer as any).shadowOffsetX ?? 0.5).toFixed(2),
-                              )}
-                              onChange={(e) =>
-                                updateLayer(selectedLayer.id, {
-                                  shadowOffsetX: parseFloat(e.target.value) || 0,
-                                })
-                              }
+                              value={parseFloat(((selectedLayer as any).shadowOffsetX ?? 0.5).toFixed(2))}
+                              onChange={(e) => updateLayer(selectedLayer.id, { shadowOffsetX: parseFloat(e.target.value) || 0 })}
                               className="w-10 bg-transparent text-center text-[11px] font-mono font-bold text-[#000000] focus:outline-none"
                             />
                             <button
-                              onClick={() =>
-                                updateLayer(selectedLayer.id, {
-                                  shadowOffsetX: Math.min(
-                                    5,
-                                    parseFloat(
-                                      (
-                                        ((selectedLayer as any).shadowOffsetX ?? 0.5) + 0.05
-                                      ).toFixed(2),
-                                    ),
-                                  ),
-                                })
-                              }
+                              onClick={() => updateLayer(selectedLayer.id, { shadowOffsetX: Math.min(5, parseFloat((((selectedLayer as any).shadowOffsetX ?? 0.5) + 0.05).toFixed(2))) })}
                               className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                             >
                               <Plus className="w-2.5 h-2.5" />
@@ -2139,12 +1740,8 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
 
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="text-[11px] font-semibold text-[#000000]">
-                            Y Offset (mm)
-                          </span>
-                          <span className="text-[10px] font-mono text-[#000000] font-bold">
-                            {((selectedLayer as any).shadowOffsetY ?? 0.5).toFixed(2)} mm
-                          </span>
+                          <span className="text-[11px] font-semibold text-[#000000]">Y Offset (mm)</span>
+                          <span className="text-[10px] font-mono text-[#000000] font-bold">{((selectedLayer as any).shadowOffsetY ?? 0.5).toFixed(2)} mm</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <input
@@ -2153,27 +1750,12 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                             max="5"
                             step="0.05"
                             value={(selectedLayer as any).shadowOffsetY ?? 0.5}
-                            onChange={(e) =>
-                              updateLayer(selectedLayer.id, {
-                                shadowOffsetY: parseFloat(e.target.value) || 0,
-                              })
-                            }
+                            onChange={(e) => updateLayer(selectedLayer.id, { shadowOffsetY: parseFloat(e.target.value) || 0 })}
                             className="flex-1 accent-[#000000] cursor-pointer"
                           />
                           <div className="flex items-center gap-0.5 border border-[#dadcdc] rounded-lg bg-[#E7E9EB] p-0.5">
                             <button
-                              onClick={() =>
-                                updateLayer(selectedLayer.id, {
-                                  shadowOffsetY: Math.max(
-                                    -5,
-                                    parseFloat(
-                                      (
-                                        ((selectedLayer as any).shadowOffsetY ?? 0.5) - 0.05
-                                      ).toFixed(2),
-                                    ),
-                                  ),
-                                })
-                              }
+                              onClick={() => updateLayer(selectedLayer.id, { shadowOffsetY: Math.max(-5, parseFloat((((selectedLayer as any).shadowOffsetY ?? 0.5) - 0.05).toFixed(2))) })}
                               className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                             >
                               <Minus className="w-2.5 h-2.5" />
@@ -2181,29 +1763,12 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                             <input
                               type="number"
                               step="0.05"
-                              value={parseFloat(
-                                ((selectedLayer as any).shadowOffsetY ?? 0.5).toFixed(2),
-                              )}
-                              onChange={(e) =>
-                                updateLayer(selectedLayer.id, {
-                                  shadowOffsetY: parseFloat(e.target.value) || 0,
-                                })
-                              }
+                              value={parseFloat(((selectedLayer as any).shadowOffsetY ?? 0.5).toFixed(2))}
+                              onChange={(e) => updateLayer(selectedLayer.id, { shadowOffsetY: parseFloat(e.target.value) || 0 })}
                               className="w-10 bg-transparent text-center text-[11px] font-mono font-bold text-[#000000] focus:outline-none"
                             />
                             <button
-                              onClick={() =>
-                                updateLayer(selectedLayer.id, {
-                                  shadowOffsetY: Math.min(
-                                    5,
-                                    parseFloat(
-                                      (
-                                        ((selectedLayer as any).shadowOffsetY ?? 0.5) + 0.05
-                                      ).toFixed(2),
-                                    ),
-                                  ),
-                                })
-                              }
+                              onClick={() => updateLayer(selectedLayer.id, { shadowOffsetY: Math.min(5, parseFloat((((selectedLayer as any).shadowOffsetY ?? 0.5) + 0.05).toFixed(2))) })}
                               className="p-1 hover:bg-[#dadcdc] rounded text-[#000000] cursor-pointer"
                             >
                               <Plus className="w-2.5 h-2.5" />
@@ -2226,49 +1791,49 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
           icon={<Ruler className="w-3.5 h-3.5 text-[#000000]" />}
           badge={`${wDisplay} × ${hDisplay} ${activeUnit}`}
           isOpen={openSections.positionSize}
-          onToggle={() => toggleSection("positionSize")}
+          onToggle={() => toggleSection('positionSize')}
         >
           {/* Alignment Tools (Single layer relative to card canvas) */}
           <div className="space-y-1">
             <div className="text-[#000000] font-semibold text-[10px]">Align to Card Canvas</div>
             <div className="grid grid-cols-6 gap-1 bg-[#E7E9EB] p-1 rounded-lg border border-[#dadcdc] text-[#000000]">
               <button
-                onClick={() => alignSelectedLayers("left")}
+                onClick={() => alignSelectedLayers('left')}
                 className="p-1.5 hover:bg-[#dadcdc] rounded flex items-center justify-center cursor-pointer"
                 title="Align Left"
               >
                 <AlignStartVertical className="w-3.5 h-3.5" />
               </button>
               <button
-                onClick={() => alignSelectedLayers("center")}
+                onClick={() => alignSelectedLayers('center')}
                 className="p-1.5 hover:bg-[#dadcdc] rounded flex items-center justify-center cursor-pointer"
                 title="Align Center"
               >
                 <AlignCenterVertical className="w-3.5 h-3.5" />
               </button>
               <button
-                onClick={() => alignSelectedLayers("right")}
+                onClick={() => alignSelectedLayers('right')}
                 className="p-1.5 hover:bg-[#dadcdc] rounded flex items-center justify-center cursor-pointer"
                 title="Align Right"
               >
                 <AlignEndVertical className="w-3.5 h-3.5" />
               </button>
               <button
-                onClick={() => alignSelectedLayers("top")}
+                onClick={() => alignSelectedLayers('top')}
                 className="p-1.5 hover:bg-[#dadcdc] rounded flex items-center justify-center cursor-pointer"
                 title="Align Top"
               >
                 <AlignStartHorizontal className="w-3.5 h-3.5" />
               </button>
               <button
-                onClick={() => alignSelectedLayers("middle")}
+                onClick={() => alignSelectedLayers('middle')}
                 className="p-1.5 hover:bg-[#dadcdc] rounded flex items-center justify-center cursor-pointer"
                 title="Align Middle"
               >
                 <AlignCenterHorizontal className="w-3.5 h-3.5" />
               </button>
               <button
-                onClick={() => alignSelectedLayers("bottom")}
+                onClick={() => alignSelectedLayers('bottom')}
                 className="p-1.5 hover:bg-[#dadcdc] rounded flex items-center justify-center cursor-pointer"
                 title="Align Bottom"
               >
@@ -2280,12 +1845,10 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
           {/* X & Y */}
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <span className="text-[10px] text-[#000000] font-semibold block mb-0.5">
-                X Position
-              </span>
+              <span className="text-[10px] text-[#000000] font-semibold block mb-0.5">X Position</span>
               <div className="flex items-center gap-1">
                 <button
-                  onClick={() => handlePositionChange("x", xDisplay - stepSize)}
+                  onClick={() => handlePositionChange('x', xDisplay - stepSize)}
                   className="px-1.5 py-1 bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] rounded text-[#000000] cursor-pointer"
                 >
                   <Minus className="w-3 h-3" />
@@ -2294,11 +1857,11 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                   type="number"
                   step="0.1"
                   value={xDisplay}
-                  onChange={(e) => handlePositionChange("x", parseFloat(e.target.value) || 0)}
+                  onChange={(e) => handlePositionChange('x', parseFloat(e.target.value) || 0)}
                   className="w-full px-1 py-1 bg-[#E7E9EB] border border-[#dadcdc] rounded font-mono text-xs text-center text-[#000000] focus:outline-none focus:border-[#000000]"
                 />
                 <button
-                  onClick={() => handlePositionChange("x", xDisplay + stepSize)}
+                  onClick={() => handlePositionChange('x', xDisplay + stepSize)}
                   className="px-1.5 py-1 bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] rounded text-[#000000] cursor-pointer"
                 >
                   <Plus className="w-3 h-3" />
@@ -2307,12 +1870,10 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
             </div>
 
             <div>
-              <span className="text-[10px] text-[#000000] font-semibold block mb-0.5">
-                Y Position
-              </span>
+              <span className="text-[10px] text-[#000000] font-semibold block mb-0.5">Y Position</span>
               <div className="flex items-center gap-1">
                 <button
-                  onClick={() => handlePositionChange("y", yDisplay - stepSize)}
+                  onClick={() => handlePositionChange('y', yDisplay - stepSize)}
                   className="px-1.5 py-1 bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] rounded text-[#000000] cursor-pointer"
                 >
                   <Minus className="w-3 h-3" />
@@ -2321,11 +1882,11 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                   type="number"
                   step="0.1"
                   value={yDisplay}
-                  onChange={(e) => handlePositionChange("y", parseFloat(e.target.value) || 0)}
+                  onChange={(e) => handlePositionChange('y', parseFloat(e.target.value) || 0)}
                   className="w-full px-1 py-1 bg-[#E7E9EB] border border-[#dadcdc] rounded font-mono text-xs text-center text-[#000000] focus:outline-none focus:border-[#000000]"
                 />
                 <button
-                  onClick={() => handlePositionChange("y", yDisplay + stepSize)}
+                  onClick={() => handlePositionChange('y', yDisplay + stepSize)}
                   className="px-1.5 py-1 bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] rounded text-[#000000] cursor-pointer"
                 >
                   <Plus className="w-3 h-3" />
@@ -2340,7 +1901,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
               <span className="text-[10px] text-[#000000] font-semibold block mb-0.5">Width</span>
               <div className="flex items-center gap-1">
                 <button
-                  onClick={() => handlePositionChange("width", Math.max(0.1, wDisplay - stepSize))}
+                  onClick={() => handlePositionChange('width', Math.max(0.1, wDisplay - stepSize))}
                   className="px-1.5 py-1 bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] rounded text-[#000000] cursor-pointer"
                 >
                   <Minus className="w-3 h-3" />
@@ -2349,11 +1910,11 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                   type="number"
                   step="0.1"
                   value={wDisplay}
-                  onChange={(e) => handlePositionChange("width", parseFloat(e.target.value) || 1)}
+                  onChange={(e) => handlePositionChange('width', parseFloat(e.target.value) || 1)}
                   className="w-full px-1 py-1 bg-[#E7E9EB] border border-[#dadcdc] rounded font-mono text-xs text-center text-[#000000] focus:outline-none focus:border-[#000000]"
                 />
                 <button
-                  onClick={() => handlePositionChange("width", wDisplay + stepSize)}
+                  onClick={() => handlePositionChange('width', wDisplay + stepSize)}
                   className="px-1.5 py-1 bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] rounded text-[#000000] cursor-pointer"
                 >
                   <Plus className="w-3 h-3" />
@@ -2365,7 +1926,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
               <span className="text-[10px] text-[#000000] font-semibold block mb-0.5">Height</span>
               <div className="flex items-center gap-1">
                 <button
-                  onClick={() => handlePositionChange("height", Math.max(0.1, hDisplay - stepSize))}
+                  onClick={() => handlePositionChange('height', Math.max(0.1, hDisplay - stepSize))}
                   className="px-1.5 py-1 bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] rounded text-[#000000] cursor-pointer"
                 >
                   <Minus className="w-3 h-3" />
@@ -2374,11 +1935,11 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                   type="number"
                   step="0.1"
                   value={hDisplay}
-                  onChange={(e) => handlePositionChange("height", parseFloat(e.target.value) || 1)}
+                  onChange={(e) => handlePositionChange('height', parseFloat(e.target.value) || 1)}
                   className="w-full px-1 py-1 bg-[#E7E9EB] border border-[#dadcdc] rounded font-mono text-xs text-center text-[#000000] focus:outline-none focus:border-[#000000]"
                 />
                 <button
-                  onClick={() => handlePositionChange("height", hDisplay + stepSize)}
+                  onClick={() => handlePositionChange('height', hDisplay + stepSize)}
                   className="px-1.5 py-1 bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] rounded text-[#000000] cursor-pointer"
                 >
                   <Plus className="w-3 h-3" />
@@ -2394,7 +1955,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
           title="Appearance & Rotation"
           icon={<Palette className="w-3.5 h-3.5 text-[#000000]" />}
           isOpen={openSections.appearance}
-          onToggle={() => toggleSection("appearance")}
+          onToggle={() => toggleSection('appearance')}
         >
           {/* Professional Opacity / Transparency Control */}
           <div className="space-y-2 p-2.5 bg-[#E7E9EB]/70 rounded-xl border border-[#dadcdc]">
@@ -2480,8 +2041,8 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                     onClick={() => updateLayer(selectedLayer.id, { opacity: preset / 100 })}
                     className={`flex-1 py-1 text-[10px] font-mono font-bold rounded-md transition-all cursor-pointer border ${
                       isSelected
-                        ? "bg-[#000000] text-white border-[#000000] shadow-sm"
-                        : "bg-white hover:bg-[#E7E9EB] text-[#000000] border-[#dadcdc]"
+                        ? 'bg-[#000000] text-white border-[#000000] shadow-sm'
+                        : 'bg-white hover:bg-[#E7E9EB] text-[#000000] border-[#dadcdc]'
                     }`}
                   >
                     {preset}%
@@ -2493,9 +2054,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
 
           <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#dadcdc] mt-3">
             <div>
-              <label className="block text-[#000000] font-semibold mb-1 text-[11px]">
-                Rotation (°)
-              </label>
+              <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Rotation (°)</label>
               <input
                 type="number"
                 value={selectedLayer.rotation || 0}
@@ -2508,36 +2067,30 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
           </div>
 
           {/* Shape Specific Styling */}
-          {selectedLayer.type === "shape" && (
+          {selectedLayer.type === 'shape' && (
             <div className="space-y-2 pt-2 border-t border-[#E7E9EB]">
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-[#000000] font-semibold mb-1 text-[11px]">
-                    Fill Color
-                  </label>
+                  <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Fill Color</label>
                   <input
                     type="color"
-                    value={selectedLayer.fill || "#3b82f6"}
+                    value={selectedLayer.fill || '#3b82f6'}
                     onChange={(e) => updateLayer(selectedLayer.id, { fill: e.target.value })}
                     className="w-8 h-8 rounded border border-[#dadcdc] cursor-pointer bg-transparent"
                   />
                 </div>
                 <div>
-                  <label className="block text-[#000000] font-semibold mb-1 text-[11px]">
-                    Stroke Color
-                  </label>
+                  <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Stroke Color</label>
                   <input
                     type="color"
-                    value={selectedLayer.stroke || "#1e3a8a"}
+                    value={selectedLayer.stroke || '#1e3a8a'}
                     onChange={(e) => updateLayer(selectedLayer.id, { stroke: e.target.value })}
                     className="w-8 h-8 rounded border border-[#dadcdc] cursor-pointer bg-transparent"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">
-                  Stroke Width (mm)
-                </label>
+                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Stroke Width (mm)</label>
                 <input
                   type="number"
                   step="0.1"
@@ -2552,29 +2105,23 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
           )}
 
           {/* Placeholder Specific Styling */}
-          {selectedLayer.type === "placeholder" && (
+          {selectedLayer.type === 'placeholder' && (
             <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#E7E9EB]">
               <div>
-                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">
-                  Border Color
-                </label>
+                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Border Color</label>
                 <input
                   type="color"
-                  value={selectedLayer.borderColor || "#1e3a8a"}
+                  value={selectedLayer.borderColor || '#1e3a8a'}
                   onChange={(e) => updateLayer(selectedLayer.id, { borderColor: e.target.value })}
                   className="w-8 h-8 rounded border border-[#dadcdc] cursor-pointer bg-transparent"
                 />
               </div>
               <div>
-                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">
-                  Background
-                </label>
+                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Background</label>
                 <input
                   type="color"
-                  value={selectedLayer.backgroundColor || "#f1f5f9"}
-                  onChange={(e) =>
-                    updateLayer(selectedLayer.id, { backgroundColor: e.target.value })
-                  }
+                  value={selectedLayer.backgroundColor || '#f1f5f9'}
+                  onChange={(e) => updateLayer(selectedLayer.id, { backgroundColor: e.target.value })}
                   className="w-8 h-8 rounded border border-[#dadcdc] cursor-pointer bg-transparent"
                 />
               </div>
@@ -2582,17 +2129,13 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
           )}
 
           {/* Barcode Specific Configuration */}
-          {selectedLayer.type === "barcode" && (
+          {selectedLayer.type === 'barcode' && (
             <div className="space-y-2 pt-2 border-t border-[#E7E9EB]">
               <div>
-                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">
-                  Barcode Type
-                </label>
+                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Barcode Type</label>
                 <select
                   value={selectedLayer.barcodeType}
-                  onChange={(e) =>
-                    updateLayer(selectedLayer.id, { barcodeType: e.target.value as any })
-                  }
+                  onChange={(e) => updateLayer(selectedLayer.id, { barcodeType: e.target.value as any })}
                   className="w-full px-2 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded text-xs text-[#000000] font-semibold cursor-pointer"
                 >
                   <option value="Code128">Code128 (Alphanumeric)</option>
@@ -2601,9 +2144,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                 </select>
               </div>
               <div>
-                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">
-                  Data Expression
-                </label>
+                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Data Expression</label>
                 <input
                   type="text"
                   value={selectedLayer.data}
@@ -2615,12 +2156,10 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
           )}
 
           {/* QR Code Specific Configuration */}
-          {selectedLayer.type === "qrcode" && (
+          {selectedLayer.type === 'qrcode' && (
             <div className="space-y-2 pt-2 border-t border-[#E7E9EB]">
               <div>
-                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">
-                  Payload / Text
-                </label>
+                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Payload / Text</label>
                 <textarea
                   rows={2}
                   value={selectedLayer.data}

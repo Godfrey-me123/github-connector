@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { X, Eye, Sparkles, CheckCircle2 } from "lucide-react";
-import { CardTemplate } from "../types";
-import { applyTemplateMapping } from "../utils/templateMappingEngine";
-import { renderTemplateToCanvas } from "../utils/export";
-import { useTemplateStore } from "../store/useTemplateStore";
+import React, { useState, useEffect, useMemo } from 'react';
+import { X, Eye, Sparkles, CheckCircle2 } from 'lucide-react';
+import { CardTemplate } from '../types';
+import { applyTemplateMapping } from '../utils/templateMappingEngine';
+import { renderTemplateToCanvas } from '../utils/export';
+import { useTemplateStore } from '../store/useTemplateStore';
 
 interface SampleDataPreviewModalProps {
   isOpen: boolean;
@@ -19,114 +19,108 @@ export const SampleDataPreviewModal: React.FC<SampleDataPreviewModalProps> = ({
   const { currentTemplate, activeServiceId } = useTemplateStore();
   const activeTemplate = propTemplate || currentTemplate;
 
-  const [previewImage, setPreviewImage] = useState<string>("");
+  const [previewImage, setPreviewImage] = useState<string>('');
   const [isRendering, setIsRendering] = useState<boolean>(true);
 
   // Generate realistic sample data based on active service
   const sampleData = useMemo(() => {
-    if (activeServiceId === "driving_license") {
+    if (activeServiceId === 'driving_license') {
       return {
-        serviceId: "driving_license",
-        firstName: "JUMA",
-        middleName: "ALLY",
-        thirdName: "RASHIDI",
-        secondName: "ALLY",
-        lastName: "RASHIDI",
-        given_names: "JUMA ALLY",
-        family_name: "RASHIDI",
-        first_name: "JUMA",
-        middle_name: "ALLY",
-        dob: "15/08/1988",
-        dateOfBirth: "15/08/1988",
-        dateOfIssue: "01/01/2024",
-        issue_date: "01/01/2024",
-        dateOfExpiry: "01/01/2029",
-        expiry_date: "01/01/2029",
-        region: "DAR ES SALAAM",
-        licenceNumber: "TZ-DL-9876543",
-        licence_number: "TZ-DL-9876543",
-        pinNumber: "109-876-543",
-        pin_number: "109-876-543",
-        gender: "MALE",
-        nationality: "TANZANIAN",
-        photo:
-          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80",
-        signature:
-          "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iNTAiPjxwYXRoIGQ9Ik0xMCAzMCBRIDMwIDEwIDUwIDMwIFQgOTAgMzAgVCAxMzAgMzAiIHN0cm9rZT0iIzA5MGIxMCIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIi8+PC9zdmc+",
-        classes_list: "A - Motorcycles\nB - Private Vehicles\nC - Public Service",
-        class_A: "VALID",
-        class_B: "VALID",
-        class_C: "VALID",
+        serviceId: 'driving_license',
+        firstName: 'JUMA',
+        middleName: 'ALLY',
+        thirdName: 'RASHIDI',
+        secondName: 'ALLY',
+        lastName: 'RASHIDI',
+        given_names: 'JUMA ALLY',
+        family_name: 'RASHIDI',
+        first_name: 'JUMA',
+        middle_name: 'ALLY',
+        dob: '15/08/1988',
+        dateOfBirth: '15/08/1988',
+        dateOfIssue: '01/01/2024',
+        issue_date: '01/01/2024',
+        dateOfExpiry: '01/01/2029',
+        expiry_date: '01/01/2029',
+        region: 'DAR ES SALAAM',
+        licenceNumber: 'TZ-DL-9876543',
+        licence_number: 'TZ-DL-9876543',
+        pinNumber: '109-876-543',
+        pin_number: '109-876-543',
+        gender: 'MALE',
+        nationality: 'TANZANIAN',
+        photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
+        signature: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iNTAiPjxwYXRoIGQ9Ik0xMCAzMCBRIDMwIDEwIDUwIDMwIFQgOTAgMzAgVCAxMzAgMzAiIHN0cm9rZT0iIzA5MGIxMCIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIi8+PC9zdmc+',
+        classes_list: 'A - Motorcycles\nB - Private Vehicles\nC - Public Service',
+        class_A: 'VALID',
+        class_B: 'VALID',
+        class_C: 'VALID',
         classes: [
-          { classCode: "A", enabled: true, issueDate: "01/01/2024", expiryDate: "01/01/2029" },
-          { classCode: "B", enabled: true, issueDate: "01/01/2024", expiryDate: "01/01/2029" },
-          { classCode: "C", enabled: true, issueDate: "01/01/2024", expiryDate: "01/01/2029" },
+          { classCode: 'A', enabled: true, issueDate: '01/01/2024', expiryDate: '01/01/2029' },
+          { classCode: 'B', enabled: true, issueDate: '01/01/2024', expiryDate: '01/01/2029' },
+          { classCode: 'C', enabled: true, issueDate: '01/01/2024', expiryDate: '01/01/2029' },
         ],
       };
     }
 
-    if (activeServiceId === "passport") {
+    if (activeServiceId === 'passport') {
       return {
-        serviceId: "passport",
-        firstName: "AMINA",
-        middleName: "HASSAN",
-        lastName: "KIMARO",
-        dob: "20/05/1992",
-        gender: "FEMALE",
-        nationality: "TANZANIAN",
-        passport_number: "AB123456",
-        issue_date: "10/02/2023",
-        expiry_date: "10/02/2033",
-        place_of_birth: "DODOMA",
-        authority: "IMMIGRATION TANZANIA",
-        photo:
-          "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
-        signature:
-          "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iNTAiPjxwYXRoIGQ9Ik0xMCAzMCBRIDMwIDEwIDUwIDMwIFQgOTAgMzAgVCAxMzAgMzAiIHN0cm9rZT0iIzA5MGIxMCIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIi8+PC9zdmc+",
+        serviceId: 'passport',
+        firstName: 'AMINA',
+        middleName: 'HASSAN',
+        lastName: 'KIMARO',
+        dob: '20/05/1992',
+        gender: 'FEMALE',
+        nationality: 'TANZANIAN',
+        passport_number: 'AB123456',
+        issue_date: '10/02/2023',
+        expiry_date: '10/02/2033',
+        place_of_birth: 'DODOMA',
+        authority: 'IMMIGRATION TANZANIA',
+        photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+        signature: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iNTAiPjxwYXRoIGQ9Ik0xMCAzMCBRIDMwIDEwIDUwIDMwIFQgOTAgMzAgVCAxMzAgMzAiIHN0cm9rZT0iIzA5MGIxMCIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIi8+PC9zdmc+',
       };
     }
 
-    if (activeServiceId === "tin") {
+    if (activeServiceId === 'tin') {
       return {
-        serviceId: "tin",
-        taxpayer_name: "BAKARI SAIDI MASOUD",
-        tin_number: "123-456-789",
-        tax_office: "ILALA TAX REGION",
-        registration_date: "12/03/2020",
-        business_name: "BAKARI ENTERPRISES LTD",
+        serviceId: 'tin',
+        taxpayer_name: 'BAKARI SAIDI MASOUD',
+        tin_number: '123-456-789',
+        tax_office: 'ILALA TAX REGION',
+        registration_date: '12/03/2020',
+        business_name: 'BAKARI ENTERPRISES LTD',
       };
     }
 
-    if (activeServiceId === "birth_certificate") {
+    if (activeServiceId === 'birth_certificate') {
       return {
-        serviceId: "birth_certificate",
-        child_name: "EMMANUEL JOSEPH MBILINYI",
-        dob: "05/11/2015",
-        gender: "MALE",
-        place_of_birth: "DAR ES SALAAM",
-        father_name: "JOSEPH MBILINYI",
-        mother_name: "MARY MBILINYI",
-        entry_number: "BC-987654",
-        registration_date: "10/11/2015",
+        serviceId: 'birth_certificate',
+        child_name: 'EMMANUEL JOSEPH MBILINYI',
+        dob: '05/11/2015',
+        gender: 'MALE',
+        place_of_birth: 'DAR ES SALAAM',
+        father_name: 'JOSEPH MBILINYI',
+        mother_name: 'MARY MBILINYI',
+        entry_number: 'BC-987654',
+        registration_date: '10/11/2015',
       };
     }
 
     // Default NIDA Sample Data
     return {
-      serviceId: "nida",
-      firstName: "JUMA",
-      middleName: "ALLY",
-      lastName: "RASHIDI",
-      firstMiddleName: "JUMA ALLY",
-      dob: "15/08/1988",
-      gender: "MALE",
-      nidaNumber: "19880815-12345-00001-12",
-      id_number: "19880815-12345-00001-12",
-      card_expiry: "15/08/2028",
-      photo:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80",
-      signature:
-        "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iNTAiPjxwYXRoIGQ9Ik0xMCAzMCBRIDMwIDEwIDUwIDMwIFQgOTAgMzAgVCAxMzAgMzAiIHN0cm9rZT0iIzA5MGIxMCIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIi8+PC9zdmc+",
+      serviceId: 'nida',
+      firstName: 'JUMA',
+      middleName: 'ALLY',
+      lastName: 'RASHIDI',
+      firstMiddleName: 'JUMA ALLY',
+      dob: '15/08/1988',
+      gender: 'MALE',
+      nidaNumber: '19880815-12345-00001-12',
+      id_number: '19880815-12345-00001-12',
+      card_expiry: '15/08/2028',
+      photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
+      signature: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iNTAiPjxwYXRoIGQ9Ik0xMCAzMCBRIDMwIDEwIDUwIDMwIFQgOTAgMzAgVCAxMzAgMzAiIHN0cm9rZT0iIzA5MGIxMCIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIi8+PC9zdmc+',
     };
   }, [activeServiceId]);
 
@@ -145,12 +139,12 @@ export const SampleDataPreviewModal: React.FC<SampleDataPreviewModalProps> = ({
     renderTemplateToCanvas(previewTemplate)
       .then((canvas) => {
         if (isMounted) {
-          setPreviewImage(canvas.toDataURL("image/png"));
+          setPreviewImage(canvas.toDataURL('image/png'));
           setIsRendering(false);
         }
       })
       .catch((err) => {
-        console.error("Failed to render sample preview canvas:", err);
+        console.error('Failed to render sample preview canvas:', err);
         if (isMounted) setIsRendering(false);
       });
 
@@ -163,10 +157,10 @@ export const SampleDataPreviewModal: React.FC<SampleDataPreviewModalProps> = ({
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === 'Escape') onClose();
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -190,7 +184,7 @@ export const SampleDataPreviewModal: React.FC<SampleDataPreviewModalProps> = ({
               <h3 className="text-sm font-bold text-[#000000] flex items-center gap-2">
                 <span>Sample Data Template Preview</span>
                 <span className="px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wide font-bold bg-[#E7E9EB] text-[#000000]">
-                  {activeServiceId.replace("_", " ")}
+                  {activeServiceId.replace('_', ' ')}
                 </span>
               </h3>
               <p className="text-[11px] text-[#555555]">
@@ -211,9 +205,7 @@ export const SampleDataPreviewModal: React.FC<SampleDataPreviewModalProps> = ({
           {isRendering ? (
             <div className="flex flex-col items-center justify-center p-8 space-y-3">
               <div className="w-8 h-8 border-3 border-[#000000] border-t-transparent rounded-full animate-spin" />
-              <span className="text-xs font-semibold text-[#555555]">
-                Rendering High-Resolution Canvas...
-              </span>
+              <span className="text-xs font-semibold text-[#555555]">Rendering High-Resolution Canvas...</span>
             </div>
           ) : previewImage ? (
             <div className="relative bg-white rounded-xl shadow-xl border border-[#CBD5E1] p-3 flex flex-col items-center justify-center">

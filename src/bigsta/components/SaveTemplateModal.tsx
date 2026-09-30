@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { X, Save, Copy, RefreshCw, CheckCircle, Tag, Layers, Star, Sparkles } from "lucide-react";
-import { useTemplateStore } from "../store/useTemplateStore";
-import { CardTemplate, CardType, CardSide } from "../types";
+import React, { useState, useEffect } from 'react';
+import { X, Save, Copy, RefreshCw, CheckCircle, Tag, Layers, Star, Sparkles } from 'lucide-react';
+import { useTemplateStore } from '../store/useTemplateStore';
+import { CardTemplate, CardType, CardSide } from '../types';
 
 export const SaveTemplateModal: React.FC = () => {
   const {
@@ -17,24 +17,24 @@ export const SaveTemplateModal: React.FC = () => {
     saveUniversalBackTemplate,
   } = useTemplateStore();
 
-  const [mode, setMode] = useState<"options" | "saveAs">("options");
-  const [templateName, setTemplateName] = useState("");
-  const [cardType, setCardType] = useState<CardType>("National ID");
-  const [side, setSide] = useState<CardSide>("Front Side");
+  const [mode, setMode] = useState<'options' | 'saveAs'>('options');
+  const [templateName, setTemplateName] = useState('');
+  const [cardType, setCardType] = useState<CardType>('National ID');
+  const [side, setSide] = useState<CardSide>('Front Side');
   const [existingTemplates, setExistingTemplates] = useState<CardTemplate[]>([]);
   const [conflictTemplate, setConflictTemplate] = useState<CardTemplate | null>(null);
   const [isSavedSuccess, setIsSavedSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("Template Saved Successfully!");
+  const [successMessage, setSuccessMessage] = useState('Template Saved Successfully!');
 
   useEffect(() => {
     if (isSaveModalOpen) {
       setTemplateName(currentTemplate.templateName);
-      setCardType(currentTemplate.cardType || "National ID");
-      setSide(currentTemplate.side || "Front Side");
-      setMode("options");
+      setCardType(currentTemplate.cardType || 'National ID');
+      setSide(currentTemplate.side || 'Front Side');
+      setMode('options');
       setConflictTemplate(null);
       setIsSavedSuccess(false);
-      setSuccessMessage("Template Saved Successfully!");
+      setSuccessMessage('Template Saved Successfully!');
 
       loadSavedTemplates().then(setExistingTemplates);
     }
@@ -44,10 +44,10 @@ export const SaveTemplateModal: React.FC = () => {
   useEffect(() => {
     if (!isSaveModalOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setSaveModalOpen(false);
+      if (e.key === 'Escape') setSaveModalOpen(false);
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isSaveModalOpen, setSaveModalOpen]);
 
   if (!isSaveModalOpen) return null;
@@ -55,7 +55,7 @@ export const SaveTemplateModal: React.FC = () => {
   const handleQuickSave = async () => {
     updateTemplateMeta({ cardType, side });
     await saveCurrentTemplate();
-    setSuccessMessage("Template Saved Successfully!");
+    setSuccessMessage('Template Saved Successfully!');
     setIsSavedSuccess(true);
     setTimeout(() => {
       setIsSavedSuccess(false);
@@ -65,7 +65,7 @@ export const SaveTemplateModal: React.FC = () => {
 
   const handleUniversalSave = async () => {
     updateTemplateMeta({ cardType, side, serviceId: activeServiceId });
-
+    
     const tplToSave = {
       ...currentTemplate,
       cardType,
@@ -74,16 +74,12 @@ export const SaveTemplateModal: React.FC = () => {
       templateName: templateName.trim() || currentTemplate.templateName,
     };
 
-    if (side === "Back Side") {
+    if (side === 'Back Side') {
       await saveUniversalBackTemplate(activeServiceId, tplToSave);
-      setSuccessMessage(
-        `Universal Back Template Saved for ${activeServiceId.replace("_", " ").toUpperCase()}!`,
-      );
+      setSuccessMessage(`Universal Back Template Saved for ${activeServiceId.replace('_', ' ').toUpperCase()}!`);
     } else {
       await saveUniversalFrontTemplate(activeServiceId, tplToSave);
-      setSuccessMessage(
-        `Universal Front Template Saved for ${activeServiceId.replace("_", " ").toUpperCase()}!`,
-      );
+      setSuccessMessage(`Universal Front Template Saved for ${activeServiceId.replace('_', ' ').toUpperCase()}!`);
     }
 
     setIsSavedSuccess(true);
@@ -98,14 +94,14 @@ export const SaveTemplateModal: React.FC = () => {
     if (!trimmed) return;
 
     const existingMatch = existingTemplates.find(
-      (t) => t.templateName.toLowerCase() === trimmed.toLowerCase() && t.id !== currentTemplate.id,
+      (t) => t.templateName.toLowerCase() === trimmed.toLowerCase() && t.id !== currentTemplate.id
     );
 
     if (existingMatch) {
       setConflictTemplate(existingMatch);
     } else {
       await saveAsNewTemplate(trimmed, cardType, side);
-      setSuccessMessage("New Template Created & Saved!");
+      setSuccessMessage('New Template Created & Saved!');
       setIsSavedSuccess(true);
       setTimeout(() => {
         setIsSavedSuccess(false);
@@ -126,7 +122,7 @@ export const SaveTemplateModal: React.FC = () => {
     };
     useTemplateStore.getState().loadTemplate(updated);
     await saveCurrentTemplate();
-    setSuccessMessage("Template Replaced Successfully!");
+    setSuccessMessage('Template Replaced Successfully!');
     setIsSavedSuccess(true);
     setTimeout(() => {
       setIsSavedSuccess(false);
@@ -137,7 +133,7 @@ export const SaveTemplateModal: React.FC = () => {
   const handleCreateNewCopy = async () => {
     const copyName = `${templateName.trim()} (Copy)`;
     await saveAsNewTemplate(copyName, cardType, side);
-    setSuccessMessage("New Copy Created & Saved!");
+    setSuccessMessage('New Copy Created & Saved!');
     setIsSavedSuccess(true);
     setTimeout(() => {
       setIsSavedSuccess(false);
@@ -191,8 +187,8 @@ export const SaveTemplateModal: React.FC = () => {
             /* Conflict Resolution View */
             <div className="space-y-4">
               <div className="p-4 bg-[#E7E9EB] border border-[#dadcdc] rounded-xl text-[#000000] text-xs leading-relaxed">
-                <span className="font-bold block mb-1 text-[#000000]">Name Already Exists</span>A
-                template named <span className="underline font-semibold">"{templateName}"</span>{" "}
+                <span className="font-bold block mb-1 text-[#000000]">Name Already Exists</span>
+                A template named <span className="underline font-semibold">"{templateName}"</span>{' '}
                 already exists in your library. Please choose how you want to proceed:
               </div>
 
@@ -238,7 +234,7 @@ export const SaveTemplateModal: React.FC = () => {
                 </button>
               </div>
             </div>
-          ) : mode === "options" ? (
+          ) : mode === 'options' ? (
             /* Save / Universal Save / Save As Choice */
             <div className="space-y-3">
               <div className="grid grid-cols-1 gap-3">
@@ -251,7 +247,9 @@ export const SaveTemplateModal: React.FC = () => {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <Save className="w-4 h-4 text-[#000000]" />
-                      <span className="font-bold text-sm text-[#000000]">1. Standard Save</span>
+                      <span className="font-bold text-sm text-[#000000]">
+                        1. Standard Save
+                      </span>
                     </div>
                     <p className="text-xs text-[#555555] font-medium">
                       Updates "{currentTemplate.templateName}" in your library normally.
@@ -277,25 +275,24 @@ export const SaveTemplateModal: React.FC = () => {
                       </span>
                     </div>
                     <p className="text-xs text-[#555555] font-medium">
-                      Saves template and sets Front + Back pair as the automatic default for all
-                      future NIDA filling sessions.
+                      Saves template and sets Front + Back pair as the automatic default for all future NIDA filling sessions.
                     </p>
                   </div>
-                  <span className="text-xs font-bold text-[#000000] shrink-0 ml-2">
-                    Universal Save →
-                  </span>
+                  <span className="text-xs font-bold text-[#000000] shrink-0 ml-2">Universal Save →</span>
                 </button>
 
                 {/* 3. Save As Copy */}
                 <button
                   type="button"
-                  onClick={() => setMode("saveAs")}
+                  onClick={() => setMode('saveAs')}
                   className="p-3.5 bg-[#FFFFFF] hover:bg-[#E7E9EB]/50 border border-[#E7E9EB] hover:border-[#000000] rounded-xl text-left flex items-start justify-between transition-all group cursor-pointer"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <Copy className="w-4 h-4 text-[#000000]" />
-                      <span className="font-bold text-xs text-[#000000]">Save As New Copy...</span>
+                      <span className="font-bold text-xs text-[#000000]">
+                        Save As New Copy...
+                      </span>
                     </div>
                     <p className="text-[11px] text-[#555555] font-medium">
                       Create a separate template with a unique name and metadata.
@@ -363,7 +360,7 @@ export const SaveTemplateModal: React.FC = () => {
               <div className="pt-2 flex items-center justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setMode("options")}
+                  onClick={() => setMode('options')}
                   className="px-4 py-2 bg-[#E7E9EB] hover:bg-[#dadcdc] text-[#000000] text-xs font-bold rounded-xl transition-colors cursor-pointer"
                 >
                   Cancel

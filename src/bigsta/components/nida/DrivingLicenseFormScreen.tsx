@@ -1,5 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Menu,
   ShieldCheck,
@@ -16,24 +16,24 @@ import {
   Key,
   CreditCard,
   Shield,
-} from "lucide-react";
-import { FloatingInput } from "./FloatingInput";
-import { FloatingSelect } from "./FloatingSelect";
-import { FloatingDatePicker } from "./FloatingDatePicker";
-import { PassportPhotoUpload } from "./PassportPhotoUpload";
-import { SignaturePad } from "./SignaturePad";
-import { TermsAndConditions } from "./TermsAndConditions";
-import { SubmissionProgressModal } from "./SubmissionProgressModal";
-import { CopyToModal, VehicleClassItem } from "./CopyToModal";
-import { ServiceMenuDrawer } from "../navigation/ServiceMenuDrawer";
-import { AppFooter } from "../common/AppFooter";
-import { UniversalBackButton } from "../common/UniversalBackButton";
-import { useTemplateStore } from "../../store/useTemplateStore";
-import { SAMPLE_TEMPLATES } from "../../utils/sampleTemplates";
-import { CardTemplate } from "../../types";
-import { applyTemplateMapping, sanitizeTemplateForSaving } from "../../utils/templateMappingEngine";
-import { formatToDdMmYyyy, validateDdMmYyyy } from "../../utils/dateValidation";
-import { renderTemplateToCanvas } from "../../utils/export";
+} from 'lucide-react';
+import { FloatingInput } from './FloatingInput';
+import { FloatingSelect } from './FloatingSelect';
+import { FloatingDatePicker } from './FloatingDatePicker';
+import { PassportPhotoUpload } from './PassportPhotoUpload';
+import { SignaturePad } from './SignaturePad';
+import { TermsAndConditions } from './TermsAndConditions';
+import { SubmissionProgressModal } from './SubmissionProgressModal';
+import { CopyToModal, VehicleClassItem } from './CopyToModal';
+import { ServiceMenuDrawer } from '../navigation/ServiceMenuDrawer';
+import { AppFooter } from '../common/AppFooter';
+import { UniversalBackButton } from '../common/UniversalBackButton';
+import { useTemplateStore } from '../../store/useTemplateStore';
+import { SAMPLE_TEMPLATES } from '../../utils/sampleTemplates';
+import { CardTemplate } from '../../types';
+import { applyTemplateMapping, sanitizeTemplateForSaving } from '../../utils/templateMappingEngine';
+import { formatToDdMmYyyy, validateDdMmYyyy } from '../../utils/dateValidation';
+import { renderTemplateToCanvas } from '../../utils/export';
 
 export interface DrivingLicenseFormData {
   firstName: string;
@@ -59,26 +59,9 @@ export interface DrivingLicenseFormScreenProps {
   onSuccess?: (data: DrivingLicenseFormData) => void;
 }
 
-const SUPPORTED_CLASS_CODES = [
-  "A",
-  "A1",
-  "A2",
-  "A3",
-  "B",
-  "C",
-  "C1",
-  "C2",
-  "C3",
-  "D",
-  "E",
-  "F",
-  "G",
-];
+const SUPPORTED_CLASS_CODES = ['A', 'A1', 'A2', 'A3', 'B', 'C', 'C1', 'C2', 'C3', 'D', 'E', 'F', 'G'];
 
-export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> = ({
-  onCancel,
-  onSuccess,
-}) => {
+export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> = ({ onCancel, onSuccess }) => {
   const {
     currentTemplate,
     loadTemplate,
@@ -96,41 +79,37 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
     if (lastDrivingLicenseFormData) {
       return {
         ...lastDrivingLicenseFormData,
-        dob: lastDrivingLicenseFormData.dob ? formatToDdMmYyyy(lastDrivingLicenseFormData.dob) : "",
-        dateOfIssue: lastDrivingLicenseFormData.dateOfIssue
-          ? formatToDdMmYyyy(lastDrivingLicenseFormData.dateOfIssue)
-          : "",
-        dateOfExpiry: lastDrivingLicenseFormData.dateOfExpiry
-          ? formatToDdMmYyyy(lastDrivingLicenseFormData.dateOfExpiry)
-          : "",
+        dob: lastDrivingLicenseFormData.dob ? formatToDdMmYyyy(lastDrivingLicenseFormData.dob) : '',
+        dateOfIssue: lastDrivingLicenseFormData.dateOfIssue ? formatToDdMmYyyy(lastDrivingLicenseFormData.dateOfIssue) : '',
+        dateOfExpiry: lastDrivingLicenseFormData.dateOfExpiry ? formatToDdMmYyyy(lastDrivingLicenseFormData.dateOfExpiry) : '',
         classes: (lastDrivingLicenseFormData.classes || []).map((c) => ({
           ...c,
-          issueDate: c.issueDate ? formatToDdMmYyyy(c.issueDate) : "",
-          expiryDate: c.expiryDate ? formatToDdMmYyyy(c.expiryDate) : "",
+          issueDate: c.issueDate ? formatToDdMmYyyy(c.issueDate) : '',
+          expiryDate: c.expiryDate ? formatToDdMmYyyy(c.expiryDate) : '',
         })),
       };
     }
     return {
-      firstName: "",
-      secondName: "",
-      thirdName: "",
-      dob: "",
-      dateOfIssue: "",
-      dateOfExpiry: "",
-      issuingAuthority: "",
-      region: "",
-      licenceNumber: "",
-      pinNumber: "",
-      gender: "Male",
-      nationality: "TANZANIAN",
+      firstName: '',
+      secondName: '',
+      thirdName: '',
+      dob: '',
+      dateOfIssue: '',
+      dateOfExpiry: '',
+      issuingAuthority: '',
+      region: '',
+      licenceNumber: '',
+      pinNumber: '',
+      gender: 'Male',
+      nationality: 'TANZANIAN',
       photoUrl: null,
       signatureUrl: null,
       termsAccepted: false,
       classes: SUPPORTED_CLASS_CODES.map((code) => ({
         classCode: code,
-        enabled: code === "B", // Default enable Class B
-        issueDate: "",
-        expiryDate: "",
+        enabled: code === 'B', // Default enable Class B
+        issueDate: '',
+        expiryDate: '',
       })),
     };
   });
@@ -149,9 +128,9 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
     sourceExpiryDate: string;
   }>({
     isOpen: false,
-    sourceClassCode: "",
-    sourceIssueDate: "",
-    sourceExpiryDate: "",
+    sourceClassCode: '',
+    sourceIssueDate: '',
+    sourceExpiryDate: '',
   });
 
   // Resolved Universal Templates for background mapping (active in store)
@@ -172,8 +151,8 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
 
   useEffect(() => {
     const { getUniversalFrontTemplate, getUniversalBackTemplate } = useTemplateStore.getState();
-    const targetFront = getUniversalFrontTemplate("driving_license");
-    const targetBack = getUniversalBackTemplate("driving_license");
+    const targetFront = getUniversalFrontTemplate('driving_license');
+    const targetBack = getUniversalBackTemplate('driving_license');
 
     if (targetFront) {
       setResolvedFrontTpl(targetFront);
@@ -187,34 +166,34 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
   // Form Validation
   const errors = useMemo(() => {
     const errs: Record<string, string> = {};
-    if (!formData.firstName.trim()) errs.firstName = "First name is required.";
-    if (!formData.thirdName.trim()) errs.thirdName = "Third Name / Surname is required.";
+    if (!formData.firstName.trim()) errs.firstName = 'First name is required.';
+    if (!formData.thirdName.trim()) errs.thirdName = 'Third Name / Surname is required.';
     if (!formData.dob) {
-      errs.dob = "Date of birth is required.";
+      errs.dob = 'Date of birth is required.';
     } else {
       const v = validateDdMmYyyy(formData.dob);
-      if (!v.isValid) errs.dob = v.error || "Date must be DD/MM/YYYY";
+      if (!v.isValid) errs.dob = v.error || 'Date must be DD/MM/YYYY';
     }
     if (!formData.dateOfIssue) {
-      errs.dateOfIssue = "Date of issue is required.";
+      errs.dateOfIssue = 'Date of issue is required.';
     } else {
       const v = validateDdMmYyyy(formData.dateOfIssue);
-      if (!v.isValid) errs.dateOfIssue = v.error || "Date must be DD/MM/YYYY";
+      if (!v.isValid) errs.dateOfIssue = v.error || 'Date must be DD/MM/YYYY';
     }
     if (!formData.dateOfExpiry) {
-      errs.dateOfExpiry = "Date of expiry is required.";
+      errs.dateOfExpiry = 'Date of expiry is required.';
     } else {
       const v = validateDdMmYyyy(formData.dateOfExpiry);
-      if (!v.isValid) errs.dateOfExpiry = v.error || "Date must be DD/MM/YYYY";
+      if (!v.isValid) errs.dateOfExpiry = v.error || 'Date must be DD/MM/YYYY';
     }
     if (!formData.licenceNumber.trim()) {
-      errs.licenceNumber = "Licence number is required.";
+      errs.licenceNumber = 'Licence number is required.';
     } else if (formData.licenceNumber.trim().length < 4) {
-      errs.licenceNumber = "Licence number must be at least 4 characters.";
+      errs.licenceNumber = 'Licence number must be at least 4 characters.';
     }
-    if (!formData.photoUrl) errs.photo = "Driver photograph is required.";
-    if (!formData.signatureUrl) errs.signature = "Driver specimen signature is required.";
-    if (!formData.termsAccepted) errs.terms = "Terms acceptance is required.";
+    if (!formData.photoUrl) errs.photo = 'Driver photograph is required.';
+    if (!formData.signatureUrl) errs.signature = 'Driver specimen signature is required.';
+    if (!formData.termsAccepted) errs.terms = 'Terms acceptance is required.';
     return errs;
   }, [formData]);
 
@@ -241,69 +220,15 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
 
   // Submission Workflow
   const [submissionSteps, setSubmissionSteps] = useState<any[]>([
-    {
-      id: "step1_fields",
-      stepNumber: 1,
-      label: "Validate Driver Info",
-      description: "Checking core Section 1 driver fields",
-      status: "pending",
-    },
-    {
-      id: "step2_licence",
-      stepNumber: 2,
-      label: "Validate Licence & PIN",
-      description: "Verifying permit number and PIN registration format",
-      status: "pending",
-    },
-    {
-      id: "step3_classes",
-      stepNumber: 3,
-      label: "Permitting Classes",
-      description: "Checking vehicle endorsements & validity dates",
-      status: "pending",
-    },
-    {
-      id: "step4_photo",
-      stepNumber: 4,
-      label: "Biometric Photograph",
-      description: "Checking portrait crop (285x309 frame ratio)",
-      status: "pending",
-    },
-    {
-      id: "step5_signature",
-      stepNumber: 5,
-      label: "Signature Specimen",
-      description: "Validating driver sign specimen",
-      status: "pending",
-    },
-    {
-      id: "step6_template",
-      stepNumber: 6,
-      label: "Prepare Layout",
-      description: "Preparing official card format and layout",
-      status: "pending",
-    },
-    {
-      id: "step7_mapping",
-      stepNumber: 7,
-      label: "Format Endorsements",
-      description: "Formatting vehicle categories and driver credentials",
-      status: "pending",
-    },
-    {
-      id: "step8_populate",
-      stepNumber: 8,
-      label: "Generate Licence",
-      description: "Compiling high-resolution card output",
-      status: "pending",
-    },
-    {
-      id: "step9_open",
-      stepNumber: 9,
-      label: "Ready for Output",
-      description: "Opening generation & export options",
-      status: "pending",
-    },
+    { id: 'step1_fields', stepNumber: 1, label: 'Validate Driver Info', description: 'Checking core Section 1 driver fields', status: 'pending' },
+    { id: 'step2_licence', stepNumber: 2, label: 'Validate Licence & PIN', description: 'Verifying permit number and PIN registration format', status: 'pending' },
+    { id: 'step3_classes', stepNumber: 3, label: 'Permitting Classes', description: 'Checking vehicle endorsements & validity dates', status: 'pending' },
+    { id: 'step4_photo', stepNumber: 4, label: 'Biometric Photograph', description: 'Checking portrait crop (285x309 frame ratio)', status: 'pending' },
+    { id: 'step5_signature', stepNumber: 5, label: 'Signature Specimen', description: 'Validating driver sign specimen', status: 'pending' },
+    { id: 'step6_template', stepNumber: 6, label: 'Prepare Layout', description: 'Preparing official card format and layout', status: 'pending' },
+    { id: 'step7_mapping', stepNumber: 7, label: 'Format Endorsements', description: 'Formatting vehicle categories and driver credentials', status: 'pending' },
+    { id: 'step8_populate', stepNumber: 8, label: 'Generate Licence', description: 'Compiling high-resolution card output', status: 'pending' },
+    { id: 'step9_open', stepNumber: 9, label: 'Ready for Output', description: 'Opening generation & export options', status: 'pending' },
   ]);
 
   const [currentStepId, setCurrentStepId] = useState<string | null>(null);
@@ -319,121 +244,103 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
     const isOnline = navigator.onLine;
     const hasCachedTemplates = resolvedFrontTpl && resolvedBackTpl;
 
-    const updateStep = (
-      id: string,
-      status: "pending" | "in_progress" | "completed" | "failed",
-      errorMessage?: string,
-    ) => {
+    const updateStep = (id: string, status: 'pending' | 'in_progress' | 'completed' | 'failed', errorMessage?: string) => {
       setSubmissionSteps((prev) =>
-        prev.map((s) => (s.id === id ? { ...s, status, errorMessage } : s)),
+        prev.map((s) => (s.id === id ? { ...s, status, errorMessage } : s))
       );
     };
 
     const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
     // Reset steps
-    setSubmissionSteps((prev) =>
-      prev.map((s) => ({ ...s, status: "pending", errorMessage: undefined })),
-    );
+    setSubmissionSteps((prev) => prev.map((s) => ({ ...s, status: 'pending', errorMessage: undefined })));
 
     // Step 0: Connectivity Check (Internal logic)
     if (!isOnline && !hasCachedTemplates) {
-      setSubmissionError(
-        "Internet connection required for first-time template sync. Please check your connection and try again.",
-      );
+      setSubmissionError('Internet connection required for first-time template sync. Please check your connection and try again.');
       setIsProcessing(false);
       return;
     }
 
     // Step 1: Validate Fields
-    setCurrentStepId("step1_fields");
-    updateStep("step1_fields", "in_progress");
+    setCurrentStepId('step1_fields');
+    updateStep('step1_fields', 'in_progress');
     await delay(250);
-    if (
-      errors.firstName ||
-      errors.thirdName ||
-      errors.dob ||
-      errors.dateOfIssue ||
-      errors.dateOfExpiry
-    ) {
-      updateStep("step1_fields", "failed", errors.firstName || errors.thirdName || errors.dob);
-      setSubmissionError("Please complete driver identity information fields.");
+    if (errors.firstName || errors.thirdName || errors.dob || errors.dateOfIssue || errors.dateOfExpiry) {
+      updateStep('step1_fields', 'failed', errors.firstName || errors.thirdName || errors.dob);
+      setSubmissionError('Please complete driver identity information fields.');
       setIsProcessing(false);
       return;
     }
-    updateStep("step1_fields", "completed");
+    updateStep('step1_fields', 'completed');
 
     // Step 2: Validate Licence & PIN
-    setCurrentStepId("step2_licence");
-    updateStep("step2_licence", "in_progress");
+    setCurrentStepId('step2_licence');
+    updateStep('step2_licence', 'in_progress');
     await delay(250);
     if (errors.licenceNumber) {
-      updateStep("step2_licence", "failed", errors.licenceNumber);
+      updateStep('step2_licence', 'failed', errors.licenceNumber);
       setSubmissionError(errors.licenceNumber);
       setIsProcessing(false);
       return;
     }
-    updateStep("step2_licence", "completed");
+    updateStep('step2_licence', 'completed');
 
     // Step 3: Vehicle Classes
-    setCurrentStepId("step3_classes");
-    updateStep("step3_classes", "in_progress");
+    setCurrentStepId('step3_classes');
+    updateStep('step3_classes', 'in_progress');
     await delay(200);
-    updateStep("step3_classes", "completed");
+    updateStep('step3_classes', 'completed');
 
     // Step 4: Photo
-    setCurrentStepId("step4_photo");
-    updateStep("step4_photo", "in_progress");
+    setCurrentStepId('step4_photo');
+    updateStep('step4_photo', 'in_progress');
     await delay(200);
     if (errors.photo) {
-      updateStep("step4_photo", "failed", errors.photo);
-      setSubmissionError("Driver photograph is required.");
+      updateStep('step4_photo', 'failed', errors.photo);
+      setSubmissionError('Driver photograph is required.');
       setIsProcessing(false);
       return;
     }
-    updateStep("step4_photo", "completed");
+    updateStep('step4_photo', 'completed');
 
     // Step 5: Signature
-    setCurrentStepId("step5_signature");
-    updateStep("step5_signature", "in_progress");
+    setCurrentStepId('step5_signature');
+    updateStep('step5_signature', 'in_progress');
     await delay(200);
     if (errors.signature) {
-      updateStep("step5_signature", "failed", errors.signature);
-      setSubmissionError("Driver signature is required.");
+      updateStep('step5_signature', 'failed', errors.signature);
+      setSubmissionError('Driver signature is required.');
       setIsProcessing(false);
       return;
     }
-    updateStep("step5_signature", "completed");
+    updateStep('step5_signature', 'completed');
 
     // Step 6: Load Universal Templates
-    setCurrentStepId("step6_template");
-    updateStep("step6_template", "in_progress");
+    setCurrentStepId('step6_template');
+    updateStep('step6_template', 'in_progress');
     await delay(250);
     if (!resolvedFrontTpl || !resolvedBackTpl) {
       if (!isOnline) {
-        updateStep("step6_template", "failed", "No internet connection to fetch templates.");
-        setSubmissionError(
-          "Offline: Universal templates not found in cache and no internet available. Please connect to sync.",
-        );
+        updateStep('step6_template', 'failed', 'No internet connection to fetch templates.');
+        setSubmissionError('Offline: Universal templates not found in cache and no internet available. Please connect to sync.');
       } else {
-        updateStep("step6_template", "failed", "Driving License universal templates missing.");
-        setSubmissionError(
-          "Universal Driving License templates are not available or failed to load. Please try again.",
-        );
+        updateStep('step6_template', 'failed', 'Driving License universal templates missing.');
+        setSubmissionError('Universal Driving License templates are not available or failed to load. Please try again.');
       }
       setIsProcessing(false);
       return;
     }
-    updateStep("step6_template", "completed");
+    updateStep('step6_template', 'completed');
 
     // Step 7 & 8: Map & Populate
-    setCurrentStepId("step7_mapping");
-    updateStep("step7_mapping", "in_progress");
+    setCurrentStepId('step7_mapping');
+    updateStep('step7_mapping', 'in_progress');
     await delay(250);
-    updateStep("step7_mapping", "completed");
+    updateStep('step7_mapping', 'completed');
 
-    setCurrentStepId("step8_populate");
-    updateStep("step8_populate", "in_progress");
+    setCurrentStepId('step8_populate');
+    updateStep('step8_populate', 'in_progress');
     await delay(300);
 
     // Combine First + Second Name -> given_names; Third Name -> family_name / last_name
@@ -452,16 +359,8 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
       expiryDate: formatToDdMmYyyy(formData.dateOfExpiry),
       classes: formData.classes.map((cls) => {
         const isEnabled = !!(cls.enabled || (cls as any).selected || (cls as any).checked);
-        const resolvedIssue = cls.issueDate
-          ? formatToDdMmYyyy(cls.issueDate)
-          : isEnabled && formData.dateOfIssue
-            ? formatToDdMmYyyy(formData.dateOfIssue)
-            : "";
-        const resolvedExpiry = cls.expiryDate
-          ? formatToDdMmYyyy(cls.expiryDate)
-          : isEnabled && formData.dateOfExpiry
-            ? formatToDdMmYyyy(formData.dateOfExpiry)
-            : "";
+        const resolvedIssue = cls.issueDate ? formatToDdMmYyyy(cls.issueDate) : (isEnabled && formData.dateOfIssue ? formatToDdMmYyyy(formData.dateOfIssue) : '');
+        const resolvedExpiry = cls.expiryDate ? formatToDdMmYyyy(cls.expiryDate) : (isEnabled && formData.dateOfExpiry ? formatToDdMmYyyy(formData.dateOfExpiry) : '');
         return {
           ...cls,
           enabled: isEnabled,
@@ -477,7 +376,7 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
       familyName: formData.thirdName.trim(),
       licenceNumber: formData.licenceNumber.trim(),
       nidaNumber: formData.licenceNumber.trim(), // Binds to licence number placeholder
-      gender: formData.gender?.trim().toUpperCase().startsWith("M") ? "M" : "F",
+      gender: formData.gender?.trim().toUpperCase().startsWith('M') ? 'M' : 'F',
     };
 
     const frontSource = sanitizeTemplateForSaving(resolvedFrontTpl);
@@ -487,15 +386,15 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
     const backRes = applyTemplateMapping(backSource, normalizedFormData as any);
 
     if (!frontRes.success) {
-      updateStep("step8_populate", "failed", frontRes.error || "Autofill failed.");
-      setSubmissionError(frontRes.error || "Failed to populate layers.");
+      updateStep('step8_populate', 'failed', frontRes.error || 'Autofill failed.');
+      setSubmissionError(frontRes.error || 'Failed to populate layers.');
       setIsProcessing(false);
       return;
     }
 
     // Persist record into store & downloads history
     const record = {
-      id: "dl_sub_" + Date.now(),
+      id: 'dl_sub_' + Date.now(),
       frontTemplateId: frontSource.id,
       backTemplateId: backSource.id,
       frontTemplateName: frontSource.templateName,
@@ -522,34 +421,28 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
     loadTemplate(frontRes.populatedTemplate);
     pushHistoryState(frontRes.populatedTemplate);
 
-    updateStep("step8_populate", "completed");
+    updateStep('step8_populate', 'completed');
 
     // Step 9: Open Card Preview
-    setCurrentStepId("step9_open");
-    updateStep("step9_open", "in_progress");
+    setCurrentStepId('step9_open');
+    updateStep('step9_open', 'in_progress');
     await delay(250);
 
-    const accessVal = useTemplateStore.getState().validateServiceAccess("driving_license");
+    const accessVal = useTemplateStore.getState().validateServiceAccess('driving_license');
     if (!accessVal.allowed) {
-      updateStep(
-        "step9_open",
-        "failed",
-        accessVal.message || "Access Required: Approved payment & available tokens needed.",
-      );
-      setSubmissionError(
-        accessVal.message || "Access Required: Please recharge or check payment status.",
-      );
+      updateStep('step9_open', 'failed', accessVal.message || 'Access Required: Approved payment & available tokens needed.');
+      setSubmissionError(accessVal.message || 'Access Required: Please recharge or check payment status.');
       setIsProcessing(false);
       return;
     }
 
-    updateStep("step9_open", "completed");
+    updateStep('step9_open', 'completed');
 
     setIsWorkflowCompleted(true);
     setIsProcessing(false);
 
     setNidaSuccessNotification({
-      title: "Driving License Generated!",
+      title: 'Driving License Generated!',
       message: `Front & Back templates populated with verified driver details and vehicle classes. Ready for export.`,
       populatedCount: frontRes.populatedCount + backRes.populatedCount,
       isBackSide: false,
@@ -559,7 +452,7 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
 
     setTimeout(() => {
       setIsSubmissionModalOpen(false);
-      setActiveScreen("preview");
+      setActiveScreen('preview');
     }, 400);
   };
 
@@ -582,6 +475,7 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
   return (
     <div className="min-h-screen bg-[#D8D2CE] text-[#101010] flex flex-col items-center justify-start p-2.5 sm:p-6 lg:p-10 font-sans overflow-y-auto overflow-x-hidden w-full max-w-full pb-24 sm:pb-12">
       <div className="relative w-full max-w-full sm:max-w-3xl min-w-0 bg-[#E7E2DE] border border-[#C8C2BE] rounded-2xl sm:rounded-3xl shadow-xl p-3 sm:p-6 lg:p-8 my-1 sm:my-3 transition-all overflow-hidden">
+        
         {/* Compact Service Header */}
         <div className="flex items-center justify-between border-b border-[#C8C2BE] pb-2.5 mb-3.5 gap-2 w-full min-w-0">
           <div className="flex items-center gap-2 min-w-0">
@@ -601,6 +495,7 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
 
         {/* Form Main Container */}
         <form onSubmit={handleSubmit} className="space-y-6">
+          
           {/* SECTION 1: DRIVER INFORMATION */}
           <div className="p-4 sm:p-6 bg-[#FFFFFF] border border-[#C8C2BE] rounded-2xl space-y-4 shadow-xs">
             <div className="flex items-center justify-between border-b border-[#E7E2DE] pb-3">
@@ -644,6 +539,8 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
               />
             </div>
 
+
+
             {/* Dates Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
               <FloatingDatePicker
@@ -682,9 +579,7 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
                 label="LICENCE NUMBER"
                 icon={CreditCard}
                 value={formData.licenceNumber}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, licenceNumber: e.target.value }))
-                }
+                onChange={(e) => setFormData((prev) => ({ ...prev, licenceNumber: e.target.value }))}
                 onBlur={() => setTouched((p) => ({ ...p, licenceNumber: true }))}
                 error={touched.licenceNumber ? errors.licenceNumber : undefined}
                 placeholder="e.g. DL-10829375"
@@ -714,9 +609,7 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
                 label="ISSUING AUTHORITY"
                 icon={Shield}
                 value={formData.issuingAuthority}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, issuingAuthority: e.target.value }))
-                }
+                onChange={(e) => setFormData((prev) => ({ ...prev, issuingAuthority: e.target.value }))}
                 placeholder="e.g. TANZANIA REVENUE AUTHORITY"
               />
               <FloatingSelect
@@ -725,8 +618,8 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
                 value={formData.gender}
                 onChange={(e) => setFormData((prev) => ({ ...prev, gender: e.target.value }))}
                 options={[
-                  { value: "Male", label: "Male (M)" },
-                  { value: "Female", label: "Female (F)" },
+                  { value: 'Male', label: 'Male (M)' },
+                  { value: 'Female', label: 'Female (F)' },
                 ]}
               />
               <FloatingInput
@@ -755,23 +648,21 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
             </div>
 
             <p className="text-xs text-[#101010]/70 font-medium">
-              Enable required classes, set issue & expiry dates, or use <strong>COPY TO</strong> to
-              apply dates to multiple classes at once.
+              Enable required classes, set issue & expiry dates, or use <strong>COPY TO</strong> to apply dates to multiple classes at once.
             </p>
 
             {/* Vehicle Class Rows */}
             <div className="space-y-3 pt-1">
               {formData.classes.map((clsItem, index) => {
-                const canCopy =
-                  clsItem.issueDate.trim().length > 0 && clsItem.expiryDate.trim().length > 0;
+                const canCopy = clsItem.issueDate.trim().length > 0 && clsItem.expiryDate.trim().length > 0;
 
                 return (
                   <div
                     key={clsItem.classCode}
                     className={`p-3.5 rounded-2xl border transition-all ${
                       clsItem.enabled
-                        ? "bg-[#F8F6F4] border-amber-400/80 shadow-xs"
-                        : "bg-white border-[#E7E2DE] opacity-80"
+                        ? 'bg-[#F8F6F4] border-amber-400/80 shadow-xs'
+                        : 'bg-white border-[#E7E2DE] opacity-80'
                     }`}
                   >
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -789,14 +680,10 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
                                   ? {
                                       ...c,
                                       enabled: isChecked,
-                                      issueDate: isChecked
-                                        ? c.issueDate || formatToDdMmYyyy(prev.dateOfIssue)
-                                        : "",
-                                      expiryDate: isChecked
-                                        ? c.expiryDate || formatToDdMmYyyy(prev.dateOfExpiry)
-                                        : "",
+                                      issueDate: isChecked ? (c.issueDate || formatToDdMmYyyy(prev.dateOfIssue)) : '',
+                                      expiryDate: isChecked ? (c.expiryDate || formatToDdMmYyyy(prev.dateOfExpiry)) : '',
                                     }
-                                  : c,
+                                  : c
                               ),
                             }));
                           }}
@@ -807,19 +694,19 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
                             Class {clsItem.classCode}
                           </span>
                           <span className="block text-[10px] text-[#101010]/60 font-semibold">
-                            {clsItem.classCode === "A" && "Motorcycles & Tricycles"}
-                            {clsItem.classCode === "A1" && "Light Motorcycles"}
-                            {clsItem.classCode === "A2" && "Heavy Motorcycles"}
-                            {clsItem.classCode === "A3" && "Tricycles / Bajaj"}
-                            {clsItem.classCode === "B" && "Private Passenger Vehicles"}
-                            {clsItem.classCode === "C" && "Public Service Vehicles (PSV)"}
-                            {clsItem.classCode === "C1" && "Light Bus"}
-                            {clsItem.classCode === "C2" && "Medium Bus"}
-                            {clsItem.classCode === "C3" && "Heavy Bus / Coaster"}
-                            {clsItem.classCode === "D" && "Commercial Heavy Trucks"}
-                            {clsItem.classCode === "E" && "Articulated / Trailer Vehicles"}
-                            {clsItem.classCode === "F" && "Tractors & Farm Machinery"}
-                            {clsItem.classCode === "G" && "Construction Heavy Equipment"}
+                            {clsItem.classCode === 'A' && 'Motorcycles & Tricycles'}
+                            {clsItem.classCode === 'A1' && 'Light Motorcycles'}
+                            {clsItem.classCode === 'A2' && 'Heavy Motorcycles'}
+                            {clsItem.classCode === 'A3' && 'Tricycles / Bajaj'}
+                            {clsItem.classCode === 'B' && 'Private Passenger Vehicles'}
+                            {clsItem.classCode === 'C' && 'Public Service Vehicles (PSV)'}
+                            {clsItem.classCode === 'C1' && 'Light Bus'}
+                            {clsItem.classCode === 'C2' && 'Medium Bus'}
+                            {clsItem.classCode === 'C3' && 'Heavy Bus / Coaster'}
+                            {clsItem.classCode === 'D' && 'Commercial Heavy Trucks'}
+                            {clsItem.classCode === 'E' && 'Articulated / Trailer Vehicles'}
+                            {clsItem.classCode === 'F' && 'Tractors & Farm Machinery'}
+                            {clsItem.classCode === 'G' && 'Construction Heavy Equipment'}
                           </span>
                         </div>
                       </label>
@@ -839,7 +726,7 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
                               setFormData((prev) => ({
                                 ...prev,
                                 classes: prev.classes.map((c) =>
-                                  c.classCode === clsItem.classCode ? { ...c, issueDate: val } : c,
+                                  c.classCode === clsItem.classCode ? { ...c, issueDate: val } : c
                                 ),
                               }));
                             }}
@@ -859,7 +746,7 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
                               setFormData((prev) => ({
                                 ...prev,
                                 classes: prev.classes.map((c) =>
-                                  c.classCode === clsItem.classCode ? { ...c, expiryDate: val } : c,
+                                  c.classCode === clsItem.classCode ? { ...c, expiryDate: val } : c
                                 ),
                               }));
                             }}
@@ -880,8 +767,8 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
                           disabled={!clsItem.enabled || !canCopy}
                           className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                             canCopy && clsItem.enabled
-                              ? "bg-[#101010] hover:bg-[#252525] text-amber-400 shadow-xs"
-                              : "bg-[#E7E2DE] text-[#101010]/40 cursor-not-allowed"
+                              ? 'bg-[#101010] hover:bg-[#252525] text-amber-400 shadow-xs'
+                              : 'bg-[#E7E2DE] text-[#101010]/40 cursor-not-allowed'
                           }`}
                           title="Copy these dates to other vehicle classes"
                         >
@@ -963,8 +850,8 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
               disabled={!canContinue || isProcessing}
               className={`px-6 py-3.5 rounded-2xl text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer active:scale-95 ${
                 canContinue && !isProcessing
-                  ? "bg-[#101010] hover:bg-[#252525]"
-                  : "bg-gray-400 cursor-not-allowed opacity-60"
+                  ? 'bg-[#101010] hover:bg-[#252525]'
+                  : 'bg-gray-400 cursor-not-allowed opacity-60'
               }`}
             >
               {isProcessing ? (
@@ -991,10 +878,10 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
         onClose={() => setIsMenuDrawerOpen(false)}
         onSelectInfoService={(srv) => {
           setIsMenuDrawerOpen(false);
-          if (srv.id === "nida") {
-            setActiveScreen("nida");
-          } else if (srv.id === "driving_license") {
-            setActiveScreen("driving_license");
+          if (srv.id === 'nida') {
+            setActiveScreen('nida');
+          } else if (srv.id === 'driving_license') {
+            setActiveScreen('driving_license');
           }
         }}
       />

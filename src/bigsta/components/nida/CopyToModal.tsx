@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { Copy, Check, X, AlertTriangle, ShieldCheck } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { Copy, Check, X, AlertTriangle, ShieldCheck } from 'lucide-react';
 
 export interface VehicleClassItem {
   classCode: string;
@@ -34,9 +34,7 @@ export const CopyToModal: React.FC<CopyToModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       // Preselect all other classes by default or leave clean
-      const others = allClasses
-        .filter((c) => c.classCode !== sourceClassCode)
-        .map((c) => c.classCode);
+      const others = allClasses.filter((c) => c.classCode !== sourceClassCode).map((c) => c.classCode);
       setSelectedCodes(others);
       setShowOverwriteWarning(false);
     }
@@ -46,24 +44,22 @@ export const CopyToModal: React.FC<CopyToModalProps> = ({
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === 'Escape') onClose();
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
   const toggleSelect = (code: string) => {
     setSelectedCodes((prev) =>
-      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code],
+      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
     );
   };
 
   const selectAll = () => {
-    const others = allClasses
-      .filter((c) => c.classCode !== sourceClassCode)
-      .map((c) => c.classCode);
+    const others = allClasses.filter((c) => c.classCode !== sourceClassCode).map((c) => c.classCode);
     setSelectedCodes(others);
   };
 
@@ -106,14 +102,7 @@ export const CopyToModal: React.FC<CopyToModalProps> = ({
                 Copy Class {sourceClassCode} Dates to Other Classes
               </h3>
               <p className="text-[11px] text-[#101010]/70 font-medium">
-                Issue Date:{" "}
-                <span className="font-mono font-bold text-[#101010]">
-                  {sourceIssueDate || "Not set"}
-                </span>{" "}
-                | Expiry Date:{" "}
-                <span className="font-mono font-bold text-[#101010]">
-                  {sourceExpiryDate || "Not set"}
-                </span>
+                Issue Date: <span className="font-mono font-bold text-[#101010]">{sourceIssueDate || 'Not set'}</span> | Expiry Date: <span className="font-mono font-bold text-[#101010]">{sourceExpiryDate || 'Not set'}</span>
               </p>
             </div>
           </div>
@@ -159,9 +148,7 @@ export const CopyToModal: React.FC<CopyToModalProps> = ({
               <div>
                 <p className="font-bold">Overwrite Warning!</p>
                 <p className="mt-0.5 text-[11px] text-amber-800">
-                  Some selected classes already have manually entered issue or expiry dates.
-                  Proceeding will overwrite those dates with Class {sourceClassCode} dates (
-                  {sourceIssueDate} - {sourceExpiryDate}).
+                  Some selected classes already have manually entered issue or expiry dates. Proceeding will overwrite those dates with Class {sourceClassCode} dates ({sourceIssueDate} - {sourceExpiryDate}).
                 </p>
               </div>
             </div>
@@ -200,8 +187,8 @@ export const CopyToModal: React.FC<CopyToModalProps> = ({
                   onClick={() => toggleSelect(item.classCode)}
                   className={`p-3 rounded-2xl border text-left transition-all flex items-center justify-between cursor-pointer ${
                     isSelected
-                      ? "bg-[#101010] text-white border-[#101010] shadow-xs"
-                      : "bg-[#F8F6F4] hover:bg-[#E7E2DE] text-[#101010] border-[#C8C2BE]"
+                      ? 'bg-[#101010] text-white border-[#101010] shadow-xs'
+                      : 'bg-[#F8F6F4] hover:bg-[#E7E2DE] text-[#101010] border-[#C8C2BE]'
                   }`}
                 >
                   <div>
@@ -211,7 +198,7 @@ export const CopyToModal: React.FC<CopyToModalProps> = ({
                     {hasDates && (
                       <span
                         className={`text-[9px] font-semibold block ${
-                          isSelected ? "text-amber-300" : "text-amber-700"
+                          isSelected ? 'text-amber-300' : 'text-amber-700'
                         }`}
                       >
                         Has dates
@@ -221,8 +208,8 @@ export const CopyToModal: React.FC<CopyToModalProps> = ({
                   <div
                     className={`w-5 h-5 rounded-lg border flex items-center justify-center ${
                       isSelected
-                        ? "bg-amber-400 border-amber-400 text-[#101010]"
-                        : "border-[#C8C2BE] bg-white"
+                        ? 'bg-amber-400 border-amber-400 text-[#101010]'
+                        : 'border-[#C8C2BE] bg-white'
                     }`}
                   >
                     {isSelected && <Check className="w-3.5 h-3.5 font-bold" />}
@@ -249,14 +236,14 @@ export const CopyToModal: React.FC<CopyToModalProps> = ({
             disabled={selectedCodes.length === 0}
             className={`px-5 py-2.5 rounded-xl text-white text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
               selectedCodes.length > 0
-                ? "bg-[#101010] hover:bg-[#252525] shadow-sm"
-                : "bg-gray-400 cursor-not-allowed opacity-50"
+                ? 'bg-[#101010] hover:bg-[#252525] shadow-sm'
+                : 'bg-gray-400 cursor-not-allowed opacity-50'
             }`}
           >
             <Copy className="w-4 h-4 text-amber-400" />
             <span>
               {showOverwriteWarning
-                ? "Confirm & Overwrite"
+                ? 'Confirm & Overwrite'
                 : `Apply to ${selectedCodes.length} Classes`}
             </span>
           </button>

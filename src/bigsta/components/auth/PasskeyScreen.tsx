@@ -1,73 +1,59 @@
-import React, { useState } from "react";
-import {
-  Shield,
-  Key,
-  Eye,
-  EyeOff,
-  ArrowRight,
-  AlertCircle,
-  Sparkles,
-  UserPlus,
-  CheckCircle2,
-  HelpCircle,
-} from "lucide-react";
-import { useTemplateStore } from "../../store/useTemplateStore";
-import { UserRegistrationModal } from "./UserRegistrationModal";
-import { ForgotPasskeyModal } from "./ForgotPasskeyModal";
+import React, { useState } from 'react';
+import { Shield, Key, Eye, EyeOff, ArrowRight, AlertCircle, Sparkles, UserPlus, CheckCircle2, HelpCircle } from 'lucide-react';
+import { useTemplateStore } from '../../store/useTemplateStore';
+import { UserRegistrationModal } from './UserRegistrationModal';
+import { ForgotPasskeyModal } from './ForgotPasskeyModal';
 
 export const PasskeyScreen: React.FC = () => {
   const { loginWithPasskey, loadingPasskeys } = useTemplateStore();
-  const [passkeyInput, setPasskeyInput] = useState("");
+  const [passkeyInput, setPasskeyInput] = useState('');
   const [showPasskey, setShowPasskey] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successNotice, setSuccessNotice] = useState("");
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successNotice, setSuccessNotice] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isForgotOpen, setIsForgotOpen] = useState(false);
 
-  console.log("[Auth Debug] PasskeyScreen Render:", {
-    authRole: useTemplateStore.getState().authRole,
-    isRegisterOpen,
-  });
+  console.log('[Auth Debug] PasskeyScreen Render:', { authRole: useTemplateStore.getState().authRole, isRegisterOpen });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!passkeyInput.trim()) {
-      setErrorMessage("Please enter your passkey to continue");
+      setErrorMessage('Please enter your passkey to continue');
       return;
     }
 
     setIsLoading(true);
-    setErrorMessage("");
-    setSuccessNotice("");
+    setErrorMessage('');
+    setSuccessNotice('');
 
     try {
       const res = await loginWithPasskey(passkeyInput);
       setIsLoading(false);
       if (!res.success) {
-        setErrorMessage(res.message || "Invalid Passkey");
+        setErrorMessage(res.message || 'Invalid Passkey');
       }
     } catch (err: any) {
       setIsLoading(false);
-      setErrorMessage(err?.message || "Error verifying passkey");
+      setErrorMessage(err?.message || 'Error verifying passkey');
     }
   };
 
   const handleRegistrationSuccess = async (registeredPasskey: string) => {
     setPasskeyInput(registeredPasskey);
     setIsLoading(true);
-    setErrorMessage("");
-
+    setErrorMessage('');
+    
     // Auto-login after registration
     try {
       const res = await loginWithPasskey(registeredPasskey);
       setIsLoading(false);
       if (!res.success) {
-        setErrorMessage(res.message || "Auto-login failed. Please enter your passkey manually.");
+        setErrorMessage(res.message || 'Auto-login failed. Please enter your passkey manually.');
       }
     } catch (err: any) {
       setIsLoading(false);
-      setErrorMessage("Auto-login failed. Please enter your passkey manually.");
+      setErrorMessage('Auto-login failed. Please enter your passkey manually.');
     }
   };
 
@@ -86,9 +72,12 @@ export const PasskeyScreen: React.FC = () => {
 
       {/* Main Container */}
       <div className="w-full max-w-md bg-[#1C2541]/90 backdrop-blur-xl border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl relative z-10 flex flex-col items-center my-auto">
+        
         {/* BIGsta Title Header */}
         <div className="flex flex-col items-center text-center mb-6">
-          <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight">BIGsta</h1>
+          <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
+            BIGsta
+          </h1>
         </div>
 
         {/* Registration Success Banner */}
@@ -112,11 +101,11 @@ export const PasskeyScreen: React.FC = () => {
               </div>
 
               <input
-                type={showPasskey ? "text" : "password"}
+                type={showPasskey ? 'text' : 'password'}
                 value={passkeyInput}
                 onChange={(e) => {
                   setPasskeyInput(e.target.value);
-                  if (errorMessage) setErrorMessage("");
+                  if (errorMessage) setErrorMessage('');
                 }}
                 placeholder="Enter Passkey"
                 className="w-full pl-10 pr-11 py-3 bg-[#0B132B]/80 border border-white/15 rounded-xl text-white placeholder-slate-500 text-sm font-mono tracking-wide focus:outline-none focus:border-[#47A5FF] focus:ring-2 focus:ring-[#47A5FF]/20 transition-all"
@@ -127,7 +116,7 @@ export const PasskeyScreen: React.FC = () => {
                 type="button"
                 onClick={() => setShowPasskey(!showPasskey)}
                 className="absolute right-3.5 text-slate-400 hover:text-white transition-colors cursor-pointer p-1"
-                title={showPasskey ? "Hide Passkey" : "Show Passkey"}
+                title={showPasskey ? 'Hide Passkey' : 'Show Passkey'}
               >
                 {showPasskey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -151,20 +140,8 @@ export const PasskeyScreen: React.FC = () => {
             {isLoading ? (
               <span className="inline-flex items-center gap-2">
                 <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
                 Verifying Passkey...
               </span>
@@ -192,7 +169,9 @@ export const PasskeyScreen: React.FC = () => {
 
         {/* Register Now Button (Prompt 21) */}
         <div className="pt-4 mt-2 flex flex-col items-center gap-2.5 border-t border-white/10 w-full">
-          <p className="text-xs text-slate-300 font-medium">Don't have an account?</p>
+          <p className="text-xs text-slate-300 font-medium">
+            Don't have an account?
+          </p>
           <button
             type="button"
             onClick={() => setIsRegisterOpen(true)}
@@ -218,9 +197,7 @@ export const PasskeyScreen: React.FC = () => {
         onClose={() => setIsForgotOpen(false)}
         onSuccess={(newPk) => {
           setPasskeyInput(newPk);
-          setSuccessNotice(
-            "Passkey updated successfully! You can now continue with your new passkey.",
-          );
+          setSuccessNotice('Passkey updated successfully! You can now continue with your new passkey.');
         }}
       />
     </div>

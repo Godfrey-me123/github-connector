@@ -1,6 +1,6 @@
-import React, { useRef, useEffect } from "react";
-import { useTemplateStore } from "../store/useTemplateStore";
-import { convertFromMm, convertToMm, formatUnitValue } from "../utils/units";
+import React, { useRef, useEffect } from 'react';
+import { useTemplateStore } from '../store/useTemplateStore';
+import { convertFromMm, convertToMm, formatUnitValue } from '../utils/units';
 
 interface RulersProps {
   stageWidthPx: number;
@@ -10,15 +10,21 @@ interface RulersProps {
 
 export const TopRuler: React.FC<RulersProps> = ({ stageWidthPx, scale }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { currentTemplate, activeUnit, cursorPosMm, addGuide, showGuides } = useTemplateStore();
+  const {
+    currentTemplate,
+    activeUnit,
+    cursorPosMm,
+    addGuide,
+    showGuides,
+  } = useTemplateStore();
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     // Drag horizontal guide down from top ruler
     addGuide({
-      type: "horizontal",
+      type: 'horizontal',
       position: Math.max(0, Math.min(currentTemplate.cardHeight, cursorPosMm.y || 5)),
-      color: "#3b82f6",
+      color: '#3b82f6',
       locked: false,
       hidden: false,
     });
@@ -27,7 +33,7 @@ export const TopRuler: React.FC<RulersProps> = ({ stageWidthPx, scale }) => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const dpr = window.devicePixelRatio || 1;
@@ -37,11 +43,11 @@ export const TopRuler: React.FC<RulersProps> = ({ stageWidthPx, scale }) => {
     ctx.scale(dpr, dpr);
 
     // Background
-    ctx.fillStyle = "#1e293b";
+    ctx.fillStyle = '#1e293b';
     ctx.fillRect(0, 0, stageWidthPx, rulerHeight);
 
     // Bottom border
-    ctx.strokeStyle = "#334155";
+    ctx.strokeStyle = '#334155';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(0, rulerHeight - 0.5);
@@ -53,14 +59,14 @@ export const TopRuler: React.FC<RulersProps> = ({ stageWidthPx, scale }) => {
 
     // Calculate step interval based on active unit
     let stepInMm = 5; // 5mm ticks default
-    if (activeUnit === "cm") stepInMm = 10;
-    if (activeUnit === "in") stepInMm = 25.4 / 4; // 1/4 inch
-    if (activeUnit === "px") stepInMm = 25.4 / 30; // ~10px step
+    if (activeUnit === 'cm') stepInMm = 10;
+    if (activeUnit === 'in') stepInMm = 25.4 / 4; // 1/4 inch
+    if (activeUnit === 'px') stepInMm = 25.4 / 30; // ~10px step
 
-    ctx.fillStyle = "#94a3b8";
-    ctx.font = "9px monospace";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '9px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
 
     const maxMm = cardWidthMm;
     for (let mm = 0; mm <= maxMm; mm += stepInMm) {
@@ -71,7 +77,7 @@ export const TopRuler: React.FC<RulersProps> = ({ stageWidthPx, scale }) => {
       const isMajor = mm % (stepInMm * 2) === 0;
       const tickHeight = isMajor ? 12 : 6;
 
-      ctx.strokeStyle = "#64748b";
+      ctx.strokeStyle = '#64748b';
       ctx.beginPath();
       ctx.moveTo(xPx, rulerHeight - tickHeight);
       ctx.lineTo(xPx, rulerHeight);
@@ -79,7 +85,7 @@ export const TopRuler: React.FC<RulersProps> = ({ stageWidthPx, scale }) => {
 
       if (isMajor && xPx > 15 && xPx < stageWidthPx - 15) {
         let label = `${displayVal}`;
-        if (activeUnit === "mm") label = `${Math.round(displayVal)}`;
+        if (activeUnit === 'mm') label = `${Math.round(displayVal)}`;
         ctx.fillText(label, xPx, 2);
       }
     }
@@ -87,7 +93,7 @@ export const TopRuler: React.FC<RulersProps> = ({ stageWidthPx, scale }) => {
     // Cursor indicator line
     if (cursorPosMm.x >= 0 && cursorPosMm.x <= cardWidthMm) {
       const cursorPx = cursorPosMm.x * pxPerMm;
-      ctx.strokeStyle = "#ef4444";
+      ctx.strokeStyle = '#ef4444';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(cursorPx, 0);
@@ -110,15 +116,20 @@ export const TopRuler: React.FC<RulersProps> = ({ stageWidthPx, scale }) => {
 
 export const LeftRuler: React.FC<RulersProps> = ({ stageHeightPx, scale }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { currentTemplate, activeUnit, cursorPosMm, addGuide } = useTemplateStore();
+  const {
+    currentTemplate,
+    activeUnit,
+    cursorPosMm,
+    addGuide,
+  } = useTemplateStore();
 
   const handleMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     // Drag vertical guide right from left ruler
     addGuide({
-      type: "vertical",
+      type: 'vertical',
       position: Math.max(0, Math.min(currentTemplate.cardWidth, cursorPosMm.x || 5)),
-      color: "#3b82f6",
+      color: '#3b82f6',
       locked: false,
       hidden: false,
     });
@@ -127,7 +138,7 @@ export const LeftRuler: React.FC<RulersProps> = ({ stageHeightPx, scale }) => {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const dpr = window.devicePixelRatio || 1;
@@ -137,11 +148,11 @@ export const LeftRuler: React.FC<RulersProps> = ({ stageHeightPx, scale }) => {
     ctx.scale(dpr, dpr);
 
     // Background
-    ctx.fillStyle = "#1e293b";
+    ctx.fillStyle = '#1e293b';
     ctx.fillRect(0, 0, rulerWidth, stageHeightPx);
 
     // Right border
-    ctx.strokeStyle = "#334155";
+    ctx.strokeStyle = '#334155';
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(rulerWidth - 0.5, 0);
@@ -152,14 +163,14 @@ export const LeftRuler: React.FC<RulersProps> = ({ stageHeightPx, scale }) => {
     const pxPerMm = (stageHeightPx / cardHeightMm) * scale;
 
     let stepInMm = 5;
-    if (activeUnit === "cm") stepInMm = 10;
-    if (activeUnit === "in") stepInMm = 25.4 / 4;
-    if (activeUnit === "px") stepInMm = 25.4 / 30;
+    if (activeUnit === 'cm') stepInMm = 10;
+    if (activeUnit === 'in') stepInMm = 25.4 / 4;
+    if (activeUnit === 'px') stepInMm = 25.4 / 30;
 
-    ctx.fillStyle = "#94a3b8";
-    ctx.font = "9px monospace";
-    ctx.textAlign = "right";
-    ctx.textBaseline = "middle";
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '9px monospace';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
 
     const maxMm = cardHeightMm;
     for (let mm = 0; mm <= maxMm; mm += stepInMm) {
@@ -170,7 +181,7 @@ export const LeftRuler: React.FC<RulersProps> = ({ stageHeightPx, scale }) => {
       const isMajor = mm % (stepInMm * 2) === 0;
       const tickWidth = isMajor ? 12 : 6;
 
-      ctx.strokeStyle = "#64748b";
+      ctx.strokeStyle = '#64748b';
       ctx.beginPath();
       ctx.moveTo(rulerWidth - tickWidth, yPx);
       ctx.lineTo(rulerWidth, yPx);
@@ -178,7 +189,7 @@ export const LeftRuler: React.FC<RulersProps> = ({ stageHeightPx, scale }) => {
 
       if (isMajor && yPx > 15 && yPx < stageHeightPx - 15) {
         let label = `${displayVal}`;
-        if (activeUnit === "mm") label = `${Math.round(displayVal)}`;
+        if (activeUnit === 'mm') label = `${Math.round(displayVal)}`;
         ctx.save();
         ctx.translate(10, yPx);
         ctx.rotate(-Math.PI / 2);
@@ -190,7 +201,7 @@ export const LeftRuler: React.FC<RulersProps> = ({ stageHeightPx, scale }) => {
     // Cursor indicator line
     if (cursorPosMm.y >= 0 && cursorPosMm.y <= cardHeightMm) {
       const cursorPx = cursorPosMm.y * pxPerMm;
-      ctx.strokeStyle = "#ef4444";
+      ctx.strokeStyle = '#ef4444';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.moveTo(0, cursorPx);

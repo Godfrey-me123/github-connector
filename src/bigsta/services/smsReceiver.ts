@@ -1,19 +1,19 @@
-import { supabase } from "./supabase";
+import { supabase } from './supabase';
 import {
   ExtractedPayment,
   computeSmsHash,
   detectNetwork,
   extractPaymentFields,
   isParsedPayment,
-} from "../utils/smsFields";
+} from '../utils/smsFields';
 
 export type { ExtractedPayment };
 export { extractPaymentFields, detectNetwork, computeSmsHash };
 
-export const SMS_TABLE = "sms_logs";
+export const SMS_TABLE = 'sms_logs';
 
-export type SmsReviewStatus = "UNREVIEWED" | "REVIEWED" | "IGNORED";
-export type SmsProcessingState = "PARSED" | "PARSE_FAILED";
+export type SmsReviewStatus = 'UNREVIEWED' | 'REVIEWED' | 'IGNORED';
+export type SmsProcessingState = 'PARSED' | 'PARSE_FAILED';
 
 export interface SmsTransaction {
   id: string;
@@ -52,10 +52,10 @@ export interface SmsDiagnostics {
   totalFailed: number;
 }
 
-const DIAG_KEY = "bigsta_sms_receiver_diagnostics";
-const OUTBOX_KEY = "bigsta_sms_receiver_outbox";
-const DEVICE_KEY = "bigsta_sms_device_id";
-const DIAG_EVENT = "bigsta:sms-diagnostics";
+const DIAG_KEY = 'bigsta_sms_receiver_diagnostics';
+const OUTBOX_KEY = 'bigsta_sms_receiver_outbox';
+const DEVICE_KEY = 'bigsta_sms_device_id';
+const DIAG_EVENT = 'bigsta:sms-diagnostics';
 
 const emptyDiagnostics = (): SmsDiagnostics => ({
   receiverRegisteredAt: null,
@@ -74,7 +74,7 @@ const emptyDiagnostics = (): SmsDiagnostics => ({
 });
 
 function getNativeInterface(): any {
-  if (typeof window === "undefined") return null;
+  if (typeof window === 'undefined') return null;
   const w = window as any;
   return w.AndroidInterface || w.Android || w.JSInterface || null;
 }
@@ -105,15 +105,15 @@ export function subscribeSmsDiagnostics(callback: () => void): () => void {
 }
 
 function recordError(message: string) {
-  console.error("[BIGsta SMS Receiver]", message);
+  console.error('[BIGsta SMS Receiver]', message);
   updateDiagnostics({ lastError: message, lastErrorAt: new Date().toISOString() });
 }
 
 export function getDeviceId(): string {
   const native = getNativeInterface();
-  if (native && typeof native.getDeviceId === "function") {
+  if (native && typeof native.getDeviceId === 'function') {
     try {
-      const id = String(native.getDeviceId() || "").trim();
+      const id = String(native.getDeviceId() || '').trim();
       if (id) return id;
     } catch {}
   }
@@ -134,7 +134,7 @@ interface OutboxItem {
 
 function readOutbox(): OutboxItem[] {
   try {
-    return JSON.parse(localStorage.getItem(OUTBOX_KEY) || "[]");
+    return JSON.parse(localStorage.getItem(OUTBOX_KEY) || '[]');
   } catch {
     return [];
   }
@@ -151,12 +151,8 @@ export interface SmsSaveResult {
   error?: string;
 }
 
-async function persistSms(
-  sender: string,
-  rawSms: string,
-  receivedAt: string,
-): Promise<SmsSaveResult> {
-  if (!supabase) return { ok: false, error: "Supabase client not configured" };
+async function persistSms(sender: string, rawSms: string, receivedAt: string): Promise<SmsSaveResult> {
+  if (!supabase) return { ok: false, error: 'Supabase client not configured' };
 
   const deviceId = getDeviceId();
   const smsHash = await computeSmsHash(sender, rawSms, receivedAt);
@@ -177,33 +173,26 @@ async function persistSms(
     transaction_id: fields.transactionId,
     payer_name: fields.payerName,
     payer_phone: fields.payerPhone,
-    status: "UNREVIEWED" as SmsReviewStatus,
-    processing_state: (parsed ? "PARSED" : "PARSE_FAILED") as SmsProcessingState,
-    source: "bigsta_apk",
+    status: 'UNREVIEWED' as SmsReviewStatus,
+    processing_state: (parsed ? 'PARSED' : 'PARSE_FAILED') as SmsProcessingState,
+    source: 'bigsta_apk',
   };
 
-  const { data, error } = await supabase.from(SMS_TABLE).insert(row).select("id").single();
+  const { data, error } = await supabase.from(SMS_TABLE).insert(row).select('id').single();
 
   if (error) {
-    if (error.code === "23505") return { ok: true, duplicate: true };
-    return { ok: false, error: `${error.code || "ERR"}: ${error.message}` };
+    if (error.code === '23505') return { ok: true, duplicate: true };
+    return { ok: false, error: `${error.code || 'ERR'}: ${error.message}` };
   }
-  if (!data?.id) return { ok: false, error: "Insert returned no row; record not confirmed" };
+  if (!data?.id) return { ok: false, error: 'Insert returned no row; record not confirmed' };
   return { ok: true, id: data.id };
 }
 
-export async function receiveNativeSms(
-  senderInput: string,
-  rawInput: string,
-  timestamp?: string | number,
-): Promise<SmsSaveResult> {
+export async function receiveNativeSms(senderInput: string, rawInput: string, timestamp?: string | number): Promise<SmsSaveResult> {
   const now = new Date().toISOString();
-  const sender = String(senderInput || "").trim() || "UNKNOWN";
-  const rawSms = String(rawInput ?? "");
-  const parsedTs =
-    timestamp !== undefined && timestamp !== null && timestamp !== ""
-      ? new Date(Number(timestamp) || timestamp)
-      : null;
+  const sender = String(senderInput || '').trim() || 'UNKNOWN';
+  const rawSms = String(rawInput ?? '');
+  const parsedTs = timestamp !== undefined && timestamp !== null && timestamp !== '' ? new Date(Number(timestamp) || timestamp) : null;
   const receivedAt = parsedTs && !Number.isNaN(parsedTs.getTime()) ? parsedTs.toISOString() : now;
 
   const diag = getSmsDiagnostics();
@@ -216,7 +205,7 @@ export async function receiveNativeSms(
   if (!rawSms.trim()) {
     recordError(`Rejected empty SMS body from ${sender}`);
     updateDiagnostics({ totalFailed: getSmsDiagnostics().totalFailed + 1 });
-    return { ok: false, error: "Empty SMS body" };
+    return { ok: false, error: 'Empty SMS body' };
   }
 
   let result: SmsSaveResult;
@@ -253,9 +242,7 @@ export async function flushSmsOutbox(): Promise<{ saved: number; remaining: numb
     const items = readOutbox();
     const remaining: OutboxItem[] = [];
     for (const item of items) {
-      const res = await persistSms(item.sender, item.rawSms, item.receivedAt).catch(
-        (e) => ({ ok: false, error: String(e) }) as SmsSaveResult,
-      );
+      const res = await persistSms(item.sender, item.rawSms, item.receivedAt).catch((e) => ({ ok: false, error: String(e) }) as SmsSaveResult);
       if (res.ok) {
         saved++;
         const t = new Date().toISOString();
@@ -289,40 +276,26 @@ export interface SmsTableHealth {
 }
 
 export async function checkSmsTable(): Promise<SmsTableHealth> {
-  if (!supabase) return { ok: false, error: "Supabase client not configured", missingTable: false };
-  const { error } = await supabase
-    .from(SMS_TABLE)
-    .select("id", { head: true, count: "exact" })
-    .limit(1);
+  if (!supabase) return { ok: false, error: 'Supabase client not configured', missingTable: false };
+  const { error } = await supabase.from(SMS_TABLE).select('id', { head: true, count: 'exact' }).limit(1);
   if (error) {
-    const missing =
-      error.code === "PGRST205" ||
-      error.code === "42P01" ||
-      /could not find the table|does not exist/i.test(error.message);
-    return { ok: false, error: `${error.code || "ERR"}: ${error.message}`, missingTable: missing };
+    const missing = error.code === 'PGRST205' || error.code === '42P01' || /could not find the table|does not exist/i.test(error.message);
+    return { ok: false, error: `${error.code || 'ERR'}: ${error.message}`, missingTable: missing };
   }
-  return { ok: true, error: "", missingTable: false };
+  return { ok: true, error: '', missingTable: false };
 }
 
 export async function fetchSmsTransactions(limit = 200): Promise<SmsTransaction[]> {
-  if (!supabase) throw new Error("Supabase client not configured");
-  const { data, error } = await supabase
-    .from(SMS_TABLE)
-    .select("*")
-    .order("received_at", { ascending: false })
-    .limit(limit);
-  if (error) throw new Error(`${error.code || "ERR"}: ${error.message}`);
+  if (!supabase) throw new Error('Supabase client not configured');
+  const { data, error } = await supabase.from(SMS_TABLE).select('*').order('received_at', { ascending: false }).limit(limit);
+  if (error) throw new Error(`${error.code || 'ERR'}: ${error.message}`);
   return (data || []) as SmsTransaction[];
 }
 
 export async function fetchLatestSavedSms(): Promise<SmsTransaction | null> {
   if (!supabase) return null;
-  const { data, error } = await supabase
-    .from(SMS_TABLE)
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(1);
-  if (error) throw new Error(`${error.code || "ERR"}: ${error.message}`);
+  const { data, error } = await supabase.from(SMS_TABLE).select('*').order('created_at', { ascending: false }).limit(1);
+  if (error) throw new Error(`${error.code || 'ERR'}: ${error.message}`);
   return (data?.[0] as SmsTransaction) || null;
 }
 
@@ -330,25 +303,20 @@ export async function countUnreviewedSms(): Promise<number> {
   if (!supabase) return 0;
   const { count, error } = await supabase
     .from(SMS_TABLE)
-    .select("id", { count: "exact", head: true })
-    .eq("status", "UNREVIEWED");
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'UNREVIEWED');
   if (error) {
-    console.error("[BIGsta SMS Receiver] Unreviewed count failed:", error.message);
+    console.error('[BIGsta SMS Receiver] Unreviewed count failed:', error.message);
     return 0;
   }
   return count || 0;
 }
 
 export async function updateSmsStatus(id: string, status: SmsReviewStatus): Promise<void> {
-  if (!supabase) throw new Error("Supabase client not configured");
-  const { data, error } = await supabase
-    .from(SMS_TABLE)
-    .update({ status })
-    .eq("id", id)
-    .select("id")
-    .single();
-  if (error) throw new Error(`${error.code || "ERR"}: ${error.message}`);
-  if (!data) throw new Error("Update not confirmed");
+  if (!supabase) throw new Error('Supabase client not configured');
+  const { data, error } = await supabase.from(SMS_TABLE).update({ status }).eq('id', id).select('id').single();
+  if (error) throw new Error(`${error.code || 'ERR'}: ${error.message}`);
+  if (!data) throw new Error('Update not confirmed');
 }
 
 export function subscribeSmsTransactions(onChange: () => void): () => void {
@@ -356,7 +324,7 @@ export function subscribeSmsTransactions(onChange: () => void): () => void {
   const client = supabase;
   const channel = client
     .channel(`realtime_${SMS_TABLE}_${Math.random().toString(36).slice(2)}`)
-    .on("postgres_changes", { event: "*", schema: "public", table: SMS_TABLE }, onChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: SMS_TABLE }, onChange)
     .subscribe();
   return () => {
     client.removeChannel(channel);
@@ -374,7 +342,12 @@ export function subscribeSmsTransactions(onChange: () => void): () => void {
 // ---------------------------------------------------------------------------
 
 export type SmsClaimOutcome =
-  "CLAIMED" | "NOT_FOUND" | "AMOUNT_MISMATCH" | "ALREADY_USED" | "UNPARSED" | "ERROR";
+  | 'CLAIMED'
+  | 'NOT_FOUND'
+  | 'AMOUNT_MISMATCH'
+  | 'ALREADY_USED'
+  | 'UNPARSED'
+  | 'ERROR';
 
 export interface SmsClaimResult {
   outcome: SmsClaimOutcome;
@@ -384,9 +357,9 @@ export interface SmsClaimResult {
 }
 
 export function normalizeReference(reference: string): string {
-  return String(reference || "")
+  return String(reference || '')
     .toUpperCase()
-    .replace(/[^A-Z0-9]/g, "");
+    .replace(/[^A-Z0-9]/g, '');
 }
 
 /** Read-only lookup of an SMS by its mobile-money reference. */
@@ -396,11 +369,11 @@ export async function findSmsByReference(reference: string): Promise<SmsTransact
   if (!ref) return null;
   const { data, error } = await supabase
     .from(SMS_TABLE)
-    .select("*")
+    .select('*')
     .or(`reference.ilike.${ref},transaction_id.ilike.${ref}`)
-    .order("received_at", { ascending: false })
+    .order('received_at', { ascending: false })
     .limit(1);
-  if (error) throw new Error(`${error.code || "ERR"}: ${error.message}`);
+  if (error) throw new Error(`${error.code || 'ERR'}: ${error.message}`);
   return (data?.[0] as SmsTransaction) || null;
 }
 
@@ -414,27 +387,27 @@ export async function claimSmsPaymentByReference(
   reference: string,
   amountInput: number,
 ): Promise<SmsClaimResult> {
-  if (!supabase) return { outcome: "ERROR", message: "Cloud database is not configured." };
+  if (!supabase) return { outcome: 'ERROR', message: 'Cloud database is not configured.' };
 
   const ref = normalizeReference(reference);
-  if (!ref) return { outcome: "NOT_FOUND", message: "Transaction code is empty or invalid." };
+  if (!ref) return { outcome: 'NOT_FOUND', message: 'Transaction code is empty or invalid.' };
 
   let row: SmsTransaction | null;
   try {
     row = await findSmsByReference(ref);
   } catch (e: any) {
-    return { outcome: "ERROR", message: e?.message || String(e) };
+    return { outcome: 'ERROR', message: e?.message || String(e) };
   }
 
   if (!row) {
-    return { outcome: "NOT_FOUND", message: `No payment SMS stored for code ${ref}.` };
+    return { outcome: 'NOT_FOUND', message: `No payment SMS stored for code ${ref}.` };
   }
-  if (row.status !== "UNREVIEWED") {
-    return { outcome: "ALREADY_USED", message: `Code ${ref} has already been used.`, row };
+  if (row.status !== 'UNREVIEWED') {
+    return { outcome: 'ALREADY_USED', message: `Code ${ref} has already been used.`, row };
   }
-  if (row.processing_state !== "PARSED" || row.amount === null || row.amount === undefined) {
+  if (row.processing_state !== 'PARSED' || row.amount === null || row.amount === undefined) {
     return {
-      outcome: "UNPARSED",
+      outcome: 'UNPARSED',
       message: `The SMS for code ${ref} was stored but its amount could not be read automatically.`,
       row,
     };
@@ -443,7 +416,7 @@ export async function claimSmsPaymentByReference(
   const smsAmount = Number(row.amount);
   if (!Number.isFinite(smsAmount) || Math.abs(smsAmount - Number(amountInput)) > 1) {
     return {
-      outcome: "AMOUNT_MISMATCH",
+      outcome: 'AMOUNT_MISMATCH',
       message: `The amount you entered (TSh ${Number(amountInput).toLocaleString()}) does not match the payment SMS for code ${ref}.`,
       amount: smsAmount,
       row,
@@ -452,25 +425,21 @@ export async function claimSmsPaymentByReference(
 
   const { data: claimed, error: claimError } = await supabase
     .from(SMS_TABLE)
-    .update({ status: "REVIEWED" as SmsReviewStatus })
-    .eq("id", row.id)
-    .eq("status", "UNREVIEWED")
-    .select("*")
+    .update({ status: 'REVIEWED' as SmsReviewStatus })
+    .eq('id', row.id)
+    .eq('status', 'UNREVIEWED')
+    .select('*')
     .maybeSingle();
 
   if (claimError) {
-    return { outcome: "ERROR", message: `${claimError.code || "ERR"}: ${claimError.message}` };
+    return { outcome: 'ERROR', message: `${claimError.code || 'ERR'}: ${claimError.message}` };
   }
   if (!claimed) {
-    return {
-      outcome: "ALREADY_USED",
-      message: `Code ${ref} was just used by another request.`,
-      row,
-    };
+    return { outcome: 'ALREADY_USED', message: `Code ${ref} was just used by another request.`, row };
   }
 
   return {
-    outcome: "CLAIMED",
+    outcome: 'CLAIMED',
     message: `Payment of TSh ${smsAmount.toLocaleString()} confirmed.`,
     amount: smsAmount,
     row: claimed as SmsTransaction,
@@ -480,10 +449,7 @@ export async function claimSmsPaymentByReference(
 /** Release a claim when granting tokens afterwards fails, so the user can retry. */
 export async function releaseSmsClaim(id: string): Promise<void> {
   if (!supabase) return;
-  await supabase
-    .from(SMS_TABLE)
-    .update({ status: "UNREVIEWED" as SmsReviewStatus })
-    .eq("id", id);
+  await supabase.from(SMS_TABLE).update({ status: 'UNREVIEWED' as SmsReviewStatus }).eq('id', id);
 }
 
 export const SMS_TABLE_SQL = `CREATE EXTENSION IF NOT EXISTS pgcrypto;

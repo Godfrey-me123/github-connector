@@ -1,5 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import { convertNidaDobBlockToDdMmmYyyy } from "../../utils/dateValidation";
+import { convertNidaDobBlockToDdMmmYyyy } from '../../utils/dateValidation';
 
 /**
  * NIDA (National Identification Authority - Tanzania)
@@ -30,7 +30,7 @@ export interface NidaValidationResult {
  * Strips all non-digit characters from string, capped at 20 digits.
  */
 export function sanitizeNidaInput(input: string): string {
-  return input.replace(/\D/g, "").slice(0, 20);
+  return input.replace(/\D/g, '').slice(0, 20);
 }
 
 /**
@@ -39,7 +39,7 @@ export function sanitizeNidaInput(input: string): string {
  */
 export function formatNidaNumber(input: string): string {
   const digits = sanitizeNidaInput(input);
-  if (!digits) return "";
+  if (!digits) return '';
 
   const parts: string[] = [];
 
@@ -63,19 +63,15 @@ export function formatNidaNumber(input: string): string {
     parts.push(digits.slice(18, 20));
   }
 
-  return parts.join("-");
+  return parts.join('-');
 }
 
 /**
  * Validates a NIDA date of birth component (YYYYMMDD)
  */
-export function validateNidaDob(dobBlock: string): {
-  isValid: boolean;
-  message?: string;
-  formattedDate?: string;
-} {
+export function validateNidaDob(dobBlock: string): { isValid: boolean; message?: string; formattedDate?: string } {
   if (dobBlock.length < 8) {
-    return { isValid: false, message: "Incomplete birth date segment (YYYYMMDD)" };
+    return { isValid: false, message: 'Incomplete birth date segment (YYYYMMDD)' };
   }
 
   const year = parseInt(dobBlock.slice(0, 4), 10);
@@ -89,16 +85,13 @@ export function validateNidaDob(dobBlock: string): {
   }
 
   if (month < 1 || month > 12) {
-    return { isValid: false, message: "Invalid month in NIDA number (01-12)" };
+    return { isValid: false, message: 'Invalid month in NIDA number (01-12)' };
   }
 
   // Days in month validation
   const daysInMonth = new Date(year, month, 0).getDate();
   if (day < 1 || day > daysInMonth) {
-    return {
-      isValid: false,
-      message: `Invalid day in NIDA number (01-${daysInMonth} for month ${month})`,
-    };
+    return { isValid: false, message: `Invalid day in NIDA number (01-${daysInMonth} for month ${month})` };
   }
 
   const strictFormattedDate = convertNidaDobBlockToDdMmmYyyy(dobBlock);
@@ -140,7 +133,7 @@ export function validateNidaNumber(input: string): NidaValidationResult {
   if (parts.dobBlock.length === 8) {
     const dobCheck = validateNidaDob(parts.dobBlock);
     if (!dobCheck.isValid) {
-      dobWarning = dobCheck.message || "Invalid date component";
+      dobWarning = dobCheck.message || 'Invalid date component';
     } else {
       extractedDob = dobCheck.formattedDate;
     }

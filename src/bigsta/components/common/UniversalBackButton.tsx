@@ -1,6 +1,6 @@
-import React from "react";
-import { ArrowLeft } from "lucide-react";
-import { useTemplateStore } from "../../store/useTemplateStore";
+import React from 'react';
+import { ArrowLeft } from 'lucide-react';
+import { useTemplateStore } from '../../store/useTemplateStore';
 
 interface UniversalBackButtonProps {
   className?: string;
@@ -9,8 +9,8 @@ interface UniversalBackButtonProps {
 }
 
 export const UniversalBackButton: React.FC<UniversalBackButtonProps> = ({
-  className = "",
-  label = "Back",
+  className = '',
+  label = 'Back',
   onClickCustom,
 }) => {
   const { goBack } = useTemplateStore();

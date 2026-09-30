@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 
 interface HorizontalActionRowProps {
   children: React.ReactNode;
@@ -13,7 +13,7 @@ interface HorizontalActionRowProps {
  */
 export const HorizontalActionRow: React.FC<HorizontalActionRowProps> = ({
   children,
-  className = "",
+  className = '',
   id,
 }) => {
   return (
@@ -21,11 +21,13 @@ export const HorizontalActionRow: React.FC<HorizontalActionRowProps> = ({
       id={id}
       className={`w-full max-w-full overflow-x-auto overflow-y-hidden touch-pan-x scroll-smooth no-scrollbar flex items-center justify-start sm:justify-end flex-nowrap shrink-0 gap-1.5 ${className}`}
       style={{
-        WebkitOverflowScrolling: "touch",
-        overscrollBehaviorX: "contain",
+        WebkitOverflowScrolling: 'touch',
+        overscrollBehaviorX: 'contain',
       }}
     >
-      <div className="flex items-center gap-1.5 flex-nowrap shrink-0 ml-auto">{children}</div>
+      <div className="flex items-center gap-1.5 flex-nowrap shrink-0 ml-auto">
+        {children}
+      </div>
     </div>
   );
 };

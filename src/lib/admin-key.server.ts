@@ -4,8 +4,5 @@ export function checkAdminKey(request: Request): Response | null {
   const key = process.env["ADMIN_API_KEY"];
   if (!key) return null;
   if (request.headers.get("x-admin-key") === key) return null;
-  return Response.json(
-    { success: false, error: "Unauthorized: missing or invalid x-admin-key" },
-    { status: 401 },
-  );
+  return Response.json({ success: false, error: "Unauthorized: missing or invalid x-admin-key" }, { status: 401 });
 }

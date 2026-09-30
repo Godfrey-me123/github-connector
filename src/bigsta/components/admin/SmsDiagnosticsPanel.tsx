@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { RefreshCw, UploadCloud } from "lucide-react";
+import React, { useCallback, useEffect, useState } from 'react';
+import { RefreshCw, UploadCloud } from 'lucide-react';
 import {
   SmsDiagnostics,
   SmsTableHealth,
@@ -11,25 +11,17 @@ import {
   getSmsDiagnostics,
   subscribeSmsDiagnostics,
   subscribeSmsTransactions,
-} from "../../services/smsReceiver";
-import { SmsSetupRequired } from "./SmsTransactionsPanel";
+} from '../../services/smsReceiver';
+import { SmsSetupRequired } from './SmsTransactionsPanel';
 
-const fmt = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleString() : "Never");
+const fmt = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleString() : 'Never');
 
-function Row({
-  label,
-  value,
-  tone = "default",
-}: {
-  label: string;
-  value: React.ReactNode;
-  tone?: "default" | "good" | "bad" | "warn";
-}) {
+function Row({ label, value, tone = 'default' }: { label: string; value: React.ReactNode; tone?: 'default' | 'good' | 'bad' | 'warn' }) {
   const toneClass = {
-    default: "text-gray-900",
-    good: "text-emerald-700",
-    bad: "text-rose-700",
-    warn: "text-amber-700",
+    default: 'text-gray-900',
+    good: 'text-emerald-700',
+    bad: 'text-rose-700',
+    warn: 'text-amber-700',
   }[tone];
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 py-3 border-b border-gray-100 last:border-0">
@@ -78,9 +70,7 @@ export function SmsDiagnosticsPanel() {
 
       <section className="bg-white border border-gray-200 rounded-3xl p-5 sm:p-6 shadow-sm">
         <div className="flex items-center justify-between gap-3 mb-2">
-          <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">
-            SMS Diagnostics
-          </h3>
+          <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">SMS Diagnostics</h3>
           <button
             type="button"
             onClick={refresh}
@@ -94,70 +84,50 @@ export function SmsDiagnosticsPanel() {
             label="SMS Receiver Status"
             value={
               receiverActive
-                ? "ACTIVE (BIGsta APK native receiver)"
+                ? 'ACTIVE (BIGsta APK native receiver)'
                 : diag.nativeInterfaceDetected
-                  ? "APK detected, receiver not registered"
-                  : "INACTIVE (not running inside BIGsta APK)"
+                  ? 'APK detected, receiver not registered'
+                  : 'INACTIVE (not running inside BIGsta APK)'
             }
-            tone={receiverActive ? "good" : "warn"}
+            tone={receiverActive ? 'good' : 'warn'}
           />
           <Row label="This Device ID" value={<span className="font-mono">{getDeviceId()}</span>} />
           <Row
             label="Last SMS Received (this device)"
-            value={
-              diag.lastSmsReceivedAt
-                ? `${fmt(diag.lastSmsReceivedAt)} · ${diag.lastSmsSender}`
-                : "Never"
-            }
+            value={diag.lastSmsReceivedAt ? `${fmt(diag.lastSmsReceivedAt)} · ${diag.lastSmsSender}` : 'Never'}
           />
-          <Row
-            label="Last SMS Saved (this device)"
-            value={fmt(diag.lastSmsSavedAt)}
-            tone={diag.lastSmsSavedAt ? "good" : "default"}
-          />
+          <Row label="Last SMS Saved (this device)" value={fmt(diag.lastSmsSavedAt)} tone={diag.lastSmsSavedAt ? 'good' : 'default'} />
           <Row
             label="Last Supabase Insert (this device)"
-            value={
-              diag.lastSupabaseInsertAt
-                ? `${fmt(diag.lastSupabaseInsertAt)} · ${diag.lastSupabaseInsertId}`
-                : "Never"
-            }
-            tone={diag.lastSupabaseInsertAt ? "good" : "default"}
+            value={diag.lastSupabaseInsertAt ? `${fmt(diag.lastSupabaseInsertAt)} · ${diag.lastSupabaseInsertId}` : 'Never'}
+            tone={diag.lastSupabaseInsertAt ? 'good' : 'default'}
           />
           <Row
             label="Latest Row in Supabase (all devices)"
             value={
               !health
-                ? "Checking..."
+                ? 'Checking...'
                 : !health.ok
-                  ? "Unavailable"
+                  ? 'Unavailable'
                   : latestError
                     ? latestError
                     : latest
                       ? `${fmt(latest.created_at)} · ${latest.sender} · ${latest.device_id}`
-                      : "No rows yet"
+                      : 'No rows yet'
             }
-            tone={latestError ? "bad" : "default"}
+            tone={latestError ? 'bad' : 'default'}
           />
           <Row
             label="Supabase sms_logs Table"
-            value={!health ? "Checking..." : health.ok ? "Reachable" : health.error}
-            tone={!health ? "default" : health.ok ? "good" : "bad"}
+            value={!health ? 'Checking...' : health.ok ? 'Reachable' : health.error}
+            tone={!health ? 'default' : health.ok ? 'good' : 'bad'}
           />
-          <Row
-            label="Last Error"
-            value={diag.lastError ? `${fmt(diag.lastErrorAt)} · ${diag.lastError}` : "None"}
-            tone={diag.lastError ? "bad" : "good"}
-          />
+          <Row label="Last Error" value={diag.lastError ? `${fmt(diag.lastErrorAt)} · ${diag.lastError}` : 'None'} tone={diag.lastError ? 'bad' : 'good'} />
           <Row
             label="Device Counters"
             value={`${diag.totalReceived} received · ${diag.totalSaved} saved · ${diag.totalFailed} failed`}
           />
-          <Row
-            label="Pending Outbox (not yet in Supabase)"
-            value={diag.pendingOutbox}
-            tone={diag.pendingOutbox > 0 ? "warn" : "good"}
-          />
+          <Row label="Pending Outbox (not yet in Supabase)" value={diag.pendingOutbox} tone={diag.pendingOutbox > 0 ? 'warn' : 'good'} />
         </dl>
         {diag.pendingOutbox > 0 && (
           <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -178,22 +148,15 @@ export function SmsDiagnosticsPanel() {
       </section>
 
       <section className="bg-white border border-gray-200 rounded-3xl p-5 sm:p-6 shadow-sm space-y-2">
-        <h4 className="text-xs font-black text-gray-900 uppercase tracking-widest">
-          APK native contract
-        </h4>
+        <h4 className="text-xs font-black text-gray-900 uppercase tracking-widest">APK native contract</h4>
         <p className="text-xs text-gray-600 leading-relaxed">
-          The APK&apos;s Android SMS BroadcastReceiver (RECEIVE_SMS permission) must call into the
-          WebView with:
+          The APK&apos;s Android SMS BroadcastReceiver (RECEIVE_SMS permission) must call into the WebView with:
         </p>
         <pre className="bg-gray-950 text-gray-100 text-[11px] rounded-2xl p-3 overflow-x-auto">
-          {
-            'webView.evaluateJavascript("window.onNativeSmsReceived(" + JSONObject.quote(sender) + "," + JSONObject.quote(body) + "," + timestampMillis + ")", null);'
-          }
+          {'webView.evaluateJavascript("window.onNativeSmsReceived(" + JSONObject.quote(sender) + "," + JSONObject.quote(body) + "," + timestampMillis + ")", null);'}
         </pre>
         <p className="text-xs text-gray-600 leading-relaxed">
-          Optional: expose <code className="font-mono">getDeviceId()</code> on the JS interface for
-          a stable hardware device ID. Status above only reports ACTIVE when the page is running
-          inside the APK.
+          Optional: expose <code className="font-mono">getDeviceId()</code> on the JS interface for a stable hardware device ID. Status above only reports ACTIVE when the page is running inside the APK.
         </p>
       </section>
     </div>

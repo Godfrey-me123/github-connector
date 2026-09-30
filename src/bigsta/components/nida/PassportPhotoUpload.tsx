@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef } from 'react';
 import {
   Upload,
   Crop,
@@ -8,11 +8,11 @@ import {
   AlertCircle,
   Image as ImageIcon,
   Sparkles,
-} from "lucide-react";
-import { PhotoCropModal } from "./PhotoCropModal";
+} from 'lucide-react';
+import { PhotoCropModal } from './PhotoCropModal';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
-const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 
 interface PassportPhotoUploadProps {
   value?: string | null;
@@ -38,7 +38,7 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
 
     // Format validation
     if (!ALLOWED_TYPES.includes(file.type.toLowerCase())) {
-      setError("Unsupported file format. Please upload JPG, JPEG, PNG, or WEBP.");
+      setError('Unsupported file format. Please upload JPG, JPEG, PNG, or WEBP.');
       return;
     }
 
@@ -55,7 +55,7 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
     reader.onload = (e) => {
       const dataUrl = e.target?.result as string;
       if (!dataUrl) {
-        setError("Failed to read image file.");
+        setError('Failed to read image file.');
         setIsProcessing(false);
         return;
       }
@@ -67,7 +67,7 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
     };
 
     reader.onerror = () => {
-      setError("Error reading file. Please try again.");
+      setError('Error reading file. Please try again.');
       setIsProcessing(false);
     };
 
@@ -81,7 +81,7 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
     }
     // reset input so same file can be chosen again
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      fileInputRef.current.value = '';
     }
   };
 
@@ -142,7 +142,7 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
             <div
               onClick={() => !disabled && !isProcessing && fileInputRef.current?.click()}
               className={`relative border-2 border-dashed border-[#C8C2BE] hover:border-[#101010] hover:bg-[#E7E2DE]/50 rounded-2xl p-6 sm:p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 group ${
-                disabled || isProcessing ? "opacity-50 pointer-events-none" : ""
+                disabled || isProcessing ? 'opacity-50 pointer-events-none' : ''
               }`}
             >
               <div className="w-14 h-14 rounded-2xl bg-[#E7E2DE] border border-[#C8C2BE] group-hover:border-[#101010] flex items-center justify-center mb-3 shadow-xs transition-all">
@@ -153,7 +153,9 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
                 )}
               </div>
 
-              <h3 className="text-sm font-bold text-[#101010]">Upload Passport Photo from Files</h3>
+              <h3 className="text-sm font-bold text-[#101010]">
+                Upload Passport Photo from Files
+              </h3>
               <p className="text-xs text-[#101010]/70 mt-1 max-w-xs font-medium">
                 Supports JPG, JPEG, PNG (including transparent backgrounds), or WEBP up to 10MB.
               </p>
@@ -179,10 +181,10 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
               className="relative w-[130px] sm:w-[140px] h-[167px] sm:h-[180px] rounded-xl overflow-hidden border-2 border-[#101010] shadow-md shrink-0 group"
               style={{
                 backgroundImage:
-                  "linear-gradient(45deg, #d8d2ce 25%, transparent 25%), linear-gradient(-45deg, #d8d2ce 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #d8d2ce 75%), linear-gradient(-45deg, transparent 75%, #d8d2ce 75%)",
-                backgroundSize: "16px 16px",
-                backgroundPosition: "0 0, 0 8px, 8px -8px, -8px 0px",
-                backgroundColor: "#ffffff",
+                  'linear-gradient(45deg, #d8d2ce 25%, transparent 25%), linear-gradient(-45deg, #d8d2ce 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #d8d2ce 75%), linear-gradient(-45deg, transparent 75%, #d8d2ce 75%)',
+                backgroundSize: '16px 16px',
+                backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
+                backgroundColor: '#ffffff',
               }}
             >
               <img
@@ -214,8 +216,7 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
                   </span>
                 </div>
                 <p className="text-xs text-[#101010]/70 mt-1 leading-relaxed font-medium">
-                  Original image properties and transparency are preserved intact. You can adjust
-                  crop, replace, or remove as needed.
+                  Original image properties and transparency are preserved intact. You can adjust crop, replace, or remove as needed.
                 </p>
               </div>
 
