@@ -1,6 +1,10 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import type { SupabaseClient } from '@supabase/supabase-js';
-import { supabase as projectSupabase } from '@/integrations/supabase/client';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+
+// Public project values (safe to ship) — used when build-time env vars are missing
+// (e.g. installed APK / preview builds), so the app always reaches the database.
+const FALLBACK_URL = 'https://yjnvjuouxzfrhlqzstlp.supabase.co';
+const FALLBACK_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlqbnZqdW91eHpmcmhscXpzdGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0MDg3MzQsImV4cCI6MjEwNTk4NDczNH0.VcGYMKh8yMSGUNzNnlpNcIhlEoC4A8q3WDEkmjEqU4o';
 
 // Read configuration from environment or fallback.
 // vite.config.ts maps the Supabase integration's injected names
@@ -14,7 +18,7 @@ const supabaseUrl =
   procEnv.VITE_SUPABASE_URL ||
   procEnv.NEXT_PUBLIC_SUPABASE_URL ||
   procEnv.SUPABASE_URL ||
-  '';
+  FALLBACK_URL;
 const supabaseAnonKey =
   metaEnv.VITE_SUPABASE_ANON_KEY ||
   metaEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
@@ -22,7 +26,7 @@ const supabaseAnonKey =
   procEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   procEnv.SUPABASE_ANON_KEY ||
   metaEnv.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  '';
+  FALLBACK_ANON;
 
 // Devices that used the app before the move to the current Supabase project may
 // still hold cached template/background URLs pointing at the retired project.
@@ -81,7 +85,11 @@ export const isSupabaseConfigured = Boolean(
 );
 
 // Initialize Supabase Client with persistent session handling
-export const supabase: SupabaseClient | null = projectSupabase as unknown as SupabaseClient;
+export const supabase: SupabaseClient | null = createClient(
+  (metaEnv.VITE_SUPABASE_URL as string) || FALLBACK_URL,
+  (metaEnv.VITE_SUPABASE_PUBLISHABLE_KEY as string) || FALLBACK_ANON,
+  { auth: { persistSession: true, autoRefreshToken: true } },
+);
 
 /**
  * SQL Schema definition for PROMPT 50 Migration
@@ -736,7 +744,7 @@ export async function fetchPaymentMethodsSupabase(): Promise<any[] | null> {
       .from('system_settings')
       .select('config_value')
       .eq('config_key', 'payment_methods')
-      .single();
+      .maybeSingle();
     if (error || !data) return null;
     return data.config_value as any[];
   } catch (e) {
@@ -774,7 +782,7 @@ export async function fetchAdminSettingsSupabase(): Promise<any | null> {
       .from('system_settings')
       .select('config_value')
       .eq('config_key', 'admin_settings')
-      .single();
+      .maybeSingle();
     if (error || !data) return null;
     return data.config_value;
   } catch (e) {
