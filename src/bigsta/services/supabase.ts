@@ -26,7 +26,7 @@ const supabaseAnonKey =
   procEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   procEnv.SUPABASE_ANON_KEY ||
   metaEnv.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  '';
+  FALLBACK_ANON;
 
 // Devices that used the app before the move to the current Supabase project may
 // still hold cached template/background URLs pointing at the retired project.
