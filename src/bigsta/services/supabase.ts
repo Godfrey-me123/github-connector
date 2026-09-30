@@ -18,7 +18,7 @@ const supabaseUrl =
   procEnv.VITE_SUPABASE_URL ||
   procEnv.NEXT_PUBLIC_SUPABASE_URL ||
   procEnv.SUPABASE_URL ||
-  '';
+  FALLBACK_URL;
 const supabaseAnonKey =
   metaEnv.VITE_SUPABASE_ANON_KEY ||
   metaEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
