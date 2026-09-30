@@ -744,7 +744,7 @@ export async function fetchPaymentMethodsSupabase(): Promise<any[] | null> {
       .from('system_settings')
       .select('config_value')
       .eq('config_key', 'payment_methods')
-      .single();
+      .maybeSingle();
     if (error || !data) return null;
     return data.config_value as any[];
   } catch (e) {
@@ -782,7 +782,7 @@ export async function fetchAdminSettingsSupabase(): Promise<any | null> {
       .from('system_settings')
       .select('config_value')
       .eq('config_key', 'admin_settings')
-      .single();
+      .maybeSingle();
     if (error || !data) return null;
     return data.config_value;
   } catch (e) {
