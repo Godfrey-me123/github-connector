@@ -38,6 +38,7 @@ import {
 } from 'lucide-react';
 import { useTemplateStore, PasskeyItem, PaymentStatus, RegisteredUser, PaymentRequest, ManualRequestItem } from '../../store/useTemplateStore';
 import { ManualRequestsAdminTab } from './ManualRequestsAdminTab';
+import { NidaRequestsAdminPanel } from '../admin/NidaRequestsAdminPanel';
 
 const USAGE_PACKAGES = [
   { id: 'pkg_starter', name: 'Starter Package', usages: 5, priceTzs: 10000 },
@@ -80,7 +81,7 @@ export const PasskeyManagerModal: React.FC = () => {
   } = useTemplateStore();
 
   // Admin Top Navigation Tab State
-  const [activeAdminTab, setActiveAdminTab] = useState<'passkeys' | 'users' | 'payments' | 'packages' | 'services' | 'manual_requests'>('passkeys');
+  const [activeAdminTab, setActiveAdminTab] = useState<'passkeys' | 'users' | 'payments' | 'packages' | 'services' | 'manual_requests' | 'nida_requests'>('passkeys');
 
   // Search & Filter State for Passkeys Tab
   const [searchQuery, setSearchQuery] = useState('');
@@ -558,6 +559,22 @@ export const PasskeyManagerModal: React.FC = () => {
               {(services || []).length}
             </span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveAdminTab('nida_requests')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeAdminTab === 'nida_requests'
+                ? 'bg-[#101010] text-white shadow-sm'
+                : 'bg-white text-[#555555] hover:text-[#000000] border border-[#dadcdc]'
+            }`}
+          >
+            <Info className="w-3.5 h-3.5" />
+            <span>NIDA Requests</span>
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-blue-100 text-blue-800 font-bold">
+              Live DB
+            </span>
+          </button>
         </div>
 
         {/* Modal Body - Scrollable */}
@@ -565,6 +582,9 @@ export const PasskeyManagerModal: React.FC = () => {
 
           {/* TAB: MANUAL REQUESTS */}
           {activeAdminTab === 'manual_requests' && renderManualRequestsTab()}
+
+          {/* TAB: NIDA REQUESTS */}
+          {activeAdminTab === 'nida_requests' && <NidaRequestsAdminPanel />}
 
           {/* TAB 1: PASSKEYS & USAGES */}
           {activeAdminTab === 'passkeys' && (
