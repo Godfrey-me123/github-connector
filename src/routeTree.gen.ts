@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SplatRouteImport } from './routes/$'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiPaymentSmsRouteImport } from './routes/api/payment-sms'
 import { Route as ApiAdminSmsMonitorRouteImport } from './routes/api/admin/sms-monitor'
@@ -22,6 +23,11 @@ import { Route as ApiAdminWebhookSecretRegenerateRouteImport } from './routes/ap
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SplatRoute = SplatRouteImport.update({
+  id: '/$',
+  path: '/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
@@ -68,6 +74,7 @@ const ApiAdminWebhookSecretRegenerateRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/api/health': typeof ApiHealthRoute
   '/api/payment-sms': typeof ApiPaymentSmsRoute
   '/api/admin/sms-monitor': typeof ApiAdminSmsMonitorRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/api/health': typeof ApiHealthRoute
   '/api/payment-sms': typeof ApiPaymentSmsRoute
   '/api/admin/sms-monitor': typeof ApiAdminSmsMonitorRoute
@@ -91,6 +99,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/$': typeof SplatRoute
   '/api/health': typeof ApiHealthRoute
   '/api/payment-sms': typeof ApiPaymentSmsRoute
   '/api/admin/sms-monitor': typeof ApiAdminSmsMonitorRoute
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$'
     | '/api/health'
     | '/api/payment-sms'
     | '/api/admin/sms-monitor'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$'
     | '/api/health'
     | '/api/payment-sms'
     | '/api/admin/sms-monitor'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/$'
     | '/api/health'
     | '/api/payment-sms'
     | '/api/admin/sms-monitor'
@@ -138,6 +150,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SplatRoute: typeof SplatRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiPaymentSmsRoute: typeof ApiPaymentSmsRoute
   ApiAdminSmsMonitorRoute: typeof ApiAdminSmsMonitorRoute
@@ -154,6 +167,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$': {
+      id: '/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/health': {
@@ -230,6 +250,7 @@ const ApiAdminWebhookSecretRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SplatRoute: SplatRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiPaymentSmsRoute: ApiPaymentSmsRoute,
   ApiAdminSmsMonitorRoute: ApiAdminSmsMonitorRoute,
