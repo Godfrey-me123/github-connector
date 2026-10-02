@@ -312,9 +312,15 @@ export interface PaymentSettings {
 export interface ConfigurablePaymentMethod {
   id: string;
   name: string;
+  title?: string;
   number: string;
   accountName: string;
+  amount?: string;
   instructions: string;
+  confirmMessage?: string;
+  whatsappNumber?: string;
+  irreversibleNotice?: string;
+  customMessage?: string;
   status: 'active' | 'inactive';
 }
 

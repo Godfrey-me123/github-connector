@@ -1,6 +1,6 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import React, { useState, useEffect, useMemo } from 'react';
-import { Wallet, CreditCard, Check, AlertCircle, RefreshCw, X, ShieldCheck, ArrowRight, Clock, Copy, Hash, Zap } from 'lucide-react';
+import { Wallet, CreditCard, Check, AlertCircle, RefreshCw, X, ShieldCheck, ArrowRight, Clock, Copy, Hash, Zap, MessageCircle, ExternalLink, AlertTriangle } from 'lucide-react';
 import { useTemplateStore } from '../../store/useTemplateStore';
 import { paymentService } from '../../services/paymentService';
 
@@ -19,7 +19,39 @@ export const RechargeModal: React.FC = () => {
     refreshUserStatus,
     tokenPackages,
     weeklyOffers,
+    paymentMethods,
   } = useTemplateStore();
+
+  const activeMethods = useMemo(() => {
+    const list = (paymentMethods || []).filter((pm) => pm.status === 'active');
+    return list.length > 0 ? list : [
+      {
+        id: 'pm_default',
+        name: 'Lipa Namba',
+        title: 'Merchant Till Number',
+        number: '1234567',
+        accountName: 'BIGSTA SERVICES LTD',
+        amount: 'As per selected package',
+        instructions: 'Pay via Lipa Namba merchant payment to number 1234567',
+        confirmMessage: 'Confirm after payment by entering transaction reference or contacting support.',
+        whatsappNumber: '+255 712 345 678',
+        irreversibleNotice: 'Note: All payments are final and irreversible once processed.',
+        status: 'active'
+      }
+    ];
+  }, [paymentMethods]);
+
+  const [selectedMethodId, setSelectedMethodId] = useState<string>('');
+
+  useEffect(() => {
+    if (activeMethods.length > 0 && (!selectedMethodId || !activeMethods.some((m) => m.id === selectedMethodId))) {
+      setSelectedMethodId(activeMethods[0].id);
+    }
+  }, [activeMethods, selectedMethodId]);
+
+  const currentMethod = useMemo(() => {
+    return activeMethods.find((m) => m.id === selectedMethodId) || activeMethods[0];
+  }, [activeMethods, selectedMethodId]);
 
   const activeWeeklyOffers = useMemo(() => {
     const now = Date.now();
@@ -144,7 +176,8 @@ export const RechargeModal: React.FC = () => {
   if (!isRechargeModalOpen) return null;
 
   const handleCopyLipa = () => {
-    navigator.clipboard.writeText('1234678');
+    const numToCopy = currentMethod?.number || '1234678';
+    navigator.clipboard.writeText(numToCopy);
     setCopiedLipa(true);
     setTimeout(() => setCopiedLipa(false), 2000);
   };
@@ -279,7 +312,11 @@ export const RechargeModal: React.FC = () => {
           <div className="space-y-1.5">
             <h2 className="text-3xl font-black text-white tracking-wider">BIGsta</h2>
             <p className="text-gray-100 text-base font-bold">Dear BIGsta User,</p>
-            <p className="text-gray-300 text-sm font-medium">You need to recharge your account.</p>
+            <p className="text-gray-300 text-sm font-medium">
+              {remainingUsages > 0
+                ? 'Top up tokens to your wallet anytime — even while your token balance is active!'
+                : 'You need to recharge your account to continue generating cards.'}
+            </p>
           </div>
         </div>
 
@@ -591,28 +628,63 @@ export const RechargeModal: React.FC = () => {
             </div>
           </div>
 
-          {/* Lipa Number Payment Instruction Box */}
-          <div className="p-3.5 bg-slate-900 text-white rounded-xl space-y-2.5">
+          {/* Dynamic Payment Method Selector & Instructions */}
+          <div className="p-3.5 bg-slate-900 text-white rounded-xl space-y-3">
             <div className="flex items-center justify-between border-b border-slate-800 pb-2">
               <span className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
                 <CreditCard className="w-3.5 h-3.5 text-blue-400" />
-                Payment Instructions
+                Select Payment Channel
               </span>
-              <span className="text-[10px] text-slate-400">Merchant Number</span>
+              <span className="text-[10px] text-slate-400 font-semibold">{currentMethod.name}</span>
             </div>
 
+            {/* Payment Method Switcher Tabs */}
+            {activeMethods.length > 1 && (
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                {activeMethods.map((m) => {
+                  const isSel = m.id === currentMethod.id;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setSelectedMethodId(m.id)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer ${
+                        isSel
+                          ? 'bg-blue-600 text-white shadow-xs'
+                          : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'
+                      }`}
+                    >
+                      {m.name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Current Method Details Box */}
             <div className="flex items-center justify-between bg-slate-800/90 p-2.5 rounded-lg border border-slate-700">
               <div>
-                <span className="text-[11px] text-slate-400 block">Merchant Lipa Number:</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-bold text-white">{currentMethod.name}</span>
+                  {currentMethod.title && (
+                    <span className="text-[10px] text-blue-300 font-mono">({currentMethod.title})</span>
+                  )}
+                </div>
                 <span className="text-base font-black font-mono text-blue-400 tracking-wider">
-                  1234678
+                  {currentMethod.number}
                 </span>
+                {currentMethod.accountName && (
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    Account: <strong className="text-slate-200">{currentMethod.accountName}</strong>
+                  </p>
+                )}
               </div>
 
               <button
                 type="button"
                 onClick={handleCopyLipa}
                 className="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer"
+                title="Copy payment number"
               >
                 {copiedLipa ? (
                   <>
@@ -628,9 +700,56 @@ export const RechargeModal: React.FC = () => {
               </button>
             </div>
 
-            <div className="text-[11px] text-slate-300 space-y-1 font-medium">
-              <p>• Pay <strong>{selectedPkg.price}</strong> to Merchant Number: <strong>1234678</strong> (BIGSTA RECHARGE).</p>
-              <p>• After completing your payment, click <strong>"Add Tokens"</strong> below.</p>
+            {/* Amount and Instructions Note */}
+            <div className="text-[11px] text-slate-300 space-y-1.5 font-medium">
+              <div className="flex items-center justify-between bg-slate-800/50 p-2 rounded-lg border border-slate-700/50">
+                <span className="text-slate-400">Amount to Pay for {selectedPkg.name}:</span>
+                <strong className="text-emerald-400 font-mono text-sm">{selectedPkg.price}</strong>
+              </div>
+
+              {currentMethod.instructions && (
+                <p className="text-slate-400 text-[11px] leading-relaxed">
+                  • {currentMethod.instructions}
+                </p>
+              )}
+
+              {/* Confirm Message */}
+              {currentMethod.confirmMessage && (
+                <div className="p-2 bg-blue-950/60 border border-blue-800/60 rounded-lg text-blue-200 text-[11px]">
+                  <span className="font-bold text-blue-300 block text-[10px] uppercase">Confirmation:</span>
+                  {currentMethod.confirmMessage}
+                </div>
+              )}
+
+              {/* WhatsApp Confirmation Link */}
+              {currentMethod.whatsappNumber && (
+                <a
+                  href={`https://wa.me/${currentMethod.whatsappNumber.replace(/\D/g, '').replace(/^0/, '255')}?text=${encodeURIComponent(`Hello, I have paid ${selectedPkg.price} for ${selectedPkg.name} (${selectedPkg.usages} Tokens) via ${currentMethod.name} (${currentMethod.number}). Please confirm my token top-up.`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-1.5 px-2.5 rounded-lg bg-emerald-900/40 hover:bg-emerald-900/60 text-emerald-200 border border-emerald-700/50 text-[11px] font-bold flex items-center justify-between transition-colors cursor-pointer"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <MessageCircle className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>Confirm on WhatsApp: {currentMethod.whatsappNumber}</span>
+                  </span>
+                  <ExternalLink className="w-3 h-3 text-emerald-400" />
+                </a>
+              )}
+
+              {/* Irreversible Notice */}
+              {currentMethod.irreversibleNotice && (
+                <div className="p-2 bg-amber-950/60 border border-amber-800/60 rounded-lg text-amber-200 text-[10px] flex items-start gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
+                  <span>{currentMethod.irreversibleNotice}</span>
+                </div>
+              )}
+
+              {currentMethod.customMessage && (
+                <p className="text-slate-400 italic text-[10px]">
+                  "{currentMethod.customMessage}"
+                </p>
+              )}
             </div>
           </div>
 

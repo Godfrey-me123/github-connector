@@ -928,11 +928,76 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
 
   const initialPaymentMethods: ConfigurablePaymentMethod[] = (() => {
     const DEFAULT_METHODS: ConfigurablePaymentMethod[] = [
-      { id: 'pm_mpesa', name: 'M-Pesa', number: '0123 000 111', accountName: 'BIGSTA SERVICES LTD', instructions: 'Dial *150*00# -> Pay Merchant or Send Money to 0123 000 111', status: 'active' },
-      { id: 'pm_mixx', name: 'Mixx by Yas', number: '0123 000 222', accountName: 'BIGSTA SERVICES LTD', instructions: 'Dial *150*01# -> Pay Merchant or Send Money to 0123 000 222', status: 'active' },
-      { id: 'pm_airtel', name: 'Airtel Money', number: '0123 000 333', accountName: 'BIGSTA SERVICES LTD', instructions: 'Dial *150*60# -> Pay Merchant or Send Money to 0123 000 333', status: 'active' },
-      { id: 'pm_halopesa', name: 'HaloPesa', number: '0123 000 444', accountName: 'BIGSTA SERVICES LTD', instructions: 'Dial *150*88# -> Send Money to 0123 000 444', status: 'active' },
-      { id: 'pm_lipanamba', name: 'Lipa Namba', number: '1234567', accountName: 'BIGSTA SERVICES LTD', instructions: 'Pay via Lipa Namba merchant payment to number 1234567', status: 'active' }
+      {
+        id: 'pm_mpesa',
+        name: 'M-Pesa',
+        title: 'Lipa kwa Simu / Till Number',
+        number: '0123 000 111',
+        accountName: 'BIGSTA SERVICES LTD',
+        amount: 'TSh 10,000',
+        instructions: 'Dial *150*00# -> Pay Merchant (Lipa kwa Simu) -> Enter Till Number',
+        confirmMessage: 'Confirm after payment: Enter your transaction reference code below for instant verification.',
+        whatsappNumber: '+255 712 345 678',
+        irreversibleNotice: 'Note: All mobile payments are final and irreversible once processed.',
+        customMessage: 'Instant automated activation after SMS or reference confirmation.',
+        status: 'active'
+      },
+      {
+        id: 'pm_mixx',
+        name: 'Mixx by Yas',
+        title: 'Merchant Number',
+        number: '0123 000 222',
+        accountName: 'BIGSTA SERVICES LTD',
+        amount: 'TSh 10,000',
+        instructions: 'Dial *150*01# -> Pay Merchant -> Enter Number',
+        confirmMessage: 'Confirm payment by uploading receipt screenshot or sending reference code.',
+        whatsappNumber: '+255 712 345 678',
+        irreversibleNotice: 'Payment is strictly irreversible. Verify recipient before confirming.',
+        customMessage: 'Available 24/7 with automatic token crediting.',
+        status: 'active'
+      },
+      {
+        id: 'pm_airtel',
+        name: 'Airtel Money',
+        title: 'Paybill / Agent Number',
+        number: '0123 000 333',
+        accountName: 'BIGSTA SERVICES LTD',
+        amount: 'TSh 10,000',
+        instructions: 'Dial *150*60# -> Paybill -> Enter Business Number',
+        confirmMessage: 'Confirm after payment: Reference code is required for instant tokens.',
+        whatsappNumber: '+255 712 345 678',
+        irreversibleNotice: 'Payment is irreversible. Double check the account name BIGSTA SERVICES LTD.',
+        customMessage: 'Tokens credit immediately upon reference match.',
+        status: 'active'
+      },
+      {
+        id: 'pm_halopesa',
+        name: 'HaloPesa',
+        title: 'Agent / Till Number',
+        number: '0123 000 444',
+        accountName: 'BIGSTA SERVICES LTD',
+        amount: 'TSh 10,000',
+        instructions: 'Dial *150*88# -> Send Money / Pay Merchant',
+        confirmMessage: 'Confirm on WhatsApp or enter transaction ID below.',
+        whatsappNumber: '+255 712 345 678',
+        irreversibleNotice: 'Payment is irreversible once submitted.',
+        customMessage: 'Contact support if tokens do not appear within 2 minutes.',
+        status: 'active'
+      },
+      {
+        id: 'pm_lipanamba',
+        name: 'Lipa Namba',
+        title: 'Merchant Till Number',
+        number: '1234567',
+        accountName: 'BIGSTA SERVICES LTD',
+        amount: 'TSh 10,000',
+        instructions: 'Pay via Lipa Namba merchant payment to till number 1234567',
+        confirmMessage: 'Confirm after payment by entering your reference number.',
+        whatsappNumber: '+255 712 345 678',
+        irreversibleNotice: 'Payment is irreversible once confirmed.',
+        customMessage: 'Direct merchant payment across all networks.',
+        status: 'active'
+      }
     ];
     if (typeof window === 'undefined') return DEFAULT_METHODS;
     try {
@@ -1132,6 +1197,9 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       const updated = get().paymentMethods.map(pm => pm.id === id ? { ...pm, ...updates } : pm);
       safeLocalStorageSetItem('bigsta_payment_methods', JSON.stringify(updated));
       set({ paymentMethods: updated });
+      import('../services/supabase').then(({ savePaymentMethodsSupabase }) => {
+        savePaymentMethodsSupabase(updated);
+      }).catch((e) => console.warn('Supabase payment methods auto-sync skipped:', e));
     },
 
     addPaymentMethod: (method) => {
@@ -1139,12 +1207,18 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       const updated = [...get().paymentMethods, newMethod];
       safeLocalStorageSetItem('bigsta_payment_methods', JSON.stringify(updated));
       set({ paymentMethods: updated });
+      import('../services/supabase').then(({ savePaymentMethodsSupabase }) => {
+        savePaymentMethodsSupabase(updated);
+      }).catch((e) => console.warn('Supabase payment methods auto-sync skipped:', e));
     },
 
     deletePaymentMethod: (id) => {
       const updated = get().paymentMethods.filter(pm => pm.id !== id);
       safeLocalStorageSetItem('bigsta_payment_methods', JSON.stringify(updated));
       set({ paymentMethods: updated });
+      import('../services/supabase').then(({ savePaymentMethodsSupabase }) => {
+        savePaymentMethodsSupabase(updated);
+      }).catch((e) => console.warn('Supabase payment methods auto-sync skipped:', e));
     },
 
     publishPaymentMethodsToSupabase: async () => {

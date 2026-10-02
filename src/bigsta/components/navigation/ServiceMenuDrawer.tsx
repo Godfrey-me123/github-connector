@@ -19,6 +19,7 @@ import {
   ChevronDown,
   Shield,
   CreditCard,
+  Wallet,
   Info,
   LogOut,
   Key,
@@ -54,7 +55,7 @@ export const ServiceMenuDrawer: React.FC<ServiceMenuDrawerProps> = ({
   onClose,
   onSelectInfoService,
 }) => {
-  const { setActiveScreen, activeScreen, authRole, logoutPasskey, setPasskeyManagerOpen, manualRequests } = useTemplateStore();
+  const { setActiveScreen, activeScreen, authRole, logoutPasskey, setPasskeyManagerOpen, manualRequests, setRechargeModalOpen } = useTemplateStore();
 
   // Close drawer on Escape key
   useEffect(() => {
@@ -183,21 +184,52 @@ export const ServiceMenuDrawer: React.FC<ServiceMenuDrawerProps> = ({
             },
             description: 'Verify SMS transactions, manage payment settings, and monitor incoming payments.',
           },
-        ]
-      : [
           {
-            id: 'user_payments',
-            name: 'Token Billing & Top-Up',
-            authority: 'Usage & Token Balance',
+            id: 'admin_billing',
+            name: 'Bills & Payment Methods',
+            authority: 'Configure Payment Channels & Top-Up',
             category: 'core' as const,
             icon: CreditCard,
-            iconColor: 'text-emerald-500',
+            iconColor: 'text-blue-500',
             status: 'active' as const,
-            badgeText: 'User',
+            badgeText: 'Admin',
             action: () => {
               setActiveScreen('billing');
               onClose();
             },
+            description: 'Configure mobile money channels, instructions, numbers and rates.',
+          },
+        ]
+      : [
+          {
+            id: 'user_payments',
+            name: 'Bills Top-Up & Receipts',
+            authority: 'Payment Methods & Mobile Money',
+            category: 'core' as const,
+            icon: CreditCard,
+            iconColor: 'text-emerald-500',
+            status: 'active' as const,
+            badgeText: 'Live',
+            action: () => {
+              setActiveScreen('billing');
+              onClose();
+            },
+            description: 'View active payment methods, numbers, instructions & upload receipts.',
+          },
+          {
+            id: 'token_recharge',
+            name: 'Token Top-Up',
+            authority: 'Instant Token Recharge & Packages',
+            category: 'core' as const,
+            icon: Wallet,
+            iconColor: 'text-blue-500',
+            status: 'active' as const,
+            badgeText: 'Top Up',
+            action: () => {
+              setRechargeModalOpen(true);
+              onClose();
+            },
+            description: 'Instant recharge packages with auto-verify.',
           },
         ]),
     {

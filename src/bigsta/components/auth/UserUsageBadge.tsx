@@ -58,9 +58,13 @@ export const UserUsageBadge: React.FC<{ className?: string }> = ({ className = '
           </span>
         </div>
 
-        {remaining === 0 && status !== 'PENDING' && (
-          <span className="ml-0.5 px-1.5 py-0.2 rounded bg-red-600 text-white text-[10px] font-black uppercase flex items-center gap-0.5">
+        {remaining === 0 && status !== 'PENDING' ? (
+          <span className="ml-0.5 px-1.5 py-0.5 rounded bg-red-600 text-white text-[10px] font-black uppercase flex items-center gap-0.5">
             <PlusCircle className="w-2.5 h-2.5" /> Top Up
+          </span>
+        ) : (
+          <span className="ml-0.5 px-1.5 py-0.5 rounded bg-white/15 hover:bg-white/25 text-white text-[10px] font-bold uppercase flex items-center gap-0.5">
+            <PlusCircle className="w-2.5 h-2.5 text-emerald-400" /> Top Up
           </span>
         )}
       </button>

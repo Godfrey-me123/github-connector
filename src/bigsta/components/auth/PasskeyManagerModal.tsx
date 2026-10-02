@@ -39,6 +39,7 @@ import {
 import { useTemplateStore, PasskeyItem, PaymentStatus, RegisteredUser, PaymentRequest, ManualRequestItem } from '../../store/useTemplateStore';
 import { ManualRequestsAdminTab } from './ManualRequestsAdminTab';
 import { NidaRequestsAdminPanel } from '../admin/NidaRequestsAdminPanel';
+import { PaymentMethodsAdminPanel } from '../admin/PaymentMethodsAdminPanel';
 
 const USAGE_PACKAGES = [
   { id: 'pkg_starter', name: 'Starter Package', usages: 5, priceTzs: 10000 },
@@ -78,10 +79,11 @@ export const PasskeyManagerModal: React.FC = () => {
     deleteService,
     toggleService,
     manualRequests,
+    paymentMethods,
   } = useTemplateStore();
 
   // Admin Top Navigation Tab State
-  const [activeAdminTab, setActiveAdminTab] = useState<'passkeys' | 'users' | 'payments' | 'packages' | 'services' | 'manual_requests' | 'nida_requests'>('passkeys');
+  const [activeAdminTab, setActiveAdminTab] = useState<'passkeys' | 'users' | 'payments' | 'packages' | 'services' | 'manual_requests' | 'nida_requests' | 'payment_methods'>('passkeys');
 
   // Search & Filter State for Passkeys Tab
   const [searchQuery, setSearchQuery] = useState('');
@@ -575,6 +577,22 @@ export const PasskeyManagerModal: React.FC = () => {
               Live DB
             </span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveAdminTab('payment_methods')}
+            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeAdminTab === 'payment_methods'
+                ? 'bg-[#101010] text-white shadow-sm'
+                : 'bg-white text-[#555555] hover:text-[#000000] border border-[#dadcdc]'
+            }`}
+          >
+            <CreditCard className="w-3.5 h-3.5" />
+            <span>Payment Methods</span>
+            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-blue-100 text-blue-800 font-bold">
+              {(paymentMethods || []).length}
+            </span>
+          </button>
         </div>
 
         {/* Modal Body - Scrollable */}
@@ -585,6 +603,9 @@ export const PasskeyManagerModal: React.FC = () => {
 
           {/* TAB: NIDA REQUESTS */}
           {activeAdminTab === 'nida_requests' && <NidaRequestsAdminPanel />}
+
+          {/* TAB: PAYMENT METHODS */}
+          {activeAdminTab === 'payment_methods' && <PaymentMethodsAdminPanel />}
 
           {/* TAB 1: PASSKEYS & USAGES */}
           {activeAdminTab === 'passkeys' && (

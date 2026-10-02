@@ -1,5 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   Wallet,
   Coins,
@@ -26,11 +26,15 @@ import {
   Sparkles,
   Zap,
   TrendingUp,
-  Receipt
+  Receipt,
+  MessageCircle,
+  ExternalLink,
+  AlertTriangle
 } from 'lucide-react';
 import { useTemplateStore } from '../../store/useTemplateStore';
 import { UniversalBackButton } from '../common/UniversalBackButton';
 import { ConfigurablePaymentMethod, UserPaymentSubmission } from '../../types';
+import { PaymentMethodsAdminPanel } from '../admin/PaymentMethodsAdminPanel';
 
 export const TokenBillingScreen: React.FC = () => {
   const {
@@ -63,12 +67,65 @@ export const TokenBillingScreen: React.FC = () => {
   const currentPasskeyObj = activePasskeys.find(p => p.key === currentAuthKey) || activePasskeys[0];
   const availableTokens = currentPasskeyObj ? currentPasskeyObj.remainingUsages : 0;
 
+  // Active packages created by admin
+  const activePackages = useMemo(() => {
+    return (tokenPackages || []).filter(p => p.active !== false && p.visibility !== 'hidden');
+  }, [tokenPackages]);
+
+  // Active weekly offers created by admin
+  const activeWeeklyOffers = useMemo(() => {
+    const now = Date.now();
+    return (weeklyOffers || []).filter((o) => o.active !== false && new Date(o.endDate).getTime() > now);
+  }, [weeklyOffers]);
+
+  // Selected Token Package
+  const [selectedPkgId, setSelectedPkgId] = useState<string>('');
+
+  useEffect(() => {
+    if (activePackages.length > 0 && (!selectedPkgId || !activePackages.some(p => p.id === selectedPkgId))) {
+      setSelectedPkgId(activePackages[0].id);
+    }
+  }, [activePackages, selectedPkgId]);
+
+  const selectedPkg = useMemo(() => {
+    const foundWeekly = activeWeeklyOffers.find(o => o.id === selectedPkgId);
+    if (foundWeekly) {
+      return {
+        id: foundWeekly.id,
+        name: foundWeekly.title || 'Weekly Offer',
+        usages: foundWeekly.tokens || 10,
+        price: foundWeekly.price || 'TSh 10,000',
+        description: foundWeekly.description || 'Special limited time deal',
+        isWeekly: true
+      };
+    }
+    const found = activePackages.find(p => p.id === selectedPkgId);
+    if (found) return found;
+    return activePackages[0] || {
+      id: 'pkg_default',
+      name: 'Standard Package',
+      usages: 10,
+      price: 'TSh 10,000',
+      description: 'Standard token top-up'
+    };
+  }, [activePackages, activeWeeklyOffers, selectedPkgId]);
+
   // Active Tab for Admin
   const [adminTab, setAdminTab] = useState<'queue' | 'methods' | 'packages' | 'offers' | 'adjust' | 'stats'>('queue');
 
   // Payment Upload Form State
   const [selectedMethod, setSelectedMethod] = useState<string>(paymentMethods[0]?.id || '');
-  const [amountInput, setAmountInput] = useState<string>('6000');
+  const [amountInput, setAmountInput] = useState<string>('10000');
+
+  // Keep amountInput in sync with selected package price
+  useEffect(() => {
+    if (selectedPkg && selectedPkg.price) {
+      const cleanNum = selectedPkg.price.replace(/\D/g, '');
+      if (cleanNum) {
+        setAmountInput(cleanNum);
+      }
+    }
+  }, [selectedPkg]);
   const [senderInput, setSenderInput] = useState<string>('John Sample (0123 456 789)');
   const [referenceInput, setReferenceInput] = useState<string>('');
   const [uploadedImageName, setUploadedImageName] = useState<string | null>(null);
@@ -299,165 +356,340 @@ export const TokenBillingScreen: React.FC = () => {
               </div>
             </div>
 
-            {/* Card 2: Payment Methods */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <Smartphone className="w-5 h-5 text-[#2563EB]" />
-                  <h2 className="text-base font-bold text-slate-900">1. Mobile Money Payment Methods</h2>
+            {/* Top-Up Anytime Banner */}
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/90 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-start sm:items-center gap-3">
+                <div className="p-2.5 bg-[#2563EB] text-white rounded-xl shadow-xs shrink-0 mt-0.5 sm:mt-0">
+                  <Coins className="w-5 h-5" />
                 </div>
-                <span className="text-xs text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full font-medium">Tanzania Mobile Money</span>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900">
+                    Add Tokens Anytime!
+                  </h3>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    Pick a package below. Payment instructions update automatically with the correct amount.
+                  </p>
+                </div>
               </div>
-
-              <p className="text-xs text-slate-600">
-                Choose any active mobile money service below to top up tokens. Dial the USSD code or send payment to the number shown.
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {paymentMethods.filter(pm => pm.status === 'active').map((pm) => (
-                  <div
-                    key={pm.id}
-                    onClick={() => setSelectedMethod(pm.id)}
-                    className={`p-4 rounded-xl border transition-all cursor-pointer relative ${
-                      selectedMethod === pm.id
-                        ? 'border-[#2563EB] bg-blue-50/50 ring-2 ring-blue-500/20 shadow-xs'
-                        : 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-bold text-slate-900">{pm.name}</span>
-                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                    </div>
-
-                    <div className="text-xs font-mono font-semibold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md flex items-center justify-between mb-2">
-                      <span>{pm.number}</span>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); handleCopy(pm.number, pm.id); }}
-                        className="text-blue-600 hover:text-blue-800"
-                        title="Copy number"
-                      >
-                        {copiedId === pm.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-
-                    <p className="text-[11px] text-slate-500 font-medium truncate mb-1">Name: {pm.accountName}</p>
-                    <p className="text-[11px] text-slate-400 line-clamp-2">{pm.instructions}</p>
-                  </div>
-                ))}
+              <div className="shrink-0 flex items-center gap-1.5 self-start sm:self-center">
+                <span className="text-[11px] font-bold text-blue-700 bg-white px-3 py-1.5 rounded-xl border border-blue-200 shadow-xs">
+                  {availableTokens} Tokens in Wallet
+                </span>
               </div>
             </div>
 
-            {/* Card 3: Upload Payment Screenshot / OCR & Quick Reference Entry */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-5">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <Upload className="w-5 h-5 text-[#2563EB]" />
-                  <h2 className="text-base font-bold text-slate-900">2. Submit Payment Receipt & Verification</h2>
+            {/* Step 1: Available Token Packages */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full bg-[#2563EB] text-white text-xs font-black flex items-center justify-center">1</span>
+                    <h2 className="text-base font-bold text-slate-900">Select Token Package</h2>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Choose the amount of tokens you need.
+                  </p>
                 </div>
-                <span className="text-xs text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full font-semibold flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" /> Auto-OCR Extractor
-                </span>
+                {selectedPkg && (
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-[#2563EB] border border-blue-200 shrink-0">
+                    {selectedPkg.name} ({selectedPkg.price})
+                  </span>
+                )}
               </div>
 
-              {submissionFeedback && (
-                <div className={`p-4 rounded-xl text-xs font-medium flex items-center gap-2 ${
-                  submissionFeedback.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'
-                }`}>
-                  {submissionFeedback.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
-                  {submissionFeedback.message}
+              {/* Weekly Special Offers (if active) */}
+              {activeWeeklyOffers.length > 0 && (
+                <div className="space-y-2 pb-2">
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-amber-700 flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                    Special Limited-Time Weekly Offers
+                  </span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {activeWeeklyOffers.map((offer) => {
+                      const isSelected = selectedPkgId === offer.id;
+                      return (
+                        <div
+                          key={offer.id}
+                          onClick={() => setSelectedPkgId(offer.id)}
+                          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                            isSelected
+                              ? 'bg-amber-50 border-amber-500 ring-2 ring-amber-500/20 shadow-xs'
+                              : 'bg-gradient-to-r from-amber-50/40 to-orange-50/40 border-amber-200 hover:border-amber-300'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
+                              isSelected ? 'border-amber-600 bg-amber-600 text-white' : 'border-amber-300'
+                            }`}>
+                              {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs font-extrabold text-slate-900">{offer.title}</span>
+                                <span className="px-1.5 py-0.2 rounded bg-amber-200 text-amber-950 font-black text-[9px] uppercase">
+                                  Deal
+                                </span>
+                              </div>
+                              <span className="text-[11px] text-slate-600">
+                                {offer.tokens} Tokens — {offer.description || 'Weekly bundle'}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-sm font-black font-mono text-amber-700">
+                            {offer.price}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
-              <form onSubmit={handleSubmitPayment} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* File Upload Zone */}
-                <div className="space-y-3">
-                  <label className="block text-xs font-semibold text-slate-700">Upload M-Pesa / Mobile Payment Screenshot</label>
-                  <div className="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center bg-slate-50/50 hover:bg-slate-50 transition-colors relative">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileUpload}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                    <div className="flex flex-col items-center justify-center space-y-2">
-                      <div className="p-3 bg-blue-50 rounded-full text-[#2563EB]">
-                        <Upload className="w-6 h-6" />
+              {/* Standard Token Packages Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                {activePackages.map((pkg) => {
+                  const isSelected = selectedPkgId === pkg.id;
+                  return (
+                    <div
+                      key={pkg.id}
+                      onClick={() => setSelectedPkgId(pkg.id)}
+                      className={`p-4 rounded-2xl border transition-all cursor-pointer relative space-y-2.5 ${
+                        isSelected
+                          ? 'border-[#2563EB] bg-blue-50/60 ring-2 ring-blue-500/20 shadow-sm'
+                          : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/40'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-sm font-black text-slate-900">{pkg.name}</span>
+                            {pkg.promotion && (
+                              <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                                {pkg.promotion}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs font-mono text-blue-700 font-bold mt-0.5 flex items-center gap-1">
+                            <Coins className="w-3.5 h-3.5" />
+                            <span>{pkg.usages} Tokens</span>
+                            {pkg.bonus ? <span className="text-emerald-600 font-extrabold ml-1">+{pkg.bonus} Bonus</span> : null}
+                          </p>
+                        </div>
+                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
+                          isSelected ? 'border-[#2563EB] bg-[#2563EB] text-white' : 'border-slate-300'
+                        }`}>
+                          {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-xs font-semibold text-slate-800">
-                          {uploadedImageName ? `Uploaded: ${uploadedImageName}` : 'Click or drop payment screenshot'}
+
+                      {pkg.description && (
+                        <p className="text-[11px] text-slate-500 line-clamp-2">
+                          {pkg.description}
                         </p>
-                        <p className="text-[11px] text-slate-400 mt-0.5">Supports PNG, JPG, WEBP receipts</p>
+                      )}
+
+                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                        <span className="text-[11px] text-slate-400 font-medium">Price:</span>
+                        <strong className="text-sm font-black font-mono text-blue-700">{pkg.price}</strong>
                       </div>
                     </div>
-                  </div>
-
-                  {isProcessingOCR && (
-                    <div className="bg-blue-50/70 border border-blue-200 rounded-xl p-3 flex items-center gap-2.5 text-xs text-blue-800 animate-pulse">
-                      <RefreshCw className="w-4 h-4 animate-spin text-blue-600" />
-                      <span>Extracting receipt fields (Sender, Amount, Reference Code)...</span>
-                    </div>
-                  )}
-
-                  {ocrExtractedData && (
-                    <div className="bg-slate-900 text-slate-100 rounded-xl p-3.5 text-xs font-mono space-y-1">
-                      <div className="text-emerald-400 font-sans font-semibold mb-1 flex items-center gap-1.5 text-[11px]">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Structured OCR Output
-                      </div>
-                      <div className="text-slate-300 text-[11px]">Amount: TSh {ocrExtractedData.amount.toLocaleString()}</div>
-                      <div className="text-slate-300 text-[11px]">Sender: {ocrExtractedData.sender}</div>
-                      <div className="text-slate-300 text-[11px]">Reference: {ocrExtractedData.reference}</div>
-                      <div className="text-slate-300 text-[11px]">Date: {ocrExtractedData.date} {ocrExtractedData.time}</div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Form Fields & Manual Entry */}
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Amount Paid (TSh)</label>
-                    <input
-                      type="number"
-                      value={amountInput}
-                      onChange={(e) => setAmountInput(e.target.value)}
-                      placeholder="e.g. 6000"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold"
-                    />
-                    <p className="text-[11px] text-slate-400 mt-1">1 Token ≈ TSh {adminSettings.tokenPriceTsh.toLocaleString()}</p>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Sender Name / Phone Number</label>
-                    <input
-                      type="text"
-                      value={senderInput}
-                      onChange={(e) => setSenderInput(e.target.value)}
-                      placeholder="e.g. John Sample (0123 456 789)"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">M-Pesa Reference Code</label>
-                    <input
-                      type="text"
-                      value={referenceInput}
-                      onChange={(e) => setReferenceInput(e.target.value)}
-                      placeholder="e.g. ABC1234567"
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono font-bold uppercase tracking-wider"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full py-3 bg-[#2563EB] hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2"
-                  >
-                    <ShieldCheck className="w-4 h-4" /> Submit Payment for Verification
-                  </button>
-                </div>
-              </form>
+                  );
+                })}
+              </div>
             </div>
+
+            {/* Step 2: Payment Channels */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-[#2563EB] text-white text-xs font-black flex items-center justify-center">2</span>
+                  <div>
+                    <h2 className="text-base font-bold text-slate-900">
+                      Select Payment Method
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      Choose your preferred method to pay for {selectedPkg?.name || 'the selected package'}.
+                    </p>
+                  </div>
+                </div>
+                <span className="text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full font-extrabold self-start sm:self-auto">
+                  Total: {selectedPkg?.price || 'TSh 10,000'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {paymentMethods.filter(pm => pm.status === 'active').map((pm) => {
+                  const isSelected = selectedMethod === pm.id;
+                  const cleanWa = (pm.whatsappNumber || '').replace(/\D/g, '');
+                  const waNumber = cleanWa.startsWith('0') ? '255' + cleanWa.slice(1) : cleanWa;
+
+                  return (
+                    <div
+                      key={pm.id}
+                      onClick={() => setSelectedMethod(pm.id)}
+                      className={`p-4 rounded-2xl border transition-all cursor-pointer relative space-y-2.5 ${
+                        isSelected
+                          ? 'border-[#2563EB] bg-blue-50/40 ring-2 ring-blue-500/20 shadow-sm'
+                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-1">
+                        <div>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-sm font-black text-slate-900">{pm.name}</span>
+                            {pm.title && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                                {pm.title}
+                              </span>
+                            )}
+                          </div>
+                          {pm.accountName && (
+                            <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                              Name: <strong className="text-slate-700">{pm.accountName}</strong>
+                            </p>
+                          )}
+                        </div>
+                        <span className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1 ${isSelected ? 'bg-blue-600 ring-4 ring-blue-100' : 'bg-emerald-500'}`} />
+                      </div>
+
+                      {/* Number Pill with Copy */}
+                      <div className="text-xs font-mono font-bold text-slate-800 bg-slate-100 px-3 py-1.5 rounded-xl flex items-center justify-between">
+                        <span className="tracking-wider">{pm.number}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); handleCopy(pm.number, pm.id); }}
+                          className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-[11px] font-sans font-semibold cursor-pointer"
+                          title="Copy number"
+                        >
+                          {copiedId === pm.id ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 text-emerald-600" />
+                              <span className="text-emerald-700">Copied</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5" />
+                              <span>Copy</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Amount to pay dynamically attached to selected package */}
+                      <div className="flex items-center justify-between text-xs py-1.5 px-2.5 bg-emerald-50/80 rounded-xl border border-emerald-100">
+                        <span className="text-slate-600 font-medium">Amount to Pay:</span>
+                        <strong className="text-emerald-700 font-mono font-black text-sm">{selectedPkg?.price || pm.amount || `TSh ${parseInt(amountInput || '10000').toLocaleString()}`}</strong>
+                      </div>
+
+                      {/* Confirm Message */}
+                      {pm.confirmMessage && (
+                        <div className="p-2 bg-blue-50/60 border border-blue-100 rounded-lg text-[11px] text-blue-900 leading-snug">
+                          <strong className="font-bold block text-[10px] uppercase text-blue-700">Confirmation:</strong>
+                          <span>{pm.confirmMessage}</span>
+                        </div>
+                      )}
+
+                      {/* WhatsApp Confirm Button */}
+                      {pm.whatsappNumber && (
+                        <a
+                          href={`https://wa.me/${waNumber}?text=${encodeURIComponent(`Hello, I have completed a payment of ${selectedPkg?.price || amountInput} for ${selectedPkg?.name || 'Token Top-Up'} (${selectedPkg?.usages || ''} Tokens) via ${pm.name} (${pm.number}). Please confirm my token top-up.`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-full py-1.5 px-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-[11px] font-bold flex items-center justify-between transition-colors"
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <MessageCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                            <span>Confirm on WhatsApp: {pm.whatsappNumber}</span>
+                          </span>
+                          <ExternalLink className="w-3 h-3 text-emerald-600" />
+                        </a>
+                      )}
+
+                      {/* Irreversible Notice */}
+                      {pm.irreversibleNotice && (
+                        <div className="p-2 bg-amber-50 text-amber-900 border border-amber-200 rounded-lg text-[10px] font-medium flex items-start gap-1.5 leading-snug">
+                          <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                          <span>{pm.irreversibleNotice}</span>
+                        </div>
+                      )}
+
+                      {/* Custom Message & Instructions */}
+                      {pm.customMessage && (
+                        <p className="text-[11px] text-slate-500 italic">
+                          "{pm.customMessage}"
+                        </p>
+                      )}
+
+                      {pm.instructions && (
+                        <p className="text-[11px] text-slate-600 line-clamp-2 pt-0.5">
+                          <strong className="text-slate-700">Guide:</strong> {pm.instructions}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+              {/* Step 3: Upload Payment Screenshot & Submit to WhatsApp */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full bg-[#2563EB] text-white text-xs font-black flex items-center justify-center">3</span>
+                    <div>
+                      <h2 className="text-base font-bold text-slate-900">Submit Payment Receipt</h2>
+                      <p className="text-xs text-slate-500">Crediting: <strong className="text-slate-700">{selectedPkg?.name}</strong> (+{selectedPkg?.usages} Tokens)</p>
+                    </div>
+                  </div>
+                </div>
+
+                {submissionFeedback && (
+                  <div className={`p-4 rounded-xl text-xs font-medium flex items-center gap-2 ${
+                    submissionFeedback.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'
+                  }`}>
+                    {submissionFeedback.type === 'success' ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+                    {submissionFeedback.message}
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  {/* File Upload Zone */}
+                  <div className="space-y-3">
+                    <label className="block text-xs font-semibold text-slate-700">Upload M-Pesa / Mobile Payment Screenshot</label>
+                    <div className="border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center bg-slate-50/50 hover:bg-slate-50 transition-colors relative">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setUploadedImageName(e.target.files?.[0]?.name || null)}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      <div className="flex flex-col items-center justify-center space-y-2">
+                        <div className="p-3 bg-blue-50 rounded-full text-[#2563EB]">
+                          <Upload className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-slate-800">
+                            {uploadedImageName ? `Selected: ${uploadedImageName}` : 'Click or drop payment screenshot'}
+                          </p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">Supports PNG, JPG, WEBP receipts</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Submit to WhatsApp Button */}
+                  <a
+                    href={`https://wa.me/${adminSettings.whatsappNumber?.replace(/\D/g, '') || '255712345678'}?text=${encodeURIComponent(`Hello Admin, I have paid ${selectedPkg?.price || 'package price'} for ${selectedPkg?.name || 'Token Top-Up'} (+${selectedPkg?.usages || ''} Tokens).\n\nName: ${currentPasskeyObj?.name || 'User'}\n\nPlease confirm my payment. [Receipt attached]`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2"
+                  >
+                    <MessageCircle className="w-5 h-5" /> Submit Receipt to Admin WhatsApp
+                  </a>
+                  <p className="text-[10px] text-center text-slate-400">After sending, wait for admin verification in the history table.</p>
+                </div>
+              </div>
 
             {/* Card 4: Submission History & Status */}
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
@@ -672,78 +904,7 @@ export const TokenBillingScreen: React.FC = () => {
 
             {/* TAB: METHODS CONFIGURATOR */}
             {adminTab === 'methods' && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-6">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <div>
-                    <h2 className="text-base font-bold text-slate-900">Payment Methods Configurator</h2>
-                    <p className="text-xs text-slate-500">Edit payment numbers, instructions, and statuses displayed to users without writing code</p>
-                  </div>
-                  <button
-                    onClick={() => setIsAddMethodOpen(true)}
-                    className="px-3.5 py-2 bg-[#2563EB] hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5"
-                  >
-                    <Plus className="w-4 h-4" /> Add Payment Method
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {paymentMethods.map((pm) => (
-                    <div key={pm.id} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-bold text-slate-900">{pm.name}</span>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => updatePaymentMethod(pm.id, { status: pm.status === 'active' ? 'inactive' : 'active' })}
-                            className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
-                              pm.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
-                            }`}
-                          >
-                            {pm.status.toUpperCase()}
-                          </button>
-                          <button
-                            onClick={() => deletePaymentMethod(pm.id)}
-                            className="text-slate-400 hover:text-red-600 p-1"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2 text-xs">
-                        <div>
-                          <label className="text-[11px] font-semibold text-slate-500">Payment Number</label>
-                          <input
-                            type="text"
-                            value={pm.number}
-                            onChange={(e) => updatePaymentMethod(pm.id, { number: e.target.value })}
-                            className="w-full px-3 py-1.5 rounded-lg border border-slate-300 font-mono font-bold text-slate-800 bg-white"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-[11px] font-semibold text-slate-500">Account Name</label>
-                          <input
-                            type="text"
-                            value={pm.accountName}
-                            onChange={(e) => updatePaymentMethod(pm.id, { accountName: e.target.value })}
-                            className="w-full px-3 py-1.5 rounded-lg border border-slate-300 font-medium text-slate-800 bg-white"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-[11px] font-semibold text-slate-500">Payment Instructions</label>
-                          <textarea
-                            value={pm.instructions}
-                            onChange={(e) => updatePaymentMethod(pm.id, { instructions: e.target.value })}
-                            rows={2}
-                            className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-slate-700 bg-white text-xs"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <PaymentMethodsAdminPanel />
             )}
 
             {/* TAB: PACKAGES (SUPABASE) */}
