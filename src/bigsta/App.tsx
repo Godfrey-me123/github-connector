@@ -30,6 +30,8 @@ import { UsageExhaustedBanner } from './components/auth/UsageExhaustedBanner';
 import { DownloadsScreen } from './components/DownloadsScreen';
 import { TokenBillingScreen } from './components/billing/TokenBillingScreen';
 import { SettingsScreen } from './components/SettingsScreen';
+import { PassportStudioScreen } from './components/PassportStudioScreen';
+import { ImageEditStudioScreen } from './components/ImageEditStudioScreen';
 import { PaymentDashboard } from './components/admin/PaymentDashboard';
 import { UnsavedChangesModal } from './components/common/UnsavedChangesModal';
 import { StartupDisclaimerModal } from './components/common/StartupDisclaimerModal';
@@ -412,6 +414,17 @@ export default function App() {
         <MergeCardModal />
         <TemplateLibraryModal />
         <CardGeneratorModal />
+      </>
+    );
+  }
+
+  if (activeScreen === 'image_edit_studio') {
+    return (
+      <>
+        <UsageExhaustedBanner />
+        <ImageEditStudioScreen />
+        <PasskeyManagerModal />
+        <RechargeModal />
       </>
     );
   }

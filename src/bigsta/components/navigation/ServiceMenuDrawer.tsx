@@ -26,6 +26,7 @@ import {
   ShieldCheck,
   DownloadCloud,
   Settings,
+  Camera,
 } from 'lucide-react';
 import { useTemplateStore } from '../../store/useTemplateStore';
 import { useUnreviewedSmsCount } from '../../hooks/useUnreviewedSmsCount';
@@ -57,15 +58,25 @@ export const ServiceMenuDrawer: React.FC<ServiceMenuDrawerProps> = ({
 }) => {
   const { setActiveScreen, activeScreen, authRole, logoutPasskey, setPasskeyManagerOpen, manualRequests, setRechargeModalOpen } = useTemplateStore();
 
-  // Close drawer on Escape key
+  // Close drawer on Escape key and Click Outside
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
         onClose();
       }
     };
+    const handleClickOutside = (e: MouseEvent) => {
+      const drawer = document.getElementById('service-menu-drawer');
+      if (isOpen && drawer && !drawer.contains(e.target as Node)) {
+        onClose();
+      }
+    };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, [isOpen, onClose]);
 
   // Lock body scroll when drawer is open on mobile
@@ -279,6 +290,22 @@ export const ServiceMenuDrawer: React.FC<ServiceMenuDrawerProps> = ({
       },
       description: 'Healthcare membership smart cards, dependent coverage validation & biometric health passes.',
       features: ['Principal & Dependent Mapping', 'Hospital Tier Endorsements', 'Smart Card Chip Specs'],
+    },
+    {
+      id: 'passport_studio',
+      name: 'Passport Size Photo Studio & Image Editor',
+      authority: 'Official Biometric Photos & Image Suite',
+      category: 'identity',
+      icon: Camera,
+      iconColor: 'text-cyan-400',
+      status: 'active',
+      badgeText: 'Full App',
+      action: () => {
+        setActiveScreen('image_edit_studio' as any);
+        onClose();
+      },
+      description: 'Full independent suite for passport cropping, background removal, resizing, compressing, converting & enhancement.',
+      features: ['Passport & Visa Country Specs', 'AI Background Removal', 'Batch Image Converter & Resizer', 'High Resolution Export'],
     },
     {
       id: 'birth_certificate',
@@ -502,6 +529,7 @@ export const ServiceMenuDrawer: React.FC<ServiceMenuDrawerProps> = ({
 
       {/* Drawer Panel */}
       <div
+        id="service-menu-drawer"
         className="relative w-full max-w-xs sm:max-w-sm bg-[#FFFFFF] border-r border-[#E7E9EB] text-[#000000] shadow-2xl flex flex-col h-full z-10 animate-in slide-in-from-left duration-250"
         role="dialog"
         aria-modal="true"

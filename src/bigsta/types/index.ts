@@ -1,4 +1,4 @@
-export type ActiveScreen = 'home' | 'upload' | 'editor' | 'templates' | 'nida' | 'nida_request' | 'preview' | 'downloads' | 'driving_license' | 'nhif' | 'admin-payments' | 'billing' | 'settings';
+export type ActiveScreen = 'home' | 'upload' | 'editor' | 'templates' | 'nida' | 'nida_request' | 'preview' | 'downloads' | 'driving_license' | 'nhif' | 'admin-payments' | 'billing' | 'settings' | 'passport_studio' | 'image_edit_studio';
 
 export type Unit = 'px' | 'mm' | 'cm' | 'in';
 
