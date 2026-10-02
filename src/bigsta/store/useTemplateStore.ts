@@ -1011,12 +1011,12 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
   })();
 
     const initialUserProfile: UserProfileSettings = (() => {
-    if (typeof window === 'undefined') return { name: 'John Sample', phone: '+255 123 456 789', email: 'sample@bigsta.tz', region: 'Dar es Salaam' };
+    if (typeof window === 'undefined') return { name: '', phone: '', email: '', region: '' };
     try {
       const raw = localStorage.getItem('bigsta_user_profile');
       if (raw) return JSON.parse(raw);
     } catch (e) {}
-    return { name: 'John Sample', phone: '+255 123 456 789', email: 'sample@bigsta.tz', region: 'Dar es Salaam' };
+    return { name: '', phone: '', email: '', region: '' };
   })();
 
   const initialUserPreferences: UserPreferences = (() => {
@@ -1247,6 +1247,18 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       const updated = { ...get().userProfile, ...updates };
       safeLocalStorageSetItem('bigsta_user_profile', JSON.stringify(updated));
       set({ userProfile: updated });
+      
+      const { currentAuthKey } = get();
+      if (currentAuthKey) {
+        import('../services/supabase').then(({ syncProfileSupabase }) => {
+          syncProfileSupabase({
+            id: currentAuthKey,
+            ...updated,
+            role: 'user', // Assuming user role for profile updates
+            tokens: 0 // Will need to be handled carefully
+          });
+        }).catch(e => console.error('Failed to sync profile to Supabase', e));
+      }
     },
 
     updateUserPreferences: (updates) => {

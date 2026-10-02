@@ -62,6 +62,7 @@ export const TokenBillingScreen: React.FC = () => {
     addWeeklyOffer,
     editWeeklyOffer,
     deleteWeeklyOffer,
+    userProfile,
   } = useTemplateStore();
 
   const currentPasskeyObj = activePasskeys.find(p => p.key === currentAuthKey) || activePasskeys[0];
@@ -592,7 +593,7 @@ export const TokenBillingScreen: React.FC = () => {
                       {/* WhatsApp Confirm Button */}
                       {pm.whatsappNumber && (
                         <a
-                          href={`https://wa.me/${waNumber}?text=${encodeURIComponent(`Hello, I have completed a payment of ${selectedPkg?.price || amountInput} for ${selectedPkg?.name || 'Token Top-Up'} (${selectedPkg?.usages || ''} Tokens) via ${pm.name} (${pm.number}). Please confirm my token top-up.`)}`}
+                          href={`https://wa.me/${waNumber}?text=${encodeURIComponent(`Hello, I have paid ${selectedPkg?.price || amountInput} for ${selectedPkg?.name || 'Token Top-Up'} (${selectedPkg?.usages || ''} Tokens) via ${pm.name} (${pm.number}).\n\nRegistered as: ${userProfile?.name || 'N/A'}\nWith number: ${userProfile?.phone || 'N/A'}\n\nPlease confirm my token top-up.`)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
@@ -680,7 +681,7 @@ export const TokenBillingScreen: React.FC = () => {
 
                   {/* Submit to WhatsApp Button */}
                   <a
-                    href={`https://wa.me/${adminSettings.whatsappNumber?.replace(/\D/g, '') || '255712345678'}?text=${encodeURIComponent(`Hello Admin, I have paid ${selectedPkg?.price || 'package price'} for ${selectedPkg?.name || 'Token Top-Up'} (+${selectedPkg?.usages || ''} Tokens).\n\nName: ${currentPasskeyObj?.name || 'User'}\n\nPlease confirm my payment. [Receipt attached]`)}`}
+                    href={`https://wa.me/${adminSettings.whatsappNumber?.replace(/\D/g, '') || '255712345678'}?text=${encodeURIComponent(`Hello, I have paid ${selectedPkg?.price || 'package price'} for ${selectedPkg?.name || 'Token Top-Up'} (${selectedPkg?.usages || ''} Tokens) via ${selectedMethod || 'Payment Method'}.\n\nRegistered as: ${userProfile?.name || 'N/A'}\nWith number: ${userProfile?.phone || 'N/A'}\n\nPlease confirm my token top-up. [Receipt attached]`)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2"
