@@ -36,6 +36,96 @@ export async function saveWebhookSettings(value: Record<string, unknown>) {
 
 const json = (body: unknown, status = 200) => Response.json(body, { status });
 
+async function logWebhookFailure(error: string, sender: string, request: Request) {
+  try {
+    const db = await admin();
+    const ip = request.headers.get("cf-connecting-ip") || request.headers.get("x-forwarded-for") || "unknown";
+    await db.from("audit_logs").insert({
+      id: crypto.randomUUID(),
+      action: "sms_webhook_rejected",
+      details: `${error} · sender=${sender} · ip=${ip}`.slice(0, 1000),
+      created_at: new Date().toISOString(),
+    });
+  } catch (e) {
+    console.error("[SMS] failed to log rejection", e);
+  }
+}
+
+export async function gatewayStatus(origin: string) {
+  const db = await admin();
+  const checks: { name: string; ok: boolean; detail: string }[] = [];
+
+  // 1. Webhook reachable (GET the public endpoint over the network)
+  try {
+    const r = await fetch(`${origin}/api/public/payment-sms`, { method: "GET" });
+    checks.push({ name: "Webhook reachable", ok: r.ok, detail: r.ok ? `HTTP ${r.status}` : `HTTP ${r.status}` });
+  } catch (e: any) {
+    checks.push({ name: "Webhook reachable", ok: false, detail: e?.message || "Network error" });
+  }
+
+  // 2. Secret configured
+  let secretOk = false;
+  try {
+    const s = await getWebhookSecret();
+    secretOk = Boolean(s && s.length >= 16);
+    checks.push({ name: "Secret valid", ok: secretOk, detail: secretOk ? "Secret configured" : "Secret too short" });
+  } catch (e: any) {
+    checks.push({ name: "Secret valid", ok: false, detail: e?.message || "Could not read secret" });
+  }
+
+  // 3. Database writable (insert + delete a probe row)
+  try {
+    const probe = `probe_${crypto.randomUUID()}`;
+    const { error: e1 } = await db.from("system_settings").upsert({
+      id: "gateway_probe",
+      config_key: "gateway_probe",
+      config_value: { probe, at: new Date().toISOString() } as never,
+      updated_at: new Date().toISOString(),
+    });
+    if (e1) throw new Error(e1.message);
+    checks.push({ name: "Database writable", ok: true, detail: "Write succeeded" });
+  } catch (e: any) {
+    checks.push({ name: "Database writable", ok: false, detail: e?.message || "Write failed" });
+  }
+
+  // 4. Logs readable
+  let lastReceived: string | null = null;
+  let lastSaved: string | null = null;
+  try {
+    const { data, error } = await db
+      .from("sms_logs")
+      .select("received_at, created_at")
+      .order("received_at", { ascending: false })
+      .limit(1);
+    if (error) throw new Error(error.message);
+    lastReceived = data?.[0]?.received_at ?? null;
+    lastSaved = data?.[0]?.created_at ?? null;
+    checks.push({ name: "Logs readable", ok: true, detail: data?.length ? "Latest row found" : "No SMS yet" });
+  } catch (e: any) {
+    checks.push({ name: "Logs readable", ok: false, detail: e?.message || "Read failed" });
+  }
+
+  const { data: fail } = await db
+    .from("audit_logs")
+    .select("created_at, details")
+    .eq("action", "sms_webhook_rejected")
+    .order("created_at", { ascending: false })
+    .limit(1);
+  const { count: failedCount } = await db
+    .from("audit_logs")
+    .select("id", { count: "exact", head: true })
+    .eq("action", "sms_webhook_rejected");
+
+  return {
+    ok: checks.every((c) => c.ok),
+    checks,
+    lastReceived,
+    lastSaved,
+    lastError: fail?.[0] ? { at: fail[0].created_at, detail: fail[0].details } : null,
+    failedAttempts: failedCount ?? 0,
+  };
+}
+
 export async function handleIncomingSms(request: Request): Promise<Response> {
   let payload: any = {};
   try {
@@ -53,8 +143,14 @@ export async function handleIncomingSms(request: Request): Promise<Response> {
   const receivedAt = new Date().toISOString();
 
   const secret = await getWebhookSecret();
-  if (!payload.secret || payload.secret !== secret) {
-    const error = !payload.secret ? "Missing Secret" : "Invalid Secret";
+  const provided =
+    request.headers.get("x-bigsta-secret") ||
+    request.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ||
+    payload.secret ||
+    new URL(request.url).searchParams.get("secret");
+  if (!provided || provided !== secret) {
+    const error = !provided ? "Missing Secret" : "Invalid Secret";
+    await logWebhookFailure(error, sender, request);
     return json({ success: false, received: true, status: "FAILED", error }, 401);
   }
   if (!rawSms.trim()) return json({ success: false, received: true, status: "FAILED", error: "Empty SMS body" }, 400);
@@ -63,6 +159,12 @@ export async function handleIncomingSms(request: Request): Promise<Response> {
   const fields = extractPaymentFields(sender, rawSms);
   const parsed = isParsedPayment(fields);
   const smsHash = await computeSmsHash(sender, rawSms, receivedAt);
+  const lower = rawSms.toLowerCase();
+  const paymentType = /received|umepokea|imepokelewa|deposit/.test(lower)
+    ? "RECEIVED"
+    : /sent|umetuma|paid|umelipa/.test(lower)
+      ? "SENT"
+      : null;
 
   const { data: row, error: insErr } = await db
     .from("sms_logs")
@@ -83,6 +185,8 @@ export async function handleIncomingSms(request: Request): Promise<Response> {
       status: "UNREVIEWED",
       processing_state: parsed ? "PARSED" : "PARSE_FAILED",
       source: "webhook",
+      secret_verified: true,
+      payment_type: paymentType,
     })
     .select("id")
     .maybeSingle();
