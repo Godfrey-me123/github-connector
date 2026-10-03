@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import React, { useState, useEffect } from 'react';
 import { ToolId, UserProfile } from './types/imageTools';
 import { Navbar } from './components/Navbar';
