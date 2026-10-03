@@ -11,8 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SplatRouteImport } from './routes/$'
+import { Route as ApiCleanTempRouteImport } from './routes/api/clean-temp'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiPaymentSmsRouteImport } from './routes/api/payment-sms'
+import { Route as ApiRemoveBgRouteImport } from './routes/api/remove-bg'
 import { Route as ApiAdminSmsMonitorRouteImport } from './routes/api/admin/sms-monitor'
 import { Route as ApiAdminWebhookDebugRouteImport } from './routes/api/admin/webhook-debug'
 import { Route as ApiAdminWebhookSecretRouteImport } from './routes/api/admin/webhook-secret'
@@ -30,6 +32,11 @@ const SplatRoute = SplatRouteImport.update({
   path: '/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCleanTempRoute = ApiCleanTempRouteImport.update({
+  id: '/api/clean-temp',
+  path: '/api/clean-temp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiHealthRoute = ApiHealthRouteImport.update({
   id: '/api/health',
   path: '/api/health',
@@ -38,6 +45,11 @@ const ApiHealthRoute = ApiHealthRouteImport.update({
 const ApiPaymentSmsRoute = ApiPaymentSmsRouteImport.update({
   id: '/api/payment-sms',
   path: '/api/payment-sms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRemoveBgRoute = ApiRemoveBgRouteImport.update({
+  id: '/api/remove-bg',
+  path: '/api/remove-bg',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAdminSmsMonitorRoute = ApiAdminSmsMonitorRouteImport.update({
@@ -75,8 +87,10 @@ const ApiAdminWebhookSecretRegenerateRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/api/clean-temp': typeof ApiCleanTempRoute
   '/api/health': typeof ApiHealthRoute
   '/api/payment-sms': typeof ApiPaymentSmsRoute
+  '/api/remove-bg': typeof ApiRemoveBgRoute
   '/api/admin/sms-monitor': typeof ApiAdminSmsMonitorRoute
   '/api/admin/webhook-debug': typeof ApiAdminWebhookDebugRoute
   '/api/admin/webhook-secret': typeof ApiAdminWebhookSecretRouteWithChildren
@@ -87,8 +101,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/api/clean-temp': typeof ApiCleanTempRoute
   '/api/health': typeof ApiHealthRoute
   '/api/payment-sms': typeof ApiPaymentSmsRoute
+  '/api/remove-bg': typeof ApiRemoveBgRoute
   '/api/admin/sms-monitor': typeof ApiAdminSmsMonitorRoute
   '/api/admin/webhook-debug': typeof ApiAdminWebhookDebugRoute
   '/api/admin/webhook-secret': typeof ApiAdminWebhookSecretRouteWithChildren
@@ -100,8 +116,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
+  '/api/clean-temp': typeof ApiCleanTempRoute
   '/api/health': typeof ApiHealthRoute
   '/api/payment-sms': typeof ApiPaymentSmsRoute
+  '/api/remove-bg': typeof ApiRemoveBgRoute
   '/api/admin/sms-monitor': typeof ApiAdminSmsMonitorRoute
   '/api/admin/webhook-debug': typeof ApiAdminWebhookDebugRoute
   '/api/admin/webhook-secret': typeof ApiAdminWebhookSecretRouteWithChildren
@@ -114,8 +132,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$'
+    | '/api/clean-temp'
     | '/api/health'
     | '/api/payment-sms'
+    | '/api/remove-bg'
     | '/api/admin/sms-monitor'
     | '/api/admin/webhook-debug'
     | '/api/admin/webhook-secret'
@@ -126,8 +146,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/$'
+    | '/api/clean-temp'
     | '/api/health'
     | '/api/payment-sms'
+    | '/api/remove-bg'
     | '/api/admin/sms-monitor'
     | '/api/admin/webhook-debug'
     | '/api/admin/webhook-secret'
@@ -138,8 +160,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/$'
+    | '/api/clean-temp'
     | '/api/health'
     | '/api/payment-sms'
+    | '/api/remove-bg'
     | '/api/admin/sms-monitor'
     | '/api/admin/webhook-debug'
     | '/api/admin/webhook-secret'
@@ -151,8 +175,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SplatRoute: typeof SplatRoute
+  ApiCleanTempRoute: typeof ApiCleanTempRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiPaymentSmsRoute: typeof ApiPaymentSmsRoute
+  ApiRemoveBgRoute: typeof ApiRemoveBgRoute
   ApiAdminSmsMonitorRoute: typeof ApiAdminSmsMonitorRoute
   ApiAdminWebhookDebugRoute: typeof ApiAdminWebhookDebugRoute
   ApiAdminWebhookSecretRoute: typeof ApiAdminWebhookSecretRouteWithChildren
@@ -176,6 +202,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/clean-temp': {
+      id: '/api/clean-temp'
+      path: '/api/clean-temp'
+      fullPath: '/api/clean-temp'
+      preLoaderRoute: typeof ApiCleanTempRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/health': {
       id: '/api/health'
       path: '/api/health'
@@ -188,6 +221,13 @@ declare module '@tanstack/react-router' {
       path: '/api/payment-sms'
       fullPath: '/api/payment-sms'
       preLoaderRoute: typeof ApiPaymentSmsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/remove-bg': {
+      id: '/api/remove-bg'
+      path: '/api/remove-bg'
+      fullPath: '/api/remove-bg'
+      preLoaderRoute: typeof ApiRemoveBgRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/admin/sms-monitor': {
@@ -251,8 +291,10 @@ const ApiAdminWebhookSecretRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SplatRoute: SplatRoute,
+  ApiCleanTempRoute: ApiCleanTempRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiPaymentSmsRoute: ApiPaymentSmsRoute,
+  ApiRemoveBgRoute: ApiRemoveBgRoute,
   ApiAdminSmsMonitorRoute: ApiAdminSmsMonitorRoute,
   ApiAdminWebhookDebugRoute: ApiAdminWebhookDebugRoute,
   ApiAdminWebhookSecretRoute: ApiAdminWebhookSecretRouteWithChildren,
