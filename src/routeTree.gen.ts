@@ -15,6 +15,7 @@ import { Route as ApiCleanTempRouteImport } from './routes/api/clean-temp'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiPaymentSmsRouteImport } from './routes/api/payment-sms'
 import { Route as ApiRemoveBgRouteImport } from './routes/api/remove-bg'
+import { Route as ApiAdminSmsGatewayRouteImport } from './routes/api/admin/sms-gateway'
 import { Route as ApiAdminSmsMonitorRouteImport } from './routes/api/admin/sms-monitor'
 import { Route as ApiAdminWebhookDebugRouteImport } from './routes/api/admin/webhook-debug'
 import { Route as ApiAdminWebhookSecretRouteImport } from './routes/api/admin/webhook-secret'
@@ -50,6 +51,11 @@ const ApiPaymentSmsRoute = ApiPaymentSmsRouteImport.update({
 const ApiRemoveBgRoute = ApiRemoveBgRouteImport.update({
   id: '/api/remove-bg',
   path: '/api/remove-bg',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminSmsGatewayRoute = ApiAdminSmsGatewayRouteImport.update({
+  id: '/api/admin/sms-gateway',
+  path: '/api/admin/sms-gateway',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAdminSmsMonitorRoute = ApiAdminSmsMonitorRouteImport.update({
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/api/health': typeof ApiHealthRoute
   '/api/payment-sms': typeof ApiPaymentSmsRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
+  '/api/admin/sms-gateway': typeof ApiAdminSmsGatewayRoute
   '/api/admin/sms-monitor': typeof ApiAdminSmsMonitorRoute
   '/api/admin/webhook-debug': typeof ApiAdminWebhookDebugRoute
   '/api/admin/webhook-secret': typeof ApiAdminWebhookSecretRouteWithChildren
@@ -105,6 +112,7 @@ export interface FileRoutesByTo {
   '/api/health': typeof ApiHealthRoute
   '/api/payment-sms': typeof ApiPaymentSmsRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
+  '/api/admin/sms-gateway': typeof ApiAdminSmsGatewayRoute
   '/api/admin/sms-monitor': typeof ApiAdminSmsMonitorRoute
   '/api/admin/webhook-debug': typeof ApiAdminWebhookDebugRoute
   '/api/admin/webhook-secret': typeof ApiAdminWebhookSecretRouteWithChildren
@@ -120,6 +128,7 @@ export interface FileRoutesById {
   '/api/health': typeof ApiHealthRoute
   '/api/payment-sms': typeof ApiPaymentSmsRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
+  '/api/admin/sms-gateway': typeof ApiAdminSmsGatewayRoute
   '/api/admin/sms-monitor': typeof ApiAdminSmsMonitorRoute
   '/api/admin/webhook-debug': typeof ApiAdminWebhookDebugRoute
   '/api/admin/webhook-secret': typeof ApiAdminWebhookSecretRouteWithChildren
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/payment-sms'
     | '/api/remove-bg'
+    | '/api/admin/sms-gateway'
     | '/api/admin/sms-monitor'
     | '/api/admin/webhook-debug'
     | '/api/admin/webhook-secret'
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/payment-sms'
     | '/api/remove-bg'
+    | '/api/admin/sms-gateway'
     | '/api/admin/sms-monitor'
     | '/api/admin/webhook-debug'
     | '/api/admin/webhook-secret'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/payment-sms'
     | '/api/remove-bg'
+    | '/api/admin/sms-gateway'
     | '/api/admin/sms-monitor'
     | '/api/admin/webhook-debug'
     | '/api/admin/webhook-secret'
@@ -179,6 +191,7 @@ export interface RootRouteChildren {
   ApiHealthRoute: typeof ApiHealthRoute
   ApiPaymentSmsRoute: typeof ApiPaymentSmsRoute
   ApiRemoveBgRoute: typeof ApiRemoveBgRoute
+  ApiAdminSmsGatewayRoute: typeof ApiAdminSmsGatewayRoute
   ApiAdminSmsMonitorRoute: typeof ApiAdminSmsMonitorRoute
   ApiAdminWebhookDebugRoute: typeof ApiAdminWebhookDebugRoute
   ApiAdminWebhookSecretRoute: typeof ApiAdminWebhookSecretRouteWithChildren
@@ -228,6 +241,13 @@ declare module '@tanstack/react-router' {
       path: '/api/remove-bg'
       fullPath: '/api/remove-bg'
       preLoaderRoute: typeof ApiRemoveBgRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/sms-gateway': {
+      id: '/api/admin/sms-gateway'
+      path: '/api/admin/sms-gateway'
+      fullPath: '/api/admin/sms-gateway'
+      preLoaderRoute: typeof ApiAdminSmsGatewayRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/admin/sms-monitor': {
@@ -295,6 +315,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiHealthRoute: ApiHealthRoute,
   ApiPaymentSmsRoute: ApiPaymentSmsRoute,
   ApiRemoveBgRoute: ApiRemoveBgRoute,
+  ApiAdminSmsGatewayRoute: ApiAdminSmsGatewayRoute,
   ApiAdminSmsMonitorRoute: ApiAdminSmsMonitorRoute,
   ApiAdminWebhookDebugRoute: ApiAdminWebhookDebugRoute,
   ApiAdminWebhookSecretRoute: ApiAdminWebhookSecretRouteWithChildren,
