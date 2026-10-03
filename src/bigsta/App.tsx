@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import React, { useEffect } from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { useTemplateStore } from './store/useTemplateStore';

@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import { CropRect, WatermarkOptions, EnhanceOptions, ExportFormat } from '../types/imageTools';
 import { PDFDocument } from 'pdf-lib';
 

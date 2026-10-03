@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code
 import React from 'react';
 import { ShieldCheck, Sparkles, User, Image as ImageIcon, Sliders, Layers } from 'lucide-react';
 import { ToolId, UserProfile } from '../types/imageTools';

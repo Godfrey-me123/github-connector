@@ -378,11 +378,13 @@ export type Database = {
           network: string | null
           payer_name: string | null
           payer_phone: string | null
+          payment_type: string | null
           processing_state: string
           raw_sms: string
           received_at: string
           receiver: string | null
           reference: string | null
+          secret_verified: boolean
           sender: string
           sms_hash: string
           source: string
@@ -398,11 +400,13 @@ export type Database = {
           network?: string | null
           payer_name?: string | null
           payer_phone?: string | null
+          payment_type?: string | null
           processing_state?: string
           raw_sms: string
           received_at?: string
           receiver?: string | null
           reference?: string | null
+          secret_verified?: boolean
           sender: string
           sms_hash: string
           source?: string
@@ -418,11 +422,13 @@ export type Database = {
           network?: string | null
           payer_name?: string | null
           payer_phone?: string | null
+          payment_type?: string | null
           processing_state?: string
           raw_sms?: string
           received_at?: string
           receiver?: string | null
           reference?: string | null
+          secret_verified?: boolean
           sender?: string
           sms_hash?: string
           source?: string

@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code
 import React, { useState, useEffect } from 'react';
 import {
   FileArchive,

@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code
 import React, { useState } from 'react';
 import { X, ShieldCheck, Check, Zap, Server, Trash2, Key, RefreshCw } from 'lucide-react';
 import { UserProfile } from '../types/imageTools';

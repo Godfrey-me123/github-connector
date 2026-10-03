@@ -38,6 +38,7 @@ import { PaymentRecord, PaymentStatus, VerificationLog } from '../../types';
 import { useTemplateStore } from '../../store/useTemplateStore';
 import { UniversalBackButton } from '../common/UniversalBackButton';
 import { SmsTransactionsPanel } from './SmsTransactionsPanel';
+import { SmsGatewayPanel } from './SmsGatewayPanel';
 import { SmsDiagnosticsPanel } from './SmsDiagnosticsPanel';
 import { NidaRequestsAdminPanel } from './NidaRequestsAdminPanel';
 import { useUnreviewedSmsCount } from '../../hooks/useUnreviewedSmsCount';
@@ -1382,7 +1383,8 @@ const renderSettings = () => {
                   { id: 'rejected', label: 'Rejected', icon: XCircle },
                   { id: 'used', label: 'Used', icon: Tag },
                   { id: 'manual', label: 'Manual', icon: AlertTriangle },
-                  { id: 'monitor', label: 'Monitor', icon: Activity },
+                  { id: 'gateway', label: 'SMS Gateway', icon: Smartphone },
+                 { id: 'monitor', label: 'Monitor', icon: Activity },
                   { id: 'sms_logs', label: unreviewedSms > 0 ? `SMS Transactions (${unreviewedSms})` : 'SMS Transactions', icon: Smartphone },
                   { id: 'sms_diagnostics', label: 'Diagnostics', icon: Activity },
                   { id: 'nida', label: 'NIDA Requests', icon: Receipt },
@@ -1413,6 +1415,7 @@ const renderSettings = () => {
             activeTab === 'sms_logs' ? renderSmsLogs() :
             activeTab === 'sms_diagnostics' ? renderSmsDiagnostics() :
             activeTab === 'nida' ? <NidaRequestsAdminPanel /> :
+            activeTab === 'gateway' ? <SmsGatewayPanel /> :
             renderPaymentList()
           )}
         </div>

@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code
 import React from 'react';
 import { ShieldCheck, Lock, Trash2, CheckCircle2 } from 'lucide-react';
 
