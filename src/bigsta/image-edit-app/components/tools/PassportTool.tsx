@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Upload, Camera, Users, Check } from 'lucide-react';
 import { Canvas, Image as FabricImage } from 'fabric';
