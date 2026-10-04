@@ -1,6 +1,6 @@
-// @ts-nocheck -- imported legacy BIGsta code
+// @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Upload, Camera, Users, Check } from 'lucide-react';
+import { Upload, Camera, Check, Sparkles, Sliders, Download, Printer, Scissors, ZoomIn, ZoomOut, RotateCw, RefreshCw, X, Home, MessageSquare, Share2, Edit3, Plus, Minus, ChevronRight, PenTool, UserCheck, UserPlus, Image, Settings } from 'lucide-react';
 import { Canvas, Image as FabricImage } from 'fabric';
 import { PassportDocumentSpec, PASSPORT_SPECS } from '../../types/passport';
 
@@ -9,84 +9,524 @@ interface PassportToolProps {
   onBack: () => void;
 }
 
+const PAPER_SIZES = [
+  { name: '3R (3.5x5 inches)', widthMm: 89, heightMm: 127, defaultCols: 3 },
+  { name: '4R (4x6 inches)', widthMm: 102, heightMm: 152, defaultCols: 4 },
+  { name: '5R (5x7 inches)', widthMm: 127, heightMm: 178, defaultCols: 4 },
+  { name: '6R (6x8 inches)', widthMm: 152, heightMm: 203, defaultCols: 5 },
+  { name: '8R (8x10 inches)', widthMm: 203, heightMm: 254, defaultCols: 5 },
+  { name: 'A4 Paper (8.27x11.69 inches)', widthMm: 210, heightMm: 297, defaultCols: 6 },
+  { name: 'S8R (8x12 inches)', widthMm: 203, heightMm: 305, defaultCols: 6 },
+  { name: '10R (10x12 inches)', widthMm: 254, heightMm: 305, defaultCols: 6 },
+];
+
+const EXTENDED_COLORS = [
+  { name: 'Transparent', hex: 'transparent' },
+  { name: 'White', hex: '#ffffff' },
+  { name: 'Black', hex: '#000000' },
+  { name: 'Light Grey', hex: '#f1f5f9' },
+  { name: 'Royal Blue', hex: '#2563eb' },
+  { name: 'Sky Blue', hex: '#38bdf8' },
+  { name: 'Navy', hex: '#1e3a8a' },
+  { name: 'Crimson Red', hex: '#dc2626' },
+  { name: 'Emerald Green', hex: '#059669' },
+  { name: 'Purple', hex: '#7c3aed' },
+  { name: 'Pink', hex: '#db2777' },
+];
+
 export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack }) => {
-  const [step, setStep] = useState<'country' | 'photo' | 'edit'>('country');
-  const [selectedSpec, setSelectedSpec] = useState<PassportDocumentSpec | null>(null);
+  const [step, setStep] = useState<'upload' | 'edit' | 'summary' | 'paper_size' | 'print_grid'>('upload');
+  const [selectedSpec, setSelectedSpec] = useState<PassportDocumentSpec>(PASSPORT_SPECS[0]);
   const [file, setFile] = useState<File | null>(initialFile || null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [fileSizeKb, setFileSizeKb] = useState<number>(63.92);
+
+  const [bgColor, setBgColor] = useState<string>('#ffffff');
+  const [colorTab, setColorTab] = useState<'basic' | 'premium' | 'custom'>('basic');
+  const [activeBottomTool, setActiveBottomTool] = useState<'remove_bg' | 'adjust' | 'background' | 'beauty' | null>('background');
+  
+  const [selectedPaper, setSelectedPaper] = useState(PAPER_SIZES[1]);
+  const [copies, setCopies] = useState<number>(8);
+  const [spacing, setSpacing] = useState<number>(0);
+  const [isLandscape, setIsLandscape] = useState<boolean>(false);
+  const [isProcessing, setIsProcessing] = useState<boolean>(false);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvas = useRef<Canvas | null>(null);
 
   useEffect(() => {
+    if (initialFile) {
+      setFile(initialFile);
+      setFileSizeKb(Math.round((initialFile.size / 1024) * 100) / 100);
+      const url = URL.createObjectURL(initialFile);
+      setPreviewUrl(url);
+      setStep('edit');
+    }
+  }, [initialFile]);
+
+  useEffect(() => {
     if (step === 'edit' && canvasRef.current && !fabricCanvas.current) {
+      const cWidth = 260;
+      const cHeight = Math.round(cWidth * (selectedSpec.heightMm / selectedSpec.widthMm));
+
       fabricCanvas.current = new Canvas(canvasRef.current, {
-        width: 500,
-        height: 600,
-        backgroundColor: '#f1f5f9'
+        width: cWidth,
+        height: cHeight,
+        backgroundColor: bgColor === 'transparent' ? undefined : bgColor
       });
-      
-      if (file) {
-        const url = URL.createObjectURL(file);
+
+      if (file || previewUrl) {
+        const url = previewUrl || (file ? URL.createObjectURL(file) : '');
+        if (url) {
+          FabricImage.fromURL(url).then(img => {
+            img.scaleToWidth(cWidth * 0.85);
+            fabricCanvas.current?.add(img);
+            fabricCanvas.current?.centerObject(img);
+            fabricCanvas.current?.renderAll();
+          });
+        }
+      }
+    }
+  }, [step, file, previewUrl, selectedSpec]);
+
+  useEffect(() => {
+    if (fabricCanvas.current) {
+      fabricCanvas.current.backgroundColor = bgColor === 'transparent' ? undefined : bgColor;
+      fabricCanvas.current.renderAll();
+    }
+  }, [bgColor]);
+
+  const handleFileSelect = (selectedFile: File) => {
+    setFile(selectedFile);
+    setFileSizeKb(Math.round((selectedFile.size / 1024) * 100) / 100);
+    const url = URL.createObjectURL(selectedFile);
+    setPreviewUrl(url);
+    setStep('edit');
+  };
+
+  const handleRemoveBackground = async () => {
+    if (!file) return;
+    setIsProcessing(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const res = await fetch('/api/remove-bg', { method: 'POST', body: formData });
+      if (!res.ok) throw new Error('Background removal failed');
+      const blob = await res.blob();
+      const newFile = new File([blob], 'nobg.png', { type: 'image/png' });
+      setFile(newFile);
+      setFileSizeKb(Math.round((blob.size / 1024) * 100) / 100);
+      const url = URL.createObjectURL(blob);
+      setPreviewUrl(url);
+      if (fabricCanvas.current) {
+        fabricCanvas.current.clear();
         FabricImage.fromURL(url).then(img => {
-          img.scaleToWidth(400);
+          img.scaleToWidth(220);
           fabricCanvas.current?.add(img);
           fabricCanvas.current?.centerObject(img);
           fabricCanvas.current?.renderAll();
         });
       }
+    } catch (err: any) {
+      alert(err.message || 'Error processing background removal');
+    } finally {
+      setIsProcessing(false);
     }
-  }, [step, file]);
+  };
 
-  const renderCountrySelector = () => (
-    <div className="space-y-4">
-      <h2 className="text-xl font-bold">Select Document Type</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {PASSPORT_SPECS.map((spec, idx) => (
-          <button
-            key={idx}
-            onClick={() => { setSelectedSpec(spec); setStep('photo'); }}
-            className="p-4 bg-slate-900 rounded-2xl border border-slate-800 hover:border-emerald-500 text-left"
-          >
-            <div className="font-bold text-white">{spec.country}</div>
-            <div className="text-sm text-slate-400">{spec.document}</div>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Print Passport Photos - ${selectedPaper.name} (${copies} Copies)</title>
+            <style>
+              @page { size: ${selectedPaper.widthMm}mm ${selectedPaper.heightMm}mm ${isLandscape ? 'landscape' : 'portrait'}; margin: 5mm; }
+              body { font-family: sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #fff; }
+              .sheet {
+                display: grid;
+                grid-template-columns: repeat(${selectedPaper.defaultCols}, 1fr);
+                gap: ${spacing}px;
+                width: 100%;
+                max-width: ${selectedPaper.widthMm}mm;
+                box-sizing: border-box;
+              }
+              .photo-box {
+                aspect-ratio: 35 / 45;
+                border: 1px solid #cbd5e1;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #fff;
+              }
+              img { width: 100%; height: 100%; object-fit: contain; }
+            </style>
+          </head>
+          <body>
+            <div class="sheet">
+              ${Array.from({ length: Math.min(copies, 60) }).map(() => `
+                <div class="photo-box">
+                  ${previewUrl ? `<img src="${previewUrl}" />` : ''}
+                </div>
+              `).join('')}
+            </div>
+            <script>
+              window.onload = function() {
+                setTimeout(function() {
+                  window.print();
+                }, 400);
+              };
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    } else {
+      window.print();
+    }
+  };
+
+  const handleSaveEdit = () => {
+    if (fabricCanvas.current) {
+      const dataURL = fabricCanvas.current.toDataURL({ format: 'jpeg', quality: 0.95 });
+      setPreviewUrl(dataURL);
+    }
+    setStep('summary');
+  };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6 text-slate-100">
-      <button onClick={onBack} className="flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white">
-        <ArrowLeft className="w-4 h-4" /> Back to Tools
-      </button>
+    <div className="max-w-md mx-auto h-[100dvh] bg-slate-100 text-slate-900 flex flex-col justify-between font-sans selection:bg-blue-500 selection:text-white shadow-2xl overflow-hidden">
       
-      {step === 'country' && renderCountrySelector()}
-      
-      {step === 'photo' && (
-        <div className="space-y-4 text-center">
-            <h2 className="text-xl font-bold">Upload Photo for {selectedSpec?.country} {selectedSpec?.document}</h2>
-            <label className="inline-block p-12 border-2 border-dashed border-slate-700 rounded-3xl cursor-pointer hover:border-emerald-500">
-                <Upload className="w-12 h-12 text-emerald-400 mx-auto" />
-                <span className="block mt-2 font-bold">Select Image</span>
-                <input type="file" accept="image/*" className="sr-only" onChange={(e) => {
-                    if (e.target.files?.[0]) {
-                        setFile(e.target.files[0]);
-                        setStep('edit');
-                    }
-                }} />
-            </label>
+      {/* ================= HOME / UPLOAD ================= */}
+      {step === 'upload' && (
+        <div className="flex-1 flex flex-col bg-[#f8fafc] text-slate-800 overflow-y-auto">
+          {/* Top Bar */}
+          <div className="px-4 py-4 flex items-center justify-between bg-[#f8fafc] sticky top-0 z-10">
+            <div className="flex items-center gap-2">
+              <button onClick={onBack} className="p-1 cursor-pointer text-slate-600 hover:text-slate-900"><X className="w-6 h-6" /></button>
+              <h1 className="font-extrabold text-lg text-slate-800 tracking-tight">Passport Photo</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <button className="bg-rose-500 hover:bg-rose-600 text-white font-bold px-3 py-1.5 rounded-full text-xs flex items-center gap-1 shadow-xs cursor-pointer">
+                <span>👑</span> Pro
+              </button>
+              <button className="p-2 bg-white rounded-full border border-slate-200 text-slate-600 hover:bg-slate-50 shadow-2xs cursor-pointer">
+                <Settings className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="p-4 space-y-6">
+            {/* 4 Tool Cards Top Row */}
+            <div className="grid grid-cols-4 gap-2.5">
+              <div onClick={() => alert('Custom')} className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 transition-all">
+                <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 mb-1.5">
+                  <Scissors className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-bold text-slate-800">Custom</span>
+              </div>
+              <div onClick={() => alert('Annotation')} className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 transition-all">
+                <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 mb-1.5">
+                  <Edit3 className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-bold text-slate-800">Annotation</span>
+              </div>
+              <div onClick={() => alert('Signature')} className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 transition-all">
+                <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 mb-1.5">
+                  <PenTool className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-bold text-slate-800">Signature</span>
+              </div>
+              <div onClick={() => alert('Sign Photo')} className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 transition-all">
+                <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 mb-1.5">
+                  <UserCheck className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-bold text-slate-800">Sign Photo</span>
+              </div>
+            </div>
+
+            {/* Two Big Action Buttons */}
+            <div className="grid grid-cols-2 gap-3">
+              <label className="bg-blue-600 hover:bg-blue-700 text-white p-5 rounded-2xl shadow-md flex flex-col items-center justify-center text-center cursor-pointer transition-all active:scale-98">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/40 flex items-center justify-center text-white mb-2">
+                  <UserPlus className="w-6 h-6" />
+                </div>
+                <span className="font-extrabold text-sm tracking-wide">Create Photo</span>
+                <input type="file" accept="image/*" className="sr-only" onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])} />
+              </label>
+
+              <button onClick={() => alert('My Photos')} className="bg-blue-600 hover:bg-blue-700 text-white p-5 rounded-2xl shadow-md flex flex-col items-center justify-center text-center cursor-pointer transition-all active:scale-98">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/40 flex items-center justify-center text-white mb-2">
+                  <Image className="w-6 h-6" />
+                </div>
+                <span className="font-extrabold text-sm tracking-wide">My Photos</span>
+              </button>
+            </div>
+
+            {/* Universal Sizes Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="font-extrabold text-sm text-slate-800">Universal</h2>
+                <button className="text-xs font-bold text-blue-600 hover:underline">See all</button>
+              </div>
+              <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+                {[
+                  { name: '35x45 mm' },
+                  { name: '1.5x1.5 in' },
+                  { name: '2x2 in' },
+                  { name: '40x60 mm' },
+                ].map((size, idx) => (
+                  <label key={idx} className="flex-shrink-0 w-36 bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs flex flex-col items-center text-center cursor-pointer hover:border-blue-400 transition-all group">
+                    <div className="w-16 h-20 bg-slate-100 rounded-lg border border-slate-200 mb-3 flex items-center justify-center relative overflow-hidden shadow-xs">
+                      <div className="absolute inset-1.5 bg-slate-200 rounded flex items-end justify-center pb-1">
+                        <div className="w-6 h-7 bg-slate-400 rounded-t-full" />
+                      </div>
+                    </div>
+                    <span className="font-bold text-xs text-slate-800 group-hover:text-blue-600 line-clamp-1">{size.name}</span>
+                    <input type="file" accept="image/*" className="sr-only" onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])} />
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Recent Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="font-extrabold text-sm text-slate-800">Recent</h2>
+                <button className="text-xs font-bold text-blue-600 hover:underline">See all</button>
+              </div>
+              <div className="space-y-2">
+                {[
+                  { name: '1.5x1.5 in' },
+                  { name: '40x60 mm' },
+                ].map((item, idx) => (
+                  <label key={idx} className="w-full bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs flex items-center gap-3.5 cursor-pointer hover:bg-slate-50 transition-all">
+                    <div className="w-10 h-12 bg-slate-100 rounded-lg border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
+                      <UserCheck className="w-5 h-5 text-slate-500" />
+                    </div>
+                    <div className="flex-1 text-left">
+                      <div className="font-bold text-xs text-slate-800">{item.name}</div>
+                    </div>
+                    <input type="file" accept="image/*" className="sr-only" onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])} />
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Popular Section */}
+            <div className="space-y-3 pb-6">
+              <div className="flex items-center justify-between">
+                <h2 className="font-extrabold text-sm text-slate-800">Popular</h2>
+                <button className="text-xs font-bold text-blue-600 hover:underline">See all</button>
+              </div>
+              <div className="space-y-2">
+                {PASSPORT_SPECS.slice(0, 4).map((spec, idx) => (
+                  <label key={idx} className="w-full bg-white p-3.5 rounded-2xl border border-slate-200 shadow-2xs flex items-center gap-3.5 cursor-pointer hover:bg-slate-50 transition-all">
+                    <div className="w-12 h-8 bg-slate-100 rounded border border-slate-200 flex items-center justify-center font-black text-xs text-slate-700 shadow-2xs shrink-0 overflow-hidden">
+                      🏳️
+                    </div>
+                    <div className="flex-1 text-left">
+                      <div className="font-bold text-xs text-slate-800">{spec.country}</div>
+                      <div className="text-[11px] text-slate-400">{spec.widthMm}x{spec.heightMm}mm</div>
+                    </div>
+                    <input type="file" accept="image/*" className="sr-only" onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])} />
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
+      {/* ================= STEP 2: EDIT ================= */}
       {step === 'edit' && (
-          <div className="text-center p-4 bg-slate-900 rounded-3xl">
-              <h2 className="text-xl font-bold mb-4">Position Your Photo</h2>
-              <canvas ref={canvasRef} className="border border-slate-700 rounded-lg mx-auto" />
-              <div className="flex gap-4 mt-4 justify-center">
-                <button onClick={() => fabricCanvas.current?.renderAll()} className="px-4 py-2 bg-emerald-500 rounded-lg text-slate-950 font-bold">Export</button>
-              </div>
+        <div className="flex-1 flex flex-col justify-between overflow-hidden">
+          <div className="bg-blue-600 text-white px-4 py-3.5 flex items-center justify-between shadow-sm shrink-0">
+            <button onClick={() => setStep('upload')} className="p-1 cursor-pointer"><X className="w-6 h-6" /></button>
+            <h1 className="font-bold text-base tracking-wide"><span className="text-red-400 font-black">Step 2:</span> Edit Photo</h1>
+            <button onClick={handleSaveEdit} className="bg-white text-blue-600 font-bold px-4 py-1.5 rounded-full text-xs shadow-sm hover:bg-blue-50 transition-colors cursor-pointer">
+              Save
+            </button>
           </div>
+
+          <div className="flex-1 flex flex-col items-center justify-center p-4 relative overflow-y-auto">
+            <div className="bg-white p-3 rounded-2xl shadow-md border border-slate-200 relative flex items-center justify-center">
+              <canvas ref={canvasRef} className="rounded object-contain" />
+              <button onClick={() => { if (fabricCanvas.current) { const obj = fabricCanvas.current.getObjects()[0]; if (obj) { obj.rotate((obj.angle || 0) + 90); fabricCanvas.current.renderAll(); } }}} className="absolute bottom-4 right-4 bg-white/90 p-2.5 rounded-full shadow-md text-slate-700 hover:bg-white cursor-pointer border border-slate-200">
+                <RotateCw className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white border-t border-slate-200 shadow-lg shrink-0">
+            {activeBottomTool === 'background' && (
+              <div className="p-3 border-b border-slate-100 space-y-2 bg-slate-50">
+                <div className="flex text-xs font-bold border-b border-slate-200 pb-1.5">
+                  <button onClick={() => setColorTab('basic')} className={`flex-1 pb-1 text-center ${colorTab === 'basic' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-400'}`}>Basic & Custom</button>
+                  <button onClick={() => setColorTab('premium')} className={`flex-1 pb-1 text-center flex items-center justify-center gap-1 ${colorTab === 'premium' ? 'text-amber-600 border-b-2 border-amber-600' : 'text-slate-400'}`}>👑 Premium</button>
+                </div>
+                
+                <div className="flex items-center gap-2 overflow-x-auto py-1 px-1 scrollbar-thin">
+                  {EXTENDED_COLORS.map((c, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setBgColor(c.hex)}
+                      className={`flex-shrink-0 px-3 py-1.5 rounded-xl border text-[11px] font-bold flex items-center gap-1 shadow-2xs ${bgColor === c.hex ? 'border-blue-600 ring-2 ring-blue-300 text-blue-600' : 'border-slate-300 text-slate-700'}`}
+                      style={{ backgroundColor: c.hex === 'transparent' ? '#0f172a' : c.hex, color: ['#ffffff', '#38bdf8', '#f1f5f9'].includes(c.hex) ? '#0f172a' : '#ffffff' }}
+                    >
+                      {c.name}
+                    </button>
+                  ))}
+                  <div className="flex items-center gap-1 flex-shrink-0 bg-white px-2 py-1 rounded-xl border border-slate-300">
+                    <span className="text-[10px] font-bold">Custom:</span>
+                    <input type="color" value={bgColor.startsWith('#') ? bgColor : '#ffffff'} onChange={(e) => setBgColor(e.target.value)} className="w-6 h-6 rounded cursor-pointer border-0 bg-transparent" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-4 py-2.5 px-2 bg-white text-center text-[10px] font-bold text-slate-700">
+              <button onClick={() => { setActiveBottomTool('remove_bg'); handleRemoveBackground(); }} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${activeBottomTool === 'remove_bg' ? 'text-blue-600 bg-blue-50' : 'hover:bg-slate-50'}`}>
+                <Scissors className={`w-5 h-5 ${isProcessing ? 'animate-spin' : ''}`} />
+                <span>Remove Bg</span>
+              </button>
+              <button onClick={() => setActiveBottomTool('adjust')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${activeBottomTool === 'adjust' ? 'text-blue-600 bg-blue-50' : 'hover:bg-slate-50'}`}>
+                <Sliders className="w-5 h-5" />
+                <span>Adjust</span>
+              </button>
+              <button onClick={() => setActiveBottomTool('background')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${activeBottomTool === 'background' ? 'text-blue-600 bg-blue-50' : 'hover:bg-slate-50'}`}>
+                <div className="w-5 h-5 rounded border border-blue-600 bg-gradient-to-tr from-blue-500 to-indigo-500" />
+                <span>Background</span>
+              </button>
+              <button onClick={() => setActiveBottomTool('beauty')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${activeBottomTool === 'beauty' ? 'text-blue-600 bg-blue-50' : 'hover:bg-slate-50'}`}>
+                <Sparkles className="w-5 h-5" />
+                <span>Beauty</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= STEP 3: SUMMARY & PRINT SETUP ================= */}
+      {step === 'summary' && (
+        <div className="flex-1 flex flex-col justify-between overflow-hidden">
+          <div className="bg-blue-600 text-white px-4 py-3.5 flex items-center justify-between shadow-sm shrink-0">
+            <button onClick={() => setStep('edit')} className="p-1 cursor-pointer"><X className="w-6 h-6" /></button>
+            <h1 className="font-bold text-sm"><span className="text-red-400 font-black">Step 3:</span> Review & Print</h1>
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 cursor-pointer" />
+              <Home onClick={onBack} className="w-4 h-4 cursor-pointer" />
+            </div>
+          </div>
+
+          <div className="p-4 space-y-3 flex-1 overflow-y-auto flex flex-col items-center justify-center">
+            <div className="w-full bg-slate-200/80 border border-slate-300 rounded-2xl p-3 flex justify-between items-center text-xs font-bold text-slate-800 shadow-2xs">
+              <div>
+                <span className="text-[10px] text-slate-500 block font-normal">Photo {selectedSpec.widthMm}x{selectedSpec.heightMm}mm</span>
+                <span>{selectedSpec.widthMm} x {selectedSpec.heightMm}mm</span>
+              </div>
+              <div className="text-right">
+                <span className="text-[10px] text-slate-500 block font-normal">File size :-</span>
+                <span>{fileSizeKb} KB</span>
+              </div>
+            </div>
+
+            <div className="w-full bg-white p-6 rounded-3xl shadow-md border border-slate-200 flex items-center justify-center relative">
+              {previewUrl && <img src={previewUrl} alt="Passport" className="max-h-56 object-contain rounded shadow-sm" />}
+            </div>
+
+            <div className="w-full grid grid-cols-2 gap-3">
+              <button onClick={() => alert('Annotation tool')} className="bg-slate-200 hover:bg-slate-300 text-slate-800 py-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-2xs cursor-pointer">
+                <Edit3 className="w-4 h-4" /> Annotation
+              </button>
+              <button onClick={() => { if (previewUrl) { const a = document.createElement('a'); a.href = previewUrl; a.download = 'passport.jpg'; a.click(); } }} className="bg-slate-200 hover:bg-slate-300 text-slate-800 py-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-2xs cursor-pointer">
+                <Share2 className="w-4 h-4" /> Share
+              </button>
+            </div>
+
+            <button onClick={() => setStep('paper_size')} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-lg cursor-pointer transition-all active:scale-98">
+              <Printer className="w-5 h-5" /> Print
+            </button>
+          </div>
+        </div>
+      )}
+
+      {step === 'paper_size' && (
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="bg-blue-600 text-white px-4 py-3.5 flex items-center justify-between shadow-sm shrink-0">
+            <button onClick={() => setStep('summary')} className="p-1 cursor-pointer">←</button>
+            <h1 className="font-bold text-base">Select Paper Size</h1>
+            <div className="w-5" />
+          </div>
+
+          <div className="p-4 space-y-3 flex-1 overflow-y-auto">
+            {PAPER_SIZES.map((paper, idx) => (
+              <button key={idx} onClick={() => { setSelectedPaper(paper); setStep('print_grid'); }} className="w-full bg-white hover:bg-blue-50/50 p-4 rounded-2xl border border-slate-200 shadow-2xs text-left flex items-center gap-4 transition-all cursor-pointer group">
+                <div className="w-10 h-12 bg-slate-700 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shadow-xs">📄</div>
+                <div>
+                  <div className="font-bold text-sm text-slate-900 group-hover:text-blue-600">{paper.name}</div>
+                  <div className="text-xs text-slate-400 mt-0.5">{paper.widthMm}mm x {paper.heightMm}mm</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {step === 'print_grid' && (
+        <div className="flex-1 flex flex-col justify-between overflow-hidden">
+          <div className="bg-blue-600 text-white px-4 py-3.5 flex items-center justify-between shadow-sm shrink-0">
+            <button onClick={() => setStep('paper_size')} className="p-1 cursor-pointer">←</button>
+            <h1 className="font-bold text-base">Select Paper Size</h1>
+            <button onClick={() => setIsLandscape(!isLandscape)} className="p-1 cursor-pointer" title="Rotate Sheet">
+              <RotateCw className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="p-4 flex-1 flex flex-col space-y-3 overflow-hidden">
+            <div onClick={() => setStep('paper_size')} className="bg-slate-200/90 hover:bg-slate-300 px-4 py-3 rounded-2xl flex items-center justify-between text-xs font-bold text-slate-800 shadow-2xs cursor-pointer transition-colors shrink-0">
+              <span>{selectedPaper.name} <span className="font-normal text-slate-500">{selectedPaper.widthMm}mm x {selectedPaper.heightMm}mm</span></span>
+              <ChevronRight className="w-4 h-4 text-slate-600" />
+            </div>
+
+            <div className="flex-1 bg-white border border-slate-200 rounded-3xl p-3 overflow-y-auto flex items-center justify-center shadow-inner">
+              <div
+                className="grid gap-1 p-2 transition-all"
+                style={{
+                  gridTemplateColumns: `repeat(${selectedPaper.defaultCols}, minmax(0, 1fr))`,
+                  gap: `${Math.max(1, spacing)}px`
+                }}
+              >
+                {Array.from({ length: Math.min(copies, 60) }).map((_, i) => (
+                  <div key={i} className="w-10 h-14 bg-slate-100 rounded border border-slate-300 overflow-hidden shadow-2xs flex items-center justify-center">
+                    {previewUrl && <img src={previewUrl} alt="Passport" className="w-full h-full object-contain" />}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 shrink-0">
+              <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between">
+                <button onClick={() => setSpacing(Math.max(0, spacing - 1))} className="w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center font-bold text-base text-slate-700 cursor-pointer">−</button>
+                <span className="text-xs font-bold text-slate-800">Spacing {spacing}</span>
+                <button onClick={() => setSpacing(spacing + 1)} className="w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center font-bold text-base text-slate-700 cursor-pointer">+</button>
+              </div>
+
+              <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs flex items-center justify-between">
+                <button onClick={() => setCopies(Math.max(1, copies - 1))} className="w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center font-bold text-base text-slate-700 cursor-pointer">−</button>
+                <span className="text-xs font-bold text-slate-800">Copies {copies}</span>
+                <button onClick={() => setCopies(copies + 1)} className="w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-full flex items-center justify-center font-bold text-base text-slate-700 cursor-pointer">+</button>
+              </div>
+            </div>
+
+            <button onClick={handlePrint} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-lg cursor-pointer transition-all active:scale-98 shrink-0">
+              <Printer className="w-5 h-5" /> Print Multiple Copies
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
