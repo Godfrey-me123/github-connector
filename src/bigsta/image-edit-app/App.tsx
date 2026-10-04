@@ -17,6 +17,7 @@ import { RenameTool } from './components/tools/RenameTool';
 import { PassportTool } from './components/tools/PassportTool';
 import { AccountModal } from './components/AccountModal';
 import { ShieldCheck, Lock } from 'lucide-react';
+import { saveActiveImageStorage, loadActiveImageStorage } from '../services/activeImageStorage';
 
 export default function App() {
   const [activeTool, setActiveTool] = useState<ToolId | 'home'>('home');
@@ -42,6 +43,19 @@ export default function App() {
   });
 
   useEffect(() => {
+    // Load cached active image from IndexedDB/localStorage storage service
+    loadActiveImageStorage().then((cached) => {
+      if (cached && cached.dataUrl && !activeFile) {
+        fetch(cached.dataUrl)
+          .then(res => res.blob())
+          .then(blob => {
+            const cachedFile = new File([blob], cached.metadata?.name || 'cached_photo.png', { type: 'image/png' });
+            setActiveFile(cachedFile);
+          })
+          .catch(() => {});
+      }
+    });
+
     // Fetch initial user profile settings from backend
     fetch('/api/user/profile')
       .then((res) => res.json())
@@ -61,8 +75,16 @@ export default function App() {
       setActiveBatchFiles(fileArray);
       setActiveTool('convert'); // Default batch action to converter
     } else {
-      setActiveFile(fileArray[0]);
+      const file = fileArray[0];
+      setActiveFile(file);
       setActiveTool('compress'); // Default single file action to compress
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          saveActiveImageStorage(e.target.result as string, { name: file.name, service: 'image_edit' });
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -92,9 +114,6 @@ export default function App() {
         userProfile={userProfile}
         onOpenAccountModal={() => setIsAccountModalOpen(true)}
       />
-
-      {/* Global Strict Privacy Assurance Banner */}
-      <PrivacyBanner />
 
       {/* Main Content Body */}
       <main className="flex-1">
@@ -191,42 +210,6 @@ export default function App() {
         userProfile={userProfile}
         onUpdateSettings={handleUpdateSettings}
       />
-
-      {/* Footer */}
-      <footer className="border-t border-slate-800 bg-slate-900/80 py-8 px-4 mt-12 text-xs text-slate-400">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
-          <div className="space-y-1">
-            <span className="font-bold text-white text-sm block">IMAGE EDIT</span>
-            <span className="text-[11px] text-slate-400 block">
-              Fast. Private. Powerful Image Tools.
-            </span>
-          </div>
-
-          <div className="flex flex-wrap justify-center items-center gap-6 text-slate-400 text-xs">
-            <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
-              <ShieldCheck className="w-4 h-4" /> 100% Zero File Storage Compliant
-            </span>
-            <span>·</span>
-            <button
-              onClick={() => setIsAccountModalOpen(true)}
-              className="hover:text-white transition-colors"
-            >
-              Privacy Policy & Audit
-            </button>
-            <span>·</span>
-            <button
-              onClick={() => setIsAccountModalOpen(true)}
-              className="hover:text-white transition-colors"
-            >
-              Subscription Plans
-            </button>
-          </div>
-
-          <div className="text-[11px] text-slate-500 font-mono">
-            © {new Date().getFullYear()} IMAGE EDIT. All rights reserved.
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

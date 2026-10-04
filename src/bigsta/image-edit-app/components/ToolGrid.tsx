@@ -31,7 +31,7 @@ interface ToolCard {
 export const ToolGrid: React.FC<ToolGridProps> = ({ onSelectTool, onQuickUpload }) => {
   const tools: ToolCard[] = [
     { id: 'passport', title: 'Passport', icon: <User className="w-5 h-5 text-blue-600" /> },
-    { id: 'remove-bg', title: 'Remove BG', icon: <Sparkles className="w-5 h-5 text-emerald-600" /> },
+    { id: 'remove-bg', title: 'Remove BG', icon: <FileEdit className="w-5 h-5 text-emerald-600" /> },
     { id: 'resize', title: 'Resize', icon: <Maximize2 className="w-5 h-5 text-blue-600" /> },
     { id: 'compress', title: 'Compress', icon: <FileArchive className="w-5 h-5 text-purple-600" /> },
     { id: 'crop', title: 'Crop', icon: <Crop className="w-5 h-5 text-amber-600" /> },

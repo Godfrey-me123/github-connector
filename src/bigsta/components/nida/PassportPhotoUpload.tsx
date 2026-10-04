@@ -20,6 +20,49 @@ interface PassportPhotoUploadProps {
   disabled?: boolean;
 }
 
+// Alpha channel matting / morphological smoothing to clean up white fringe artifacts on facial edges
+async function applyAlphaMatting(blob: Blob): Promise<Blob> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(blob);
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imgData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const a = data[i + 3];
+
+        // Target semi-transparent or bright edge pixels (white fringe)
+        if (a > 0 && a < 252 && r > 200 && g > 200 && b > 200) {
+          data[i + 3] = Math.max(0, a - 70);
+        } else if (a === 255 && r > 245 && g > 245 && b > 245) {
+          data[i + 3] = 238;
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      canvas.toBlob((b) => {
+        resolve(b || blob);
+      }, 'image/png', 1.0);
+    };
+    img.onerror = () => resolve(blob);
+    img.src = url;
+  });
+}
+
 export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
   value,
   onChange,
@@ -27,13 +70,14 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
 }) => {
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [autoRemoveBg, setAutoRemoveBg] = useState<boolean>(true);
   const [rawImageForCrop, setRawImageForCrop] = useState<string | null>(null);
   const [showCropModal, setShowCropModal] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Validate and read file while strictly preserving original format & transparency
-  const processFile = (file: File) => {
+  // Validate and read file with optional auto background removal and alpha matting
+  const processFile = async (file: File) => {
     setError(null);
 
     // Format validation
@@ -51,6 +95,23 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
 
     setIsProcessing(true);
 
+    let workingFile = file;
+
+    if (autoRemoveBg) {
+      try {
+        const formData = new FormData();
+        formData.append('image', file);
+        const res = await fetch('/api/remove-bg', { method: 'POST', body: formData });
+        if (res.ok) {
+          const blob = await res.blob();
+          const mattedBlob = await applyAlphaMatting(blob);
+          workingFile = new File([mattedBlob], 'nobg.png', { type: 'image/png' });
+        }
+      } catch (err) {
+        console.warn('Auto background removal fallback:', err);
+      }
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
       const dataUrl = e.target?.result as string;
@@ -60,7 +121,6 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
         return;
       }
 
-      // Preserve original file, format, MIME type, and transparency untouched!
       setIsProcessing(false);
       setRawImageForCrop(dataUrl);
       onChange(dataUrl);
@@ -71,7 +131,7 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
       setIsProcessing(false);
     };
 
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(workingFile);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -79,7 +139,6 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
     if (file) {
       processFile(file);
     }
-    // reset input so same file can be chosen again
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -104,7 +163,6 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
 
   return (
     <div className="w-full space-y-3 font-sans">
-      {/* Hidden File Input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -114,9 +172,7 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
         disabled={disabled}
       />
 
-      {/* Main Upload Card Container */}
       <div className="p-4 sm:p-5 bg-[#FFFFFF] border border-[#C8C2BE] rounded-2xl space-y-4 shadow-xs">
-        {/* Card Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[#101010]" />
@@ -129,16 +185,22 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
             <span className="px-2 py-0.5 rounded-md bg-[#E7E2DE] border border-[#C8C2BE]">
               35 × 45 mm (3:4)
             </span>
-            <span className="px-2 py-0.5 rounded-md bg-[#E7E2DE] border border-[#C8C2BE] text-[#FF6839]">
-              Max 10MB
-            </span>
           </div>
         </div>
 
-        {/* Content Area: Either Upload State or Photo Preview State */}
+        {/* Background Removal Checkbox Option */}
+        <div className="flex items-center justify-between bg-[#E7E2DE]/50 p-3 rounded-xl border border-[#C8C2BE]">
+          <span className="text-xs font-bold text-[#101010]">Auto Background Removal</span>
+          <input
+            type="checkbox"
+            checked={autoRemoveBg}
+            onChange={(e) => setAutoRemoveBg(e.target.checked)}
+            className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+          />
+        </div>
+
         {!value ? (
           <div className="space-y-3">
-            {/* Large Upload Drop Zone / Button */}
             <div
               onClick={() => !disabled && !isProcessing && fileInputRef.current?.click()}
               className={`relative border-2 border-dashed border-[#C8C2BE] hover:border-[#101010] hover:bg-[#E7E2DE]/50 rounded-2xl p-6 sm:p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 group ${
@@ -154,126 +216,55 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
               </div>
 
               <h3 className="text-sm font-bold text-[#101010]">
-                Upload Passport Photo from Files
+                {isProcessing ? 'Removing Background & Matting...' : 'Upload Passport Photo'}
               </h3>
               <p className="text-xs text-[#101010]/70 mt-1 max-w-xs font-medium">
-                Supports JPG, JPEG, PNG (including transparent backgrounds), or WEBP up to 10MB.
+                Supports JPG, JPEG, PNG, or WEBP up to 10MB.
               </p>
-
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  fileInputRef.current?.click();
-                }}
-                className="mt-4 px-4 py-2 bg-[#101010] hover:bg-[#252525] text-white text-xs font-bold rounded-xl transition-all shadow-md inline-flex items-center gap-2 cursor-pointer"
-              >
-                <ImageIcon className="w-4 h-4 text-white" />
-                <span>Choose</span>
-              </button>
             </div>
           </div>
         ) : (
-          /* Preview State with Passport Ratio & Action Buttons */
-          <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-5 p-3 sm:p-4 bg-[#E7E2DE] border border-[#C8C2BE] rounded-2xl">
-            {/* Passport Frame Preview (Exact 35:45 ratio with transparency checkerboard background) */}
-            <div
-              className="relative w-[130px] sm:w-[140px] h-[167px] sm:h-[180px] rounded-xl overflow-hidden border-2 border-[#101010] shadow-md shrink-0 group"
-              style={{
-                backgroundImage:
-                  'linear-gradient(45deg, #d8d2ce 25%, transparent 25%), linear-gradient(-45deg, #d8d2ce 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #d8d2ce 75%), linear-gradient(-45deg, transparent 75%, #d8d2ce 75%)',
-                backgroundSize: '16px 16px',
-                backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
-                backgroundColor: '#ffffff',
-              }}
-            >
-              <img
-                src={value}
-                alt="Passport Photo Preview"
-                className="w-full h-full object-contain"
-              />
-
-              {/* Verified Badge */}
-              <div className="absolute top-1.5 right-1.5 bg-emerald-700 text-white rounded-full p-1 shadow-md">
-                <CheckCircle2 className="w-3.5 h-3.5" />
-              </div>
-
-              {/* Passport dimension tag */}
-              <div className="absolute bottom-1 left-1 right-1 bg-black/75 backdrop-blur-xs rounded px-1.5 py-0.5 text-center text-[9px] font-mono text-white font-bold">
-                Original Asset Preserved
-              </div>
+          <div className="flex items-center gap-4 p-3 bg-[#E7E2DE]/30 rounded-xl border border-[#C8C2BE]">
+            <div className="w-16 h-20 bg-white rounded-lg border border-[#C8C2BE] overflow-hidden flex items-center justify-center shrink-0 shadow-2xs">
+              <img src={value} alt="Passport Preview" className="w-full h-full object-contain" />
             </div>
-
-            {/* Photo Details & Action Controls */}
-            <div className="flex-1 space-y-3 w-full text-center sm:text-left">
-              <div>
-                <div className="flex items-center justify-center sm:justify-start gap-2">
-                  <span className="text-xs font-bold text-emerald-800 flex items-center gap-1">
-                    Photo Attached
-                  </span>
-                  <span className="text-[10px] text-[#101010]/70 font-semibold">
-                    Ready for Identity Card
-                  </span>
-                </div>
-                <p className="text-xs text-[#101010]/70 mt-1 leading-relaxed font-medium">
-                  Original image properties and transparency are preserved intact. You can adjust crop, replace, or remove as needed.
-                </p>
+            <div className="flex-1 space-y-1">
+              <div className="flex items-center gap-1.5 text-emerald-700 text-xs font-bold">
+                <CheckCircle2 className="w-4 h-4" /> Photo Uploaded
               </div>
-
-              {/* Action Buttons Grid */}
-              <div className="grid grid-cols-3 gap-1.5 sm:gap-2 pt-1">
-                {/* Crop Photo */}
+              <div className="flex items-center gap-2 pt-1">
                 <button
                   type="button"
                   onClick={handleOpenCrop}
-                  className="py-2 px-1.5 sm:px-2.5 bg-[#FFFFFF] hover:bg-[#F5F2EF] border border-[#C8C2BE] hover:border-[#101010] rounded-xl text-[11px] sm:text-xs font-bold text-[#101010] flex items-center justify-center gap-1 sm:gap-1.5 transition-all active:scale-95 cursor-pointer shadow-xs"
-                  title="Crop Photo"
+                  className="px-3 py-1 bg-white hover:bg-[#E7E2DE] text-[#101010] border border-[#C8C2BE] rounded-lg text-xs font-bold transition-all flex items-center gap-1"
                 >
-                  <Crop className="w-3.5 h-3.5 text-[#101010] shrink-0" />
-                  <span className="truncate">Crop</span>
+                  <Crop className="w-3.5 h-3.5" /> Crop
                 </button>
-
-                {/* Replace Photo */}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="py-2 px-1.5 sm:px-2.5 bg-[#FFFFFF] hover:bg-[#F5F2EF] border border-[#C8C2BE] hover:border-[#101010] rounded-xl text-[11px] sm:text-xs font-bold text-[#101010] flex items-center justify-center gap-1 sm:gap-1.5 transition-all active:scale-95 cursor-pointer shadow-xs"
-                  title="Replace with new photo"
-                >
-                  <RefreshCw className="w-3.5 h-3.5 text-[#101010] shrink-0" />
-                  <span className="truncate">Replace</span>
-                </button>
-
-                {/* Remove Photo */}
                 <button
                   type="button"
                   onClick={handleRemovePhoto}
-                  className="py-2 px-1.5 sm:px-2.5 bg-rose-100 hover:bg-rose-200 border border-rose-300 rounded-xl text-[11px] sm:text-xs font-bold text-rose-800 flex items-center justify-center gap-1 sm:gap-1.5 transition-all active:scale-95 cursor-pointer"
-                  title="Remove Photo"
+                  className="px-3 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold transition-all flex items-center gap-1"
                 >
-                  <Trash2 className="w-3.5 h-3.5 shrink-0" />
-                  <span className="truncate">Remove</span>
+                  <Trash2 className="w-3.5 h-3.5" /> Remove
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Friendly Error Display */}
         {error && (
-          <div className="flex items-center gap-2 p-3 bg-rose-100 border border-rose-300 rounded-xl text-xs text-rose-800 font-semibold">
+          <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
       </div>
 
-      {/* Interactive Passport Crop Modal */}
-      {showCropModal && (rawImageForCrop || value) && (
+      {showCropModal && value && (
         <PhotoCropModal
-          imageSrc={rawImageForCrop || (value as string)}
+          imageUrl={value}
           onCropComplete={handleCropComplete}
-          onCancel={() => setShowCropModal(false)}
+          onClose={() => setShowCropModal(false)}
         />
       )}
     </div>

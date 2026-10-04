@@ -64,6 +64,24 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
     }
   }, [initialFile]);
 
+  // Safe image loader for Fabric.js to prevent blob loading errors
+  const loadFabricImg = (srcUrl: string): Promise<FabricImage> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const fabricImg = new FabricImage(img);
+          resolve(fabricImg);
+        } catch (e) {
+          reject(e);
+        }
+      };
+      img.onerror = (err) => reject(err);
+      img.src = srcUrl;
+    });
+  };
+
   useEffect(() => {
     if (step === 'edit' && canvasRef.current && !fabricCanvas.current) {
       const cWidth = 260;
@@ -78,12 +96,12 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
       if (file || previewUrl) {
         const url = previewUrl || (file ? URL.createObjectURL(file) : '');
         if (url) {
-          FabricImage.fromURL(url).then(img => {
+          loadFabricImg(url).then(img => {
             img.scaleToWidth(cWidth * 0.85);
             fabricCanvas.current?.add(img);
             fabricCanvas.current?.centerObject(img);
             fabricCanvas.current?.renderAll();
-          });
+          }).catch(err => console.warn('Fabric image load error:', err));
         }
       }
     }
@@ -120,12 +138,12 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
       setPreviewUrl(url);
       if (fabricCanvas.current) {
         fabricCanvas.current.clear();
-        FabricImage.fromURL(url).then(img => {
+        loadFabricImg(url).then(img => {
           img.scaleToWidth(220);
           fabricCanvas.current?.add(img);
           fabricCanvas.current?.centerObject(img);
           fabricCanvas.current?.renderAll();
-        });
+        }).catch(err => console.warn('Fabric image load error:', err));
       }
     } catch (err: any) {
       alert(err.message || 'Error processing background removal');

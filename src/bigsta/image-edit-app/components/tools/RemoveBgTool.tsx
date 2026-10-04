@@ -1,7 +1,7 @@
 // @ts-nocheck -- imported legacy BIGsta code
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Sparkles,
+  FileEdit,
   Download,
   Upload,
   RefreshCw,
@@ -17,6 +17,49 @@ interface RemoveBgToolProps {
   initialFile?: File | null;
   onBack: () => void;
   onSelectTool: (tool: ToolId) => void;
+}
+
+// Alpha channel matting / morphological smoothing to clean up white fringe artifacts on facial edges
+async function applyAlphaMatting(blob: Blob): Promise<Blob> {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(blob);
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imgData.data;
+
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const a = data[i + 3];
+
+        // Target semi-transparent or bright edge pixels (white fringe)
+        if (a > 0 && a < 252 && r > 200 && g > 200 && b > 200) {
+          data[i + 3] = Math.max(0, a - 70);
+        } else if (a === 255 && r > 245 && g > 245 && b > 245) {
+          data[i + 3] = 238;
+        }
+      }
+
+      ctx.putImageData(imgData, 0, 0);
+      canvas.toBlob((b) => {
+        resolve(b || blob);
+      }, 'image/png', 1.0);
+    };
+    img.onerror = () => resolve(blob);
+    img.src = url;
+  });
 }
 
 export const RemoveBgTool: React.FC<RemoveBgToolProps> = ({ initialFile, onBack, onSelectTool }) => {
@@ -57,9 +100,13 @@ export const RemoveBgTool: React.FC<RemoveBgToolProps> = ({ initialFile, onBack,
       });
       if (!res.ok) throw new Error('Failed to process image');
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
+      
+      // Apply alpha channel morphological matting to clean up white fringes
+      const mattedBlob = await applyAlphaMatting(blob);
+
+      const url = URL.createObjectURL(mattedBlob);
       setProcessedUrl(url);
-      setProcessedSize(blob.size);
+      setProcessedSize(mattedBlob.size);
       fetch('/api/clean-temp', { method: 'POST' }).catch(() => {});
     } catch (err: any) {
       setError(err.message || 'Error processing background removal');
@@ -71,7 +118,7 @@ export const RemoveBgTool: React.FC<RemoveBgToolProps> = ({ initialFile, onBack,
   const handleDownload = () => {
     if (!processedUrl || !file) return;
     const cleanName = file.name.replace(/\.[^/.]+$/, '') + '-nobg.png';
-    downloadProcessedFile(processedUrl, cleanName);
+    downloadProcessedFile(processedUrl, `BIGsta_${cleanName}`);
   };
 
   return (
@@ -93,7 +140,7 @@ export const RemoveBgTool: React.FC<RemoveBgToolProps> = ({ initialFile, onBack,
       {!file ? (
         <div className="bg-slate-900 border-2 border-dashed border-emerald-500/30 hover:border-emerald-400 rounded-3xl p-12 text-center max-w-2xl mx-auto space-y-4">
           <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 text-emerald-400 mx-auto flex items-center justify-center">
-            <Sparkles className="w-8 h-8" />
+            <FileEdit className="w-8 h-8" />
           </div>
           <h2 className="text-xl font-bold text-white">Remove Image Background</h2>
           <label className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold rounded-xl cursor-pointer transition-colors shadow-lg shadow-emerald-950/30">
@@ -112,7 +159,7 @@ export const RemoveBgTool: React.FC<RemoveBgToolProps> = ({ initialFile, onBack,
           {error && <div className="p-4 bg-rose-950/40 border border-rose-800 rounded-2xl text-xs text-rose-300">{error}</div>}
           <div className="relative bg-slate-950 border border-slate-800 rounded-3xl overflow-hidden min-h-[420px] flex items-center justify-center p-4">
             {isProcessing ? (
-              <div className="text-center p-8 text-sm font-semibold text-white">Detecting Subject...</div>
+              <div className="text-center p-8 text-sm font-semibold text-white">Detecting Subject & Applying Alpha Matting...</div>
             ) : processedUrl && previewUrl ? (
               <div ref={containerRef} className="relative w-full max-w-4xl h-[480px] overflow-hidden rounded-2xl select-none shadow-2xl">
                 <img src={processedUrl} alt="Result" className="absolute inset-0 w-full h-full object-contain pointer-events-none" />

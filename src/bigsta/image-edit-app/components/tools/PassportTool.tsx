@@ -1,8 +1,9 @@
 // @ts-nocheck
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Camera, Check, Sparkles, Sliders, Download, Printer, Scissors, ZoomIn, ZoomOut, RotateCw, RefreshCw, X, Home, MessageSquare, Share2, Edit3, Plus, Minus, ChevronRight, PenTool, UserCheck, UserPlus, Image, Settings } from 'lucide-react';
+import { Upload, Camera, Check, Sparkles, Sliders, Download, Printer, Scissors, ZoomIn, ZoomOut, RotateCw, RefreshCw, X, Home, MessageSquare, Share2, Edit3, Plus, Minus, ChevronRight, PenTool, UserCheck, UserPlus, Image, Settings, FileImage } from 'lucide-react';
 import { Canvas, Image as FabricImage } from 'fabric';
 import { PassportDocumentSpec, PASSPORT_SPECS } from '../../types/passport';
+import { saveActiveImageStorage, loadActiveImageStorage } from '../../../services/activeImageStorage';
 
 interface PassportToolProps {
   initialFile?: File | null;
@@ -48,6 +49,9 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
   const [colorTab, setColorTab] = useState<'basic' | 'premium' | 'custom'>('basic');
   const [activeBottomTool, setActiveBottomTool] = useState<'remove_bg' | 'adjust' | 'background' | 'beauty' | null>('background');
   
+  // Checkbox option for automatic background removal
+  const [autoRemoveBg, setAutoRemoveBg] = useState<boolean>(true);
+
   const [selectedPaper, setSelectedPaper] = useState(PAPER_SIZES[1]);
   const [copies, setCopies] = useState<number>(8);
   const [spacing, setSpacing] = useState<number>(2);
@@ -64,6 +68,7 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvas = useRef<Canvas | null>(null);
 
+  // Phone storage & IndexedDB persistence: load cached working photo if available
   useEffect(() => {
     if (initialFile) {
       setFile(initialFile);
@@ -71,6 +76,27 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
       const url = URL.createObjectURL(initialFile);
       setPreviewUrl(url);
       setStep('edit');
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          saveActiveImageStorage(e.target.result as string, { name: initialFile.name, service: 'passport' });
+        }
+      };
+      reader.readAsDataURL(initialFile);
+    } else {
+      loadActiveImageStorage().then((cached) => {
+        if (cached && cached.dataUrl) {
+          setPreviewUrl(cached.dataUrl);
+          fetch(cached.dataUrl)
+            .then(res => res.blob())
+            .then(blob => {
+              const cachedFile = new File([blob], cached.metadata?.name || 'cached_photo.png', { type: 'image/png' });
+              setFile(cachedFile);
+              setFileSizeKb(Math.round((blob.size / 1024) * 100) / 100);
+            })
+            .catch(() => {});
+        }
+      });
     }
   }, [initialFile]);
 
@@ -92,6 +118,24 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
     setCopies(total > 0 ? total : 8);
   }, [selectedPaper, selectedSpec, spacing, isLandscape]);
 
+  // Safe image loader for Fabric.js to prevent blob loading errors
+  const loadFabricImg = (srcUrl: string): Promise<FabricImage> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          const fabricImg = new FabricImage(img);
+          resolve(fabricImg);
+        } catch (e) {
+          reject(e);
+        }
+      };
+      img.onerror = (err) => reject(err);
+      img.src = srcUrl;
+    });
+  };
+
   useEffect(() => {
     if (step === 'edit' && canvasRef.current && !fabricCanvas.current) {
       const cWidth = 260;
@@ -106,12 +150,12 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
       if (file || previewUrl) {
         const url = previewUrl || (file ? URL.createObjectURL(file) : '');
         if (url) {
-          FabricImage.fromURL(url).then(img => {
+          loadFabricImg(url).then(img => {
             img.scaleToWidth(cWidth * 0.85);
             fabricCanvas.current?.add(img);
             fabricCanvas.current?.centerObject(img);
             fabricCanvas.current?.renderAll();
-          });
+          }).catch(err => console.warn('Fabric image load error:', err));
         }
       }
     }
@@ -124,12 +168,45 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
     }
   }, [bgColor]);
 
-  const handleFileSelect = (selectedFile: File) => {
+  const handleFileSelect = async (selectedFile: File) => {
     setFile(selectedFile);
     setFileSizeKb(Math.round((selectedFile.size / 1024) * 100) / 100);
-    const url = URL.createObjectURL(selectedFile);
+    
+    let workingFile = selectedFile;
+    let url = URL.createObjectURL(selectedFile);
+
+    // If autoRemoveBg checkbox is checked, run background removal immediately
+    if (autoRemoveBg) {
+      setIsProcessing(true);
+      try {
+        const formData = new FormData();
+        formData.append('image', selectedFile);
+        const res = await fetch('/api/remove-bg', { method: 'POST', body: formData });
+        if (res.ok) {
+          const blob = await res.blob();
+          workingFile = new File([blob], 'nobg.png', { type: 'image/png' });
+          setFile(workingFile);
+          setFileSizeKb(Math.round((blob.size / 1024) * 100) / 100);
+          url = URL.createObjectURL(blob);
+        }
+      } catch (err) {
+        console.warn('Auto background removal fallback:', err);
+      } finally {
+        setIsProcessing(false);
+      }
+    }
+
     setPreviewUrl(url);
     setStep('edit');
+
+    // Cache in IndexedDB / localStorage storage service
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      if (e.target?.result) {
+        saveActiveImageStorage(e.target.result as string, { name: workingFile.name, service: 'passport' });
+      }
+    };
+    reader.readAsDataURL(workingFile);
   };
 
   const handleRemoveBackground = async () => {
@@ -148,12 +225,12 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
       setPreviewUrl(url);
       if (fabricCanvas.current) {
         fabricCanvas.current.clear();
-        FabricImage.fromURL(url).then(img => {
+        loadFabricImg(url).then(img => {
           img.scaleToWidth(220);
           fabricCanvas.current?.add(img);
           fabricCanvas.current?.centerObject(img);
           fabricCanvas.current?.renderAll();
-        });
+        }).catch(err => console.warn('Fabric image load error:', err));
       }
     } catch (err: any) {
       alert(err.message || 'Error processing background removal');
@@ -292,16 +369,43 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
               </div>
             </div>
 
+            {/* Background Removal Checkbox Option */}
+            <div className="bg-white p-3 rounded-2xl border border-slate-200 flex items-center justify-between shadow-2xs">
+              <span className="text-xs font-bold text-slate-800">Remove Background automatically</span>
+              <input
+                type="checkbox"
+                checked={autoRemoveBg}
+                onChange={(e) => setAutoRemoveBg(e.target.checked)}
+                className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+              />
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <label className="bg-blue-600 hover:bg-blue-700 text-white p-5 rounded-2xl shadow-md flex flex-col items-center justify-center text-center cursor-pointer transition-all active:scale-98">
                 <div className="w-10 h-10 rounded-xl bg-blue-500/40 flex items-center justify-center text-white mb-2">
                   <UserPlus className="w-6 h-6" />
                 </div>
-                <span className="font-extrabold text-sm tracking-wide">Create Photo</span>
+                <span className="font-extrabold text-sm tracking-wide">
+                  {isProcessing ? 'Processing...' : 'Create Photo'}
+                </span>
                 <input type="file" accept="image/*" className="sr-only" onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])} />
               </label>
 
-              <button onClick={() => alert('My Photos')} className="bg-blue-600 hover:bg-blue-700 text-white p-5 rounded-2xl shadow-md flex flex-col items-center justify-center text-center cursor-pointer transition-all active:scale-98">
+              <button onClick={() => {
+                const cached = localStorage.getItem('bigsta_active_photo');
+                if (cached) {
+                  fetch(cached)
+                    .then(res => res.blob())
+                    .then(blob => {
+                      const cachedFile = new File([blob], 'saved_photo.png', { type: 'image/png' });
+                      setFile(cachedFile);
+                      setPreviewUrl(cached);
+                      setStep('edit');
+                    });
+                } else {
+                  alert('No recent photo in phone storage. Please upload one.');
+                }
+              }} className="bg-blue-600 hover:bg-blue-700 text-white p-5 rounded-2xl shadow-md flex flex-col items-center justify-center text-center cursor-pointer transition-all active:scale-98">
                 <div className="w-10 h-10 rounded-xl bg-blue-500/40 flex items-center justify-center text-white mb-2">
                   <Image className="w-6 h-6" />
                 </div>
@@ -414,7 +518,7 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
 
             <div className="grid grid-cols-4 py-2.5 px-2 bg-white text-center text-[10px] font-bold text-slate-700">
               <button onClick={() => { setActiveBottomTool('remove_bg'); handleRemoveBackground(); }} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${activeBottomTool === 'remove_bg' ? 'text-blue-600 bg-blue-50' : 'hover:bg-slate-50'}`}>
-                <Scissors className={`w-5 h-5 ${isProcessing ? 'animate-spin' : ''}`} />
+                <FileImage className={`w-5 h-5 ${isProcessing ? 'animate-spin' : ''}`} />
                 <span>Remove Bg</span>
               </button>
               <button onClick={() => setActiveBottomTool('adjust')} className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-colors ${activeBottomTool === 'adjust' ? 'text-blue-600 bg-blue-50' : 'hover:bg-slate-50'}`}>

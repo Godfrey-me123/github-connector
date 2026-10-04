@@ -636,7 +636,8 @@ export async function downloadPNG(
 ) {
   const canvas = await renderTemplateToCanvas(template, cardData, 300, cropRegion);
   const dataUrl = canvas.toDataURL('image/png');
-  const finalFilename = filename || `${template.templateName?.toLowerCase().replace(/\s+/g, '_') || 'card'}_300dpi.png`;
+  const rawName = filename || `${template.templateName?.toLowerCase().replace(/\s+/g, '_') || 'card'}_300dpi.png`;
+  const finalFilename = rawName.startsWith('BIGsta_') ? rawName : `BIGsta_${rawName}`;
   
   const link = document.createElement('a');
   link.download = finalFilename;
@@ -667,7 +668,8 @@ export async function downloadJPG(
 ) {
   const canvas = await renderTemplateToCanvas(template, cardData, 300, cropRegion);
   const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-  const finalFilename = filename || `${template.templateName?.toLowerCase().replace(/\s+/g, '_') || 'card'}_300dpi.jpg`;
+  const rawName = filename || `${template.templateName?.toLowerCase().replace(/\s+/g, '_') || 'card'}_300dpi.jpg`;
+  const finalFilename = rawName.startsWith('BIGsta_') ? rawName : `BIGsta_${rawName}`;
   
   const link = document.createElement('a');
   link.download = finalFilename;
@@ -707,7 +709,8 @@ export async function downloadPDF(
 
   pdf.addImage(imgData, 'JPEG', 0, 0, template.cardWidth, template.cardHeight);
   const pdfOutput = pdf.output('datauristring');
-  const finalFilename = filename || `${template.templateName?.toLowerCase().replace(/\s+/g, '_') || 'card'}_print.pdf`;
+  const rawName = filename || `${template.templateName?.toLowerCase().replace(/\s+/g, '_') || 'card'}_print.pdf`;
+  const finalFilename = rawName.startsWith('BIGsta_') ? rawName : `BIGsta_${rawName}`;
 
   const link = document.createElement('a');
   link.download = finalFilename;
@@ -764,7 +767,8 @@ export async function download2In1PDF(
   }
 
   const pdfOutput = pdf.output('datauristring');
-  const finalFilename = filename || `2in1_merged_card_sheet.pdf`;
+  const rawName = filename || `2in1_merged_card_sheet.pdf`;
+  const finalFilename = rawName.startsWith('BIGsta_') ? rawName : `BIGsta_${rawName}`;
 
   const link = document.createElement('a');
   link.download = finalFilename;
@@ -811,7 +815,8 @@ export function downloadJSON(template: CardTemplate, filename?: string) {
   const blob = new Blob([jsonStr], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   
-  const finalFilename = filename || `${template.templateName.toLowerCase().replace(/\s+/g, '_')}_template.json`;
+  const rawName = filename || `${template.templateName.toLowerCase().replace(/\s+/g, '_')}_template.json`;
+  const finalFilename = rawName.startsWith('BIGsta_') ? rawName : `BIGsta_${rawName}`;
   
   const reader = new FileReader();
   reader.onloadend = () => {
@@ -861,7 +866,8 @@ export async function downloadSVG(template: CardTemplate, cardData: CardData = {
   const blob = new Blob([svgString], { type: 'image/svg+xml' });
   const url = URL.createObjectURL(blob);
   
-  const finalFilename = `${template.templateName.toLowerCase().replace(/\s+/g, '_')}.svg`;
+  const rawSvgName = `${template.templateName.toLowerCase().replace(/\s+/g, '_')}.svg`;
+  const finalFilename = rawSvgName.startsWith('BIGsta_') ? rawSvgName : `BIGsta_${rawSvgName}`;
 
   const reader = new FileReader();
   reader.onloadend = () => {
