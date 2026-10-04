@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { playNotificationSound } from '../utils/audioHandler';
 import {
   DownloadCloud,
   Trash2,
@@ -104,6 +105,7 @@ export const DownloadsScreen: React.FC = () => {
   const handleDownload = async (record: DownloadRecord, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     try {
+      playNotificationSound();
       const link = document.createElement('a');
       link.download = record.fileName;
       link.href = record.dataUrl || '#';

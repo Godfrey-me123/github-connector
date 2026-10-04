@@ -58,6 +58,7 @@ import {
   validateNidaNumber,
   NidaValidationResult,
 } from './nidaValidation';
+import { playNotificationSound } from '../../utils/audioHandler';
 import { useTemplateStore } from '../../store/useTemplateStore';
 import { SAMPLE_TEMPLATES } from '../../utils/sampleTemplates';
 import {
@@ -468,6 +469,7 @@ export const NidaFormScreen: React.FC<NidaFormScreenProps> = ({ onSuccess, onCan
     updateStep('step9_open', 'completed');
     setIsWorkflowCompleted(true);
     setIsProcessing(false);
+    playNotificationSound();
 
     // Set success notification toast
     setNidaSuccessNotification({

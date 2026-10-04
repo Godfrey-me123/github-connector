@@ -4,6 +4,7 @@ import { Upload, Camera, Check, Sparkles, Sliders, Download, Printer, Scissors, 
 import { Canvas, Image as FabricImage } from 'fabric';
 import { PassportDocumentSpec, PASSPORT_SPECS } from '../../types/passport';
 import { saveActiveImageStorage, loadActiveImageStorage } from '../../../services/activeImageStorage';
+import { playNotificationSound } from '../../../utils/audioHandler';
 
 interface PassportToolProps {
   initialFile?: File | null;
@@ -236,6 +237,7 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
   };
 
   const handlePrint = () => {
+    playNotificationSound();
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       const sheetW = isLandscape ? selectedPaper.heightMm : selectedPaper.widthMm;

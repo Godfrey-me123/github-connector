@@ -507,20 +507,51 @@ export const SettingsScreen: React.FC = () => {
 
                   <div className="flex items-center justify-between p-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5">
                     <div>
-                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Download Ready Notifications</p>
-                      <p className="text-[11px] text-slate-400 dark:text-slate-400">Alert when document generation completes</p>
+                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200">Enable Notification Sounds</p>
+                      <p className="text-[11px] text-slate-400 dark:text-slate-400">Play chime on alerts</p>
                     </div>
                     <input
                       type="checkbox"
-                      checked={prefsForm.downloadAlerts}
+                      checked={prefsForm.notificationSoundEnabled}
                       onChange={(e) => {
-                        const updated = { ...prefsForm, downloadAlerts: e.target.checked };
+                        const updated = { ...prefsForm, notificationSoundEnabled: e.target.checked };
                         setPrefsForm(updated);
                         updateUserPreferences(updated);
                       }}
                       className="w-4 h-4 text-blue-600 rounded cursor-pointer"
                     />
                   </div>
+                  
+                  {prefsForm.notificationSoundEnabled && (
+                    <div className="p-3.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/5 space-y-3">
+                        <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300">Sound Source</label>
+                        <select
+                          value={prefsForm.notificationSoundType}
+                          onChange={(e) => {
+                            const updated = { ...prefsForm, notificationSoundType: e.target.value as 'default' | 'custom' };
+                            setPrefsForm(updated);
+                            updateUserPreferences(updated);
+                          }}
+                          className="w-full px-3.5 py-2 rounded-lg border border-slate-300 bg-white text-xs font-semibold"
+                        >
+                          <option value="default">Default Chime</option>
+                          <option value="custom">Custom Audio File</option>
+                        </select>
+                        {prefsForm.notificationSoundType === 'custom' && (
+                            <input
+                                type="text"
+                                placeholder="Enter custom audio URL"
+                                value={prefsForm.customNotificationSoundUrl || ''}
+                                onChange={(e) => {
+                                    const updated = { ...prefsForm, customNotificationSoundUrl: e.target.value };
+                                    setPrefsForm(updated);
+                                    updateUserPreferences(updated);
+                                }}
+                                className="w-full px-3.5 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono"
+                            />
+                        )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}

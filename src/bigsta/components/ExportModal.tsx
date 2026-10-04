@@ -12,6 +12,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { useTemplateStore } from '../store/useTemplateStore';
+import { playNotificationSound } from '../utils/audioHandler';
 import {
   downloadPNG,
   downloadJPG,
@@ -341,8 +342,9 @@ export const ExportModal: React.FC = () => {
                   const val = store.validateExportAccess('json');
                   if (!val.allowed) return;
                   try {
-                    downloadJSON(currentTemplate);
+                    await downloadJSON(currentTemplate);
                     store.consumeUsage('JSON Template Export', undefined, 1);
+                    playNotificationSound();
                   } catch (e) {
                     console.error('JSON export failed', e);
                   }
@@ -390,6 +392,7 @@ export const ExportModal: React.FC = () => {
                   try {
                     await downloadPDF(currentTemplate, formData, undefined, cropPayload);
                     store.consumeUsage(`${currentTemplate.templateName || 'Card'} PDF Export`, undefined, 1);
+                    playNotificationSound();
                   } catch (e) {
                     console.error('PDF export failed', e);
                   }
@@ -436,6 +439,7 @@ export const ExportModal: React.FC = () => {
                   try {
                     await downloadPNG(currentTemplate, formData, undefined, cropPayload);
                     store.consumeUsage(`${currentTemplate.templateName || 'Card'} PNG Export`, undefined, 1);
+                    playNotificationSound();
                   } catch (e) {
                     console.error('PNG export failed', e);
                   }
@@ -482,6 +486,7 @@ export const ExportModal: React.FC = () => {
                   try {
                     await downloadJPG(currentTemplate, formData, undefined, cropPayload);
                     store.consumeUsage(`${currentTemplate.templateName || 'Card'} JPG Export`, undefined, 1);
+                    playNotificationSound();
                   } catch (e) {
                     console.error('JPG export failed', e);
                   }
@@ -512,6 +517,7 @@ export const ExportModal: React.FC = () => {
                   try {
                     await downloadSVG(currentTemplate);
                     store.consumeUsage('SVG Vector Export', undefined, 1);
+                    playNotificationSound();
                   } catch (e) {
                     console.error('SVG export failed', e);
                   }

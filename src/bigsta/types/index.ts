@@ -338,6 +338,9 @@ export interface UserPreferences {
   paymentAlerts: boolean;
   downloadAlerts: boolean;
   systemAlerts: boolean;
+  notificationSoundEnabled: boolean;
+  notificationSoundType: 'default' | 'custom';
+  customNotificationSoundUrl?: string;
   downloadFolder: string;
   autoSave: boolean;
   openAfterDownload: boolean;

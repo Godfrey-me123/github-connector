@@ -677,19 +677,10 @@ export const CardPreviewScreen: React.FC = () => {
                 id="action-edit-studio-btn"
                 type="button"
                 onClick={() => {
-                  const { activeServiceId, setCurrentTemplate, getUniversalFrontTemplate, getUniversalBackTemplate } = useTemplateStore.getState();
-                  const serviceTemplates = {
-                    front: getUniversalFrontTemplate(activeServiceId),
-                    back: getUniversalBackTemplate(activeServiceId)
-                  };
-                  
-                  const rawTemplate = activeSide === 'front' ? serviceTemplates.front : serviceTemplates.back;
-                  if (rawTemplate) {
-                    setCurrentTemplate(rawTemplate);
-                  }
-                  useTemplateStore.getState().navigateSafely('editor', undefined, true);
+                  const store = useTemplateStore.getState();
+                  store.setCurrentTemplate(activeTemplate);
+                  store.navigateSafely('editor', store.activeServiceId, true);
                 }}
-                className="px-4 py-2.5 rounded-xl bg-[#14171E] hover:bg-[#1E222A] text-slate-200 hover:text-white border border-[#4C5055]/70 text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer shrink-0 whitespace-nowrap"
               >
                 <Edit3 className="w-3.5 h-3.5 text-purple-400" />
                 <span>Studio Editor</span>
