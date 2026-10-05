@@ -1,6 +1,6 @@
 // Shared, environment-agnostic SMS field extraction.
 // Used by BOTH the in-app native SMS receiver (browser/APK) and the
-// server webhook (`/api/payment-sms`) so every ingestion path stores
+// server webhook (`/api/public/payment-sms`) so every ingestion path stores
 // exactly the same columns in `sms_logs`.
 
 import { parseSms } from './smsParser';

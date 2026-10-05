@@ -13,7 +13,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as ApiCleanTempRouteImport } from './routes/api/clean-temp'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
-import { Route as ApiPaymentSmsRouteImport } from './routes/api/payment-sms'
 import { Route as ApiRemoveBgRouteImport } from './routes/api/remove-bg'
 import { Route as ApiAdminSmsGatewayRouteImport } from './routes/api/admin/sms-gateway'
 import { Route as ApiAdminSmsMonitorRouteImport } from './routes/api/admin/sms-monitor'
@@ -41,11 +40,6 @@ const ApiCleanTempRoute = ApiCleanTempRouteImport.update({
 const ApiHealthRoute = ApiHealthRouteImport.update({
   id: '/api/health',
   path: '/api/health',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPaymentSmsRoute = ApiPaymentSmsRouteImport.update({
-  id: '/api/payment-sms',
-  path: '/api/payment-sms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiRemoveBgRoute = ApiRemoveBgRouteImport.update({
@@ -95,7 +89,6 @@ export interface FileRoutesByFullPath {
   '/$': typeof SplatRoute
   '/api/clean-temp': typeof ApiCleanTempRoute
   '/api/health': typeof ApiHealthRoute
-  '/api/payment-sms': typeof ApiPaymentSmsRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
   '/api/admin/sms-gateway': typeof ApiAdminSmsGatewayRoute
   '/api/admin/sms-monitor': typeof ApiAdminSmsMonitorRoute
@@ -110,7 +103,6 @@ export interface FileRoutesByTo {
   '/$': typeof SplatRoute
   '/api/clean-temp': typeof ApiCleanTempRoute
   '/api/health': typeof ApiHealthRoute
-  '/api/payment-sms': typeof ApiPaymentSmsRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
   '/api/admin/sms-gateway': typeof ApiAdminSmsGatewayRoute
   '/api/admin/sms-monitor': typeof ApiAdminSmsMonitorRoute
@@ -126,7 +118,6 @@ export interface FileRoutesById {
   '/$': typeof SplatRoute
   '/api/clean-temp': typeof ApiCleanTempRoute
   '/api/health': typeof ApiHealthRoute
-  '/api/payment-sms': typeof ApiPaymentSmsRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
   '/api/admin/sms-gateway': typeof ApiAdminSmsGatewayRoute
   '/api/admin/sms-monitor': typeof ApiAdminSmsMonitorRoute
@@ -143,7 +134,6 @@ export interface FileRouteTypes {
     | '/$'
     | '/api/clean-temp'
     | '/api/health'
-    | '/api/payment-sms'
     | '/api/remove-bg'
     | '/api/admin/sms-gateway'
     | '/api/admin/sms-monitor'
@@ -158,7 +148,6 @@ export interface FileRouteTypes {
     | '/$'
     | '/api/clean-temp'
     | '/api/health'
-    | '/api/payment-sms'
     | '/api/remove-bg'
     | '/api/admin/sms-gateway'
     | '/api/admin/sms-monitor'
@@ -173,7 +162,6 @@ export interface FileRouteTypes {
     | '/$'
     | '/api/clean-temp'
     | '/api/health'
-    | '/api/payment-sms'
     | '/api/remove-bg'
     | '/api/admin/sms-gateway'
     | '/api/admin/sms-monitor'
@@ -189,7 +177,6 @@ export interface RootRouteChildren {
   SplatRoute: typeof SplatRoute
   ApiCleanTempRoute: typeof ApiCleanTempRoute
   ApiHealthRoute: typeof ApiHealthRoute
-  ApiPaymentSmsRoute: typeof ApiPaymentSmsRoute
   ApiRemoveBgRoute: typeof ApiRemoveBgRoute
   ApiAdminSmsGatewayRoute: typeof ApiAdminSmsGatewayRoute
   ApiAdminSmsMonitorRoute: typeof ApiAdminSmsMonitorRoute
@@ -227,13 +214,6 @@ declare module '@tanstack/react-router' {
       path: '/api/health'
       fullPath: '/api/health'
       preLoaderRoute: typeof ApiHealthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/payment-sms': {
-      id: '/api/payment-sms'
-      path: '/api/payment-sms'
-      fullPath: '/api/payment-sms'
-      preLoaderRoute: typeof ApiPaymentSmsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/remove-bg': {
@@ -313,7 +293,6 @@ const rootRouteChildren: RootRouteChildren = {
   SplatRoute: SplatRoute,
   ApiCleanTempRoute: ApiCleanTempRoute,
   ApiHealthRoute: ApiHealthRoute,
-  ApiPaymentSmsRoute: ApiPaymentSmsRoute,
   ApiRemoveBgRoute: ApiRemoveBgRoute,
   ApiAdminSmsGatewayRoute: ApiAdminSmsGatewayRoute,
   ApiAdminSmsMonitorRoute: ApiAdminSmsMonitorRoute,

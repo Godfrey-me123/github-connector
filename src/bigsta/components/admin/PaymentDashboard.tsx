@@ -75,7 +75,7 @@ export const PaymentDashboard: React.FC = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          webhookUrl: `${trimmedUrl}/api/payment-sms`,
+          webhookUrl: `${trimmedUrl}/api/public/payment-sms`,
           customAppUrl: trimmedUrl
         }),
       });
@@ -83,7 +83,7 @@ export const PaymentDashboard: React.FC = () => {
       const secData = await secRes.json();
       setWebhookSecret(secData.secret);
 
-      alert(`App URL saved and connected successfully!\n\nWebhook Endpoint:\n${trimmedUrl}/api/payment-sms\n\nNew Secret Key generated and saved.`);
+      alert(`App URL saved and connected successfully!\n\nWebhook Endpoint:\n${trimmedUrl}/api/public/payment-sms\n\nNew Secret Key generated and saved.`);
     } catch (err) {
       alert('Failed to save and generate webhook settings.');
     }
@@ -259,7 +259,7 @@ export const PaymentDashboard: React.FC = () => {
   }, [payments]);
 
   const copyWebhookUrl = () => {
-    const url = `${window.location.origin}/api/payment-sms`;
+    const url = `${window.location.origin}/api/public/payment-sms`;
     navigator.clipboard.writeText(url);
     setCopiedUrl(true);
     setTimeout(() => setCopiedUrl(false), 2000);
@@ -271,7 +271,7 @@ export const PaymentDashboard: React.FC = () => {
     setTestLogs(prev => [newLog, ...prev]);
 
     try {
-      const response = await fetch('/api/payment-sms');
+      const response = await fetch('/api/public/payment-sms');
       const data = await response.json();
       if (data.status === 'online') {
         setTestStatus('success');
@@ -291,7 +291,7 @@ export const PaymentDashboard: React.FC = () => {
     setTestLogs(prev => [newLog, ...prev]);
 
     try {
-      const response = await fetch('/api/payment-sms', {
+      const response = await fetch('/api/public/payment-sms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -970,7 +970,7 @@ const renderSettings = () => {
                 </button>
               </div>
               <p className="text-[11px] text-gray-600 font-medium">
-                Active Webhook Endpoint: <code className="font-mono text-blue-600 font-bold">{customAppUrl.trim().replace(/\/+$/, '') || window.location.origin}/api/payment-sms</code>
+                Active Webhook Endpoint: <code className="font-mono text-blue-600 font-bold">{customAppUrl.trim().replace(/\/+$/, '') || window.location.origin}/api/public/payment-sms</code>
               </p>
             </div>
 
@@ -979,7 +979,7 @@ const renderSettings = () => {
                 Webhook Path
               </label>
               <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 font-mono text-[11px] text-blue-600 border-dashed">
-                /api/payment-sms
+                /api/public/payment-sms
               </div>
             </div>
             <div className="space-y-2">
@@ -988,11 +988,11 @@ const renderSettings = () => {
               </label>
               <div className="flex items-center gap-2">
                 <div className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 font-mono text-[11px] text-gray-600 truncate">
-                  {customAppUrl.trim().replace(/\/+$/, '') || window.location.origin}/api/payment-sms
+                  {customAppUrl.trim().replace(/\/+$/, '') || window.location.origin}/api/public/payment-sms
                 </div>
                 <button
                   onClick={() => {
-                    const fullUrl = `${customAppUrl.trim().replace(/\/+$/, '') || window.location.origin}/api/payment-sms`;
+                    const fullUrl = `${customAppUrl.trim().replace(/\/+$/, '') || window.location.origin}/api/public/payment-sms`;
                     navigator.clipboard.writeText(fullUrl);
                     setCopiedUrl(true);
                     setTimeout(() => setCopiedUrl(false), 2000);

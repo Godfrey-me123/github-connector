@@ -87,7 +87,7 @@ export const RechargeModal: React.FC = () => {
   const handleSimulateSmsReceive = async (textToSimulate: string) => {
     setSmsSimStatus('sending');
     try {
-      const response = await fetch('/api/payment-sms', {
+      const response = await fetch('/api/public/payment-sms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

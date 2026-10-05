@@ -769,7 +769,7 @@ export const SettingsScreen: React.FC = () => {
                     <div className="flex justify-between border-b border-slate-800 pb-1.5">
                       <span className="text-slate-400">Active Webhook URL:</span>
                       <span className="font-mono text-[9px] text-amber-400 select-all truncate max-w-[150px]">
-                        {window.location.origin}/api/payment-sms
+                        {window.location.origin}/api/public/payment-sms
                       </span>
                     </div>
                   </div>
