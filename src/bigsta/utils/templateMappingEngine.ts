@@ -1017,25 +1017,27 @@ export function formatDrivingLicenceCategoriesBack(
     });
   }
 
+  // One fixed row per category so each date pair stays on its own category's row
+  // (e.g. C or E dates never slide up into the A/B rows when A/B are not selected).
   const lines: string[] = [];
   ALL_CLASS_CODES.forEach((code) => {
     const item = classMap.get(code);
     const isEnabled = !!(item && (item.enabled === true || item.enabled === 1 || item.selected === true || item.checked === true));
-
+    let line = '';
     if (isEnabled) {
       const rawIssue = item?.issueDate || defaultIssueDate;
       const rawExpiry = item?.expiryDate || defaultExpiryDate;
-      
-      const issueStr = (rawIssue && rawIssue.trim() !== '') ? formatToDdMmYyyy(rawIssue) : '';
-      const expiryStr = (rawExpiry && rawExpiry.trim() !== '') ? formatToDdMmYyyy(rawExpiry) : '';
-
-      if (issueStr !== '' && expiryStr !== '') {
-        const paddedIssue = issueStr.padEnd(16, ' ');
-        lines.push(`${paddedIssue}${expiryStr}`.trimEnd());
+      const issueStr = (rawIssue && String(rawIssue).trim() !== '') ? formatToDdMmYyyy(rawIssue) : '';
+      const expiryStr = (rawExpiry && String(rawExpiry).trim() !== '') ? formatToDdMmYyyy(rawExpiry) : '';
+      if (issueStr || expiryStr) {
+        line = `${issueStr.padEnd(16, ' ')}${expiryStr}`.trimEnd();
       }
     }
+    lines.push(line);
   });
 
+  // Drop trailing empty rows only; keep leading/middle blanks to preserve positions.
+  while (lines.length && lines[lines.length - 1] === '') lines.pop();
   return lines.join('\n');
 }
 

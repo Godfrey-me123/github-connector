@@ -39,7 +39,7 @@ export const playNotificationSound = async () => {
   
   triggerHapticFeedback();
 
-  if (!audioContext) await initNotificationAudio();
+  if (!audioContext || !audioBuffer) await initNotificationAudio();
   if (!audioBuffer) return;
   
   try {
