@@ -341,6 +341,7 @@ export interface UserPreferences {
   notificationSoundEnabled: boolean;
   notificationSoundType: 'default' | 'custom';
   customNotificationSoundUrl?: string;
+  customNotificationSoundName?: string;
   downloadFolder: string;
   autoSave: boolean;
   openAfterDownload: boolean;
