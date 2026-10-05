@@ -409,7 +409,7 @@ export class PaymentService {
       connectionStatus: 'OFFLINE',
       lastSmsReceived: '',
       lastSmsTime: '',
-      webhookUrl: typeof window !== 'undefined' ? `${window.location.origin}/api/payment-sms` : ''
+      webhookUrl: typeof window !== 'undefined' ? `${window.location.origin}/api/public/payment-sms` : ''
     };
     return defaultSettings;
   }
