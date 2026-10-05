@@ -538,17 +538,37 @@ export const SettingsScreen: React.FC = () => {
                           <option value="custom">Custom Audio File</option>
                         </select>
                         {prefsForm.notificationSoundType === 'custom' && (
-                            <input
-                                type="text"
-                                placeholder="Enter custom audio URL"
-                                value={prefsForm.customNotificationSoundUrl || ''}
-                                onChange={(e) => {
-                                    const updated = { ...prefsForm, customNotificationSoundUrl: e.target.value };
-                                    setPrefsForm(updated);
-                                    updateUserPreferences(updated);
-                                }}
-                                className="w-full px-3.5 py-2 rounded-lg border border-slate-300 bg-white text-xs font-mono"
-                            />
+                            <div className="space-y-2">
+                              <label className="flex items-center justify-center w-full px-3.5 py-2.5 rounded-lg border border-dashed border-slate-400 bg-white text-xs font-semibold cursor-pointer">
+                                {prefsForm.customNotificationSoundUrl ? 'Change sound / ringtone' : 'Choose sound or ringtone from phone'}
+                                <input
+                                  type="file"
+                                  accept="audio/*"
+                                  className="hidden"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    if (file.size > 2 * 1024 * 1024) { alert('Please pick an audio file under 2 MB.'); return; }
+                                    const reader = new FileReader();
+                                    reader.onload = async () => {
+                                      const updated = { ...prefsForm, customNotificationSoundUrl: String(reader.result), customNotificationSoundName: file.name };
+                                      setPrefsForm(updated);
+                                      updateUserPreferences(updated);
+                                      try {
+                                        const a = new Audio(String(reader.result));
+                                        await a.play();
+                                      } catch {}
+                                      try { const m = await import('../utils/audioHandler'); await m.initNotificationAudio(); } catch {}
+                                    };
+                                    reader.readAsDataURL(file);
+                                    e.target.value = '';
+                                  }}
+                                />
+                              </label>
+                              {prefsForm.customNotificationSoundUrl && (
+                                <p className="text-[11px] text-slate-500 truncate">Selected: {(prefsForm as any).customNotificationSoundName || 'Custom sound'}</p>
+                              )}
+                            </div>
                         )}
                     </div>
                   )}
