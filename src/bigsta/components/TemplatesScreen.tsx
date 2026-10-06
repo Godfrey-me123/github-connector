@@ -299,14 +299,14 @@ export const TemplatesScreen: React.FC = () => {
       {/* Main Grid Section */}
       <div className="flex-1 overflow-y-auto p-6 relative">
         {(isLoading || loadingTemplates) && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 backdrop-blur-[1px]">
-            <div className="flex flex-col items-center gap-3">
-              <div className="relative">
-                <div className="w-12 h-12 border-4 border-slate-100 rounded-full"></div>
-                <div className="absolute top-0 left-0 w-12 h-12 border-4 border-[#000000] border-t-transparent rounded-full animate-spin"></div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-pulse">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+              <div key={n} className="border border-[#E7E9EB] rounded-2xl p-4 bg-white space-y-3">
+                <div className="w-full h-36 bg-slate-100 rounded-xl" />
+                <div className="h-4 bg-slate-100 rounded-lg w-3/4" />
+                <div className="h-3 bg-slate-100 rounded-lg w-1/2" />
               </div>
-              <span className="text-sm font-bold text-[#000000]">Syncing Workspace...</span>
-            </div>
+            ))}
           </div>
         )}
 

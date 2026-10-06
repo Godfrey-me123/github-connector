@@ -277,7 +277,7 @@ export default function App() {
 
   if (activeScreen === 'home') {
     return (
-      <>
+      <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
         <HomeScreen />
         <PasskeyManagerModal />
@@ -288,13 +288,13 @@ export default function App() {
         <MergeCardModal />
         <TemplateLibraryModal />
         <CardGeneratorModal />
-      </>
+      </div>
     );
   }
 
   if (activeScreen === 'upload') {
     return (
-      <>
+      <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
         <UploadScreen />
         <PasskeyManagerModal />
@@ -304,13 +304,13 @@ export default function App() {
         <MergeCardModal />
         <TemplateLibraryModal />
         <CardGeneratorModal />
-      </>
+      </div>
     );
   }
 
   if (activeScreen === 'templates') {
     return (
-      <>
+      <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
         <TemplatesScreen />
         <PasskeyManagerModal />
@@ -320,13 +320,13 @@ export default function App() {
         <MergeCardModal />
         <TemplateLibraryModal />
         <CardGeneratorModal />
-      </>
+      </div>
     );
   }
 
   if (activeScreen === 'nida_request') {
     return (
-      <>
+      <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
         <NidaRequestFormScreen />
         <PasskeyManagerModal />
@@ -336,13 +336,13 @@ export default function App() {
         <MergeCardModal />
         <TemplateLibraryModal />
         <CardGeneratorModal />
-      </>
+      </div>
     );
   }
 
   if (activeScreen === 'nida') {
     return (
-      <>
+      <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
         <NidaFormScreen
           onCancel={() => useTemplateStore.getState().goBack()}
@@ -357,13 +357,13 @@ export default function App() {
         <MergeCardModal />
         <TemplateLibraryModal />
         <CardGeneratorModal />
-      </>
+      </div>
     );
   }
 
   if (activeScreen === 'driving_license') {
     return (
-      <>
+      <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
         <DrivingLicenseFormScreen
           onCancel={() => useTemplateStore.getState().goBack()}
@@ -378,13 +378,13 @@ export default function App() {
         <MergeCardModal />
         <TemplateLibraryModal />
         <CardGeneratorModal />
-      </>
+      </div>
     );
   }
 
   if (activeScreen === 'nhif') {
     return (
-      <>
+      <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
         <NhifFormScreen
           onCancel={() => useTemplateStore.getState().goBack()}
@@ -399,13 +399,13 @@ export default function App() {
         <MergeCardModal />
         <TemplateLibraryModal />
         <CardGeneratorModal />
-      </>
+      </div>
     );
   }
 
   if (activeScreen === 'preview') {
     return (
-      <>
+      <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
         <CardPreviewScreen />
         <PasskeyManagerModal />
@@ -415,40 +415,51 @@ export default function App() {
         <MergeCardModal />
         <TemplateLibraryModal />
         <CardGeneratorModal />
-      </>
+      </div>
+    );
+  }
+
+  if (activeScreen === 'passport_studio') {
+    return (
+      <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
+        <UsageExhaustedBanner />
+        <PassportStudioScreen />
+        <PasskeyManagerModal />
+        <RechargeModal />
+      </div>
     );
   }
 
   if (activeScreen === 'image_edit_studio') {
     return (
-      <>
+      <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
         <ImageEditStudioScreen />
         <PasskeyManagerModal />
         <RechargeModal />
-      </>
+      </div>
     );
   }
 
   if (activeScreen === 'admin-payments' && authRole === 'admin') {
     return (
-      <>
+      <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
         <PaymentDashboard />
         <PasskeyManagerModal />
         <RechargeModal />
-      </>
+      </div>
     );
   }
 
   // Final Guard for Users: If they reach this point (unknown screen or editor), send back to home
   if (authRole === 'user') {
     return (
-      <>
+      <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
         <HomeScreen />
         <RechargeModal />
-      </>
+      </div>
     );
   }
 

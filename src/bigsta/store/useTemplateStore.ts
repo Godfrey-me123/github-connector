@@ -3094,7 +3094,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       set({
         authRole: match.role,
         currentAuthKey: match.key,
-        activeScreen: match.role === 'admin' ? 'home' : 'nida',
+        activeScreen: 'home',
         activePasskeys: updatedList,
       });
 

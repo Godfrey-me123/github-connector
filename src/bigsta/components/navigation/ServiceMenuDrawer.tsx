@@ -1,32 +1,30 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Menu,
   X,
   Home,
+  BarChart3,
   UserCheck,
-  ScrollText,
-  Car,
-  Globe,
+  FolderOpen,
+  Camera,
+  DownloadCloud,
+  Settings,
+  ChevronRight,
+  ChevronDown,
+  Layers,
+  Key,
   Receipt,
+  CreditCard,
+  Shield,
+  FileText,
+  Car,
   Building2,
   GraduationCap,
   HeartPulse,
   Briefcase,
-  Layers,
-  FolderOpen,
-  ChevronRight,
-  ChevronDown,
-  Shield,
-  CreditCard,
-  Wallet,
-  Info,
-  LogOut,
-  Key,
-  ShieldCheck,
-  DownloadCloud,
-  Settings,
-  Camera,
+  AlertCircle,
+  LogOut
 } from 'lucide-react';
 import { useTemplateStore } from '../../store/useTemplateStore';
 import { useUnreviewedSmsCount } from '../../hooks/useUnreviewedSmsCount';
@@ -37,26 +35,19 @@ export interface ServiceMenuDrawerProps {
   onSelectInfoService?: (service: { id: string; name: string; authority: string; description: string; features: string[] }) => void;
 }
 
-interface NavItem {
-  id: string;
-  name: string;
-  authority: string;
-  category: 'core' | 'identity' | 'civil' | 'education' | 'finance' | 'health';
-  icon: React.ComponentType<{ className?: string }>;
-  iconColor: string;
-  status: 'active' | 'coming_soon';
-  badgeText?: string;
-  action: () => void;
-  description?: string;
-  features?: string[];
-}
-
 export const ServiceMenuDrawer: React.FC<ServiceMenuDrawerProps> = ({
   isOpen,
   onClose,
   onSelectInfoService,
 }) => {
-  const { setActiveScreen, activeScreen, authRole, logoutPasskey, setPasskeyManagerOpen, manualRequests, setRechargeModalOpen } = useTemplateStore();
+  const { setActiveScreen, activeScreen, authRole, setPasskeyManagerOpen, setRechargeModalOpen, logoutPasskey } = useTemplateStore();
+  const unreviewedSms = useUnreviewedSmsCount(authRole === 'admin');
+
+  // Root dropdown state: 'none' | 'dashboard' | 'services' (collapsed by default)
+  const [openRoot, setOpenRoot] = useState<'none' | 'dashboard' | 'services'>('none');
+  
+  // Subcategory open state (only one open at a time): null | 'template_mgmt' | 'security' | 'payments' | 'identity' | 'licence' | 'document' | 'education' | 'manual'
+  const [openSub, setOpenSub] = useState<string | null>(null);
 
   // Close drawer on Escape key and Click Outside
   useEffect(() => {
@@ -79,7 +70,7 @@ export const ServiceMenuDrawer: React.FC<ServiceMenuDrawerProps> = ({
     };
   }, [isOpen, onClose]);
 
-  // Lock body scroll when drawer is open on mobile
+  // Lock body scroll when drawer is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -91,647 +82,443 @@ export const ServiceMenuDrawer: React.FC<ServiceMenuDrawerProps> = ({
     };
   }, [isOpen]);
 
-  const unreviewedSms = useUnreviewedSmsCount(authRole === 'admin');
-  const [readyCount, setReadyCount] = React.useState<number>(0);
-  const [isServicesExpanded, setIsServicesExpanded] = React.useState<boolean>(true);
-  React.useEffect(() => {
-    if (isOpen) {
-      import('../../utils/idb').then(async (m) => {
-        const records = await m.getAllDownloadRecordsDB();
-        const ready = records.filter(r => r.status === 'READY').length;
-        setReadyCount(ready);
-      });
+  // Reset dropdowns when drawer closes
+  useEffect(() => {
+    if (!isOpen) {
+      setOpenRoot('none');
+      setOpenSub(null);
     }
   }, [isOpen]);
 
-  const navItems: NavItem[] = [
-    {
-      id: 'dashboard',
-      name: 'Dashboard',
-      authority: 'Portal Overview',
-      category: 'core',
-      icon: Home,
-      iconColor: 'text-blue-500',
-      status: 'active',
-      action: () => {
-        setActiveScreen('home');
-        onClose();
-      },
-    },
-    {
-      id: 'services',
-      name: 'Services',
-      authority: 'ID & Verification Services',
-      category: 'core',
-      icon: UserCheck,
-      iconColor: 'text-blue-500',
-      status: 'active',
-      action: () => {
-        setActiveScreen('home');
-        onClose();
-      },
-    },
-    ...(authRole === 'admin'
-      ? [
-          {
-            id: 'custom_studio',
-            name: 'Custom Card Studio',
-            authority: 'ID Template Designer',
-            category: 'core' as const,
-            icon: Layers,
-            iconColor: 'text-blue-400',
-            status: 'active' as const,
-            badgeText: 'Admin',
-            action: () => {
-              setActiveScreen('upload');
-              onClose();
-            },
-            description: 'Create custom employee badges, student cards, or upload background artwork.',
-            features: ['CR80 Millimeter Layout', 'Custom Image Backgrounds', 'Smart Magnetic Snap', 'PDF & SVG Export'],
-          },
-          {
-            id: 'templates_library',
-            name: 'Saved Templates Library',
-            authority: 'Template Storage',
-            category: 'core' as const,
-            icon: FolderOpen,
-            iconColor: 'text-amber-400',
-            status: 'active' as const,
-            badgeText: 'Admin',
-            action: () => {
-              setActiveScreen('templates');
-              onClose();
-            },
-            description: 'Manage, duplicate, search, and export saved card templates.',
-            features: ['Local Storage Persistence', 'JSON Import & Export', 'Template Duplication'],
-          },
-          {
-            id: 'passkey_manager',
-            name: 'Passkey Manager',
-            authority: 'Admin Access & Key Security',
-            category: 'core' as const,
-            icon: Key,
-            iconColor: 'text-purple-600',
-            status: 'active' as const,
-            badgeText: 'Admin',
-            action: () => {
-              setPasskeyManagerOpen(true);
-              onClose();
-            },
-            description: 'Manage admin & user passkeys, generate new keys & reset admin access.',
-          },
-          {
-            id: 'sms_payments',
-            name: unreviewedSms > 0 ? `Payments (${unreviewedSms})` : 'Payments & Transactions',
-            authority: 'SMS Forwarder & Auto-Verification',
-            category: 'core' as const,
-            icon: Receipt,
-            iconColor: 'text-emerald-600',
-            status: 'active' as const,
-            badgeText: 'Admin',
-            action: () => {
-              setActiveScreen('admin-payments');
-              onClose();
-            },
-            description: 'Verify SMS transactions, manage payment settings, and monitor incoming payments.',
-          },
-          {
-            id: 'admin_billing',
-            name: 'Bills & Payment Methods',
-            authority: 'Configure Payment Channels & Top-Up',
-            category: 'core' as const,
-            icon: CreditCard,
-            iconColor: 'text-blue-500',
-            status: 'active' as const,
-            badgeText: 'Admin',
-            action: () => {
-              setActiveScreen('billing');
-              onClose();
-            },
-            description: 'Configure mobile money channels, instructions, numbers and rates.',
-          },
-        ]
-      : [
-          {
-            id: 'user_payments',
-            name: 'Bills Top-Up & Receipts',
-            authority: 'Payment Methods & Mobile Money',
-            category: 'core' as const,
-            icon: CreditCard,
-            iconColor: 'text-emerald-500',
-            status: 'active' as const,
-            badgeText: 'Live',
-            action: () => {
-              setActiveScreen('billing');
-              onClose();
-            },
-            description: 'View active payment methods, numbers, instructions & upload receipts.',
-          },
-          {
-            id: 'token_recharge',
-            name: 'Token Top-Up',
-            authority: 'Instant Token Recharge & Packages',
-            category: 'core' as const,
-            icon: Wallet,
-            iconColor: 'text-blue-500',
-            status: 'active' as const,
-            badgeText: 'Top Up',
-            action: () => {
-              setRechargeModalOpen(true);
-              onClose();
-            },
-            description: 'Instant recharge packages with auto-verify.',
-          },
-        ]),
-    {
-      id: 'nida',
-      name: 'NIDA Services',
-      authority: 'National Identification Authority',
-      category: 'identity',
-      icon: UserCheck,
-      iconColor: 'text-[#47A5FF]',
-      status: 'active',
-      badgeText: 'Active',
-      action: () => {
-        setActiveScreen('nida');
-        onClose();
-      },
-      description: 'Instant auto-fill, verification & CR80 card generation for Front & Back National IDs.',
-      features: ['20-Digit ID Verification', 'Biometric Photo Upload', 'Digital Signature Pad', 'Barcode Sync'],
-    },
-    {
-      id: 'driving_license',
-      name: 'Driving License Services',
-      authority: 'Traffic & Vehicle Inspection',
-      category: 'civil',
-      icon: Car,
-      iconColor: 'text-amber-400',
-      status: 'active',
-      badgeText: 'Active',
-      action: () => {
-        setActiveScreen('driving_license');
-        onClose();
-      },
-      description: 'Driver permit issuance, class endorsements & digital driver identification cards.',
-      features: ['Class Endorsements (A, B, C, D, E)', 'Penalty Point Tracking', 'Digital QR Validation'],
-    },
-    {
-      id: 'nhif',
-      name: 'NHIF Membership Card',
-      authority: 'National Health Insurance Fund',
-      category: 'health',
-      icon: HeartPulse,
-      iconColor: 'text-rose-400',
-      status: 'active',
-      badgeText: 'Active',
-      action: () => {
-        setActiveScreen('nhif' as any);
-        onClose();
-      },
-      description: 'Healthcare membership smart cards, dependent coverage validation & biometric health passes.',
-      features: ['Principal & Dependent Mapping', 'Hospital Tier Endorsements', 'Smart Card Chip Specs'],
-    },
-    {
-      id: 'passport_studio',
-      name: 'Passport Size Photo Studio & Image Editor',
-      authority: 'Official Biometric Photos & Image Suite',
-      category: 'identity',
-      icon: Camera,
-      iconColor: 'text-cyan-400',
-      status: 'active',
-      badgeText: 'Full App',
-      action: () => {
-        setActiveScreen('image_edit_studio' as any);
-        onClose();
-      },
-      description: 'Full independent suite for passport cropping, background removal, resizing, compressing, converting & enhancement.',
-      features: ['Passport & Visa Country Specs', 'AI Background Removal', 'Batch Image Converter & Resizer', 'High Resolution Export'],
-    },
-    {
-      id: 'birth_certificate',
-      name: 'Birth Certificate Services',
-      authority: 'RITA Civil Registration',
-      category: 'civil',
-      icon: ScrollText,
-      iconColor: 'text-emerald-400',
-      status: 'coming_soon',
-      badgeText: (() => {
-        const req = manualRequests.find((r) => r.serviceId === 'birth_certificate');
-        if (!req) return 'Request Manual';
-        if (req.status === 'PENDING') return 'Admin Review';
-        if (req.status === 'PROCESSING') return 'On Progress';
-        if (req.status === 'APPROVED' || req.status === 'COMPLETED') return 'Accepted';
-        if (req.status === 'REJECTED') return 'Rejected';
-        return 'Request Manual';
-      })(),
-      action: () => {
-        onSelectInfoService?.({
-          id: 'birth_certificate',
-          name: 'Birth Certificate Services',
-          authority: 'RITA (Registration Insolvency and Trusteeship Agency)',
-          description: 'Official birth certificate issuance, verification & digital civil registry documentation.',
-          features: ['Civil Registration Archiving', 'Legal Certification Verification', 'Official Watermark Validation'],
-        });
-        onClose();
-      },
-    },
-    {
-      id: 'passport',
-      name: 'Passport Services',
-      authority: 'Immigration Services Department',
-      category: 'identity',
-      icon: Globe,
-      iconColor: 'text-cyan-400',
-      status: 'coming_soon',
-      badgeText: (() => {
-        const req = manualRequests.find((r) => r.serviceId === 'passport');
-        if (!req) return 'Request Manual';
-        if (req.status === 'PENDING') return 'Admin Review';
-        if (req.status === 'PROCESSING') return 'On Progress';
-        if (req.status === 'APPROVED' || req.status === 'COMPLETED') return 'Accepted';
-        if (req.status === 'REJECTED') return 'Rejected';
-        return 'Request Manual';
-      })(),
-      action: () => {
-        onSelectInfoService?.({
-          id: 'passport',
-          name: 'Passport Services',
-          authority: 'Immigration Services Department',
-          description: 'East African e-Passport booklet formatting, bio-data pages & travel credentials.',
-          features: ['ICAO 9303 Compliant MRZ', 'Biometric Chip Layout', 'Diplomatic & Ordinary Profiles'],
-        });
-        onClose();
-      },
-    },
-    {
-      id: 'tin',
-      name: 'TIN Services',
-      authority: 'Tanzania Revenue Authority',
-      category: 'finance',
-      icon: Receipt,
-      iconColor: 'text-violet-400',
-      status: 'coming_soon',
-      badgeText: (() => {
-        const req = manualRequests.find((r) => r.serviceId === 'tin');
-        if (!req) return 'Request Manual';
-        if (req.status === 'PENDING') return 'Admin Review';
-        if (req.status === 'PROCESSING') return 'On Progress';
-        if (req.status === 'APPROVED' || req.status === 'COMPLETED') return 'Accepted';
-        if (req.status === 'REJECTED') return 'Rejected';
-        return 'Request Manual';
-      })(),
-      action: () => {
-        onSelectInfoService?.({
-          id: 'tin',
-          name: 'TIN Services',
-          authority: 'Tanzania Revenue Authority (TRA)',
-          description: 'Taxpayer Identification Number cards, tax compliance credentials & PIN certificates.',
-          features: ['Taxpayer PIN Sync', 'QR Compliance Stamp', 'Corporate & Individual Formats'],
-        });
-        onClose();
-      },
-    },
-    {
-      id: 'business_license',
-      name: 'Business License Services',
-      authority: 'BRELA & Municipal Authorities',
-      category: 'finance',
-      icon: Building2,
-      iconColor: 'text-orange-400',
-      status: 'coming_soon',
-      badgeText: (() => {
-        const req = manualRequests.find((r) => r.serviceId === 'business_license');
-        if (!req) return 'Request Manual';
-        if (req.status === 'PENDING') return 'Admin Review';
-        if (req.status === 'PROCESSING') return 'On Progress';
-        if (req.status === 'APPROVED' || req.status === 'COMPLETED') return 'Accepted';
-        if (req.status === 'REJECTED') return 'Rejected';
-        return 'Request Manual';
-      })(),
-      action: () => {
-        onSelectInfoService?.({
-          id: 'business_license',
-          name: 'Business License Services',
-          authority: 'BRELA & Municipal Authorities',
-          description: 'Commercial enterprise registration certificates, municipal trade permits & corporate IDs.',
-          features: ['BRELA Certificate Layout', 'Annual Renewal Badges', 'Sector Trade Validation'],
-        });
-        onClose();
-      },
-    },
-    {
-      id: 'heslb',
-      name: 'HESLB Student Loans Services',
-      authority: 'Higher Education Students’ Loans Board',
-      category: 'education',
-      icon: GraduationCap,
-      iconColor: 'text-indigo-400',
-      status: 'coming_soon',
-      badgeText: (() => {
-        const req = manualRequests.find((r) => r.serviceId === 'heslb');
-        if (!req) return 'Request Manual';
-        if (req.status === 'PENDING') return 'Admin Review';
-        if (req.status === 'PROCESSING') return 'On Progress';
-        if (req.status === 'APPROVED' || req.status === 'COMPLETED') return 'Accepted';
-        if (req.status === 'REJECTED') return 'Rejected';
-        return 'Request Manual';
-      })(),
-      action: () => {
-        onSelectInfoService?.({
-          id: 'heslb',
-          name: 'HESLB Student Loans Services',
-          authority: 'Higher Education Students’ Loans Board (HESLB)',
-          description: 'Student beneficiary loan allocation cards, academic verification & repayment IDs.',
-          features: ['Index Number Verification', 'Institution Allocation Status', 'Beneficiary Smart Badges'],
-        });
-        onClose();
-      },
-    },
-    {
-      id: 'ajira',
-      name: 'Ajira Portal Services',
-      authority: 'Public Service Recruitment Secretariat',
-      category: 'education',
-      icon: Briefcase,
-      iconColor: 'text-teal-400',
-      status: 'coming_soon',
-      badgeText: (() => {
-        const req = manualRequests.find((r) => r.serviceId === 'ajira');
-        if (!req) return 'Request Manual';
-        if (req.status === 'PENDING') return 'Admin Review';
-        if (req.status === 'PROCESSING') return 'On Progress';
-        if (req.status === 'APPROVED' || req.status === 'COMPLETED') return 'Accepted';
-        if (req.status === 'REJECTED') return 'Rejected';
-        return 'Request Manual';
-      })(),
-      action: () => {
-        onSelectInfoService?.({
-          id: 'ajira',
-          name: 'Ajira Portal Services',
-          authority: 'Public Service Recruitment Secretariat (PSRS)',
-          description: 'Government job application portfolios, civil service recruitment IDs & applicant profiles.',
-          features: ['Civil Service Application Sync', 'Cadre Certificate Validation', 'Interview Pass Generation'],
-        });
-        onClose();
-      },
-    },
-    {
-      id: 'downloads',
-      name: 'Downloads',
-      authority: 'Generated Files & History',
-      category: 'core',
-      icon: DownloadCloud,
-      iconColor: 'text-blue-600',
-      status: 'active',
-      badgeText: readyCount > 0 ? `${readyCount} Ready` : undefined,
-      action: () => {
-        setActiveScreen('downloads');
-        onClose();
-      },
-      description: 'Manage generated files, track export status (Generating, Ready, Downloaded, Failed), and redownload anytime.',
-      features: ['Server-Side Export Persistence', 'One-Click Re-download', 'Token Protection on Failure'],
-    },
-    {
-      id: 'settings',
-      name: 'Settings',
-      authority: 'Account & Preferences',
-      category: 'core',
-      icon: Settings,
-      iconColor: 'text-gray-600',
-      status: 'active',
-      action: () => {
-        setActiveScreen('settings');
-        onClose();
-      },
-    },
-  ];
+  const toggleRoot = (rootKey: 'dashboard' | 'services') => {
+    if (openRoot === rootKey) {
+      setOpenRoot('none');
+      setOpenSub(null);
+    } else {
+      setOpenRoot(rootKey);
+      setOpenSub(null);
+    }
+  };
 
-  // Escape key listener
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  const toggleSub = (subKey: string) => {
+    setOpenSub(openSub === subKey ? null : subKey);
+  };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex font-sans animate-in fade-in duration-200">
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/75 backdrop-blur-xs transition-opacity"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Drawer Panel */}
+    <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-xs flex justify-start transition-opacity duration-200">
       <div
         id="service-menu-drawer"
-        className="relative w-full max-w-xs sm:max-w-sm bg-[#FFFFFF] border-r border-[#E7E9EB] text-[#000000] shadow-2xl flex flex-col h-full z-10 animate-in slide-in-from-left duration-250"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Services Navigation"
+        className="w-80 max-w-[85vw] bg-white h-full shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-left duration-200"
       >
-        {/* Drawer Header - Centered BIGsta Title with CEO / Welcome Back Tag */}
-        <div className="relative flex flex-col items-center justify-center px-5 py-4 border-b border-[#E7E9EB] bg-[#FFFFFF] shrink-0">
-          <div className="text-center">
-            <h2 className="text-sm font-black text-[#000000] tracking-wider uppercase font-sans">
-              BIGsta
-            </h2>
+        {/* Drawer Header */}
+        <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 bg-blue-600 text-white rounded-xl flex items-center justify-center font-black text-sm shadow-sm">
+              B
+            </div>
+            <div>
+              <h2 className="text-sm font-black text-slate-900 leading-tight">BIGsta Portal</h2>
+              <p className="text-[10px] text-slate-500 font-semibold">
+                {authRole === 'admin' ? 'Administrator Workspace' : 'User Portal'}
+              </p>
+            </div>
           </div>
-
-          {/* Current Role / Greeting Tag Badge */}
-          <div className="mt-2">
-            {authRole === 'admin' ? (
-              <span className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider px-3.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs">
-                <Shield className="w-3.5 h-3.5 text-amber-700" />
-                <span>CEO</span>
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold tracking-wider px-3.5 py-1 rounded-full bg-blue-50 text-blue-800 border border-blue-200 shadow-2xs">
-                <UserCheck className="w-3.5 h-3.5 text-blue-600" />
-                <span>Welcome back</span>
-              </span>
-            )}
-          </div>
-
           <button
-            type="button"
             onClick={onClose}
-            className="absolute right-4 top-4 p-1.5 rounded-lg text-[#555555] hover:text-[#000000] hover:bg-[#E7E9EB] transition-colors cursor-pointer"
-            aria-label="Close menu"
+            className="p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Navigation List - Vertically Scrollable */}
-        <div className="flex-1 overflow-y-auto min-h-0 py-3 px-3 space-y-2 divide-y divide-[#E7E9EB]">
-          {/* Active Workspaces */}
-          <div className="pb-2 space-y-1">
-            <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#777777]">
-              Workspace Navigation
-            </div>
+        {/* Drawer Navigation Content */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-1.5 font-sans">
+          {/* 1. Home */}
+          <button
+            onClick={() => {
+              setActiveScreen('home');
+              onClose();
+            }}
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
+          >
+            <Home className="w-4 h-4 text-blue-600" />
+            <span>Home</span>
+          </button>
 
-            {/* Dashboard */}
-            {(() => {
-              const dashItem = navItems.find((i) => i.id === 'dashboard');
-              if (!dashItem) return null;
-              const isDashActive = activeScreen === 'home';
-              return (
-                <button
-                  key={dashItem.id}
-                  type="button"
-                  onClick={dashItem.action}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left transition-all cursor-pointer ${
-                    isDashActive
-                      ? 'bg-[#000000] text-[#FFFFFF]'
-                      : 'hover:bg-[#E7E9EB] text-[#000000]'
-                  }`}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className={`p-1.5 rounded-lg shrink-0 ${isDashActive ? 'bg-white/20 text-white' : 'bg-[#E7E9EB] text-[#000000]'}`}>
-                      <Home className="w-4 h-4" />
-                    </div>
-                    <div className="truncate min-w-0">
-                      <div className="text-xs font-bold truncate">{dashItem.name}</div>
-                      <div className={`text-[10px] truncate hidden sm:block ${isDashActive ? 'text-slate-300' : 'text-slate-500'}`}>{dashItem.authority}</div>
-                    </div>
-                  </div>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${isDashActive ? 'bg-white text-black' : 'bg-[#E7E9EB] text-[#000000]'}`}>
-                    {isDashActive ? 'Active' : 'Open'}
-                  </span>
-                </button>
-              );
-            })()}
-
-            {/* Services Dropdown Parent - Consolidated All Services */}
-            <div className="space-y-1 pt-1">
-              <button
-                type="button"
-                onClick={() => setIsServicesExpanded((prev) => !prev)}
-                className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-left hover:bg-[#E7E9EB] text-[#000000] transition-all cursor-pointer border border-[#E7E9EB] bg-[#F8F9FA]"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="p-1.5 rounded-lg shrink-0 bg-[#E7E9EB] text-[#000000]">
-                    <UserCheck className="w-4 h-4" />
-                  </div>
-                  <div className="truncate min-w-0">
-                    <div className="text-xs font-bold truncate">Services</div>
-                    <div className="text-[10px] text-slate-500 truncate hidden sm:block">Identity, Cards & Public Services</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#CEE9B9] text-[#000000]">
-                    Active
-                  </span>
-                  <ChevronDown className={`w-4 h-4 text-slate-600 transition-transform duration-200 ${isServicesExpanded ? 'rotate-180' : ''}`} />
-                </div>
-              </button>
-
-              {/* Collapsible Dropdown Children nested under Services - Consolidated */}
-              {isServicesExpanded && (
-                <div className="pl-2 ml-2 border-l-2 border-[#E7E9EB] space-y-1 pt-1 pb-1 animate-in slide-in-from-top-1 duration-150">
-                  {navItems
-                    .filter((item) => item.id !== 'dashboard' && item.id !== 'services')
-                    .map((item) => {
-                      const Icon = item.icon;
-                      const isActive =
-                        (item.id === 'nida' && activeScreen === 'nida') ||
-                        (item.id === 'driving_license' && activeScreen === 'driving_license') ||
-                        (item.id === 'nhif' && activeScreen === 'nhif') ||
-                        ((item.id === 'templates' || item.id === 'templates_library') && (activeScreen === 'upload' || activeScreen === 'templates' || activeScreen === 'editor')) ||
-                        ((item.id === 'payments' || item.id === 'sms_payments' || item.id === 'user_payments') && activeScreen === 'admin-payments') ||
-                        (item.id === 'downloads' && activeScreen === 'downloads') ||
-                        (item.id === 'custom_studio' && activeScreen === 'upload');
-
-                      return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={item.action}
-                          className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left transition-all cursor-pointer ${
-                            isActive
-                              ? 'bg-[#000000] text-[#FFFFFF]'
-                              : 'hover:bg-[#E7E9EB] text-[#000000]'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div className={`p-1.5 rounded-lg shrink-0 ${isActive ? 'bg-white/20 text-white' : 'bg-[#E7E9EB] text-[#000000]'}`}>
-                              <Icon className="w-3.5 h-3.5" />
-                            </div>
-                            <div className="truncate min-w-0">
-                              <div className="text-xs font-semibold truncate">{item.name}</div>
-                              <div className={`text-[9px] truncate ${isActive ? 'text-slate-300' : 'text-slate-500'}`}>{item.authority}</div>
-                            </div>
-                          </div>
-
-                          {item.badgeText ? (
-                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
-                              item.status === 'coming_soon'
-                                ? 'bg-amber-100 text-amber-900 border border-amber-200'
-                                : isActive
-                                ? 'bg-white text-black'
-                                : 'bg-blue-600 text-white'
-                            }`}>
-                              {item.badgeText}
-                            </span>
-                          ) : item.status === 'active' ? (
-                            <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded shrink-0 ${isActive ? 'bg-white text-black font-bold' : 'bg-[#CEE9B9] text-[#000000] font-bold'}`}>
-                              {isActive ? 'Active' : 'Ready'}
-                            </span>
-                          ) : (
-                            <span className="text-[9px] text-[#555555] px-1.5 py-0.5 rounded bg-[#E7E9EB] shrink-0 font-medium">
-                              Info
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                </div>
+          {/* 2. Dashboard (Accordion) */}
+          <div>
+            <button
+              onClick={() => toggleRoot('dashboard')}
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <BarChart3 className="w-4 h-4 text-indigo-600" />
+                <span>Dashboard</span>
+              </div>
+              {openRoot === 'dashboard' ? (
+                <ChevronDown className="w-4 h-4 text-slate-400" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-slate-400" />
               )}
-            </div>
-          </div>
-        </div>
+            </button>
 
-        {/* Drawer Footer with Role Status & Sticky Logout */}
-        <div className="p-4 border-t border-[#E7E9EB] bg-[#F8F9FA] shrink-0 space-y-2.5 z-10">
-          <div className="flex items-center justify-end">
-            {authRole === 'admin' && (
-              <button
-                type="button"
-                onClick={() => {
-                  setPasskeyManagerOpen(true);
-                  onClose();
-                }}
-                className="text-[11px] text-[#47A5FF] hover:underline font-bold flex items-center gap-1 cursor-pointer"
-              >
-                <Key className="w-3.5 h-3.5" />
-                <span>Passkeys</span>
-              </button>
+            {/* Dashboard Submenu */}
+            {openRoot === 'dashboard' && (
+              <div className="ml-4 pl-3 border-l-2 border-indigo-100 my-1 space-y-1 transition-all duration-200">
+                {authRole === 'admin' ? (
+                  <>
+                    {/* Template Management */}
+                    <div>
+                      <button
+                        onClick={() => toggleSub('template_mgmt')}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                      >
+                        <span className="flex items-center gap-2">
+                          <Layers className="w-3.5 h-3.5 text-blue-500" />
+                          Template Management
+                        </span>
+                        {openSub === 'template_mgmt' ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                      </button>
+                      {openSub === 'template_mgmt' && (
+                        <div className="ml-4 pl-2 border-l border-slate-200 my-1 space-y-1">
+                          <button
+                            onClick={() => {
+                              setActiveScreen('upload');
+                              onClose();
+                            }}
+                            className="w-full text-left px-2.5 py-1.5 rounded-md text-[11px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+                          >
+                            Custom Card Studio
+                          </button>
+                          <button
+                            onClick={() => {
+                              setActiveScreen('templates');
+                              onClose();
+                            }}
+                            className="w-full text-left px-2.5 py-1.5 rounded-md text-[11px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+                          >
+                            Saved Templates Library
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Security & Access */}
+                    <div>
+                      <button
+                        onClick={() => toggleSub('security')}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                      >
+                        <span className="flex items-center gap-2">
+                          <Key className="w-3.5 h-3.5 text-purple-500" />
+                          Security & Access
+                        </span>
+                        {openSub === 'security' ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                      </button>
+                      {openSub === 'security' && (
+                        <div className="ml-4 pl-2 border-l border-slate-200 my-1 space-y-1">
+                          <button
+                            onClick={() => {
+                              setPasskeyManagerOpen(true);
+                              onClose();
+                            }}
+                            className="w-full text-left px-2.5 py-1.5 rounded-md text-[11px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+                          >
+                            Passkey Manager
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Payments */}
+                    <div>
+                      <button
+                        onClick={() => toggleSub('payments')}
+                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                      >
+                        <span className="flex items-center gap-2">
+                          <Receipt className="w-3.5 h-3.5 text-emerald-500" />
+                          Payments {unreviewedSms > 0 ? `(${unreviewedSms})` : ''}
+                        </span>
+                        {openSub === 'payments' ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                      </button>
+                      {openSub === 'payments' && (
+                        <div className="ml-4 pl-2 border-l border-slate-200 my-1 space-y-1">
+                          <button
+                            onClick={() => {
+                              setActiveScreen('admin-payments');
+                              onClose();
+                            }}
+                            className="w-full text-left px-2.5 py-1.5 rounded-md text-[11px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+                          >
+                            Payments & Transactions
+                          </button>
+                          <button
+                            onClick={() => {
+                              setRechargeModalOpen(true);
+                              onClose();
+                            }}
+                            className="w-full text-left px-2.5 py-1.5 rounded-md text-[11px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+                          >
+                            Bills & Payment Methods
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="px-3 py-2 text-[11px] text-slate-500 font-medium">
+                    Welcome to your user dashboard. Access verification services via Services below.
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
+          {/* 3. Services (Accordion) */}
+          <div>
+            <button
+              onClick={() => toggleRoot('services')}
+              className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <UserCheck className="w-4 h-4 text-amber-600" />
+                <span>Services</span>
+              </div>
+              {openRoot === 'services' ? (
+                <ChevronDown className="w-4 h-4 text-slate-400" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              )}
+            </button>
+
+            {/* Services Subcategories */}
+            {openRoot === 'services' && (
+              <div className="ml-4 pl-3 border-l-2 border-amber-100 my-1 space-y-1 transition-all duration-200">
+                {/* Identity Services */}
+                <div>
+                  <button
+                    onClick={() => toggleSub('identity')}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Shield className="w-3.5 h-3.5 text-blue-500" />
+                      Identity Services
+                    </span>
+                    {openSub === 'identity' ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                  </button>
+                  {openSub === 'identity' && (
+                    <div className="ml-4 pl-2 border-l border-slate-200 my-1 space-y-1">
+                      <button
+                        onClick={() => {
+                          setActiveScreen('nida');
+                          onClose();
+                        }}
+                        className="w-full text-left px-2.5 py-1.5 rounded-md text-[11px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+                      >
+                        NIDA Services
+                      </button>
+                      <button
+                        onClick={() => {
+                          setActiveScreen('nhif');
+                          onClose();
+                        }}
+                        className="w-full text-left px-2.5 py-1.5 rounded-md text-[11px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+                      >
+                        NHIF Membership Card
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Licence & Transport */}
+                <div>
+                  <button
+                    onClick={() => toggleSub('licence')}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Car className="w-3.5 h-3.5 text-indigo-500" />
+                      Licence & Transport
+                    </span>
+                    {openSub === 'licence' ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                  </button>
+                  {openSub === 'licence' && (
+                    <div className="ml-4 pl-2 border-l border-slate-200 my-1 space-y-1">
+                      <button
+                        onClick={() => {
+                          setActiveScreen('driving_license');
+                          onClose();
+                        }}
+                        className="w-full text-left px-2.5 py-1.5 rounded-md text-[11px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+                      >
+                        Driving Licence Services
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Document Services */}
+                <div>
+                  <button
+                    onClick={() => toggleSub('document')}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2">
+                      <FileText className="w-3.5 h-3.5 text-emerald-500" />
+                      Document Services
+                    </span>
+                    {openSub === 'document' ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                  </button>
+                  {openSub === 'document' && (
+                    <div className="ml-4 pl-2 border-l border-slate-200 my-1 space-y-1">
+                      {[
+                        'Birth Certificate Services',
+                        'Passport Services',
+                        'TIN Services',
+                        'Business License Services'
+                      ].map((svc) => (
+                        <button
+                          key={svc}
+                          onClick={() => {
+                            setActiveScreen('nida_request');
+                            onClose();
+                          }}
+                          className="w-full text-left px-2.5 py-1.5 rounded-md text-[11px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+                        >
+                          {svc}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Education & Employment */}
+                <div>
+                  <button
+                    onClick={() => toggleSub('education')}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2">
+                      <GraduationCap className="w-3.5 h-3.5 text-purple-500" />
+                      Education & Employment
+                    </span>
+                    {openSub === 'education' ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                  </button>
+                  {openSub === 'education' && (
+                    <div className="ml-4 pl-2 border-l border-slate-200 my-1 space-y-1">
+                      {[
+                        'HESLB Student Loans',
+                        'Ajira Portal Services',
+                        'University Applications'
+                      ].map((svc) => (
+                        <button
+                          key={svc}
+                          onClick={() => {
+                            setActiveScreen('nida_request');
+                            onClose();
+                          }}
+                          className="w-full text-left px-2.5 py-1.5 rounded-md text-[11px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+                        >
+                          {svc}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Manual Requests */}
+                <div>
+                  <button
+                    onClick={() => toggleSub('manual')}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Briefcase className="w-3.5 h-3.5 text-amber-500" />
+                      Manual Requests
+                    </span>
+                    {openSub === 'manual' ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                  </button>
+                  {openSub === 'manual' && (
+                    <div className="ml-4 pl-2 border-l border-slate-200 my-1 space-y-1">
+                      {[
+                        'Police Loss Report',
+                        'Birth Certificate Services',
+                        'Passport Services',
+                        'TIN Services',
+                        'Business License Services',
+                        'HESLB Student Loans',
+                        'Ajira Portal Services',
+                        'University Applications'
+                      ].map((svc) => (
+                        <button
+                          key={svc}
+                          onClick={() => {
+                            setActiveScreen('nida_request');
+                            onClose();
+                          }}
+                          className="w-full text-left px-2.5 py-1.5 rounded-md text-[11px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+                        >
+                          {svc}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 4. Passport Size Photo Studio */}
           <button
-            type="button"
             onClick={() => {
-              logoutPasskey();
+              setActiveScreen('passport_studio');
               onClose();
             }}
-            className="w-full py-2.5 px-3 bg-red-600 hover:bg-red-700 border border-red-700 text-white font-black text-xs rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-98"
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
           >
-            <LogOut className="w-4 h-4 shrink-0" />
-            <span>Logout (Return to Gateway) ↩</span>
+            <Camera className="w-4 h-4 text-pink-600" />
+            <span>Passport Size Photo Studio</span>
           </button>
 
-          <div className="text-center pt-0.5">
-            <p className="text-[10px] text-[#777777]">
-              BIGsta Gateway System • CR80 Cards
-            </p>
+          {/* 5. Downloads */}
+          <button
+            onClick={() => {
+              setActiveScreen('downloads');
+              onClose();
+            }}
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
+          >
+            <DownloadCloud className="w-4 h-4 text-emerald-600" />
+            <span>Downloads</span>
+          </button>
+
+          {/* 6. Settings */}
+          <button
+            onClick={() => {
+              setActiveScreen('settings');
+              onClose();
+            }}
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-800 hover:bg-slate-100 transition-colors cursor-pointer"
+          >
+            <Settings className="w-4 h-4 text-slate-600" />
+            <span>Settings</span>
+          </button>
+
+          {/* Log Out */}
+          <div className="pt-4 mt-4 border-t border-slate-200">
+            <button
+              onClick={() => {
+                logoutPasskey();
+                onClose();
+              }}
+              className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+            >
+              <LogOut className="w-4 h-4 text-rose-600" />
+              <span>Log Out</span>
+            </button>
           </div>
         </div>
       </div>
