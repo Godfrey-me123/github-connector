@@ -705,12 +705,17 @@ export type Database = {
       user_feedback: {
         Row: {
           admin_reply: string | null
+          attachment_data: string | null
           attachment_name: string | null
+          attachment_path: string | null
           attachment_url: string | null
           category: string | null
+          comment: string | null
           created_at: string
+          feedback_type: string | null
           id: string
           message: string | null
+          rating: number | null
           status: string
           subject: string | null
           updated_at: string
@@ -720,12 +725,17 @@ export type Database = {
         }
         Insert: {
           admin_reply?: string | null
+          attachment_data?: string | null
           attachment_name?: string | null
+          attachment_path?: string | null
           attachment_url?: string | null
           category?: string | null
+          comment?: string | null
           created_at?: string
-          id?: string
+          feedback_type?: string | null
+          id: string
           message?: string | null
+          rating?: number | null
           status?: string
           subject?: string | null
           updated_at?: string
@@ -735,12 +745,17 @@ export type Database = {
         }
         Update: {
           admin_reply?: string | null
+          attachment_data?: string | null
           attachment_name?: string | null
+          attachment_path?: string | null
           attachment_url?: string | null
           category?: string | null
+          comment?: string | null
           created_at?: string
+          feedback_type?: string | null
           id?: string
           message?: string | null
+          rating?: number | null
           status?: string
           subject?: string | null
           updated_at?: string
