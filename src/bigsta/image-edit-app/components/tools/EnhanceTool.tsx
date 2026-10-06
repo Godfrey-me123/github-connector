@@ -76,10 +76,17 @@ export const EnhanceTool: React.FC<EnhanceToolProps> = ({ initialFile, onBack })
       });
 
       if (res.ok) {
-        const json = await res.json();
-        if (json.success) {
-          setAnalysisPlan(json.enhancementPlan);
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const json = await res.json();
+          if (json.success) {
+            setAnalysisPlan(json.enhancementPlan);
+          }
+        } else {
+          console.warn("AI enhancement response not JSON", await res.text());
         }
+      } else {
+        console.warn("AI enhancement request failed", await res.text());
       }
 
       // Render enhanced image canvas

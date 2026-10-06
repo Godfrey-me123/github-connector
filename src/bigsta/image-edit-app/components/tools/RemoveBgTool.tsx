@@ -35,8 +35,11 @@ async function applyAlphaMatting(blob: Blob): Promise<Blob> {
         const b = data[i + 2];
         const a = data[i + 3];
 
-        // Target semi-transparent or bright edge pixels (white fringe)
-        if (a > 0 && a < 252 && r > 200 && g > 200 && b > 200) {
+        // Target dark/black fringe pixels
+        if (a > 0 && a < 252 && r < 50 && g < 50 && b < 50) {
+          data[i + 3] = Math.max(0, a - 70);
+        } else if (a > 0 && a < 252 && r > 200 && g > 200 && b > 200) {
+          // Keep existing white fringe handling just in case
           data[i + 3] = Math.max(0, a - 70);
         } else if (a === 255 && r > 245 && g > 245 && b > 245) {
           data[i + 3] = 238;
