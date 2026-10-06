@@ -28,7 +28,7 @@ import { AppFooter } from './common/AppFooter';
 import { SAMPLE_TEMPLATES } from '../utils/sampleTemplates';
 import { applyTemplateMapping, isBackSideTemplate, matchLayerToBinding, SupportedBinding, formatDrivingLicenceCategoriesFront } from '../utils/templateMappingEngine';
 import { UniversalBackButton } from './common/UniversalBackButton';
-import { CardTemplate } from '../types';
+import { CardTemplate, LastEditingContext } from '../types';
 import { FieldMappingInspectorModal } from './nida/FieldMappingInspectorModal';
 
 export const CardPreviewScreen: React.FC = () => {
@@ -46,18 +46,47 @@ export const CardPreviewScreen: React.FC = () => {
     setPopulatedCardPair,
     authRole,
     activeServiceId,
+    lastEditingContext,
   } = useTemplateStore();
 
   const targetFormScreen = activeServiceId === 'driving_license' ? 'driving_license' : activeServiceId === 'nhif' ? 'nhif' : 'nida';
 
-  // Output selection: Single Card vs Front + Back (Merge 2-in-1)
-  const [outputMode, setOutputMode] = useState<'single' | 'merge'>('single');
+  // Output selection: Single Card vs Front + Back (Merge 2-in-1) with lastEditingContext caching
+  const [outputMode, setOutputMode] = useState<'single' | 'merge'>(() => {
+    return lastEditingContext?.outputMode || 'single';
+  });
 
-  const [activeSide, setActiveSide] = useState<'front' | 'back'>(
-    isBackSideTemplate(currentTemplate) ? 'back' : 'front'
-  );
+  const [activeSide, setActiveSide] = useState<'front' | 'back'>(() => {
+    if (lastEditingContext?.activeSide) return lastEditingContext.activeSide;
+    if (lastEditingContext?.side === 'back' || lastEditingContext?.side === 'Back Side') return 'back';
+    if (lastEditingContext?.side === 'front' || lastEditingContext?.side === 'Front Side') return 'front';
+    return isBackSideTemplate(currentTemplate) ? 'back' : 'front';
+  });
 
-  const [zoomLevel, setZoomLevel] = useState<number>(1.0);
+  const [zoomLevel, setZoomLevel] = useState<number>(() => {
+    return lastEditingContext?.zoomLevel || 1.0;
+  });
+
+  // Synchronize when returning from Studio via lastEditingContext
+  useEffect(() => {
+    if (lastEditingContext && lastEditingContext.sourceScreen === 'preview') {
+      if (lastEditingContext.activeSide) {
+        setActiveSide(lastEditingContext.activeSide);
+      } else if (lastEditingContext.side === 'back' || lastEditingContext.side === 'Back Side') {
+        setActiveSide('back');
+      } else if (lastEditingContext.side === 'front' || lastEditingContext.side === 'Front Side') {
+        setActiveSide('front');
+      }
+
+      if (lastEditingContext.outputMode) {
+        setOutputMode(lastEditingContext.outputMode);
+      }
+
+      if (typeof lastEditingContext.zoomLevel === 'number') {
+        setZoomLevel(lastEditingContext.zoomLevel);
+      }
+    }
+  }, [lastEditingContext]);
   const [previewDataUrl, setPreviewDataUrl] = useState<string>('');
   const [mergeFrontUrl, setMergeFrontUrl] = useState<string>('');
   const [mergeBackUrl, setMergeBackUrl] = useState<string>('');
@@ -124,6 +153,42 @@ export const CardPreviewScreen: React.FC = () => {
         setCurrentTemplate(result.populatedTemplate);
       }
     }
+  };
+
+  const handleOpenEditInStudio = () => {
+    const store = useTemplateStore.getState();
+    const service = activeServiceId;
+    
+    // Exact template currently assigned to preview for current activeSide
+    const templateToEdit = activeSide === 'back'
+      ? (backPopulatedTemplate || store.getUniversalBackTemplate(service) || currentTemplate)
+      : (frontPopulatedTemplate || store.getUniversalFrontTemplate(service) || currentTemplate);
+
+    const safeTemplate = {
+      ...templateToEdit,
+      serviceId: service,
+      side: activeSide === 'back' ? ('Back Side' as const) : ('Front Side' as const),
+    };
+
+    const context: LastEditingContext = {
+      sourceScreen: 'preview',
+      serviceId: service,
+      side: activeSide,
+      activeSide: activeSide,
+      outputMode: outputMode,
+      zoomLevel: zoomLevel,
+      templateId: safeTemplate.id,
+      frontPopulatedTemplate: frontPopulatedTemplate,
+      backPopulatedTemplate: backPopulatedTemplate,
+      lastNidaFormData: lastNidaFormData,
+      lastDrivingLicenseFormData: lastDrivingLicenseFormData,
+      lastNhifFormData: lastNhifFormData,
+      timestamp: Date.now(),
+    };
+
+    store.setLastEditingContext(context);
+    store.loadTemplate(safeTemplate);
+    store.navigateSafely('editor', service, true);
   };
 
   const fTpl = React.useMemo(() => {
@@ -348,24 +413,12 @@ export const CardPreviewScreen: React.FC = () => {
               <button
                 id="header-studio-btn"
                 type="button"
-                onClick={() => {
-                  const { activeServiceId, setCurrentTemplate, getUniversalFrontTemplate, getUniversalBackTemplate } = useTemplateStore.getState();
-                  const serviceTemplates = {
-                    front: getUniversalFrontTemplate(activeServiceId),
-                    back: getUniversalBackTemplate(activeServiceId)
-                  };
-                  
-                  const rawTemplate = activeSide === 'front' ? serviceTemplates.front : serviceTemplates.back;
-                  if (rawTemplate) {
-                    setCurrentTemplate(rawTemplate);
-                  }
-                  useTemplateStore.getState().navigateSafely('editor', undefined, true);
-                }}
+                onClick={handleOpenEditInStudio}
                 className="hidden sm:flex px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-semibold items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
-                title="Open Studio"
+                title="Edit in Studio"
               >
                 <Sliders className="w-3.5 h-3.5 text-purple-400" />
-                <span>Studio</span>
+                <span>Edit in Studio</span>
               </button>
             )}
           </div>
@@ -672,18 +725,16 @@ export const CardPreviewScreen: React.FC = () => {
               <span>{isPrinting ? 'Printing' : 'Print'}</span>
             </button>
 
-            {isDevMode && authRole === 'admin' && (
+            {authRole === 'admin' && (
               <button
                 id="action-edit-studio-btn"
                 type="button"
-                onClick={() => {
-                  const store = useTemplateStore.getState();
-                  store.setCurrentTemplate(activeTemplate);
-                  store.navigateSafely('editor', store.activeServiceId, true);
-                }}
+                onClick={handleOpenEditInStudio}
+                className="px-4 py-2.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 text-purple-200 hover:text-white border border-purple-500/40 text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer shrink-0 whitespace-nowrap"
+                title="Edit in Studio"
               >
-                <Edit3 className="w-3.5 h-3.5 text-purple-400" />
-                <span>Studio Editor</span>
+                <Sliders className="w-3.5 h-3.5 text-purple-400" />
+                <span>Edit in Studio</span>
               </button>
             )}
           </HorizontalActionRow>

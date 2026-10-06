@@ -48,6 +48,7 @@ export const CanvasWorkspace: React.FC = () => {
   const {
     currentTemplate,
     lastNidaFormData,
+    lastDrivingLicenseFormData,
     zoom,
     setZoom,
     panOffset,
@@ -1158,6 +1159,7 @@ export const CanvasWorkspace: React.FC = () => {
                     // Text Stroke / Outline combining text stroke and simulated bold
                     let finalStroke = layer.strokeEnabled ? layer.strokeColor || '#000000' : undefined;
                     let finalStrokeWidth = layer.strokeEnabled ? (layer.strokeWidth ?? 0.5) * pxPerMm : 0;
+                    
                     if (isBoldSimulationActive) {
                       finalStroke = layer.color || '#000000';
                       // Visual bold simulation: a very small, controlled stroke around the letter edges
@@ -1189,6 +1191,48 @@ export const CanvasWorkspace: React.FC = () => {
                         shadowOpacity={layer.shadowEnabled ? (layer.shadowOpacity ?? 50) / 100 : 0}
                         shadowEnabled={layer.shadowEnabled ?? false}
                       />
+                    );
+                  }
+
+                  if (layer.type === 'licence_category') {
+                    const catLayer = layer as any;
+                    const classes = lastDrivingLicenseFormData?.classes || [];
+                    const cls = classes.find((c: any) => c.classCode === catLayer.category_code && c.enabled);
+                    if (!cls) return null;
+
+                    let displayText = '';
+                    if (catLayer.field_type === 'label') {
+                        displayText = catLayer.category_code;
+                    } else {
+                        const dateStr = catLayer.field_type === 'issue_date' ? cls.issueDate : cls.expiryDate;
+                        if (dateStr) {
+                            const [d, m, y] = dateStr.split('/');
+                            const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+                            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                            
+                            const format = catLayer.display_format || 'MMM DD, YYYY';
+                            if (format === 'MMM DD, YYYY') displayText = `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+                            else if (format === 'DD MMM YYYY') displayText = `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+                            else if (format === 'DD/MM/YYYY') displayText = dateStr;
+                            else if (format === 'DD-MM-YYYY') displayText = `${d}-${m}-${y}`;
+                        }
+                    }
+
+                    return (
+                        <KonvaText
+                            {...commonProps}
+                            text={displayText}
+                            fontFamily={catLayer.fontFamily || 'Helvetica'}
+                            fontSize={(catLayer.fontSize || 3.5) * pxPerMm}
+                            fill={catLayer.color || '#000000'}
+                            width={wPx}
+                            height={hPx}
+                            align={catLayer.align || 'center'}
+                            verticalAlign="middle"
+                            opacity={(catLayer.opacity ?? 1)}
+                            fontStyle={catLayer.fontStyle}
+                            textDecoration={catLayer.textDecoration === 'underline' ? 'underline' : ''}
+                        />
                     );
                   }
 

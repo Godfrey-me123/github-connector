@@ -263,9 +263,9 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
 
       {showCropModal && value && (
         <PhotoCropModal
-          imageUrl={value}
+          imageSrc={value}
           onCropComplete={handleCropComplete}
-          onClose={() => setShowCropModal(false)}
+          onCancel={() => setShowCropModal(false)}
         />
       )}
     </div>

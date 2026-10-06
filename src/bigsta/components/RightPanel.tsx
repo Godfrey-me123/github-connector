@@ -42,6 +42,9 @@ import {
   CheckCircle2,
   Sun,
   Image as ImageIcon,
+  Calendar,
+  Tag,
+  List,
 } from 'lucide-react';
 import { useTemplateStore } from '../store/useTemplateStore';
 import { convertFromMm, convertToMm } from '../utils/units';
@@ -121,6 +124,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
     selectLayer,
     toggleTemplateActive,
     isSaving,
+    activeServiceId,
   } = useTemplateStore();
 
   const [isSavedNotice, setIsSavedNotice] = useState(false);
@@ -181,6 +185,15 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
     applyWeightToLayers(pendingWeight, scope, pendingWeightLayerId);
   };
 
+  const isDrivingLicenseContext =
+    activeServiceId === 'driving_license' ||
+    currentTemplate.cardType === 'Driving License' ||
+    currentTemplate.cardType === 'Driving Licence' ||
+    currentTemplate.serviceId === 'driving_license' ||
+    Boolean(currentTemplate.templateName?.toLowerCase().includes('driving')) ||
+    (selectedLayer as any)?.licenseCategoryGroup !== undefined ||
+    (selectedLayer as any)?.licenseCategoriesSeparator !== undefined;
+
   const variableOptions = [
     { label: 'First Name + Middle Name', val: '{{first_middle_name}}' },
     { label: 'First Name', val: '{{first_name}}' },
@@ -198,11 +211,26 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
     { label: 'Department / Role', val: '{{role}}' },
   ];
 
-  if (!currentTemplate.side || !currentTemplate.side.toLowerCase().includes('back')) {
-    variableOptions.unshift({ label: 'Front Field 9 (Categories)', val: '{{categories_field9}}' });
-  }
-  if (currentTemplate.side && currentTemplate.side.toLowerCase().includes('back')) {
-    variableOptions.unshift({ label: 'Back Categories Table', val: '{{driving_licence_categories}}' });
+  if (isDrivingLicenseContext) {
+    variableOptions.unshift(
+      { label: 'Categories List', val: '{{categories_field9}}' },
+      { label: 'Categories Table', val: '{{driving_licence_categories}}' },
+      { label: 'Class A Issue Date', val: '{{class_a_issue}}' },
+      { label: 'Class A Expiry Date', val: '{{class_a_expiry}}' },
+      { label: 'Class B Issue Date', val: '{{class_b_issue}}' },
+      { label: 'Class B Expiry Date', val: '{{class_b_expiry}}' },
+      { label: 'Class C Issue Date', val: '{{class_c_issue}}' },
+      { label: 'Class C Expiry Date', val: '{{class_c_expiry}}' },
+      { label: 'Class E Issue Date', val: '{{class_e_issue}}' },
+      { label: 'Class E Expiry Date', val: '{{class_e_expiry}}' }
+    );
+  } else {
+    if (!currentTemplate.side || !currentTemplate.side.toLowerCase().includes('back')) {
+      variableOptions.unshift({ label: 'Front Field 9 (Categories)', val: '{{categories_field9}}' });
+    }
+    if (currentTemplate.side && currentTemplate.side.toLowerCase().includes('back')) {
+      variableOptions.unshift({ label: 'Back Categories Table', val: '{{driving_licence_categories}}' });
+    }
   }
 
   // Quick actions header for Save, Generate, and Export
@@ -811,6 +839,87 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
         </div>
 
         {/* 1. COMPACT UNIFIED TEXT PROPERTIES SECTION (User requirement) */}
+        {selectedLayer.type === 'licence_category' && (
+          <CollapsibleSection
+            id="licenceCategoryProps"
+            title="Category Block Settings"
+            icon={<Tag className="w-3.5 h-3.5 text-[#000000]" />}
+            badge={`${(selectedLayer as any).category_code}`}
+            isOpen={true}
+            onToggle={() => {}}
+          >
+            <div className="space-y-3">
+                {/* Basic Settings */}
+                <div className="grid grid-cols-2 gap-2">
+                    <div>
+                        <label className="block text-[11px] font-semibold text-[#000000] mb-1">Category</label>
+                        <select
+                            value={(selectedLayer as any).category_code}
+                            onChange={(e) => updateLayer(selectedLayer.id, { category_code: e.target.value })}
+                            className="w-full px-2 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded text-xs text-[#000000] font-semibold"
+                        >
+                            {['A', 'A1', 'A2', 'A3', 'B', 'B1', 'B2', 'C', 'C1', 'C2', 'C3', 'D', 'D1', 'D2', 'E', 'F', 'G'].map((cat) => (
+                                <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-[11px] font-semibold text-[#000000] mb-1">Date Type</label>
+                        <select
+                            value={(selectedLayer as any).field_type}
+                            onChange={(e) => updateLayer(selectedLayer.id, { field_type: e.target.value })}
+                            className="w-full px-2 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded text-xs text-[#000000] font-semibold"
+                        >
+                            <option value="label">Category Label</option>
+                            <option value="issue_date">Issue Date</option>
+                            <option value="expiry_date">Expiry Date</option>
+                        </select>
+                    </div>
+                </div>
+
+                {/* Display Format */}
+                {((selectedLayer as any).field_type === 'issue_date' || (selectedLayer as any).field_type === 'expiry_date') && (
+                    <div>
+                        <label className="block text-[11px] font-semibold text-[#000000] mb-1">Display Format</label>
+                        <select
+                            value={(selectedLayer as any).display_format || 'MMM DD, YYYY'}
+                            onChange={(e) => updateLayer(selectedLayer.id, { display_format: e.target.value })}
+                            className="w-full px-2 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded text-xs text-[#000000] font-semibold"
+                        >
+                            <option value="MMM DD, YYYY">Jun 16, 1981</option>
+                            <option value="DD MMM YYYY">16 Jun 1981</option>
+                            <option value="DD/MM/YYYY">16/06/1981</option>
+                            <option value="DD-MM-YYYY">16-06-1981</option>
+                        </select>
+                    </div>
+                )}
+                
+                <hr className="border-[#dadcdc]" />
+
+                {/* Styling Properties */}
+                <div>
+                    <label className="block text-[11px] font-semibold text-[#000000] mb-1">Font Size (mm)</label>
+                    <input
+                        type="number"
+                        step="0.1"
+                        value={(selectedLayer as any).fontSize}
+                        onChange={(e) => updateLayer(selectedLayer.id, { fontSize: parseFloat(e.target.value) || 3.5 })}
+                        className="w-full px-2.5 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded-lg text-xs font-mono text-[#000000]"
+                    />
+                </div>
+                <div>
+                    <label className="block text-[11px] font-semibold text-[#000000] mb-1">Color</label>
+                    <input
+                        type="color"
+                        value={(selectedLayer as any).color || '#000000'}
+                        onChange={(e) => updateLayer(selectedLayer.id, { color: e.target.value })}
+                        className="w-full h-8 cursor-pointer"
+                    />
+                </div>
+            </div>
+          </CollapsibleSection>
+        )}
+        
         {selectedLayer.type === 'text' && (
           <CollapsibleSection
             id="textProps"

@@ -13,6 +13,9 @@ import {
   Shield,
   FileSignature,
   Upload,
+  Calendar,
+  List,
+  Layers,
 } from 'lucide-react';
 import { useTemplateStore } from '../store/useTemplateStore';
 import { Layer, ShapeType, BarcodeType } from '../types';
@@ -261,10 +264,11 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({ onElementAdded }) 
     e.target.value = '';
   };
 
-  const handleAddGroupCategoryDate = () => {
+  const handleAddCategoryDate = (code = 'A', dateType: 'issueDate' | 'expiryDate' = 'issueDate') => {
+    const isExpiry = dateType === 'expiryDate';
     const newLayer: Layer = {
       id: 'dl_gdate_' + Date.now(),
-      name: 'Group Category Date (A)',
+      name: `Class ${code} ${isExpiry ? 'Expiry' : 'Issue'} Date`,
       type: 'text',
       x: 10,
       y: 10,
@@ -274,9 +278,9 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({ onElementAdded }) 
       opacity: 1,
       locked: false,
       hidden: false,
-      text: '12/05/2026',
-      licenseCategoryGroup: 'A',
-      licenseCategoryDateType: 'issueDate',
+      text: isExpiry ? '12/05/2029' : '12/05/2026',
+      licenseCategoryGroup: code,
+      licenseCategoryDateType: dateType,
       fontFamily: 'Helvetica',
       fontSize: 3.0,
       fontWeight: 700,
@@ -291,10 +295,14 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({ onElementAdded }) 
     onElementAdded?.();
   };
 
+  const handleAddGroupCategoryDate = () => {
+    handleAddCategoryDate('A', 'issueDate');
+  };
+
   const handleAddLicenceCategories = () => {
     const newLayer: Layer = {
       id: 'dl_cats_' + Date.now(),
-      name: 'Licence Categories List',
+      name: 'Categories List',
       type: 'text',
       x: 10,
       y: 10,
@@ -320,8 +328,55 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({ onElementAdded }) 
     onElementAdded?.();
   };
 
+  const handleAddLicenceCategoryBlock = (category_code = 'A', field_type: 'label' | 'issue_date' | 'expiry_date' = 'label') => {
+    const newLayer: Layer = {
+      id: 'lic_cat_' + Date.now(),
+      name: `Category ${category_code} ${field_type.replace('_', ' ')}`,
+      type: 'licence_category',
+      category_code,
+      field_type,
+      display_format: 'MMM DD, YYYY',
+      fontFamily: 'Helvetica',
+      fontSize: 3.5,
+      fontWeight: 700,
+      fontStyle: 'bold',
+      textDecoration: 'none',
+      color: '#000000',
+      align: 'center',
+      letterSpacing: 0,
+      lineHeight: 1.1,
+      x: 10,
+      y: 10,
+      width: 30,
+      height: 5,
+      rotation: 0,
+      opacity: 1,
+      locked: false,
+      hidden: false,
+    } as any; // Cast as any to bypass Layer type checking
+    addLayer(newLayer);
+    onElementAdded?.();
+  };
+
   return (
     <div className="space-y-4 pb-4 bg-[#FFFFFF]">
+      {/* Licence Category Elements (New) */}
+      <div>
+        <div className="flex items-center gap-1.5 text-xs font-bold text-[#000000] mb-2">
+          <Tag className="w-3.5 h-3.5 text-[#000000]" />
+          <span>Licence Category Block</span>
+        </div>
+        <button
+          onClick={() => handleAddLicenceCategoryBlock('A', 'label')}
+          className="w-full p-2.5 rounded-lg bg-sky-50 hover:bg-sky-100 border border-sky-300 text-xs font-semibold text-[#000000] flex items-center gap-2 transition-colors min-h-[42px] cursor-pointer"
+        >
+          <div className="w-5 h-5 rounded bg-sky-500/20 text-sky-700 flex items-center justify-center flex-shrink-0">
+            <Tag className="w-3.5 h-3.5" />
+          </div>
+          <span className="truncate">Add Licence Category Block</span>
+        </button>
+      </div>
+
       {/* 1. Service Dynamic Template Fields */}
       <div>
         <div className="flex items-center justify-between text-xs font-bold text-[#000000] mb-2">
@@ -421,42 +476,36 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({ onElementAdded }) 
                 <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
                 <span className="truncate">Sex / Gender</span>
               </button>
-              {(!currentTemplate.side || !currentTemplate.side.toLowerCase().includes('back')) && (
-                <>
-                  <button
-                    onClick={() => handleAddText('{{categories_field9}}')}
-                    className="p-2 rounded-lg bg-[#FDE68A] hover:bg-[#fcd34d] border border-[#f59e0b] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer col-span-2"
-                  >
-                    <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
-                    <span className="truncate">Front Field 9 (Categories of Vehicles)</span>
-                  </button>
-                  <button
-                    onClick={handleAddLicenceCategories}
-                    className="p-2 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200 text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer col-span-2"
-                  >
-                    <Brackets className="w-3.5 h-3.5 text-purple-600 flex-shrink-0" />
-                    <span className="truncate">Licence Categories List (Front Custom)</span>
-                  </button>
-                </>
-              )}
-              {currentTemplate.side && currentTemplate.side.toLowerCase().includes('back') && (
-                <>
-                  <button
-                    onClick={() => handleAddText('{{driving_licence_categories}}')}
-                    className="p-2 rounded-lg bg-[#ECA6FC] hover:bg-[#e48efa] border border-[#dd76f8] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer col-span-2"
-                  >
-                    <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
-                    <span className="truncate">Back Table (Driving Licence Categories)</span>
-                  </button>
-                  <button
-                    onClick={handleAddGroupCategoryDate}
-                    className="p-2 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer col-span-2"
-                  >
-                    <Brackets className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
-                    <span className="truncate">Group Category Date (Back Custom)</span>
-                  </button>
-                </>
-              )}
+              {/* Category Elements for Driving License */}
+              <button
+                onClick={() => handleAddCategoryDate('A', 'issueDate')}
+                className="p-2 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-300 text-xs font-semibold text-[#000000] flex items-center gap-2 transition-colors min-h-[40px] cursor-pointer col-span-2"
+              >
+                <div className="w-5 h-5 rounded-md bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0">
+                  <Calendar className="w-3.5 h-3.5" />
+                </div>
+                <span className="truncate">Category Date</span>
+              </button>
+
+              <button
+                onClick={handleAddLicenceCategories}
+                className="p-2 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-300 text-xs font-semibold text-[#000000] flex items-center gap-2 transition-colors min-h-[40px] cursor-pointer"
+              >
+                <div className="w-5 h-5 rounded-md bg-purple-500/20 text-purple-700 flex items-center justify-center shrink-0">
+                  <List className="w-3.5 h-3.5" />
+                </div>
+                <span className="truncate">Categories List</span>
+              </button>
+
+              <button
+                onClick={() => handleAddText('{{driving_licence_categories}}')}
+                className="p-2 rounded-lg bg-pink-50 hover:bg-pink-100 border border-pink-300 text-xs font-semibold text-[#000000] flex items-center gap-2 transition-colors min-h-[40px] cursor-pointer"
+              >
+                <div className="w-5 h-5 rounded-md bg-pink-500/20 text-pink-700 flex items-center justify-center shrink-0">
+                  <Layers className="w-3.5 h-3.5" />
+                </div>
+                <span className="truncate">Categories Table</span>
+              </button>
             </>
           )}
 

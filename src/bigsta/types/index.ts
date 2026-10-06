@@ -5,7 +5,7 @@ export type Unit = 'px' | 'mm' | 'cm' | 'in';
 export type CardType = 'National ID' | 'Employee ID' | 'Student ID' | 'Membership Card' | 'NHIF Membership Card' | 'Access Badge' | 'Driving License' | 'Other';
 export type CardSide = 'Front Side' | 'Back Side' | 'Full Card' | 'Single Side';
 
-export type LayerType = 'text' | 'image' | 'placeholder' | 'shape' | 'barcode' | 'qrcode' | 'group';
+export type LayerType = 'text' | 'image' | 'placeholder' | 'shape' | 'barcode' | 'qrcode' | 'group' | 'licence_category';
 
 export type ShapeType = 'rectangle' | 'circle' | 'line' | 'polygon';
 
@@ -100,9 +100,18 @@ export interface TextLayer extends BaseLayer {
   widthPreset?: 'normal' | 'condensed' | 'semi_condensed' | 'expanded' | 'semi_expanded';
 
   // Driving License Specific Custom Properties
-  licenseCategoryGroup?: string; // A, A1, A2, A3, B, C, C1, C2, C3, D, E, F, G
+  licenseCategoryGroup?: string; // Legacy support (A, A1, B, C, etc.)
   licenseCategoryDateType?: 'issueDate' | 'expiryDate';
   licenseCategoriesSeparator?: 'spaceSeparated' | 'commaSeparated' | 'slashSeparated';
+
+  // Master Category Engine Properties (Prompt Rebuild)
+  isCategoryElement?: boolean;
+  categoryCode?: string;
+  displayMode?: 'code' | 'issueDate' | 'expiryDate' | 'fullRow' | 'custom';
+  linkedIssueDateElementId?: string;
+  linkedExpiryDateElementId?: string;
+  visibilityRule?: 'showIfSelected' | 'alwaysShow' | 'hideIfSelected';
+  linkedElementIds?: string[];
 }
 
 export interface ImageLayer extends BaseLayer {
@@ -146,9 +155,38 @@ export interface QRCodeLayer extends BaseLayer {
   colorLight: string;
 }
 
-export interface GroupLayer extends BaseLayer {
-  type: 'group';
-  childrenIds: string[];
+export interface LicenceCategoryLayer extends BaseLayer {
+  type: 'licence_category';
+  category_code: string; // 'A', 'A1', ...
+  field_type: 'label' | 'issue_date' | 'expiry_date';
+  date_value?: string; // Stored date
+  display_format?: 'MMM DD, YYYY' | 'DD MMM YYYY' | 'DD/MM/YYYY' | 'DD-MM-YYYY';
+
+  // Text Styling Properties (mirrored from TextLayer)
+  fontFamily: string;
+  fontSize: number; // in pt or mm
+  fontStyle: string; // e.g. 'normal', 'bold', 'italic', 'bold italic', '700', etc.
+  fontWeight?: number;
+  textDecoration: 'none' | 'underline';
+  color: string;
+  align: 'left' | 'center' | 'right' | 'justify';
+  letterSpacing: number;
+  lineHeight: number;
+  verticalScale?: number;
+  horizontalScale?: number;
+  textOpacity?: number;
+  strokeEnabled?: boolean;
+  strokeWidth?: number;
+  strokeColor?: string;
+  shadowEnabled?: boolean;
+  shadowColor?: string;
+  shadowOpacity?: number;
+  shadowBlur?: number;
+  shadowOffsetX?: number;
+  shadowOffsetY?: number;
+  textCase?: 'original' | 'uppercase' | 'lowercase' | 'capitalize';
+  boldSimulation?: 'normal' | 'bold' | 'simulated_bold';
+  widthPreset?: 'normal' | 'condensed' | 'semi_condensed' | 'expanded' | 'semi_expanded';
 }
 
 export type Layer =
@@ -158,7 +196,8 @@ export type Layer =
   | ShapeLayer
   | BarcodeLayer
   | QRCodeLayer
-  | GroupLayer;
+  | GroupLayer
+  | LicenceCategoryLayer;
 
 export interface BackgroundConfig {
   type: 'image' | 'color';
@@ -383,4 +422,20 @@ export interface UserPaymentSubmission {
   extractedData: ExtractedPaymentData;
   rejectionReason?: string;
   tokensGranted?: number;
+}
+
+export interface LastEditingContext {
+  sourceScreen: 'preview' | string;
+  serviceId: string;
+  side: 'front' | 'back' | CardSide;
+  activeSide?: 'front' | 'back';
+  outputMode?: 'single' | 'merge';
+  zoomLevel?: number;
+  templateId?: string;
+  frontPopulatedTemplate?: CardTemplate | null;
+  backPopulatedTemplate?: CardTemplate | null;
+  lastNidaFormData?: any;
+  lastDrivingLicenseFormData?: any;
+  lastNhifFormData?: any;
+  timestamp?: number;
 }

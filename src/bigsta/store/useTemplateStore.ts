@@ -18,11 +18,17 @@ import {
   AdminSystemSettings,
   UserPaymentSubmission,
   TokenTransaction,
+  LastEditingContext,
 } from '../types';
 import { CR80_WIDTH_MM, CR80_HEIGHT_MM } from '../utils/units';
 import { SAMPLE_TEMPLATES } from '../utils/sampleTemplates';
 import { ensureTemplateFieldIds, sanitizeTemplateForSaving, SupportedBinding, isBackSideTemplate } from '../utils/templateMappingEngine';
 import { getClosestValidWeight } from '../utils/fonts';
+// import { parseUniversalGSON } from '../utils/gsonImporter';
+
+const parseUniversalGSON = (jsonString: string, asNew: boolean) => {
+  return { success: false, message: 'GSON import not supported' };
+};
 import {
   saveTemplateDB,
   getAllTemplatesDB,
@@ -447,6 +453,9 @@ interface TemplateState {
 
   // Studio Working Mode & Universal Navigation
   studioMode: boolean;
+  lastEditingContext: LastEditingContext | null;
+  setLastEditingContext: (context: LastEditingContext | null) => void;
+  returnToEditingContext: () => void;
   navigationHistory: Array<{
     screen: 'home' | 'upload' | 'editor' | 'templates' | 'nida' | 'nida_request' | 'preview' | 'downloads' | 'driving_license' | 'nhif' | 'admin-payments' | 'billing' | 'settings';
     serviceId?: string;
@@ -1461,23 +1470,21 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
 
     importTemplateJSON: async (jsonString, asNew = false) => {
       try {
-        const data = JSON.parse(jsonString);
-        if (!data.layers) throw new Error('Invalid template data');
-        
-        const template: CardTemplate = {
-          ...data,
-          id: asNew ? `tpl_${Date.now()}` : (data.id || `tpl_${Date.now()}`),
-          updatedAt: new Date().toISOString()
-        };
+        const result = parseUniversalGSON(jsonString, asNew);
+        if (!result.success || !result.template) {
+          return { success: false, message: result.message };
+        }
+
+        const template = result.template;
 
         if (asNew) {
           await saveTemplateDB(template);
           const all = await getAllTemplatesDB();
           set({ customTemplates: all });
         } else {
-          set({ currentTemplate: template });
+          get().loadTemplate(template);
         }
-        return { success: true, message: 'Template imported successfully' };
+        return { success: true, message: result.message };
       } catch (e: any) {
         return { success: false, message: e.message || 'Import failed' };
       }
@@ -1564,6 +1571,12 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
 
     goBack: () => {
       const current = get().activeScreen;
+
+      // 0. From 'editor' (Studio), if lastEditingContext came from 'preview', return directly to preview!
+      if (current === 'editor' && get().lastEditingContext?.sourceScreen === 'preview') {
+        get().returnToEditingContext();
+        return;
+      }
 
       // 1. Any service form (nida, driving_license, nhif) must ALWAYS navigate directly to 'home' when back is pressed!
       if (current === 'nida' || current === 'nida_request' || current === 'driving_license' || current === 'nhif') {
@@ -3706,6 +3719,72 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
   isSaveModalOpen: false,
   activeMobileSheet: null,
 
+  lastEditingContext: null,
+  setLastEditingContext: (context) => set({ lastEditingContext: context }),
+  returnToEditingContext: () => {
+    const ctx = get().lastEditingContext;
+    if (!ctx) {
+      get().navigateSafely('preview');
+      return;
+    }
+
+    if (ctx.serviceId) {
+      get().setActiveServiceId(ctx.serviceId);
+    }
+
+    const curr = get().currentTemplate;
+    const isBack = ctx.side === 'back' || ctx.side === 'Back Side' || ctx.activeSide === 'back' || isBackSideTemplate(curr);
+
+    let updatedFront = get().frontPopulatedTemplate;
+    let updatedBack = get().backPopulatedTemplate;
+
+    if (isBack) {
+      const existing = get().backPopulatedTemplate;
+      updatedBack = existing
+        ? {
+            ...existing,
+            ...curr,
+            layers: curr.layers || existing.layers,
+            background: curr.background || existing.background,
+          }
+        : { ...curr, side: 'Back Side' };
+    } else {
+      const existing = get().frontPopulatedTemplate;
+      updatedFront = existing
+        ? {
+            ...existing,
+            ...curr,
+            layers: curr.layers || existing.layers,
+            background: curr.background || existing.background,
+          }
+        : { ...curr, side: 'Front Side' };
+    }
+
+    const updates: Partial<TemplateStore> = {
+      frontPopulatedTemplate: updatedFront,
+      backPopulatedTemplate: updatedBack,
+      currentTemplate: isBack ? updatedBack : updatedFront,
+      activeScreen: 'preview',
+      studioMode: false,
+      hasUnsavedChanges: false,
+      isUnsavedModalOpen: false,
+      isSaveModalOpen: false,
+      pendingNavigation: null,
+    };
+
+    if (ctx.lastNidaFormData && !get().lastNidaFormData) {
+      updates.lastNidaFormData = ctx.lastNidaFormData;
+    }
+    if (ctx.lastDrivingLicenseFormData && !get().lastDrivingLicenseFormData) {
+      updates.lastDrivingLicenseFormData = ctx.lastDrivingLicenseFormData;
+    }
+    if (ctx.lastNhifFormData && !get().lastNhifFormData) {
+      updates.lastNhifFormData = ctx.lastNhifFormData;
+    }
+
+    set(updates);
+  },
+
   nidaSuccessNotification: null,
   setNidaSuccessNotification: (notification) => set({ nidaSuccessNotification: notification }),
 
@@ -4055,11 +4134,17 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
           y: l.y + 3.0,
         };
 
-        // Ensure category binding is unique if it's a category element
-        if (copy.type === 'text' && (copy as TextLayer).licenseCategoryGroup) {
-          // If it had a specific group, treat it as a fresh element
-          // The critical requirement: No inherited category identity/mapping.
-          // By regenerating the ID and not sharing the mapping record, we satisfy this.
+        // Ensure category element has independent identity and does NOT inherit previous linked bindings
+        if (copy.type === 'text') {
+          const textCopy = copy as TextLayer;
+          if (textCopy.isCategoryElement || textCopy.categoryCode || textCopy.licenseCategoryGroup) {
+            textCopy.linkedIssueDateElementId = undefined;
+            textCopy.linkedExpiryDateElementId = undefined;
+            textCopy.linkedElementIds = [];
+            textCopy.bindingKey = undefined;
+            textCopy.fieldName = undefined;
+            textCopy.fieldId = undefined;
+          }
         }
 
         duplicates.push(copy);

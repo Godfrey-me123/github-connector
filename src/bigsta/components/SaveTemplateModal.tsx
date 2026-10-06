@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Copy, RefreshCw, CheckCircle, Tag, Layers, Star, Sparkles } from 'lucide-react';
+import { X, Save, Copy, RefreshCw, CheckCircle, Tag, Layers, Star } from 'lucide-react';
 import { useTemplateStore } from '../store/useTemplateStore';
 import { CardTemplate, CardType, CardSide } from '../types';
 
@@ -15,6 +15,7 @@ export const SaveTemplateModal: React.FC = () => {
     activeServiceId,
     saveUniversalFrontTemplate,
     saveUniversalBackTemplate,
+    lastEditingContext,
   } = useTemplateStore();
 
   const [mode, setMode] = useState<'options' | 'saveAs'>('options');
@@ -24,21 +25,22 @@ export const SaveTemplateModal: React.FC = () => {
   const [existingTemplates, setExistingTemplates] = useState<CardTemplate[]>([]);
   const [conflictTemplate, setConflictTemplate] = useState<CardTemplate | null>(null);
   const [isSavedSuccess, setIsSavedSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('Template Saved Successfully!');
+  const [successMessage, setSuccessMessage] = useState('Template Saved');
 
   useEffect(() => {
     if (isSaveModalOpen) {
       setTemplateName(currentTemplate.templateName);
       setCardType(currentTemplate.cardType || 'National ID');
-      setSide(currentTemplate.side || 'Front Side');
+      const isBack = currentTemplate.side === 'Back Side' || (currentTemplate.side as string) === 'back' || (lastEditingContext?.side === 'back' || lastEditingContext?.side === 'Back Side');
+      setSide(isBack ? 'Back Side' : 'Front Side');
       setMode('options');
       setConflictTemplate(null);
       setIsSavedSuccess(false);
-      setSuccessMessage('Template Saved Successfully!');
+      setSuccessMessage('Template Saved');
 
       loadSavedTemplates().then(setExistingTemplates);
     }
-  }, [isSaveModalOpen, currentTemplate, loadSavedTemplates]);
+  }, [isSaveModalOpen, currentTemplate, loadSavedTemplates, lastEditingContext]);
 
   // Escape key listener
   useEffect(() => {
@@ -52,15 +54,32 @@ export const SaveTemplateModal: React.FC = () => {
 
   if (!isSaveModalOpen) return null;
 
+  const handlePostSaveTransition = (customMessage?: string) => {
+    const store = useTemplateStore.getState();
+    const context = store.lastEditingContext;
+
+    setSuccessMessage(customMessage || 'Template Saved');
+    setIsSavedSuccess(true);
+
+    if (context && (context.sourceScreen === 'preview' || context.serviceId)) {
+      setTimeout(() => {
+        setIsSavedSuccess(false);
+        setSaveModalOpen(false);
+        // Trigger transition back to preview screen with exact parameters cached in lastEditingContext
+        store.returnToEditingContext();
+      }, 900);
+    } else {
+      setTimeout(() => {
+        setIsSavedSuccess(false);
+        setSaveModalOpen(false);
+      }, 1000);
+    }
+  };
+
   const handleQuickSave = async () => {
     updateTemplateMeta({ cardType, side });
     await saveCurrentTemplate();
-    setSuccessMessage('Template Saved Successfully!');
-    setIsSavedSuccess(true);
-    setTimeout(() => {
-      setIsSavedSuccess(false);
-      setSaveModalOpen(false);
-    }, 1200);
+    handlePostSaveTransition('Template Saved');
   };
 
   const handleUniversalSave = async () => {
@@ -74,19 +93,14 @@ export const SaveTemplateModal: React.FC = () => {
       templateName: templateName.trim() || currentTemplate.templateName,
     };
 
-    if (side === 'Back Side') {
+    const isBack = side === 'Back Side' || (side as string) === 'back';
+    if (isBack) {
       await saveUniversalBackTemplate(activeServiceId, tplToSave);
-      setSuccessMessage(`Universal Back Template Saved for ${activeServiceId.replace('_', ' ').toUpperCase()}!`);
+      handlePostSaveTransition('Universal Saved');
     } else {
       await saveUniversalFrontTemplate(activeServiceId, tplToSave);
-      setSuccessMessage(`Universal Front Template Saved for ${activeServiceId.replace('_', ' ').toUpperCase()}!`);
+      handlePostSaveTransition('Universal Saved');
     }
-
-    setIsSavedSuccess(true);
-    setTimeout(() => {
-      setIsSavedSuccess(false);
-      setSaveModalOpen(false);
-    }, 1500);
   };
 
   const checkConflictAndSaveAs = async (nameToSave: string) => {
@@ -101,12 +115,7 @@ export const SaveTemplateModal: React.FC = () => {
       setConflictTemplate(existingMatch);
     } else {
       await saveAsNewTemplate(trimmed, cardType, side);
-      setSuccessMessage('New Template Created & Saved!');
-      setIsSavedSuccess(true);
-      setTimeout(() => {
-        setIsSavedSuccess(false);
-        setSaveModalOpen(false);
-      }, 1200);
+      handlePostSaveTransition('Template Created');
     }
   };
 
@@ -122,23 +131,13 @@ export const SaveTemplateModal: React.FC = () => {
     };
     useTemplateStore.getState().loadTemplate(updated);
     await saveCurrentTemplate();
-    setSuccessMessage('Template Replaced Successfully!');
-    setIsSavedSuccess(true);
-    setTimeout(() => {
-      setIsSavedSuccess(false);
-      setSaveModalOpen(false);
-    }, 1200);
+    handlePostSaveTransition('Template Replaced');
   };
 
   const handleCreateNewCopy = async () => {
     const copyName = `${templateName.trim()} (Copy)`;
     await saveAsNewTemplate(copyName, cardType, side);
-    setSuccessMessage('New Copy Created & Saved!');
-    setIsSavedSuccess(true);
-    setTimeout(() => {
-      setIsSavedSuccess(false);
-      setSaveModalOpen(false);
-    }, 1200);
+    handlePostSaveTransition('Copy Created');
   };
 
   return (
@@ -158,9 +157,6 @@ export const SaveTemplateModal: React.FC = () => {
             </div>
             <div>
               <h2 className="text-lg font-bold text-[#000000]">Save Template</h2>
-              <p className="text-xs text-[#555555] font-medium">
-                Choose standard save or Universal Default Save
-              </p>
             </div>
           </div>
 
@@ -179,9 +175,6 @@ export const SaveTemplateModal: React.FC = () => {
             <div className="py-8 flex flex-col items-center justify-center text-center space-y-2">
               <CheckCircle className="w-12 h-12 text-[#000000] animate-bounce" />
               <h3 className="text-base font-bold text-[#000000]">{successMessage}</h3>
-              <p className="text-xs text-[#555555] font-medium">
-                Your template data is safely stored in persistent storage.
-              </p>
             </div>
           ) : conflictTemplate ? (
             /* Conflict Resolution View */

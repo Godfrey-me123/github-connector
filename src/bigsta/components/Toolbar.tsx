@@ -78,6 +78,9 @@ export const Toolbar: React.FC = () => {
     saveUniversalFrontTemplate,
     saveUniversalBackTemplate,
     importTemplateJSON,
+    setSaveModalOpen,
+    lastEditingContext,
+    returnToEditingContext,
   } = useTemplateStore();
 
   const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState(false);
@@ -573,7 +576,14 @@ export const Toolbar: React.FC = () => {
                       await saveUniversalFrontTemplate(activeServiceId, currentTemplate);
                       setIsSavedNotice(true);
                       setShowSaveDropdown(false);
-                      setTimeout(() => setIsSavedNotice(false), 2000);
+                      if (lastEditingContext?.sourceScreen === 'preview') {
+                        setTimeout(() => {
+                          setIsSavedNotice(false);
+                          returnToEditingContext();
+                        }, 1000);
+                      } else {
+                        setTimeout(() => setIsSavedNotice(false), 2000);
+                      }
                     }}
                     className="w-full text-left px-3 py-2 bg-[#F0FDF4] hover:bg-[#DCFCE7] rounded-lg text-[#000000] font-bold transition-colors cursor-pointer flex items-center justify-between border border-[#BBF7D0]"
                   >
@@ -585,7 +595,14 @@ export const Toolbar: React.FC = () => {
                       await saveUniversalBackTemplate(activeServiceId, currentTemplate);
                       setIsSavedNotice(true);
                       setShowSaveDropdown(false);
-                      setTimeout(() => setIsSavedNotice(false), 2000);
+                      if (lastEditingContext?.sourceScreen === 'preview') {
+                        setTimeout(() => {
+                          setIsSavedNotice(false);
+                          returnToEditingContext();
+                        }, 1000);
+                      } else {
+                        setTimeout(() => setIsSavedNotice(false), 2000);
+                      }
                     }}
                     className="w-full text-left px-3 py-2 bg-[#FAF5FF] hover:bg-[#F3E8FF] rounded-lg text-[#000000] font-bold transition-colors cursor-pointer flex items-center justify-between border border-[#E9D5FF]"
                   >
@@ -600,7 +617,14 @@ export const Toolbar: React.FC = () => {
                         await saveCurrentTemplate();
                         setIsSavedNotice(true);
                         setShowSaveDropdown(false);
-                        setTimeout(() => setIsSavedNotice(false), 2000);
+                        if (lastEditingContext?.sourceScreen === 'preview') {
+                          setTimeout(() => {
+                            setIsSavedNotice(false);
+                            returnToEditingContext();
+                          }, 1000);
+                        } else {
+                          setTimeout(() => setIsSavedNotice(false), 2000);
+                        }
                       }, 50);
                     }}
                     className="w-full text-left px-3 py-2 hover:bg-[#E7E9EB] rounded-lg text-[#000000] font-bold transition-colors cursor-pointer flex items-center justify-between"
@@ -615,13 +639,31 @@ export const Toolbar: React.FC = () => {
                         await saveCurrentTemplate();
                         setIsSavedNotice(true);
                         setShowSaveDropdown(false);
-                        setTimeout(() => setIsSavedNotice(false), 2000);
+                        if (lastEditingContext?.sourceScreen === 'preview') {
+                          setTimeout(() => {
+                            setIsSavedNotice(false);
+                            returnToEditingContext();
+                          }, 1000);
+                        } else {
+                          setTimeout(() => setIsSavedNotice(false), 2000);
+                        }
                       }, 50);
                     }}
                     className="w-full text-left px-3 py-2 hover:bg-[#E7E9EB] rounded-lg text-[#000000] font-bold transition-colors cursor-pointer flex items-center justify-between"
                   >
                     <span>Save as Custom Back</span>
                     <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#ECA6FC] text-[#000000] border border-[#dd76f8]">BACK</span>
+                  </button>
+                  <div className="my-1 border-t border-[#E7E9EB]" />
+                  <button
+                    onClick={() => {
+                      setShowSaveDropdown(false);
+                      setSaveModalOpen(true);
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-[#E7E9EB] rounded-lg text-[#000000] font-bold transition-colors cursor-pointer flex items-center justify-between"
+                  >
+                    <span>Save Options...</span>
+                    <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-[#E7E9EB] text-[#000000] border border-[#dadcdc]">MODAL</span>
                   </button>
                 </div>
               </>

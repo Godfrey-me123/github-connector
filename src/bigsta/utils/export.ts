@@ -294,12 +294,14 @@ export async function renderTemplateToCanvas(
 
       if (isCategoryDateLayer) {
         const classes = cardData.classes || effectiveCardData.classes || (cardData as any).categories || [];
+        const groupCode = String((layer as any).licenseCategoryGroup || '').trim().toUpperCase();
         const matchedClass = Array.isArray(classes)
-          ? classes.find((c: any) => c && c.classCode === (layer as any).licenseCategoryGroup)
+          ? classes.find((c: any) => c && String(c.classCode || '').trim().toUpperCase() === groupCode)
           : undefined;
-        const isEnabled = matchedClass && Boolean(matchedClass.enabled);
+        const isEnabled = matchedClass && Boolean(matchedClass.enabled || matchedClass.selected || matchedClass.checked);
         if (isEnabled) {
-          const rawDate = (layer as any).licenseCategoryDateType === 'expiryDate'
+          const isExpiryType = (layer as any).licenseCategoryDateType === 'expiryDate' || /exp/i.test(String((layer as any).licenseCategoryDateType || ''));
+          const rawDate = isExpiryType
             ? (matchedClass.expiryDate || cardData.dateOfExpiry || effectiveCardData.dateOfExpiry || cardData.expiryDate || effectiveCardData.expiryDate || '')
             : (matchedClass.issueDate || cardData.dateOfIssue || effectiveCardData.dateOfIssue || cardData.issueDate || effectiveCardData.issueDate || '');
           textVal = rawDate ? formatToDdMmYyyy(rawDate) : '';
