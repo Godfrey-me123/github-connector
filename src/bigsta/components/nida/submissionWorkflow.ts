@@ -1,21 +1,30 @@
-import { NidaFormData } from './NidaFormScreen';
-import { CardTemplate } from '../../types';
-import { validateNidaNumber } from './nidaValidation';
-import { isTemplateSelectedOrCreated, detectTemplateType, TEMPLATE_TYPE_PROFILES } from '../../utils/templateTypeDetector';
-import { planTemplateMapping, applyTemplateMapping, PopulatedTemplateResult, isBackSideTemplate } from '../../utils/templateMappingEngine';
+import { NidaFormData } from "./NidaFormScreen";
+import { CardTemplate } from "../../types";
+import { validateNidaNumber } from "./nidaValidation";
+import {
+  isTemplateSelectedOrCreated,
+  detectTemplateType,
+  TEMPLATE_TYPE_PROFILES,
+} from "../../utils/templateTypeDetector";
+import {
+  planTemplateMapping,
+  applyTemplateMapping,
+  PopulatedTemplateResult,
+  isBackSideTemplate,
+} from "../../utils/templateMappingEngine";
 
 export type SubmissionStepId =
-  | 'step1_fields'
-  | 'step2_nida'
-  | 'step3_photo'
-  | 'step4_signature'
-  | 'step5_terms'
-  | 'step6_template'
-  | 'step7_mapping'
-  | 'step8_populate'
-  | 'step9_open';
+  | "step1_fields"
+  | "step2_nida"
+  | "step3_photo"
+  | "step4_signature"
+  | "step5_terms"
+  | "step6_template"
+  | "step7_mapping"
+  | "step8_populate"
+  | "step9_open";
 
-export type StepStatus = 'pending' | 'in_progress' | 'completed' | 'failed';
+export type StepStatus = "pending" | "in_progress" | "completed" | "failed";
 
 export interface WorkflowStep {
   id: SubmissionStepId;
@@ -35,67 +44,67 @@ export interface WorkflowValidationResult {
 
 export const INITIAL_SUBMISSION_STEPS: WorkflowStep[] = [
   {
-    id: 'step1_fields',
+    id: "step1_fields",
     stepNumber: 1,
-    label: 'Validate All Fields',
-    description: 'Verifying personal identification details (Names, DOB, Gender)',
-    status: 'pending',
+    label: "Validate All Fields",
+    description: "Verifying personal identification details (Names, DOB, Gender)",
+    status: "pending",
   },
   {
-    id: 'step2_nida',
+    id: "step2_nida",
     stepNumber: 2,
-    label: 'Validate NIDA Number',
-    description: 'Verifying 20-digit Tanzania standard format and birthdate block',
-    status: 'pending',
+    label: "Validate NIDA Number",
+    description: "Verifying 20-digit Tanzania standard format and birthdate block",
+    status: "pending",
   },
   {
-    id: 'step3_photo',
+    id: "step3_photo",
     stepNumber: 3,
-    label: 'Validate Passport Photo',
-    description: 'Checking compliant 35×45mm biometric portrait photograph',
-    status: 'pending',
+    label: "Validate Passport Photo",
+    description: "Checking compliant 35×45mm biometric portrait photograph",
+    status: "pending",
   },
   {
-    id: 'step4_signature',
+    id: "step4_signature",
     stepNumber: 4,
-    label: 'Validate Digital Signature',
-    description: 'Checking recorded specimen signature image or drawing',
-    status: 'pending',
+    label: "Validate Digital Signature",
+    description: "Checking recorded specimen signature image or drawing",
+    status: "pending",
   },
   {
-    id: 'step5_terms',
+    id: "step5_terms",
     stepNumber: 5,
-    label: 'Validate Terms Acceptance',
-    description: 'Confirming legal terms & statutory registration consent',
-    status: 'pending',
+    label: "Validate Terms Acceptance",
+    description: "Confirming legal terms & statutory registration consent",
+    status: "pending",
   },
   {
-    id: 'step6_template',
+    id: "step6_template",
     stepNumber: 6,
-    label: 'Check Template Exists',
-    description: 'Verifying active ID card template in workspace',
-    status: 'pending',
+    label: "Check Template Exists",
+    description: "Verifying active ID card template in workspace",
+    status: "pending",
   },
   {
-    id: 'step7_mapping',
+    id: "step7_mapping",
     stepNumber: 7,
-    label: 'Map Fields',
-    description: 'Matching placeholders and synchronizing barcode sources',
-    status: 'pending',
+    label: "Map Fields",
+    description: "Matching placeholders and synchronizing barcode sources",
+    status: "pending",
   },
   {
-    id: 'step8_populate',
+    id: "step8_populate",
     stepNumber: 8,
-    label: 'Populate Template',
-    description: 'Injecting verified identity records into card layers',
-    status: 'pending',
+    label: "Populate Template",
+    description: "Injecting verified identity records into card layers",
+    status: "pending",
   },
   {
-    id: 'step9_open',
+    id: "step9_open",
     stepNumber: 9,
-    label: 'Open Card Preview',
-    description: 'Transitioning to Card Preview for inspection and export',
-    status: 'pending',
+    label: "Open Card Preview",
+    description: "Transitioning to Card Preview for inspection and export",
+    status: "pending",
   },
 ];
 
@@ -104,7 +113,7 @@ export const INITIAL_SUBMISSION_STEPS: WorkflowStep[] = [
  */
 export function validateWorkflowPreflight(
   formData: NidaFormData,
-  template: CardTemplate | null | undefined
+  template: CardTemplate | null | undefined,
 ): WorkflowValidationResult {
   const isBackSide = isBackSideTemplate(template);
   const detectedType = detectTemplateType(template);
@@ -114,39 +123,48 @@ export function validateWorkflowPreflight(
   // Step 1: Validate all fields (Names, DOB, Gender)
   // For back-side only templates, personal names are optional, but for standard NIDA cards they are validated
   if (!isBackSide) {
-    if (enabledBindings.has('FIRST_NAME') && (!formData.firstName || formData.firstName.trim().length === 0)) {
+    if (
+      enabledBindings.has("FIRST_NAME") &&
+      (!formData.firstName || formData.firstName.trim().length === 0)
+    ) {
       return {
         valid: false,
-        failedStep: 'step1_fields',
-        errorMessage: 'First name is required. Please provide the cardholder given name.',
-        fieldFocus: 'firstName',
+        failedStep: "step1_fields",
+        errorMessage: "First name is required. Please provide the cardholder given name.",
+        fieldFocus: "firstName",
       };
     }
 
-    if (enabledBindings.has('LAST_NAME') && (!formData.lastName || formData.lastName.trim().length === 0)) {
+    if (
+      enabledBindings.has("LAST_NAME") &&
+      (!formData.lastName || formData.lastName.trim().length === 0)
+    ) {
       return {
         valid: false,
-        failedStep: 'step1_fields',
-        errorMessage: 'Last name / Surname is required. Please provide the cardholder family name.',
-        fieldFocus: 'lastName',
+        failedStep: "step1_fields",
+        errorMessage: "Last name / Surname is required. Please provide the cardholder family name.",
+        fieldFocus: "lastName",
       };
     }
 
-    if (enabledBindings.has('DOB') && (!formData.dob || formData.dob.trim().length === 0)) {
+    if (enabledBindings.has("DOB") && (!formData.dob || formData.dob.trim().length === 0)) {
       return {
         valid: false,
-        failedStep: 'step1_fields',
-        errorMessage: 'Date of birth is required. Please provide a valid birthdate.',
-        fieldFocus: 'dob',
+        failedStep: "step1_fields",
+        errorMessage: "Date of birth is required. Please provide a valid birthdate.",
+        fieldFocus: "dob",
       };
     }
 
-    if (enabledBindings.has('GENDER') && (!formData.gender || formData.gender.trim().length === 0)) {
+    if (
+      enabledBindings.has("GENDER") &&
+      (!formData.gender || formData.gender.trim().length === 0)
+    ) {
       return {
         valid: false,
-        failedStep: 'step1_fields',
-        errorMessage: 'Gender selection is required. Please select Male or Female.',
-        fieldFocus: 'gender',
+        failedStep: "step1_fields",
+        errorMessage: "Gender selection is required. Please select Male or Female.",
+        fieldFocus: "gender",
       };
     }
   }
@@ -156,29 +174,33 @@ export function validateWorkflowPreflight(
   if (!nidaValidation.isValid) {
     return {
       valid: false,
-      failedStep: 'step2_nida',
-      errorMessage: nidaValidation.error || 'NIDA Number must contain exactly 20 digits matching YYYYMMDD-XXXXX-XXXXX-XX.',
-      fieldFocus: 'nidaNumber',
+      failedStep: "step2_nida",
+      errorMessage:
+        nidaValidation.error ||
+        "NIDA Number must contain exactly 20 digits matching YYYYMMDD-XXXXX-XXXXX-XX.",
+      fieldFocus: "nidaNumber",
     };
   }
 
   // Step 3: Validate Photo
-  if (!isBackSide && enabledBindings.has('PHOTO') && !formData.photoUrl) {
+  if (!isBackSide && enabledBindings.has("PHOTO") && !formData.photoUrl) {
     return {
       valid: false,
-      failedStep: 'step3_photo',
-      errorMessage: 'Passport photograph is required. Please upload or capture a 35×45mm biometric portrait.',
-      fieldFocus: 'photo',
+      failedStep: "step3_photo",
+      errorMessage:
+        "Passport photograph is required. Please upload or capture a 35×45mm biometric portrait.",
+      fieldFocus: "photo",
     };
   }
 
   // Step 4: Validate Signature
-  if (!isBackSide && enabledBindings.has('SIGNATURE') && !formData.signatureUrl) {
+  if (!isBackSide && enabledBindings.has("SIGNATURE") && !formData.signatureUrl) {
     return {
       valid: false,
-      failedStep: 'step4_signature',
-      errorMessage: 'Specimen signature is required. Please draw or upload the cardholder signature.',
-      fieldFocus: 'signature',
+      failedStep: "step4_signature",
+      errorMessage:
+        "Specimen signature is required. Please draw or upload the cardholder signature.",
+      fieldFocus: "signature",
     };
   }
 
@@ -186,9 +208,10 @@ export function validateWorkflowPreflight(
   if (!formData.termsAccepted) {
     return {
       valid: false,
-      failedStep: 'step5_terms',
-      errorMessage: 'You must review and accept the NIDA Registration Terms & Conditions to proceed.',
-      fieldFocus: 'terms',
+      failedStep: "step5_terms",
+      errorMessage:
+        "You must review and accept the NIDA Registration Terms & Conditions to proceed.",
+      fieldFocus: "terms",
     };
   }
 
@@ -196,9 +219,10 @@ export function validateWorkflowPreflight(
   if (!isTemplateSelectedOrCreated(template)) {
     return {
       valid: false,
-      failedStep: 'step6_template',
-      errorMessage: 'No template has been selected or created. A valid ID card template is required.',
-      fieldFocus: 'template',
+      failedStep: "step6_template",
+      errorMessage:
+        "No template has been selected or created. A valid ID card template is required.",
+      fieldFocus: "template",
     };
   }
 

@@ -1,5 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import {
   Stage,
   Layer as KonvaLayer,
@@ -11,8 +11,8 @@ import {
   Line,
   RegularPolygon,
   Transformer,
-} from 'react-konva';
-import Konva from 'konva';
+} from "react-konva";
+import Konva from "konva";
 import {
   ArrowUp,
   ArrowDown,
@@ -31,15 +31,15 @@ import {
   Map,
   Hand,
   X,
-} from 'lucide-react';
-import { useTemplateStore } from '../store/useTemplateStore';
-import { replaceTextTokens } from '../utils/templateMappingEngine';
-import { mmToPx, pxToMm, calculateCanvasPxSize } from '../utils/units';
-import { generateBarcodeDataUrl, generateQRCodeDataUrl } from '../utils/barcodes';
-import { FONT_WEIGHTS_BY_FAMILY } from '../utils/fonts';
-import { formatLicenceDate } from '../utils/dateValidation';
-import { Layer, SmartGuide } from '../types';
-import { TopRuler, LeftRuler } from './Rulers';
+} from "lucide-react";
+import { useTemplateStore } from "../store/useTemplateStore";
+import { replaceTextTokens } from "../utils/templateMappingEngine";
+import { mmToPx, pxToMm, calculateCanvasPxSize } from "../utils/units";
+import { generateBarcodeDataUrl, generateQRCodeDataUrl } from "../utils/barcodes";
+import { FONT_WEIGHTS_BY_FAMILY } from "../utils/fonts";
+import { formatLicenceDate } from "../utils/dateValidation";
+import { Layer, SmartGuide } from "../types";
+import { TopRuler, LeftRuler } from "./Rulers";
 
 export const CanvasWorkspace: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -84,7 +84,12 @@ export const CanvasWorkspace: React.FC = () => {
   const [isSpacePressed, setIsSpacePressed] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
   const [showMinimap, setShowMinimap] = useState(false);
-  const panStartRef = useRef<{ mouseX: number; mouseY: number; initialPanX: number; initialPanY: number }>({
+  const panStartRef = useRef<{
+    mouseX: number;
+    mouseY: number;
+    initialPanX: number;
+    initialPanY: number;
+  }>({
     mouseX: 0,
     mouseY: 0,
     initialPanX: 0,
@@ -114,22 +119,22 @@ export const CanvasWorkspace: React.FC = () => {
   // Keyboard spacebar listener for hand panning mode
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) return;
-      if (e.code === 'Space' && !e.repeat) {
+      if (["INPUT", "TEXTAREA", "SELECT"].includes((e.target as HTMLElement)?.tagName)) return;
+      if (e.code === "Space" && !e.repeat) {
         setIsSpacePressed(true);
       }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
+      if (e.code === "Space") {
         setIsSpacePressed(false);
         setIsPanning(false);
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
     };
   }, []);
 
@@ -140,7 +145,7 @@ export const CanvasWorkspace: React.FC = () => {
       e.button === 1 ||
       isSpacePressed ||
       e.target === containerRef.current ||
-      (e.target as HTMLElement).id === 'canvas-workspace-bg'
+      (e.target as HTMLElement).id === "canvas-workspace-bg"
     ) {
       if (e.button === 1) e.preventDefault();
       setIsPanning(true);
@@ -190,21 +195,24 @@ export const CanvasWorkspace: React.FC = () => {
   const effectiveShowRulers = !isMobileScreen && showRulers;
 
   // When mobile drawer is open, reserve lower viewport space so canvas card stays 100% visible above drawer
-  const sheetHeightReserve = isMobileScreen && activeMobileSheet ? Math.min(320, containerDimensions.height * 0.44) : 0;
+  const sheetHeightReserve =
+    isMobileScreen && activeMobileSheet ? Math.min(320, containerDimensions.height * 0.44) : 0;
 
   // Calculate base screen dimensions for card, leaving margin for smooth viewing
   const horizontalPadding = effectiveShowRulers ? 60 : isMobileScreen ? 16 : 32;
   const verticalPadding = effectiveShowRulers ? 60 : isMobileScreen ? 16 : 32;
 
   const maxAvailableW = Math.max(200, containerDimensions.width - horizontalPadding);
-  const maxAvailableH = Math.max(120, containerDimensions.height - sheetHeightReserve - verticalPadding);
-
-  const { pxWidth: baseWidthPx, pxHeight: baseHeightPx, dpi } = calculateCanvasPxSize(
-    cardWidthMm,
-    cardHeightMm,
-    maxAvailableW,
-    maxAvailableH
+  const maxAvailableH = Math.max(
+    120,
+    containerDimensions.height - sheetHeightReserve - verticalPadding,
   );
+
+  const {
+    pxWidth: baseWidthPx,
+    pxHeight: baseHeightPx,
+    dpi,
+  } = calculateCanvasPxSize(cardWidthMm, cardHeightMm, maxAvailableW, maxAvailableH);
 
   const cardWidthPx = baseWidthPx * zoom;
   const cardHeightPx = baseHeightPx * zoom;
@@ -213,13 +221,20 @@ export const CanvasWorkspace: React.FC = () => {
 
   // Memoized fingerprint of image sources / barcodes / QR codes to prevent preloading loop on positional drag / property edits
   const imageSourceFingerprint = useMemo(() => {
-    const bg = currentTemplate.background?.type === 'image' ? (currentTemplate.background?.src || 'EMPTY') : '';
-    const layersSig = currentTemplate.layers.map((l) => {
-      if (l.type === 'image') return `${l.id}:img:${l.src || ''}`;
-      if (l.type === 'barcode') return `${l.id}:bc:${l.barcodeType}:${l.data}:${l.lineColor}:${l.backgroundColor}:${l.includeText}`;
-      if (l.type === 'qrcode') return `${l.id}:qr:${l.colorDark}:${l.colorLight}:${l.data}`;
-      return '';
-    }).filter(Boolean).join('|');
+    const bg =
+      currentTemplate.background?.type === "image"
+        ? currentTemplate.background?.src || "EMPTY"
+        : "";
+    const layersSig = currentTemplate.layers
+      .map((l) => {
+        if (l.type === "image") return `${l.id}:img:${l.src || ""}`;
+        if (l.type === "barcode")
+          return `${l.id}:bc:${l.barcodeType}:${l.data}:${l.lineColor}:${l.backgroundColor}:${l.includeText}`;
+        if (l.type === "qrcode") return `${l.id}:qr:${l.colorDark}:${l.colorLight}:${l.data}`;
+        return "";
+      })
+      .filter(Boolean)
+      .join("|");
     return `${currentTemplate.id}:${bg}:${layersSig}`;
   }, [currentTemplate.id, currentTemplate.background, currentTemplate.layers]);
 
@@ -228,12 +243,14 @@ export const CanvasWorkspace: React.FC = () => {
     let isMounted = true;
     const imagesToLoad: Record<string, string> = {};
 
-    if (currentTemplate.background?.type === 'image') {
+    if (currentTemplate.background?.type === "image") {
       if (!currentTemplate.background.src) {
-        console.warn(`[Template Diagnostics Warning] Background type is 'image' but background image URL is missing for template: ${currentTemplate.id}`);
-        setBackgroundWarning('Template background image URL is missing.');
+        console.warn(
+          `[Template Diagnostics Warning] Background type is 'image' but background image URL is missing for template: ${currentTemplate.id}`,
+        );
+        setBackgroundWarning("Template background image URL is missing.");
       } else {
-        imagesToLoad['__bg__'] = currentTemplate.background.src;
+        imagesToLoad["__bg__"] = currentTemplate.background.src;
         setBackgroundWarning(null);
       }
     } else {
@@ -241,7 +258,7 @@ export const CanvasWorkspace: React.FC = () => {
     }
 
     currentTemplate.layers.forEach((l) => {
-      if (l.type === 'image' && l.src) {
+      if (l.type === "image" && l.src) {
         imagesToLoad[l.id] = l.src;
       }
     });
@@ -249,16 +266,16 @@ export const CanvasWorkspace: React.FC = () => {
     // Asynchronously generate Barcode & QR Code images
     const generateDynamicCodes = async () => {
       for (const l of currentTemplate.layers) {
-        if (l.type === 'barcode') {
+        if (l.type === "barcode") {
           const url = await generateBarcodeDataUrl(
             l.barcodeType,
             l.data,
             l.lineColor,
             l.backgroundColor,
-            l.includeText
+            l.includeText,
           );
           if (url) imagesToLoad[l.id] = url;
-        } else if (l.type === 'qrcode') {
+        } else if (l.type === "qrcode") {
           const url = await generateQRCodeDataUrl(l.data, l.colorDark, l.colorLight);
           if (url) imagesToLoad[l.id] = url;
         }
@@ -269,15 +286,17 @@ export const CanvasWorkspace: React.FC = () => {
       const promises = Object.entries(imagesToLoad).map(([key, src]) => {
         return new Promise<void>((resolve) => {
           const img = new Image();
-          img.crossOrigin = 'anonymous';
+          img.crossOrigin = "anonymous";
           img.onload = () => {
             if (isMounted) newLoaded[key] = img;
             resolve();
           };
           img.onerror = () => {
-            if (key === '__bg__') {
-              console.warn(`[Template Diagnostics Warning] Background image failed to load from URL: ${src}`);
-              if (isMounted) setBackgroundWarning('Template background image failed to load.');
+            if (key === "__bg__") {
+              console.warn(
+                `[Template Diagnostics Warning] Background image failed to load from URL: ${src}`,
+              );
+              if (isMounted) setBackgroundWarning("Template background image failed to load.");
             }
             resolve();
           };
@@ -306,8 +325,8 @@ export const CanvasWorkspace: React.FC = () => {
 
   // Memoized string of layer IDs to avoid re-attaching Transformer on every positional drag (PROMPT 57 & 58)
   const layerIdsString = useMemo(
-    () => currentTemplate.layers.map((l) => l.id).join(','),
-    [currentTemplate.layers]
+    () => currentTemplate.layers.map((l) => l.id).join(","),
+    [currentTemplate.layers],
   );
 
   // Update Transformer selection safely without interrupting active drag gestures
@@ -319,7 +338,7 @@ export const CanvasWorkspace: React.FC = () => {
     selectedLayerIds.forEach((id) => {
       if (!id) return;
       try {
-        const node = stage.findOne('#' + id);
+        const node = stage.findOne("#" + id);
         if (node) nodes.push(node);
       } catch {
         // Safe fallback if id selector query fails
@@ -328,8 +347,7 @@ export const CanvasWorkspace: React.FC = () => {
 
     const currentNodes = transformerRef.current.nodes();
     const isSame =
-      currentNodes.length === nodes.length &&
-      currentNodes.every((n, i) => n === nodes[i]);
+      currentNodes.length === nodes.length && currentNodes.every((n, i) => n === nodes[i]);
 
     if (!isSame) {
       transformerRef.current.nodes(nodes);
@@ -354,7 +372,7 @@ export const CanvasWorkspace: React.FC = () => {
         y: Math.max(0, Math.min(cardHeightMm, yMm)),
       });
     },
-    [cardWidthPx, cardWidthMm, cardHeightMm, setCursorPosMm]
+    [cardWidthPx, cardWidthMm, cardHeightMm, setCursorPosMm],
   );
 
   // Mouse wheel zoom handler
@@ -462,13 +480,13 @@ export const CanvasWorkspace: React.FC = () => {
           template.guides.forEach((g) => {
             if (g.hidden) return;
             const guidePx = g.position * pxPerMm;
-            if (g.type === 'vertical') {
+            if (g.type === "vertical") {
               if (Math.abs(newX - guidePx) < snapThresholdPx) {
                 newX = guidePx;
               } else if (Math.abs(newX + nodeW - guidePx) < snapThresholdPx) {
                 newX = guidePx - nodeW;
               }
-            } else if (g.type === 'horizontal') {
+            } else if (g.type === "horizontal") {
               if (Math.abs(newY - guidePx) < snapThresholdPx) {
                 newY = guidePx;
               } else if (Math.abs(newY + nodeH - guidePx) < snapThresholdPx) {
@@ -498,16 +516,18 @@ export const CanvasWorkspace: React.FC = () => {
             const otherH = other.height * pxPerMm;
 
             if (Math.abs(newX - otherX) < snapThresholdPx) newX = otherX;
-            if (Math.abs(newX + nodeW - (otherX + otherW)) < snapThresholdPx) newX = otherX + otherW - nodeW;
+            if (Math.abs(newX + nodeW - (otherX + otherW)) < snapThresholdPx)
+              newX = otherX + otherW - nodeW;
             if (Math.abs(newY - otherY) < snapThresholdPx) newY = otherY;
-            if (Math.abs(newY + nodeH - (otherY + otherH)) < snapThresholdPx) newY = otherY + otherH - nodeH;
+            if (Math.abs(newY + nodeH - (otherY + otherH)) < snapThresholdPx)
+              newY = otherY + otherH - nodeH;
           });
         }
 
         return { x: newX, y: newY };
       };
     },
-    [cardWidthPx, cardWidthMm, cardHeightPx, snapSettings, gridSettings, showGuides]
+    [cardWidthPx, cardWidthMm, cardHeightPx, snapSettings, gridSettings, showGuides],
   );
 
   // Smart guides & real-time store update during drag
@@ -533,10 +553,10 @@ export const CanvasWorkspace: React.FC = () => {
         const cardCenterX = cardWidthPx / 2;
         const cardCenterY = cardHeightPx / 2;
         if (Math.abs(nodeCenterX - cardCenterX) < snapThresholdPx) {
-          guides.push({ type: 'x', position: cardCenterX, label: 'Canvas Center X' });
+          guides.push({ type: "x", position: cardCenterX, label: "Canvas Center X" });
         }
         if (Math.abs(nodeCenterY - cardCenterY) < snapThresholdPx) {
-          guides.push({ type: 'y', position: cardCenterY, label: 'Canvas Center Y' });
+          guides.push({ type: "y", position: cardCenterY, label: "Canvas Center Y" });
         }
       }
 
@@ -545,15 +565,17 @@ export const CanvasWorkspace: React.FC = () => {
           if (g.hidden) return;
           const guidePx = g.position * pxPerMm;
           if (
-            g.type === 'vertical' &&
-            (Math.abs(newX - guidePx) < snapThresholdPx || Math.abs(newX + nodeW - guidePx) < snapThresholdPx)
+            g.type === "vertical" &&
+            (Math.abs(newX - guidePx) < snapThresholdPx ||
+              Math.abs(newX + nodeW - guidePx) < snapThresholdPx)
           ) {
-            guides.push({ type: 'x', position: guidePx });
+            guides.push({ type: "x", position: guidePx });
           } else if (
-            g.type === 'horizontal' &&
-            (Math.abs(newY - guidePx) < snapThresholdPx || Math.abs(newY + nodeH - guidePx) < snapThresholdPx)
+            g.type === "horizontal" &&
+            (Math.abs(newY - guidePx) < snapThresholdPx ||
+              Math.abs(newY + nodeH - guidePx) < snapThresholdPx)
           ) {
-            guides.push({ type: 'y', position: guidePx });
+            guides.push({ type: "y", position: guidePx });
           }
         });
       }
@@ -566,7 +588,7 @@ export const CanvasWorkspace: React.FC = () => {
         transformerRef.current.getLayer()?.batchDraw();
       }
     },
-    [cardWidthPx, cardWidthMm, cardHeightPx, snapSettings, showGuides, setActiveSmartGuides]
+    [cardWidthPx, cardWidthMm, cardHeightPx, snapSettings, showGuides, setActiveSmartGuides],
   );
 
   const handleDragEnd = useCallback(
@@ -589,14 +611,14 @@ export const CanvasWorkspace: React.FC = () => {
         transformerRef.current.getLayer()?.batchDraw();
       }
     },
-    [cardWidthPx, cardWidthMm, updateLayer, setActiveSmartGuides]
+    [cardWidthPx, cardWidthMm, updateLayer, setActiveSmartGuides],
   );
 
   const handleTransformEnd = useCallback(
     (layerId: string) => {
       const stage = stageRef.current;
       if (!stage) return;
-      const node = stage.findOne('#' + layerId);
+      const node = stage.findOne("#" + layerId);
       if (!node) return;
 
       const pxPerMm = cardWidthPx / cardWidthMm;
@@ -620,14 +642,14 @@ export const CanvasWorkspace: React.FC = () => {
         rotation: newRotation,
       });
     },
-    [cardWidthPx, cardWidthMm, updateLayer]
+    [cardWidthPx, cardWidthMm, updateLayer],
   );
 
   // Keyboard Arrow Key Nudge Listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      const activeTag = (document.activeElement?.tagName || '').toLowerCase();
-      if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') {
+      const activeTag = (document.activeElement?.tagName || "").toLowerCase();
+      if (activeTag === "input" || activeTag === "textarea" || activeTag === "select") {
         return;
       }
 
@@ -635,26 +657,26 @@ export const CanvasWorkspace: React.FC = () => {
 
       const step = e.shiftKey ? 1.0 : 0.1; // 1.0mm coarse, 0.1mm fine
 
-      if (e.key === 'ArrowLeft') {
+      if (e.key === "ArrowLeft") {
         e.preventDefault();
         nudgeSelectedLayers(-step, 0);
-      } else if (e.key === 'ArrowRight') {
+      } else if (e.key === "ArrowRight") {
         e.preventDefault();
         nudgeSelectedLayers(step, 0);
-      } else if (e.key === 'ArrowUp') {
+      } else if (e.key === "ArrowUp") {
         e.preventDefault();
         nudgeSelectedLayers(0, -step);
-      } else if (e.key === 'ArrowDown') {
+      } else if (e.key === "ArrowDown") {
         e.preventDefault();
         nudgeSelectedLayers(0, step);
-      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+      } else if (e.key === "Delete" || e.key === "Backspace") {
         e.preventDefault();
         deleteSelectedLayers();
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedLayerIds, nudgeSelectedLayers, deleteSelectedLayers]);
 
   // Render Card Safe Zones Overlay (Bleed, Cut, Safe Area)
@@ -711,7 +733,7 @@ export const CanvasWorkspace: React.FC = () => {
           strokeWidth={0.5}
           opacity={gridSettings.opacity}
           dash={[2, 2]}
-        />
+        />,
       );
     }
 
@@ -724,7 +746,7 @@ export const CanvasWorkspace: React.FC = () => {
           strokeWidth={0.5}
           opacity={gridSettings.opacity}
           dash={[2, 2]}
-        />
+        />,
       );
     }
 
@@ -745,12 +767,12 @@ export const CanvasWorkspace: React.FC = () => {
       if (guide.hidden) return null;
       const posPx = guide.position * pxPerMm;
 
-      if (guide.type === 'horizontal') {
+      if (guide.type === "horizontal") {
         return (
           <Line
             key={guide.id}
             points={[0, posPx, cardWidthPx, posPx]}
-            stroke={guide.color || '#3b82f6'}
+            stroke={guide.color || "#3b82f6"}
             strokeWidth={1}
             dash={[4, 4]}
             draggable={!guide.locked}
@@ -766,7 +788,7 @@ export const CanvasWorkspace: React.FC = () => {
           <Line
             key={guide.id}
             points={[posPx, 0, posPx, cardHeightPx]}
-            stroke={guide.color || '#3b82f6'}
+            stroke={guide.color || "#3b82f6"}
             strokeWidth={1}
             dash={[4, 4]}
             draggable={!guide.locked}
@@ -784,7 +806,7 @@ export const CanvasWorkspace: React.FC = () => {
   // Render Smart Guides
   const renderSmartGuides = () => {
     return activeSmartGuides.map((guide, idx) => {
-      if (guide.type === 'x') {
+      if (guide.type === "x") {
         return (
           <Line
             key={`sg_${idx}`}
@@ -825,8 +847,8 @@ export const CanvasWorkspace: React.FC = () => {
       onDoubleClick={() => resetView()}
       className="flex-1 bg-slate-950 flex flex-col items-center justify-center relative overflow-hidden select-none p-1 sm:p-4 w-full h-full"
       style={{
-        touchAction: 'none',
-        cursor: isPanning ? 'grabbing' : isSpacePressed ? 'grab' : 'default',
+        touchAction: "none",
+        cursor: isPanning ? "grabbing" : isSpacePressed ? "grab" : "default",
       }}
     >
       {/* Floating Canvas Control Bar (Prompts 47, 48, 49) */}
@@ -895,7 +917,9 @@ export const CanvasWorkspace: React.FC = () => {
         <button
           onClick={() => setShowMinimap(!showMinimap)}
           className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-            showMinimap ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            showMinimap
+              ? "bg-blue-600 text-white"
+              : "bg-slate-800 text-slate-300 hover:bg-slate-700"
           }`}
           title="Toggle Navigator Minimap"
         >
@@ -937,13 +961,13 @@ export const CanvasWorkspace: React.FC = () => {
             }}
           >
             {/* Background Thumbnail */}
-            {currentTemplate.background.type === 'color' && (
+            {currentTemplate.background.type === "color" && (
               <div
                 className="absolute inset-0"
-                style={{ backgroundColor: currentTemplate.background.color || '#ffffff' }}
+                style={{ backgroundColor: currentTemplate.background.color || "#ffffff" }}
               />
             )}
-            {currentTemplate.background.type === 'image' && currentTemplate.background.src && (
+            {currentTemplate.background.type === "image" && currentTemplate.background.src && (
               <img
                 src={currentTemplate.background.src}
                 alt="bg mini"
@@ -956,7 +980,9 @@ export const CanvasWorkspace: React.FC = () => {
               <div
                 key={l.id}
                 className={`absolute rounded-xs ${
-                  selectedLayerIds.includes(l.id) ? 'bg-blue-500/60 border border-blue-400' : 'bg-slate-400/30'
+                  selectedLayerIds.includes(l.id)
+                    ? "bg-blue-500/60 border border-blue-400"
+                    : "bg-slate-400/30"
                 }`}
                 style={{
                   left: `${(l.x / cardWidthMm) * 100}%`,
@@ -971,8 +997,8 @@ export const CanvasWorkspace: React.FC = () => {
             <div
               className="absolute border-2 border-red-500/90 bg-red-500/10 pointer-events-none rounded-xs shadow-xs transition-all duration-75"
               style={{
-                left: `${Math.max(0, Math.min(80, 50 - (panOffset.x / cardWidthPx) * 100 - (50 / zoom)))}%`,
-                top: `${Math.max(0, Math.min(80, 50 - (panOffset.y / cardHeightPx) * 100 - (50 / zoom)))}%`,
+                left: `${Math.max(0, Math.min(80, 50 - (panOffset.x / cardWidthPx) * 100 - 50 / zoom))}%`,
+                top: `${Math.max(0, Math.min(80, 50 - (panOffset.y / cardHeightPx) * 100 - 50 / zoom))}%`,
                 width: `${Math.min(100, 100 / zoom)}%`,
                 height: `${Math.min(100, 100 / zoom)}%`,
               }}
@@ -995,7 +1021,7 @@ export const CanvasWorkspace: React.FC = () => {
       <div
         className="flex flex-col items-center justify-center max-w-full max-h-full transition-transform duration-150 ease-out"
         style={{
-          transform: `translate(${panOffset.x}px, ${panOffset.y - (sheetHeightReserve / 2)}px)`,
+          transform: `translate(${panOffset.x}px, ${panOffset.y - sheetHeightReserve / 2}px)`,
         }}
       >
         {effectiveShowRulers && (
@@ -1009,7 +1035,9 @@ export const CanvasWorkspace: React.FC = () => {
         )}
 
         <div className="flex items-start">
-          {effectiveShowRulers && <LeftRuler stageWidthPx={cardWidthPx} stageHeightPx={cardHeightPx} scale={1} />}
+          {effectiveShowRulers && (
+            <LeftRuler stageWidthPx={cardWidthPx} stageHeightPx={cardHeightPx} scale={1} />
+          )}
 
           {/* Canvas Card Container with Real CR80 Rounded Corners */}
           <div
@@ -1018,7 +1046,7 @@ export const CanvasWorkspace: React.FC = () => {
               width: cardWidthPx,
               height: cardHeightPx,
               borderRadius: `${Math.round(3.18 * pxPerMm)}px`,
-              touchAction: 'none',
+              touchAction: "none",
             }}
           >
             {backgroundWarning && (
@@ -1034,27 +1062,27 @@ export const CanvasWorkspace: React.FC = () => {
               onMouseMove={handleMouseMove}
               onMouseDown={(e) => {
                 if (e.target === e.target.getStage()) {
-                  selectLayer('', false);
+                  selectLayer("", false);
                 }
               }}
               onTouchStart={(e) => {
                 if (e.target === e.target.getStage()) {
-                  selectLayer('', false);
+                  selectLayer("", false);
                 }
               }}
             >
               {/* Background Layer */}
               <KonvaLayer>
-                {currentTemplate.background?.type === 'color' ? (
+                {currentTemplate.background?.type === "color" ? (
                   <Rect
                     width={cardWidthPx}
                     height={cardHeightPx}
-                    fill={currentTemplate.background.color || '#ffffff'}
+                    fill={currentTemplate.background.color || "#ffffff"}
                     cornerRadius={3.18 * pxPerMm}
                   />
-                ) : loadedImages['__bg__'] ? (
+                ) : loadedImages["__bg__"] ? (
                   <KonvaImage
-                    image={loadedImages['__bg__']}
+                    image={loadedImages["__bg__"]}
                     width={cardWidthPx}
                     height={cardHeightPx}
                     opacity={currentTemplate.background?.opacity ?? 1}
@@ -1106,12 +1134,13 @@ export const CanvasWorkspace: React.FC = () => {
                         selectLayer(layer.id, isShift);
                       }
                     },
-                    onDragMove: (e: Konva.KonvaEventObject<DragEvent>) => handleDragMove(e, layer.id),
+                    onDragMove: (e: Konva.KonvaEventObject<DragEvent>) =>
+                      handleDragMove(e, layer.id),
                     onDragEnd: (e: Konva.KonvaEventObject<DragEvent>) => handleDragEnd(e, layer.id),
                     onTransformEnd: () => handleTransformEnd(layer.id),
                   };
 
-                  if (layer.type === 'text' || layer.type === 'licence_category') {
+                  if (layer.type === "text" || layer.type === "licence_category") {
                     const fontSizePx = (layer.fontSize || 3.5) * pxPerMm;
 
                     // Text width preset scaling (Normal, Condensed, Expanded)
@@ -1122,14 +1151,15 @@ export const CanvasWorkspace: React.FC = () => {
                       expanded: 1.25,
                       semi_expanded: 1.15,
                     };
-                    const presetScale = PRESET_SCALES[(layer as any).widthPreset || 'normal'] || 1.0;
+                    const presetScale =
+                      PRESET_SCALES[(layer as any).widthPreset || "normal"] || 1.0;
                     const finalScaleX = (layer.horizontalScale ?? 1) * presetScale;
 
                     // Text Case display transformation (Display-only, original unchanged)
-                    let displayText = layer.text || '';
-                    
+                    let displayText = layer.text || "";
+
                     const isCategoryDateLayer =
-                      layer.type === 'licence_category' ||
+                      layer.type === "licence_category" ||
                       (layer as any).licenseCategoryGroup !== undefined ||
                       (layer as any).category_code !== undefined ||
                       (layer as any).categoryCode !== undefined;
@@ -1137,88 +1167,126 @@ export const CanvasWorkspace: React.FC = () => {
                     if (isCategoryDateLayer) {
                       const catCode = String(
                         (layer as any).licenseCategoryGroup ||
-                        (layer as any).category_code ||
-                        (layer as any).categoryCode ||
-                        'A'
-                      ).trim().toUpperCase();
+                          (layer as any).category_code ||
+                          (layer as any).categoryCode ||
+                          "A",
+                      )
+                        .trim()
+                        .toUpperCase();
 
                       const dateTypeRaw = String(
                         (layer as any).licenseCategoryDateType ||
-                        (layer as any).field_type ||
-                        (layer as any).dateType ||
-                        'issueDate'
+                          (layer as any).field_type ||
+                          (layer as any).dateType ||
+                          "issueDate",
                       ).trim();
 
-                      const isExpiry = dateTypeRaw === 'expiryDate' || dateTypeRaw === 'expiry_date' || /exp/i.test(dateTypeRaw);
-                      const isLabel = dateTypeRaw === 'label' || dateTypeRaw === 'categoryLabel';
+                      const isExpiry =
+                        dateTypeRaw === "expiryDate" ||
+                        dateTypeRaw === "expiry_date" ||
+                        /exp/i.test(dateTypeRaw);
+                      const isLabel = dateTypeRaw === "label" || dateTypeRaw === "categoryLabel";
 
-                      const fmt = (layer as any).dateFormat || (layer as any).display_format || 'dd/MM/yyyy';
+                      const fmt =
+                        (layer as any).dateFormat || (layer as any).display_format || "dd/MM/yyyy";
 
-                      const classes = lastDrivingLicenseFormData?.classes || lastDrivingLicenseFormData?.categories || [];
+                      const classes =
+                        lastDrivingLicenseFormData?.classes ||
+                        lastDrivingLicenseFormData?.categories ||
+                        [];
                       const matchedClass = Array.isArray(classes)
-                        ? classes.find((c: any) => c && String(c.classCode || c.code || c.category_code || '').trim().toUpperCase() === catCode)
+                        ? classes.find(
+                            (c: any) =>
+                              c &&
+                              String(c.classCode || c.code || c.category_code || "")
+                                .trim()
+                                .toUpperCase() === catCode,
+                          )
                         : undefined;
 
-                      const isEnabled = matchedClass && Boolean(matchedClass.enabled || matchedClass.selected || matchedClass.checked);
+                      const isEnabled =
+                        matchedClass &&
+                        Boolean(
+                          matchedClass.enabled || matchedClass.selected || matchedClass.checked,
+                        );
 
-                      if (lastDrivingLicenseFormData && Object.keys(lastDrivingLicenseFormData).length > 0) {
+                      if (
+                        lastDrivingLicenseFormData &&
+                        Object.keys(lastDrivingLicenseFormData).length > 0
+                      ) {
                         if (isEnabled && matchedClass) {
                           if (isLabel) {
                             displayText = catCode;
                           } else {
                             const rawDate = isExpiry
-                              ? String(matchedClass.expiryDate || matchedClass.expiry_date || '').trim()
-                              : String(matchedClass.issueDate || matchedClass.issue_date || '').trim();
-                            displayText = rawDate ? formatLicenceDate(rawDate, fmt) : '';
+                              ? String(
+                                  matchedClass.expiryDate || matchedClass.expiry_date || "",
+                                ).trim()
+                              : String(
+                                  matchedClass.issueDate || matchedClass.issue_date || "",
+                                ).trim();
+                            displayText = rawDate ? formatLicenceDate(rawDate, fmt) : "";
                           }
                         } else {
-                          displayText = ''; // Category not selected by cardholder -> hide
+                          displayText = ""; // Category not selected by cardholder -> hide
                         }
                       } else {
                         // Admin Design Studio preview mode (no user form data)
                         if (isLabel) {
                           displayText = catCode;
                         } else {
-                          const sampleRawDate = isExpiry ? '12/05/2031' : '12/05/2026';
+                          const sampleRawDate = isExpiry ? "12/05/2031" : "12/05/2026";
                           displayText = formatLicenceDate(sampleRawDate, fmt);
                         }
                       }
-                    } else if (lastNidaFormData && displayText.includes('{{')) {
+                    } else if (lastNidaFormData && displayText.includes("{{")) {
                       displayText = replaceTextTokens(displayText, lastNidaFormData);
                     }
-                    const textCase = (layer as any).textCase || 'original';
-                    if (textCase === 'uppercase') {
+                    const textCase = (layer as any).textCase || "original";
+                    if (textCase === "uppercase") {
                       displayText = displayText.toUpperCase();
-                    } else if (textCase === 'lowercase') {
+                    } else if (textCase === "lowercase") {
                       displayText = displayText.toLowerCase();
-                    } else if (textCase === 'capitalize') {
-                      displayText = displayText.split(' ').map(word => {
-                        if (!word) return '';
-                        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-                      }).join(' ');
+                    } else if (textCase === "capitalize") {
+                      displayText = displayText
+                        .split(" ")
+                        .map((word) => {
+                          if (!word) return "";
+                          return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                        })
+                        .join(" ");
                     }
 
                     // Bold Simulation preference
                     const availableWeights = FONT_WEIGHTS_BY_FAMILY[layer.fontFamily] || [400, 700];
-                    const hasRealBold = availableWeights.some(w => w >= 600);
-                    const isBoldSimulationActive = (layer as any).boldSimulation === 'simulated_bold' || 
-                      ((layer as any).boldSimulation === 'bold' && !hasRealBold);
+                    const hasRealBold = availableWeights.some((w) => w >= 600);
+                    const isBoldSimulationActive =
+                      (layer as any).boldSimulation === "simulated_bold" ||
+                      ((layer as any).boldSimulation === "bold" && !hasRealBold);
 
-                    let finalWeight = layer.fontWeight ?? (layer.fontStyle?.includes('bold') ? 700 : 400);
-                    if ((layer as any).boldSimulation === 'bold' && hasRealBold) {
+                    let finalWeight =
+                      layer.fontWeight ?? (layer.fontStyle?.includes("bold") ? 700 : 400);
+                    if ((layer as any).boldSimulation === "bold" && hasRealBold) {
                       finalWeight = 700;
-                    } else if ((layer as any).boldSimulation === 'normal' || (layer as any).boldSimulation === 'simulated_bold') {
+                    } else if (
+                      (layer as any).boldSimulation === "normal" ||
+                      (layer as any).boldSimulation === "simulated_bold"
+                    ) {
                       finalWeight = 400;
                     }
-                    const isItalic = layer.fontStyle?.includes('italic');
-                    const computedStyle = `${finalWeight}${isItalic ? ' italic' : ''}`;
+                    const isItalic = layer.fontStyle?.includes("italic");
+                    const computedStyle = `${finalWeight}${isItalic ? " italic" : ""}`;
 
                     // Text Stroke / Outline combining text stroke and simulated bold
-                    let finalStroke = layer.strokeEnabled ? layer.strokeColor || '#000000' : undefined;
-                    let finalStrokeWidth = layer.strokeEnabled ? (layer.strokeWidth ?? 0.5) * pxPerMm : 0;
-                    
+                    let finalStroke = layer.strokeEnabled
+                      ? layer.strokeColor || "#000000"
+                      : undefined;
+                    let finalStrokeWidth = layer.strokeEnabled
+                      ? (layer.strokeWidth ?? 0.5) * pxPerMm
+                      : 0;
+
                     if (isBoldSimulationActive) {
-                      finalStroke = layer.color || '#000000';
+                      finalStroke = layer.color || "#000000";
                       // Visual bold simulation: a very small, controlled stroke around the letter edges
                       finalStrokeWidth = fontSizePx * 0.04;
                     }
@@ -1229,12 +1297,12 @@ export const CanvasWorkspace: React.FC = () => {
                         key={layer.id}
                         width={wPx}
                         text={displayText}
-                        fontFamily={layer.fontFamily || 'Helvetica'}
+                        fontFamily={layer.fontFamily || "Helvetica"}
                         fontSize={fontSizePx}
                         fontStyle={computedStyle}
-                        textDecoration={layer.textDecoration === 'underline' ? 'underline' : ''}
-                        fill={layer.color || '#000000'}
-                        align={layer.align || 'left'}
+                        textDecoration={layer.textDecoration === "underline" ? "underline" : ""}
+                        fill={layer.color || "#000000"}
+                        align={layer.align || "left"}
                         letterSpacing={layer.letterSpacing ? layer.letterSpacing * pxPerMm : 0}
                         lineHeight={layer.lineHeight || 1.1}
                         scaleX={finalScaleX}
@@ -1242,16 +1310,27 @@ export const CanvasWorkspace: React.FC = () => {
                         opacity={(layer.opacity ?? 1) * (layer.textOpacity ?? 1)}
                         stroke={finalStroke}
                         strokeWidth={finalStrokeWidth}
-                        shadowColor={layer.shadowColor || '#000000'}
+                        shadowColor={layer.shadowColor || "#000000"}
                         shadowBlur={layer.shadowEnabled ? (layer.shadowBlur ?? 1.5) * pxPerMm : 0}
-                        shadowOffset={layer.shadowEnabled ? { x: (layer.shadowOffsetX ?? 0.5) * pxPerMm, y: (layer.shadowOffsetY ?? 0.5) * pxPerMm } : { x: 0, y: 0 }}
+                        shadowOffset={
+                          layer.shadowEnabled
+                            ? {
+                                x: (layer.shadowOffsetX ?? 0.5) * pxPerMm,
+                                y: (layer.shadowOffsetY ?? 0.5) * pxPerMm,
+                              }
+                            : { x: 0, y: 0 }
+                        }
                         shadowOpacity={layer.shadowEnabled ? (layer.shadowOpacity ?? 50) / 100 : 0}
                         shadowEnabled={layer.shadowEnabled ?? false}
                       />
                     );
                   }
 
-                  if (layer.type === 'image' || layer.type === 'barcode' || layer.type === 'qrcode') {
+                  if (
+                    layer.type === "image" ||
+                    layer.type === "barcode" ||
+                    layer.type === "qrcode"
+                  ) {
                     const imgObj = loadedImages[layer.id];
                     return (
                       <Group {...commonProps} key={layer.id}>
@@ -1271,11 +1350,11 @@ export const CanvasWorkspace: React.FC = () => {
                               width={wPx}
                               height={hPx}
                               text={
-                                layer.type === 'barcode'
-                                  ? 'Barcode'
-                                  : layer.type === 'qrcode'
-                                  ? 'QR Code'
-                                  : 'Image'
+                                layer.type === "barcode"
+                                  ? "Barcode"
+                                  : layer.type === "qrcode"
+                                    ? "QR Code"
+                                    : "Image"
                               }
                               fontFamily="sans-serif"
                               fontSize={Math.max(9, Math.min(14, hPx / 4))}
@@ -1289,15 +1368,15 @@ export const CanvasWorkspace: React.FC = () => {
                     );
                   }
 
-                  if (layer.type === 'placeholder') {
+                  if (layer.type === "placeholder") {
                     const customImgObj = loadedImages[layer.id];
                     return (
                       <Group {...commonProps} key={layer.id}>
                         <Rect
                           width={wPx}
                           height={hPx}
-                          fill={layer.backgroundColor || 'rgba(241, 245, 249, 0.9)'}
-                          stroke={layer.borderColor || '#1e3a8a'}
+                          fill={layer.backgroundColor || "rgba(241, 245, 249, 0.9)"}
+                          stroke={layer.borderColor || "#1e3a8a"}
                           strokeWidth={1.5}
                           dash={[4, 4]}
                         />
@@ -1319,13 +1398,11 @@ export const CanvasWorkspace: React.FC = () => {
                     );
                   }
 
-                  if (layer.type === 'shape') {
+                  if (layer.type === "shape") {
                     const shapeFill =
-                      layer.fill && layer.fill !== 'transparent'
-                        ? layer.fill
-                        : 'rgba(0,0,0,0.001)';
+                      layer.fill && layer.fill !== "transparent" ? layer.fill : "rgba(0,0,0,0.001)";
 
-                    if (layer.shapeType === 'rectangle') {
+                    if (layer.shapeType === "rectangle") {
                       return (
                         <Rect
                           {...commonProps}
@@ -1333,14 +1410,17 @@ export const CanvasWorkspace: React.FC = () => {
                           width={wPx}
                           height={hPx}
                           fill={shapeFill}
-                          stroke={layer.stroke || 'transparent'}
+                          stroke={layer.stroke || "transparent"}
                           strokeWidth={layer.strokeWidth ? layer.strokeWidth * pxPerMm : 0}
                           cornerRadius={layer.borderRadius ? layer.borderRadius * pxPerMm : 0}
-                          hitStrokeWidth={Math.max(12, layer.strokeWidth ? layer.strokeWidth * pxPerMm : 12)}
+                          hitStrokeWidth={Math.max(
+                            12,
+                            layer.strokeWidth ? layer.strokeWidth * pxPerMm : 12,
+                          )}
                         />
                       );
                     }
-                    if (layer.shapeType === 'circle') {
+                    if (layer.shapeType === "circle") {
                       return (
                         <Group {...commonProps} key={layer.id}>
                           <Circle
@@ -1348,26 +1428,35 @@ export const CanvasWorkspace: React.FC = () => {
                             y={hPx / 2}
                             radius={Math.min(wPx, hPx) / 2}
                             fill={shapeFill}
-                            stroke={layer.stroke || 'transparent'}
+                            stroke={layer.stroke || "transparent"}
                             strokeWidth={layer.strokeWidth ? layer.strokeWidth * pxPerMm : 0}
-                            hitStrokeWidth={Math.max(12, layer.strokeWidth ? layer.strokeWidth * pxPerMm : 12)}
+                            hitStrokeWidth={Math.max(
+                              12,
+                              layer.strokeWidth ? layer.strokeWidth * pxPerMm : 12,
+                            )}
                           />
                         </Group>
                       );
                     }
-                    if (layer.shapeType === 'line') {
+                    if (layer.shapeType === "line") {
                       return (
                         <Group {...commonProps} key={layer.id}>
                           <Line
                             points={[0, hPx / 2, wPx, hPx / 2]}
-                            stroke={layer.stroke || layer.fill || '#000000'}
-                            strokeWidth={Math.max(2, layer.strokeWidth ? layer.strokeWidth * pxPerMm : 2)}
-                            hitStrokeWidth={Math.max(20, layer.strokeWidth ? layer.strokeWidth * pxPerMm : 20)}
+                            stroke={layer.stroke || layer.fill || "#000000"}
+                            strokeWidth={Math.max(
+                              2,
+                              layer.strokeWidth ? layer.strokeWidth * pxPerMm : 2,
+                            )}
+                            hitStrokeWidth={Math.max(
+                              20,
+                              layer.strokeWidth ? layer.strokeWidth * pxPerMm : 20,
+                            )}
                           />
                         </Group>
                       );
                     }
-                    if (layer.shapeType === 'polygon') {
+                    if (layer.shapeType === "polygon") {
                       return (
                         <Group {...commonProps} key={layer.id}>
                           <RegularPolygon
@@ -1376,9 +1465,12 @@ export const CanvasWorkspace: React.FC = () => {
                             sides={layer.polygonSides || 5}
                             radius={Math.min(wPx, hPx) / 2}
                             fill={shapeFill}
-                            stroke={layer.stroke || 'transparent'}
+                            stroke={layer.stroke || "transparent"}
                             strokeWidth={layer.strokeWidth ? layer.strokeWidth * pxPerMm : 0}
-                            hitStrokeWidth={Math.max(12, layer.strokeWidth ? layer.strokeWidth * pxPerMm : 12)}
+                            hitStrokeWidth={Math.max(
+                              12,
+                              layer.strokeWidth ? layer.strokeWidth * pxPerMm : 12,
+                            )}
                           />
                         </Group>
                       );
@@ -1422,7 +1514,7 @@ export const CanvasWorkspace: React.FC = () => {
               className="px-1 py-0.5 bg-slate-800 hover:bg-slate-700 text-blue-400 rounded font-semibold text-[9px]"
               title="Toggle Step Size"
             >
-              {mobileNudgeStep === 0.1 ? 'Fine' : 'Coarse'}
+              {mobileNudgeStep === 0.1 ? "Fine" : "Coarse"}
             </button>
           </div>
 

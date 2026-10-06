@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   PlusCircle,
   Layers,
@@ -9,8 +9,8 @@ import {
   Trash2,
   X,
   Move,
-} from 'lucide-react';
-import { useTemplateStore } from '../store/useTemplateStore';
+} from "lucide-react";
+import { useTemplateStore } from "../store/useTemplateStore";
 
 interface MobileNavBarProps {
   onToggleNudgePad?: () => void;
@@ -40,7 +40,7 @@ export const MobileNavBar: React.FC<MobileNavBarProps> = ({ onToggleNudgePad, sh
     setPanOffset({ x: 0, y: 0 });
   };
 
-  const handleToggleSheet = (sheet: 'elements' | 'layers' | 'backgrounds' | 'properties') => {
+  const handleToggleSheet = (sheet: "elements" | "layers" | "backgrounds" | "properties") => {
     if (activeMobileSheet === sheet) {
       setActiveMobileSheet(null);
     } else {
@@ -63,11 +63,11 @@ export const MobileNavBar: React.FC<MobileNavBarProps> = ({ onToggleNudgePad, sh
           <div className="flex items-center gap-1 flex-shrink-0">
             {/* Open Properties Drawer */}
             <button
-              onClick={() => handleToggleSheet('properties')}
+              onClick={() => handleToggleSheet("properties")}
               className={`h-9 px-2.5 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors ${
-                activeMobileSheet === 'properties'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                activeMobileSheet === "properties"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "bg-slate-800 text-slate-200 hover:bg-slate-700"
               }`}
             >
               <Sliders className="w-3.5 h-3.5 text-blue-400" />
@@ -89,8 +89,8 @@ export const MobileNavBar: React.FC<MobileNavBarProps> = ({ onToggleNudgePad, sh
                 onClick={onToggleNudgePad}
                 className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
                   showNudgePad
-                    ? 'bg-blue-600/30 text-blue-400 border border-blue-500/50'
-                    : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+                    ? "bg-blue-600/30 text-blue-400 border border-blue-500/50"
+                    : "bg-slate-800 hover:bg-slate-700 text-slate-300"
                 }`}
                 title="Precision Nudge Pad"
               >
@@ -109,7 +109,7 @@ export const MobileNavBar: React.FC<MobileNavBarProps> = ({ onToggleNudgePad, sh
 
             {/* Deselect */}
             <button
-              onClick={() => selectLayer('', false)}
+              onClick={() => selectLayer("", false)}
               className="w-8 h-9 text-slate-400 hover:text-slate-200 flex items-center justify-center"
               title="Deselect"
             >
@@ -123,11 +123,11 @@ export const MobileNavBar: React.FC<MobileNavBarProps> = ({ onToggleNudgePad, sh
       <nav className="bg-slate-900/98 backdrop-blur-lg border-t border-slate-800 px-2 py-1.5 flex items-center justify-around pointer-events-auto shadow-2xl safe-area-bottom">
         {/* Elements Button */}
         <button
-          onClick={() => handleToggleSheet('elements')}
+          onClick={() => handleToggleSheet("elements")}
           className={`flex-1 min-h-[48px] py-1 px-1 rounded-xl flex flex-col items-center justify-center gap-1 transition-colors ${
-            activeMobileSheet === 'elements'
-              ? 'text-blue-400 bg-blue-500/10'
-              : 'text-slate-400 hover:text-slate-200 active:bg-slate-800/60'
+            activeMobileSheet === "elements"
+              ? "text-blue-400 bg-blue-500/10"
+              : "text-slate-400 hover:text-slate-200 active:bg-slate-800/60"
           }`}
         >
           <PlusCircle className="w-5 h-5" />
@@ -136,11 +136,11 @@ export const MobileNavBar: React.FC<MobileNavBarProps> = ({ onToggleNudgePad, sh
 
         {/* Layers Button */}
         <button
-          onClick={() => handleToggleSheet('layers')}
+          onClick={() => handleToggleSheet("layers")}
           className={`flex-1 min-h-[48px] py-1 px-1 rounded-xl flex flex-col items-center justify-center gap-1 relative transition-colors ${
-            activeMobileSheet === 'layers'
-              ? 'text-blue-400 bg-blue-500/10'
-              : 'text-slate-400 hover:text-slate-200 active:bg-slate-800/60'
+            activeMobileSheet === "layers"
+              ? "text-blue-400 bg-blue-500/10"
+              : "text-slate-400 hover:text-slate-200 active:bg-slate-800/60"
           }`}
         >
           <div className="relative">
@@ -156,11 +156,11 @@ export const MobileNavBar: React.FC<MobileNavBarProps> = ({ onToggleNudgePad, sh
 
         {/* Background Button */}
         <button
-          onClick={() => handleToggleSheet('backgrounds')}
+          onClick={() => handleToggleSheet("backgrounds")}
           className={`flex-1 min-h-[48px] py-1 px-1 rounded-xl flex flex-col items-center justify-center gap-1 transition-colors ${
-            activeMobileSheet === 'backgrounds'
-              ? 'text-blue-400 bg-blue-500/10'
-              : 'text-slate-400 hover:text-slate-200 active:bg-slate-800/60'
+            activeMobileSheet === "backgrounds"
+              ? "text-blue-400 bg-blue-500/10"
+              : "text-slate-400 hover:text-slate-200 active:bg-slate-800/60"
           }`}
         >
           <Palette className="w-5 h-5" />
@@ -169,13 +169,13 @@ export const MobileNavBar: React.FC<MobileNavBarProps> = ({ onToggleNudgePad, sh
 
         {/* Properties Button */}
         <button
-          onClick={() => handleToggleSheet('properties')}
+          onClick={() => handleToggleSheet("properties")}
           className={`flex-1 min-h-[48px] py-1 px-1 rounded-xl flex flex-col items-center justify-center gap-1 transition-colors ${
-            activeMobileSheet === 'properties'
-              ? 'text-blue-400 bg-blue-500/10'
+            activeMobileSheet === "properties"
+              ? "text-blue-400 bg-blue-500/10"
               : selectedLayerIds.length > 0
-              ? 'text-blue-300 hover:text-white'
-              : 'text-slate-400 hover:text-slate-200 active:bg-slate-800/60'
+                ? "text-blue-300 hover:text-white"
+                : "text-slate-400 hover:text-slate-200 active:bg-slate-800/60"
           }`}
         >
           <div className="relative">

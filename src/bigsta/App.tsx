@@ -1,45 +1,55 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import React, { useEffect } from 'react';
-import { CheckCircle2 } from 'lucide-react';
-import { useTemplateStore } from './store/useTemplateStore';
-import { UploadScreen } from './components/UploadScreen';
-import { TemplatesScreen } from './components/TemplatesScreen';
-import { Toolbar } from './components/Toolbar';
-import { LeftPanel } from './components/LeftPanel';
-import { CanvasWorkspace } from './components/CanvasWorkspace';
-import { RightPanel } from './components/RightPanel';
-import { BottomStatusBar } from './components/BottomStatusBar';
-import { TemplateLibraryModal } from './components/TemplateLibraryModal';
-import { CardGeneratorModal } from './components/CardGeneratorModal';
-import { ExportModal } from './components/ExportModal';
-import { SaveTemplateModal } from './components/SaveTemplateModal';
-import { MergeCardModal } from './components/MergeCardModal';
-import { MobileNavBar } from './components/MobileNavBar';
-import { MobileBottomSheet } from './components/MobileBottomSheet';
-import { NidaFormScreen } from './components/nida';
-import { NidaRequestFormScreen } from './components/nida/NidaRequestFormScreen';
-import { DrivingLicenseFormScreen } from './components/nida/DrivingLicenseFormScreen';
-import { NhifFormScreen } from './components/nida/NhifFormScreen';
-import { NidaSuccessToast } from './components/nida/NidaSuccessToast';
-import { HomeScreen } from './components/HomeScreen';
-import { CardPreviewScreen } from './components/CardPreviewScreen';
-import { PasskeyScreen } from './components/auth/PasskeyScreen';
-import { PasskeyManagerModal } from './components/auth/PasskeyManagerModal';
-import { ManualApplicationModal } from './components/auth/ManualApplicationModal';
-import { RechargeModal } from './components/auth/RechargeModal';
-import { UsageExhaustedBanner } from './components/auth/UsageExhaustedBanner';
-import { DownloadsScreen } from './components/DownloadsScreen';
-import { TokenBillingScreen } from './components/billing/TokenBillingScreen';
-import { SettingsScreen } from './components/SettingsScreen';
-import { PassportStudioScreen } from './components/PassportStudioScreen';
-import { ImageEditStudioScreen } from './components/ImageEditStudioScreen';
-import { PaymentDashboard } from './components/admin/PaymentDashboard';
-import { UnsavedChangesModal } from './components/common/UnsavedChangesModal';
-import { StartupDisclaimerModal } from './components/common/StartupDisclaimerModal';
-import { SuccessActivationModal } from './components/common/SuccessActivationModal';
+import React, { useEffect } from "react";
+import { CheckCircle2 } from "lucide-react";
+import { useTemplateStore } from "./store/useTemplateStore";
+import { UploadScreen } from "./components/UploadScreen";
+import { TemplatesScreen } from "./components/TemplatesScreen";
+import { Toolbar } from "./components/Toolbar";
+import { LeftPanel } from "./components/LeftPanel";
+import { CanvasWorkspace } from "./components/CanvasWorkspace";
+import { RightPanel } from "./components/RightPanel";
+import { BottomStatusBar } from "./components/BottomStatusBar";
+import { TemplateLibraryModal } from "./components/TemplateLibraryModal";
+import { CardGeneratorModal } from "./components/CardGeneratorModal";
+import { ExportModal } from "./components/ExportModal";
+import { SaveTemplateModal } from "./components/SaveTemplateModal";
+import { MergeCardModal } from "./components/MergeCardModal";
+import { MobileNavBar } from "./components/MobileNavBar";
+import { MobileBottomSheet } from "./components/MobileBottomSheet";
+import { NidaFormScreen } from "./components/nida";
+import { NidaRequestFormScreen } from "./components/nida/NidaRequestFormScreen";
+import { DrivingLicenseFormScreen } from "./components/nida/DrivingLicenseFormScreen";
+import { NhifFormScreen } from "./components/nida/NhifFormScreen";
+import { NidaSuccessToast } from "./components/nida/NidaSuccessToast";
+import { HomeScreen } from "./components/HomeScreen";
+import { CardPreviewScreen } from "./components/CardPreviewScreen";
+import { PasskeyScreen } from "./components/auth/PasskeyScreen";
+import { PasskeyManagerModal } from "./components/auth/PasskeyManagerModal";
+import { ManualApplicationModal } from "./components/auth/ManualApplicationModal";
+import { RechargeModal } from "./components/auth/RechargeModal";
+import { UsageExhaustedBanner } from "./components/auth/UsageExhaustedBanner";
+import { DownloadsScreen } from "./components/DownloadsScreen";
+import { TokenBillingScreen } from "./components/billing/TokenBillingScreen";
+import { SettingsScreen } from "./components/SettingsScreen";
+import { PassportStudioScreen } from "./components/PassportStudioScreen";
+import { ImageEditStudioScreen } from "./components/ImageEditStudioScreen";
+import { PaymentDashboard } from "./components/admin/PaymentDashboard";
+import { UnsavedChangesModal } from "./components/common/UnsavedChangesModal";
+import { StartupDisclaimerModal } from "./components/common/StartupDisclaimerModal";
+import { SuccessActivationModal } from "./components/common/SuccessActivationModal";
 
 export default function App() {
-  const { activeScreen, setActiveScreen, authRole, fetchPasskeysFromSupabase, userPreferences, loadSavedTemplates, isSaving, loadTokenPackages, loadWeeklyOffers } = useTemplateStore();
+  const {
+    activeScreen,
+    setActiveScreen,
+    authRole,
+    fetchPasskeysFromSupabase,
+    userPreferences,
+    loadSavedTemplates,
+    isSaving,
+    loadTokenPackages,
+    loadWeeklyOffers,
+  } = useTemplateStore();
 
   useEffect(() => {
     fetchPasskeysFromSupabase();
@@ -50,77 +60,84 @@ export default function App() {
     let unsubPkgs: (() => void) | null = null;
     let unsubOffers: (() => void) | null = null;
 
-    import('./services/supabase').then(({ subscribeTokenPackagesRealtime, subscribeWeeklyOffersRealtime }) => {
-      unsubPkgs = subscribeTokenPackagesRealtime((freshPkgs) => {
-        console.log('Realtime update: token packages received', freshPkgs);
-        if (freshPkgs && Array.isArray(freshPkgs)) {
-          const mapped = freshPkgs.map((p) => ({
-            id: p.id,
-            name: p.name,
-            usages: p.usages,
-            price: p.price,
-            description: p.description || '',
-            visibility: (p.visibility || 'public') as 'public' | 'hidden',
-            active: p.is_active !== false,
-            sortOrder: p.sort_order ?? 0,
-            bonus: p.bonus ?? 0,
-            promotion: p.promotion || '',
-          }));
-          useTemplateStore.setState({ tokenPackages: mapped });
-        }
-      });
+    import("./services/supabase")
+      .then(({ subscribeTokenPackagesRealtime, subscribeWeeklyOffersRealtime }) => {
+        unsubPkgs = subscribeTokenPackagesRealtime((freshPkgs) => {
+          console.log("Realtime update: token packages received", freshPkgs);
+          if (freshPkgs && Array.isArray(freshPkgs)) {
+            const mapped = freshPkgs.map((p) => ({
+              id: p.id,
+              name: p.name,
+              usages: p.usages,
+              price: p.price,
+              description: p.description || "",
+              visibility: (p.visibility || "public") as "public" | "hidden",
+              active: p.is_active !== false,
+              sortOrder: p.sort_order ?? 0,
+              bonus: p.bonus ?? 0,
+              promotion: p.promotion || "",
+            }));
+            useTemplateStore.setState({ tokenPackages: mapped });
+          }
+        });
 
-      unsubOffers = subscribeWeeklyOffersRealtime((freshOffers) => {
-        if (freshOffers && Array.isArray(freshOffers)) {
-          const mapped = freshOffers.map((o) => ({
-            id: o.id,
-            title: o.title,
-            description: o.description || '',
-            tokens: o.tokens,
-            price: o.price,
-            services: o.services || [],
-            startDate: o.start_date,
-            endDate: o.end_date,
-            active: o.is_active !== false,
-          }));
-          useTemplateStore.setState({ weeklyOffers: mapped });
-        }
-      });
-    }).catch(() => {});
+        unsubOffers = subscribeWeeklyOffersRealtime((freshOffers) => {
+          if (freshOffers && Array.isArray(freshOffers)) {
+            const mapped = freshOffers.map((o) => ({
+              id: o.id,
+              title: o.title,
+              description: o.description || "",
+              tokens: o.tokens,
+              price: o.price,
+              services: o.services || [],
+              startDate: o.start_date,
+              endDate: o.end_date,
+              active: o.is_active !== false,
+            }));
+            useTemplateStore.setState({ weeklyOffers: mapped });
+          }
+        });
+      })
+      .catch(() => {});
 
     let templatesChannel: any = null;
     let templatesClient: any = null;
-    import('./services/supabase').then(({ supabase }) => {
-      if (!supabase) return;
-      templatesClient = supabase;
-      templatesChannel = supabase
-        .channel('realtime_templates')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'templates' }, () => {
-          loadSavedTemplates();
-        })
-        .subscribe();
-    }).catch(() => {});
+    import("./services/supabase")
+      .then(({ supabase }) => {
+        if (!supabase) return;
+        templatesClient = supabase;
+        templatesChannel = supabase
+          .channel("realtime_templates")
+          .on("postgres_changes", { event: "*", schema: "public", table: "templates" }, () => {
+            loadSavedTemplates();
+          })
+          .subscribe();
+      })
+      .catch(() => {});
 
     const refreshFromCloud = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === "visible") {
         loadSavedTemplates();
         loadTokenPackages();
       }
     };
-    document.addEventListener('visibilitychange', refreshFromCloud);
+    document.addEventListener("visibilitychange", refreshFromCloud);
 
     return () => {
       if (unsubPkgs) unsubPkgs();
       if (unsubOffers) unsubOffers();
       if (templatesClient && templatesChannel) templatesClient.removeChannel(templatesChannel);
-      document.removeEventListener('visibilitychange', refreshFromCloud);
+      document.removeEventListener("visibilitychange", refreshFromCloud);
     };
   }, [fetchPasskeysFromSupabase, loadSavedTemplates, loadTokenPackages, loadWeeklyOffers]);
 
   // Guard Custom Studio access for non-admin users
   useEffect(() => {
-    if (authRole !== 'admin' && (activeScreen === 'upload' || activeScreen === 'templates' || activeScreen === 'editor')) {
-      setActiveScreen('home');
+    if (
+      authRole !== "admin" &&
+      (activeScreen === "upload" || activeScreen === "templates" || activeScreen === "editor")
+    ) {
+      setActiveScreen("home");
     }
   }, [authRole, activeScreen, setActiveScreen]);
 
@@ -128,7 +145,7 @@ export default function App() {
   useEffect(() => {
     // 1. Android Native SMS Receiver Callback
     const handleNativeSms = async (sender: string, rawSms: string, timestamp?: string | number) => {
-      const { receiveNativeSms } = await import('./services/smsReceiver');
+      const { receiveNativeSms } = await import("./services/smsReceiver");
       const result = await receiveNativeSms(sender, rawSms, timestamp);
       if (result.ok) {
         fetchPasskeysFromSupabase();
@@ -142,34 +159,42 @@ export default function App() {
     (window as any).receiveSms = handleNativeSms;
     (window as any).BIGstaOnSms = handleNativeSms;
 
-    import('./services/smsReceiver').then(({ markReceiverRegistered, flushSmsOutbox }) => {
-      markReceiverRegistered();
-      flushSmsOutbox();
-    }).catch(() => {});
+    import("./services/smsReceiver")
+      .then(({ markReceiverRegistered, flushSmsOutbox }) => {
+        markReceiverRegistered();
+        flushSmsOutbox();
+      })
+      .catch(() => {});
 
     const retryOutbox = () => {
-      import('./services/smsReceiver').then(({ flushSmsOutbox }) => flushSmsOutbox()).catch(() => {});
+      import("./services/smsReceiver")
+        .then(({ flushSmsOutbox }) => flushSmsOutbox())
+        .catch(() => {});
     };
-    window.addEventListener('online', retryOutbox);
+    window.addEventListener("online", retryOutbox);
     // Periodic retry so a queued SMS is never stranded if the device never
     // fires an 'online' event (common inside Android WebViews).
     const outboxTimer = setInterval(retryOutbox, 60000);
 
     // 2. Request Permissions Bridge
     (window as any).requestApkPermissions = () => {
-      const android = (window as any).AndroidInterface || (window as any).Android || (window as any).JSInterface;
-      if (android && typeof android.requestPermissions === 'function') {
+      const android =
+        (window as any).AndroidInterface || (window as any).Android || (window as any).JSInterface;
+      if (android && typeof android.requestPermissions === "function") {
         android.requestPermissions();
         return true;
       }
-      console.warn('[Native APK Bridge] No Java/Kotlin interface found. Run inside APK with standard WebAppInterface bindings.');
+      console.warn(
+        "[Native APK Bridge] No Java/Kotlin interface found. Run inside APK with standard WebAppInterface bindings.",
+      );
       return false;
     };
 
     // 3. Native Storage Save Bridge
     (window as any).saveFileNatively = (fileName: string, base64Data: string) => {
-      const android = (window as any).AndroidInterface || (window as any).Android || (window as any).JSInterface;
-      if (android && typeof android.saveFile === 'function') {
+      const android =
+        (window as any).AndroidInterface || (window as any).Android || (window as any).JSInterface;
+      if (android && typeof android.saveFile === "function") {
         android.saveFile(fileName, base64Data);
         return true;
       }
@@ -177,7 +202,7 @@ export default function App() {
     };
 
     return () => {
-      window.removeEventListener('online', retryOutbox);
+      window.removeEventListener("online", retryOutbox);
       clearInterval(outboxTimer);
     };
   }, [fetchPasskeysFromSupabase]);
@@ -185,10 +210,13 @@ export default function App() {
   // Automatically trigger Native Permissions request if inside the APK Webview environment on startup
   useEffect(() => {
     const timer = setTimeout(() => {
-      const android = (window as any).AndroidInterface || (window as any).Android || (window as any).JSInterface;
+      const android =
+        (window as any).AndroidInterface || (window as any).Android || (window as any).JSInterface;
       if (android) {
-        console.log('[Native APK Bridge] Native wrapper detected. Launching automated permission trigger...');
-        if (typeof android.requestPermissions === 'function') {
+        console.log(
+          "[Native APK Bridge] Native wrapper detected. Launching automated permission trigger...",
+        );
+        if (typeof android.requestPermissions === "function") {
           android.requestPermissions();
         }
       }
@@ -198,15 +226,15 @@ export default function App() {
 
   // Synchronize system and user theme with DOM
   useEffect(() => {
-    const isDark = userPreferences?.theme === 'dark';
+    const isDark = userPreferences?.theme === "dark";
     if (isDark) {
-      document.documentElement.classList.add('dark');
-      document.documentElement.setAttribute('data-theme', 'dark');
-      document.body.classList.add('dark');
+      document.documentElement.classList.add("dark");
+      document.documentElement.setAttribute("data-theme", "dark");
+      document.body.classList.add("dark");
     } else {
-      document.documentElement.classList.remove('dark');
-      document.documentElement.setAttribute('data-theme', 'light');
-      document.body.classList.remove('dark');
+      document.documentElement.classList.remove("dark");
+      document.documentElement.setAttribute("data-theme", "light");
+      document.body.classList.remove("dark");
     }
   }, [userPreferences?.theme]);
 
@@ -214,8 +242,8 @@ export default function App() {
   if (!authRole) {
     // Redirect all restricted paths to login
     const path = window.location.pathname;
-    if (path !== '/' && path !== '/login') {
-      window.history.replaceState({}, '', '/login');
+    if (path !== "/" && path !== "/login") {
+      window.history.replaceState({}, "", "/login");
     }
     return (
       <>
@@ -226,7 +254,10 @@ export default function App() {
   }
 
   // Strict RBAC Guard: Regular Users (authRole === 'user') are blocked from Studio/Editor/Templates
-  if (authRole === 'user' && (activeScreen === 'editor' || activeScreen === 'templates' || activeScreen === 'upload')) {
+  if (
+    authRole === "user" &&
+    (activeScreen === "editor" || activeScreen === "templates" || activeScreen === "upload")
+  ) {
     return (
       <>
         <UsageExhaustedBanner />
@@ -242,7 +273,7 @@ export default function App() {
     );
   }
 
-  if (activeScreen === 'downloads') {
+  if (activeScreen === "downloads") {
     return (
       <>
         <UsageExhaustedBanner />
@@ -253,7 +284,7 @@ export default function App() {
     );
   }
 
-  if (activeScreen === 'billing') {
+  if (activeScreen === "billing") {
     return (
       <>
         <UsageExhaustedBanner />
@@ -264,7 +295,7 @@ export default function App() {
     );
   }
 
-  if (activeScreen === 'settings') {
+  if (activeScreen === "settings") {
     return (
       <>
         <UsageExhaustedBanner />
@@ -275,7 +306,7 @@ export default function App() {
     );
   }
 
-  if (activeScreen === 'home') {
+  if (activeScreen === "home") {
     return (
       <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
@@ -292,7 +323,7 @@ export default function App() {
     );
   }
 
-  if (activeScreen === 'upload') {
+  if (activeScreen === "upload") {
     return (
       <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
@@ -308,7 +339,7 @@ export default function App() {
     );
   }
 
-  if (activeScreen === 'templates') {
+  if (activeScreen === "templates") {
     return (
       <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
@@ -324,7 +355,7 @@ export default function App() {
     );
   }
 
-  if (activeScreen === 'nida_request') {
+  if (activeScreen === "nida_request") {
     return (
       <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
@@ -340,7 +371,7 @@ export default function App() {
     );
   }
 
-  if (activeScreen === 'nida') {
+  if (activeScreen === "nida") {
     return (
       <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
@@ -361,7 +392,7 @@ export default function App() {
     );
   }
 
-  if (activeScreen === 'driving_license') {
+  if (activeScreen === "driving_license") {
     return (
       <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
@@ -382,7 +413,7 @@ export default function App() {
     );
   }
 
-  if (activeScreen === 'nhif') {
+  if (activeScreen === "nhif") {
     return (
       <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
@@ -403,7 +434,7 @@ export default function App() {
     );
   }
 
-  if (activeScreen === 'preview') {
+  if (activeScreen === "preview") {
     return (
       <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
@@ -419,7 +450,7 @@ export default function App() {
     );
   }
 
-  if (activeScreen === 'passport_studio') {
+  if (activeScreen === "passport_studio") {
     return (
       <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
@@ -430,7 +461,7 @@ export default function App() {
     );
   }
 
-  if (activeScreen === 'image_edit_studio') {
+  if (activeScreen === "image_edit_studio") {
     return (
       <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
@@ -441,7 +472,7 @@ export default function App() {
     );
   }
 
-  if (activeScreen === 'admin-payments' && authRole === 'admin') {
+  if (activeScreen === "admin-payments" && authRole === "admin") {
     return (
       <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
@@ -453,7 +484,7 @@ export default function App() {
   }
 
   // Final Guard for Users: If they reach this point (unknown screen or editor), send back to home
-  if (authRole === 'user') {
+  if (authRole === "user") {
     return (
       <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
@@ -482,10 +513,10 @@ export default function App() {
       </div>
 
       {/* Mobile Canva-style Dock (Visible only on mobile editor) */}
-      {activeScreen === 'editor' && <MobileNavBar />}
+      {activeScreen === "editor" && <MobileNavBar />}
 
       {/* Mobile Slide-Up Drawer for Elements, Layers, Backgrounds, Properties */}
-      {activeScreen === 'editor' && <MobileBottomSheet />}
+      {activeScreen === "editor" && <MobileBottomSheet />}
 
       {/* Bottom Status Bar (Desktop) */}
       <BottomStatusBar />
@@ -516,7 +547,7 @@ export default function App() {
                 Updating your account preferences and syncing with the central cloud store.
               </p>
             </div>
-            
+
             <button
               onClick={() => useTemplateStore.setState({ isSaving: false })}
               className="mt-2 px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all border border-slate-200 active:scale-95"

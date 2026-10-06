@@ -1,5 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   FileEdit,
   Download,
@@ -10,10 +10,10 @@ import {
   RefreshCw,
   Hash,
   Search,
-  Type
-} from 'lucide-react';
-import { RenameOptions } from '../../types/imageTools';
-import { formatBytes, downloadProcessedFile } from '../../utils/imageProcessing';
+  Type,
+} from "lucide-react";
+import { RenameOptions } from "../../types/imageTools";
+import { formatBytes, downloadProcessedFile } from "../../utils/imageProcessing";
 
 interface RenameToolProps {
   initialFiles?: File[] | null;
@@ -33,9 +33,9 @@ export const RenameTool: React.FC<RenameToolProps> = ({ initialFiles, onBack }) 
   const [items, setItems] = useState<RenameQueueItem[]>(() => {
     if (initialFiles && initialFiles.length > 0) {
       return initialFiles.map((f) => {
-        const lastDot = f.name.lastIndexOf('.');
+        const lastDot = f.name.lastIndexOf(".");
         const nameWithoutExt = lastDot > 0 ? f.name.substring(0, lastDot) : f.name;
-        const ext = lastDot > 0 ? f.name.substring(lastDot) : '';
+        const ext = lastDot > 0 ? f.name.substring(lastDot) : "";
         return {
           id: Math.random().toString(36).substring(7),
           file: f,
@@ -50,23 +50,23 @@ export const RenameTool: React.FC<RenameToolProps> = ({ initialFiles, onBack }) 
   });
 
   const [options, setOptions] = useState<RenameOptions>({
-    patternMode: 'sequential',
-    customName: 'Image',
-    prefix: '',
-    suffix: '_edited',
+    patternMode: "sequential",
+    customName: "Image",
+    prefix: "",
+    suffix: "_edited",
     startNumber: 1,
     numberPadding: 3,
-    findText: '',
-    replaceText: '',
-    casing: 'preserve',
-    spaceReplacement: 'hyphen',
+    findText: "",
+    replaceText: "",
+    casing: "preserve",
+    spaceReplacement: "hyphen",
   });
 
   const handleAddFiles = (fileList: FileList) => {
     const newItems: RenameQueueItem[] = Array.from(fileList).map((f) => {
-      const lastDot = f.name.lastIndexOf('.');
+      const lastDot = f.name.lastIndexOf(".");
       const nameWithoutExt = lastDot > 0 ? f.name.substring(0, lastDot) : f.name;
-      const ext = lastDot > 0 ? f.name.substring(lastDot) : '';
+      const ext = lastDot > 0 ? f.name.substring(lastDot) : "";
       return {
         id: Math.random().toString(36).substring(7),
         file: f,
@@ -84,55 +84,59 @@ export const RenameTool: React.FC<RenameToolProps> = ({ initialFiles, onBack }) 
 
   const recalculateNames = (
     currentItems: RenameQueueItem[],
-    opts: RenameOptions
+    opts: RenameOptions,
   ): RenameQueueItem[] => {
     return currentItems.map((item, index) => {
       let baseName = item.originalName;
 
       switch (opts.patternMode) {
-        case 'sequential': {
+        case "sequential": {
           const num = opts.startNumber + index;
-          const paddedNum = String(num).padStart(opts.numberPadding, '0');
-          baseName = `${opts.customName || 'Image'}_${paddedNum}`;
+          const paddedNum = String(num).padStart(opts.numberPadding, "0");
+          baseName = `${opts.customName || "Image"}_${paddedNum}`;
           break;
         }
-        case 'prefix-suffix': {
+        case "prefix-suffix": {
           baseName = `${opts.prefix}${item.originalName}${opts.suffix}`;
           break;
         }
-        case 'custom': {
-          baseName = currentItems.length > 1
-            ? `${opts.customName || 'Image'}_${index + 1}`
-            : (opts.customName || item.originalName);
+        case "custom": {
+          baseName =
+            currentItems.length > 1
+              ? `${opts.customName || "Image"}_${index + 1}`
+              : opts.customName || item.originalName;
           break;
         }
-        case 'find-replace': {
+        case "find-replace": {
           if (opts.findText) {
-            const regex = new RegExp(escapeRegExp(opts.findText), 'gi');
+            const regex = new RegExp(escapeRegExp(opts.findText), "gi");
             baseName = item.originalName.replace(regex, opts.replaceText);
           }
           break;
         }
-        case 'clean': {
+        case "clean": {
           baseName = item.originalName;
           break;
         }
       }
 
       // Space replacements
-      if (opts.spaceReplacement === 'hyphen') {
-        baseName = baseName.replace(/\s+/g, '-');
-      } else if (opts.spaceReplacement === 'underscore') {
-        baseName = baseName.replace(/\s+/g, '_');
+      if (opts.spaceReplacement === "hyphen") {
+        baseName = baseName.replace(/\s+/g, "-");
+      } else if (opts.spaceReplacement === "underscore") {
+        baseName = baseName.replace(/\s+/g, "_");
       }
 
       // Casing adjustments
-      if (opts.casing === 'lowercase') {
+      if (opts.casing === "lowercase") {
         baseName = baseName.toLowerCase();
-      } else if (opts.casing === 'uppercase') {
+      } else if (opts.casing === "uppercase") {
         baseName = baseName.toUpperCase();
-      } else if (opts.casing === 'titlecase') {
-        baseName = baseName.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+      } else if (opts.casing === "titlecase") {
+        baseName = baseName.replace(
+          /\w\S*/g,
+          (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase(),
+        );
       }
 
       return {
@@ -143,7 +147,7 @@ export const RenameTool: React.FC<RenameToolProps> = ({ initialFiles, onBack }) 
   };
 
   const escapeRegExp = (string: string) => {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   };
 
   const handleOptionChange = (newOpts: Partial<RenameOptions>) => {
@@ -154,7 +158,7 @@ export const RenameTool: React.FC<RenameToolProps> = ({ initialFiles, onBack }) 
 
   const handleIndividualProposedNameChange = (id: string, newProposed: string) => {
     setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, proposedName: newProposed } : item))
+      prev.map((item) => (item.id === id ? { ...item, proposedName: newProposed } : item)),
     );
   };
 
@@ -205,7 +209,8 @@ export const RenameTool: React.FC<RenameToolProps> = ({ initialFiles, onBack }) 
           <div>
             <h2 className="text-xl font-bold text-white">Rename Image Files</h2>
             <p className="text-xs text-slate-400 mt-1">
-              Batch rename photo titles, apply sequential numbers, add prefixes/suffixes, or search & replace.
+              Batch rename photo titles, apply sequential numbers, add prefixes/suffixes, or search
+              & replace.
             </p>
           </div>
           <label className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold rounded-xl cursor-pointer transition-colors shadow-lg shadow-emerald-950/30">
@@ -246,7 +251,7 @@ export const RenameTool: React.FC<RenameToolProps> = ({ initialFiles, onBack }) 
             </div>
 
             {/* Dynamic Controls Based on Pattern Mode */}
-            {options.patternMode === 'sequential' && (
+            {options.patternMode === "sequential" && (
               <div className="space-y-4">
                 <div>
                   <label className="text-xs text-slate-400 block mb-1">Base Name / Title</label>
@@ -273,7 +278,9 @@ export const RenameTool: React.FC<RenameToolProps> = ({ initialFiles, onBack }) 
                     <label className="text-xs text-slate-400 block mb-1">Padding</label>
                     <select
                       value={options.numberPadding}
-                      onChange={(e) => handleOptionChange({ numberPadding: Number(e.target.value) })}
+                      onChange={(e) =>
+                        handleOptionChange({ numberPadding: Number(e.target.value) })
+                      }
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono"
                     >
                       <option value={1}>1 (1, 2, 3)</option>
@@ -286,7 +293,7 @@ export const RenameTool: React.FC<RenameToolProps> = ({ initialFiles, onBack }) 
               </div>
             )}
 
-            {options.patternMode === 'prefix-suffix' && (
+            {options.patternMode === "prefix-suffix" && (
               <div className="space-y-4">
                 <div>
                   <label className="text-xs text-slate-400 block mb-1">Prefix (Add to front)</label>
@@ -311,7 +318,7 @@ export const RenameTool: React.FC<RenameToolProps> = ({ initialFiles, onBack }) 
               </div>
             )}
 
-            {options.patternMode === 'custom' && (
+            {options.patternMode === "custom" && (
               <div>
                 <label className="text-xs text-slate-400 block mb-1">New Image Title</label>
                 <input
@@ -324,7 +331,7 @@ export const RenameTool: React.FC<RenameToolProps> = ({ initialFiles, onBack }) 
               </div>
             )}
 
-            {options.patternMode === 'find-replace' && (
+            {options.patternMode === "find-replace" && (
               <div className="space-y-4">
                 <div>
                   <label className="text-xs text-slate-400 block mb-1">Find Text</label>
@@ -403,7 +410,10 @@ export const RenameTool: React.FC<RenameToolProps> = ({ initialFiles, onBack }) 
 
               <div className="divide-y divide-slate-800">
                 {items.map((item) => (
-                  <div key={item.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                  <div
+                    key={item.id}
+                    className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                  >
                     <div className="space-y-1">
                       <span className="text-slate-500 line-through block truncate max-w-xs font-mono">
                         {item.file.name}
@@ -411,7 +421,9 @@ export const RenameTool: React.FC<RenameToolProps> = ({ initialFiles, onBack }) 
                       <input
                         type="text"
                         value={item.proposedName}
-                        onChange={(e) => handleIndividualProposedNameChange(item.id, e.target.value)}
+                        onChange={(e) =>
+                          handleIndividualProposedNameChange(item.id, e.target.value)
+                        }
                         className="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-emerald-400 font-bold font-mono focus:outline-none focus:border-emerald-500 w-full sm:w-80 text-xs"
                       />
                     </div>

@@ -1,5 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Smartphone,
   Plus,
@@ -19,10 +19,10 @@ import {
   FileText,
   CheckCircle2,
   CreditCard,
-  Zap
-} from 'lucide-react';
-import { useTemplateStore } from '../../store/useTemplateStore';
-import { ConfigurablePaymentMethod } from '../../types';
+  Zap,
+} from "lucide-react";
+import { useTemplateStore } from "../../store/useTemplateStore";
+import { ConfigurablePaymentMethod } from "../../types";
 
 export const PaymentMethodsAdminPanel: React.FC = () => {
   const {
@@ -44,17 +44,18 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
 
   // Form State
   const initialFormState = {
-    name: 'M-Pesa',
-    title: 'Lipa kwa Simu / Till Number',
-    number: '',
-    accountName: 'BIGSTA SERVICES LTD',
-    amount: '',
-    instructions: 'Dial *150*00# -> Pay Merchant (Lipa kwa Simu) -> Enter Till Number',
-    confirmMessage: 'Confirm after payment: Enter your transaction reference code below for instant verification.',
-    whatsappNumber: '+255 712 345 678',
-    irreversibleNotice: 'Note: All mobile payments are final and irreversible once processed.',
-    customMessage: 'Instant automated activation after SMS or reference confirmation.',
-    status: 'active' as 'active' | 'inactive',
+    name: "M-Pesa",
+    title: "Lipa kwa Simu / Till Number",
+    number: "",
+    accountName: "BIGSTA SERVICES LTD",
+    amount: "",
+    instructions: "Dial *150*00# -> Pay Merchant (Lipa kwa Simu) -> Enter Till Number",
+    confirmMessage:
+      "Confirm after payment: Enter your transaction reference code below for instant verification.",
+    whatsappNumber: "+255 712 345 678",
+    irreversibleNotice: "Note: All mobile payments are final and irreversible once processed.",
+    customMessage: "Instant automated activation after SMS or reference confirmation.",
+    status: "active" as "active" | "inactive",
   };
 
   const [formData, setFormData] = useState(initialFormState);
@@ -71,12 +72,12 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
     try {
       const ok = await publishPaymentMethodsToSupabase();
       if (ok) {
-        setSyncNotice('All payment methods synced to Cloud Database (Supabase) successfully!');
+        setSyncNotice("All payment methods synced to Cloud Database (Supabase) successfully!");
       } else {
-        setSyncNotice('Payment methods saved locally (Cloud sync skipped or table updated).');
+        setSyncNotice("Payment methods saved locally (Cloud sync skipped or table updated).");
       }
     } catch (e: any) {
-      setSyncNotice('Saved locally. Cloud sync: ' + (e?.message || 'Ready'));
+      setSyncNotice("Saved locally. Cloud sync: " + (e?.message || "Ready"));
     } finally {
       setIsSyncing(false);
       setTimeout(() => setSyncNotice(null), 4000);
@@ -93,24 +94,24 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
     setEditingMethod(method);
     setFormError(null);
     setFormData({
-      name: method.name || '',
-      title: method.title || '',
-      number: method.number || '',
-      accountName: method.accountName || '',
-      amount: method.amount || '',
-      instructions: method.instructions || '',
-      confirmMessage: method.confirmMessage || '',
-      whatsappNumber: method.whatsappNumber || '',
-      irreversibleNotice: method.irreversibleNotice || '',
-      customMessage: method.customMessage || '',
-      status: method.status || 'active',
+      name: method.name || "",
+      title: method.title || "",
+      number: method.number || "",
+      accountName: method.accountName || "",
+      amount: method.amount || "",
+      instructions: method.instructions || "",
+      confirmMessage: method.confirmMessage || "",
+      whatsappNumber: method.whatsappNumber || "",
+      irreversibleNotice: method.irreversibleNotice || "",
+      customMessage: method.customMessage || "",
+      status: method.status || "active",
     });
   };
 
   const handleSaveForm = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.number.trim()) {
-      setFormError('Please fill in both the payment method name and number.');
+      setFormError("Please fill in both the payment method name and number.");
       return;
     }
     setFormError(null);
@@ -141,8 +142,8 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
   };
 
   const cleanWaNumber = (num: string) => {
-    let clean = (num || '').replace(/\D/g, '');
-    if (clean.startsWith('0')) clean = '255' + clean.slice(1);
+    let clean = (num || "").replace(/\D/g, "");
+    if (clean.startsWith("0")) clean = "255" + clean.slice(1);
     return clean;
   };
 
@@ -158,7 +159,8 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
             </h2>
           </div>
           <p className="text-xs text-slate-500 mt-0.5">
-            Configure payment methods displayed to users in Bills Top-Up and Token Top-Up menus. Stored live in database.
+            Configure payment methods displayed to users in Bills Top-Up and Token Top-Up menus.
+            Stored live in database.
           </p>
         </div>
 
@@ -170,8 +172,8 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
             className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             title="Sync with Supabase Cloud Database"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-blue-600' : ''}`} />
-            <span>{isSyncing ? 'Syncing...' : 'Sync Cloud DB'}</span>
+            <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin text-blue-600" : ""}`} />
+            <span>{isSyncing ? "Syncing..." : "Sync Cloud DB"}</span>
           </button>
 
           <button
@@ -198,21 +200,23 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
         <div className="text-center py-10 border-2 border-dashed border-slate-200 rounded-2xl space-y-2">
           <Smartphone className="w-8 h-8 text-slate-300 mx-auto" />
           <p className="text-sm font-semibold text-slate-600">No payment methods configured yet</p>
-          <p className="text-xs text-slate-400">Click "Add Payment Method" to configure your first payment channel.</p>
+          <p className="text-xs text-slate-400">
+            Click "Add Payment Method" to configure your first payment channel.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {paymentMethods.map((pm) => {
-            const isActive = pm.status === 'active';
-            const cleanWa = cleanWaNumber(pm.whatsappNumber || '');
+            const isActive = pm.status === "active";
+            const cleanWa = cleanWaNumber(pm.whatsappNumber || "");
 
             return (
               <div
                 key={pm.id}
                 className={`p-4 rounded-2xl border transition-all space-y-3 relative ${
                   isActive
-                    ? 'border-slate-200 bg-white hover:border-blue-400 shadow-xs'
-                    : 'border-slate-200 bg-slate-50 opacity-75'
+                    ? "border-slate-200 bg-white hover:border-blue-400 shadow-xs"
+                    : "border-slate-200 bg-slate-50 opacity-75"
                 }`}
               >
                 {/* Method Top Bar */}
@@ -236,15 +240,17 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
-                      onClick={() => updatePaymentMethod(pm.id, { status: isActive ? 'inactive' : 'active' })}
+                      onClick={() =>
+                        updatePaymentMethod(pm.id, { status: isActive ? "inactive" : "active" })
+                      }
                       className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full transition-all cursor-pointer ${
                         isActive
-                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-200'
-                          : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                          ? "bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-200"
+                          : "bg-slate-200 text-slate-600 hover:bg-slate-300"
                       }`}
                       title="Click to toggle status"
                     >
-                      {isActive ? 'ACTIVE' : 'INACTIVE'}
+                      {isActive ? "ACTIVE" : "INACTIVE"}
                     </button>
 
                     <button
@@ -315,7 +321,9 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
                 <div className="space-y-1.5 text-[11px]">
                   {pm.confirmMessage && (
                     <div className="p-2 bg-blue-50/70 text-blue-900 border border-blue-100 rounded-lg">
-                      <strong className="font-bold block text-[10px] uppercase text-blue-700">Auto Confirmation Note:</strong>
+                      <strong className="font-bold block text-[10px] uppercase text-blue-700">
+                        Auto Confirmation Note:
+                      </strong>
                       <span>{pm.confirmMessage}</span>
                     </div>
                   )}
@@ -324,11 +332,13 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
                     <div className="flex items-center justify-between p-2 bg-emerald-50 text-emerald-900 border border-emerald-100 rounded-lg">
                       <div className="flex items-center gap-1.5 truncate">
                         <MessageCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span className="truncate">Confirm WhatsApp: <strong>{pm.whatsappNumber}</strong></span>
+                        <span className="truncate">
+                          Confirm WhatsApp: <strong>{pm.whatsappNumber}</strong>
+                        </span>
                       </div>
                       {cleanWa && (
                         <a
-                          href={`https://wa.me/${cleanWa}?text=${encodeURIComponent(`Hello, I have made a payment of ${pm.amount || 'package price'} via ${pm.name} (${pm.number}). Please confirm my tokens.`)}`}
+                          href={`https://wa.me/${cleanWa}?text=${encodeURIComponent(`Hello, I have made a payment of ${pm.amount || "package price"} via ${pm.name} (${pm.number}). Please confirm my tokens.`)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-[10px] font-bold text-emerald-700 hover:underline shrink-0 flex items-center gap-0.5"
@@ -343,19 +353,20 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
                   {pm.irreversibleNotice && (
                     <div className="p-2 bg-amber-50 text-amber-900 border border-amber-200/80 rounded-lg flex items-start gap-1.5">
                       <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
-                      <span className="font-medium text-[10px] leading-tight">{pm.irreversibleNotice}</span>
+                      <span className="font-medium text-[10px] leading-tight">
+                        {pm.irreversibleNotice}
+                      </span>
                     </div>
                   )}
 
                   {pm.customMessage && (
-                    <p className="text-slate-500 italic text-[11px]">
-                      "{pm.customMessage}"
-                    </p>
+                    <p className="text-slate-500 italic text-[11px]">"{pm.customMessage}"</p>
                   )}
 
                   {pm.instructions && (
                     <p className="text-slate-600 text-[11px] pt-1 border-t border-slate-100 line-clamp-2">
-                      <span className="font-semibold text-slate-700">Instructions:</span> {pm.instructions}
+                      <span className="font-semibold text-slate-700">Instructions:</span>{" "}
+                      {pm.instructions}
                     </p>
                   )}
                 </div>
@@ -392,54 +403,80 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
             <div className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-2 p-3 bg-slate-50 rounded-xl">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Method Name</span>
-                  <span className="text-sm font-extrabold text-slate-900">{viewingMethod.name}</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                    Method Name
+                  </span>
+                  <span className="text-sm font-extrabold text-slate-900">
+                    {viewingMethod.name}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Method Title</span>
-                  <span className="text-sm font-bold text-blue-700">{viewingMethod.title || 'Standard'}</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                    Method Title
+                  </span>
+                  <span className="text-sm font-bold text-blue-700">
+                    {viewingMethod.title || "Standard"}
+                  </span>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-2 p-3 bg-slate-50 rounded-xl">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Payment Number</span>
-                  <span className="font-mono font-bold text-slate-900 text-sm">{viewingMethod.number}</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                    Payment Number
+                  </span>
+                  <span className="font-mono font-bold text-slate-900 text-sm">
+                    {viewingMethod.number}
+                  </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Account Name</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                    Account Name
+                  </span>
                   <span className="font-semibold text-slate-800">{viewingMethod.accountName}</span>
                 </div>
               </div>
 
               <div className="p-3 bg-slate-50 rounded-xl flex items-center justify-between">
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Amount to Pay</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                    Amount to Pay
+                  </span>
                   <span className="font-bold text-blue-700 text-xs flex items-center gap-1 mt-0.5">
                     <Zap className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                     <span>Dynamic (Attaches to each available Token Package)</span>
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Status</span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    viewingMethod.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'
-                  }`}>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">
+                    Status
+                  </span>
+                  <span
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      viewingMethod.status === "active"
+                        ? "bg-emerald-100 text-emerald-800"
+                        : "bg-slate-200 text-slate-600"
+                    }`}
+                  >
                     {viewingMethod.status.toUpperCase()}
                   </span>
                 </div>
               </div>
 
               <div>
-                <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Instructions</span>
+                <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">
+                  Instructions
+                </span>
                 <div className="p-2.5 bg-slate-50 rounded-xl text-slate-700">
-                  {viewingMethod.instructions || 'No instructions provided.'}
+                  {viewingMethod.instructions || "No instructions provided."}
                 </div>
               </div>
 
               {viewingMethod.confirmMessage && (
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Confirm After Payment Message</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">
+                    Confirm After Payment Message
+                  </span>
                   <div className="p-2.5 bg-blue-50 text-blue-900 border border-blue-100 rounded-xl">
                     {viewingMethod.confirmMessage}
                   </div>
@@ -448,9 +485,13 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
 
               {viewingMethod.whatsappNumber && (
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Confirm on WhatsApp</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">
+                    Confirm on WhatsApp
+                  </span>
                   <div className="p-2.5 bg-emerald-50 text-emerald-900 border border-emerald-100 rounded-xl flex items-center justify-between">
-                    <span>Number: <strong>{viewingMethod.whatsappNumber}</strong></span>
+                    <span>
+                      Number: <strong>{viewingMethod.whatsappNumber}</strong>
+                    </span>
                     <a
                       href={`https://wa.me/${cleanWaNumber(viewingMethod.whatsappNumber)}?text=${encodeURIComponent(`Hello, I have sent payment via ${viewingMethod.name}.`)}`}
                       target="_blank"
@@ -466,7 +507,9 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
 
               {viewingMethod.irreversibleNotice && (
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Irreversible Notice</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">
+                    Irreversible Notice
+                  </span>
                   <div className="p-2.5 bg-amber-50 text-amber-900 border border-amber-200 rounded-xl flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
                     <span>{viewingMethod.irreversibleNotice}</span>
@@ -476,7 +519,9 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
 
               {viewingMethod.customMessage && (
                 <div>
-                  <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Custom Message</span>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block mb-1">
+                    Custom Message
+                  </span>
                   <div className="p-2.5 bg-slate-50 rounded-xl text-slate-700 italic">
                     "{viewingMethod.customMessage}"
                   </div>
@@ -529,7 +574,10 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
       {(isAddOpen || editingMethod) && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs font-sans"
-          onClick={() => { setIsAddOpen(false); setEditingMethod(null); }}
+          onClick={() => {
+            setIsAddOpen(false);
+            setEditingMethod(null);
+          }}
         >
           <div
             className="bg-white text-slate-900 border border-slate-200 rounded-2xl p-5 sm:p-6 w-full max-w-xl shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto"
@@ -538,15 +586,21 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div>
                 <h3 className="font-black text-base sm:text-lg">
-                  {editingMethod ? `Edit Payment Method: ${editingMethod.name}` : 'Add New Payment Method'}
+                  {editingMethod
+                    ? `Edit Payment Method: ${editingMethod.name}`
+                    : "Add New Payment Method"}
                 </h3>
                 <p className="text-xs text-slate-500">
-                  Update payment titles, amounts, instructions, and messages displayed in user top-up menus
+                  Update payment titles, amounts, instructions, and messages displayed in user
+                  top-up menus
                 </p>
               </div>
               <button
                 type="button"
-                onClick={() => { setIsAddOpen(false); setEditingMethod(null); }}
+                onClick={() => {
+                  setIsAddOpen(false);
+                  setEditingMethod(null);
+                }}
                 className="p-1 rounded-lg text-slate-400 hover:text-slate-800"
               >
                 <X className="w-5 h-5" />
@@ -575,7 +629,9 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                     required
                   />
-                  <span className="text-[10px] text-slate-400">e.g. M-Pesa, Mixx, Airtel, HaloPesa, Bank</span>
+                  <span className="text-[10px] text-slate-400">
+                    e.g. M-Pesa, Mixx, Airtel, HaloPesa, Bank
+                  </span>
                 </div>
 
                 {/* Method Title */}
@@ -590,7 +646,9 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
                     placeholder="e.g. Lipa kwa Simu / Till Number"
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                   />
-                  <span className="text-[10px] text-slate-400">Display label shown on top-up card</span>
+                  <span className="text-[10px] text-slate-400">
+                    Display label shown on top-up card
+                  </span>
                 </div>
               </div>
 
@@ -608,7 +666,9 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono font-bold text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                     required
                   />
-                  <span className="text-[10px] text-slate-400">Users can 1-click copy this number</span>
+                  <span className="text-[10px] text-slate-400">
+                    Users can 1-click copy this number
+                  </span>
                 </div>
 
                 {/* Account Name */}
@@ -624,7 +684,9 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                     required
                   />
-                  <span className="text-[10px] text-slate-400">Recipient name shown on USSD confirmation</span>
+                  <span className="text-[10px] text-slate-400">
+                    Recipient name shown on USSD confirmation
+                  </span>
                 </div>
               </div>
 
@@ -638,7 +700,9 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
                     </label>
                   </div>
                   <p className="text-[10.5px] text-blue-800 leading-snug">
-                    No need to enter a fixed amount! This payment method automatically attaches to all token packages created by admin. Users see the exact package price in Bills & Token Top-Up.
+                    No need to enter a fixed amount! This payment method automatically attaches to
+                    all token packages created by admin. Users see the exact package price in Bills
+                    & Token Top-Up.
                   </p>
                 </div>
 
@@ -649,13 +713,17 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
                   </label>
                   <select
                     value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, status: e.target.value as "active" | "inactive" })
+                    }
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                   >
                     <option value="active">Active (Visible to Users)</option>
                     <option value="inactive">Inactive (Hidden from Users)</option>
                   </select>
-                  <span className="text-[10px] text-slate-400">Controls visibility in all user top-up menus</span>
+                  <span className="text-[10px] text-slate-400">
+                    Controls visibility in all user top-up menus
+                  </span>
                 </div>
               </div>
 
@@ -692,7 +760,9 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
                     placeholder="e.g. Confirm after payment: Enter transaction reference code below"
                     className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white"
                   />
-                  <span className="text-[10px] text-slate-500">Shown to user as confirmation prompt</span>
+                  <span className="text-[10px] text-slate-500">
+                    Shown to user as confirmation prompt
+                  </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -708,7 +778,9 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
                       placeholder="e.g. +255 712 345 678"
                       className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-mono bg-white"
                     />
-                    <span className="text-[10px] text-slate-500">Provides direct click-to-WhatsApp link</span>
+                    <span className="text-[10px] text-slate-500">
+                      Provides direct click-to-WhatsApp link
+                    </span>
                   </div>
 
                   {/* Payment is irreversible notice */}
@@ -719,11 +791,15 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
                     <input
                       type="text"
                       value={formData.irreversibleNotice}
-                      onChange={(e) => setFormData({ ...formData, irreversibleNotice: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, irreversibleNotice: e.target.value })
+                      }
                       placeholder="e.g. Payment is irreversible once submitted."
                       className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white"
                     />
-                    <span className="text-[10px] text-slate-500">Warning badge displayed on payment screen</span>
+                    <span className="text-[10px] text-slate-500">
+                      Warning badge displayed on payment screen
+                    </span>
                   </div>
                 </div>
 
@@ -746,7 +822,10 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
               <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                 <button
                   type="button"
-                  onClick={() => { setIsAddOpen(false); setEditingMethod(null); }}
+                  onClick={() => {
+                    setIsAddOpen(false);
+                    setEditingMethod(null);
+                  }}
                   className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
                 >
                   Cancel
@@ -756,7 +835,7 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
                   className="px-5 py-2 bg-[#101010] hover:bg-black text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
                 >
                   <Check className="w-4 h-4" />
-                  <span>{editingMethod ? 'Save Changes' : 'Create Payment Method'}</span>
+                  <span>{editingMethod ? "Save Changes" : "Create Payment Method"}</span>
                 </button>
               </div>
             </form>
@@ -780,7 +859,9 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
               </div>
               <div>
                 <h3 className="text-base font-black text-slate-900">Delete Payment Method?</h3>
-                <p className="text-xs text-slate-500">This action will remove this payment option from the system.</p>
+                <p className="text-xs text-slate-500">
+                  This action will remove this payment option from the system.
+                </p>
               </div>
             </div>
 
@@ -803,7 +884,10 @@ export const PaymentMethodsAdminPanel: React.FC = () => {
 
             <div className="text-xs text-amber-800 bg-amber-50 p-2.5 rounded-xl border border-amber-200/80 flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-              <span>Users will no longer see this payment method in Bills Top-Up and Token Top-Up screens. Changes will sync to Supabase.</span>
+              <span>
+                Users will no longer see this payment method in Bills Top-Up and Token Top-Up
+                screens. Changes will sync to Supabase.
+              </span>
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">

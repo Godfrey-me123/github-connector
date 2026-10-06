@@ -1,5 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 import {
   Type,
   Image as ImageIcon,
@@ -20,9 +20,9 @@ import {
   ChevronUp,
   ChevronDown,
   Check,
-} from 'lucide-react';
-import { useTemplateStore } from '../store/useTemplateStore';
-import { Layer } from '../types';
+} from "lucide-react";
+import { useTemplateStore } from "../store/useTemplateStore";
+import { Layer } from "../types";
 
 interface LayersListProps {
   onLayerSelected?: () => void;
@@ -44,7 +44,7 @@ export const LayersList: React.FC<LayersListProps> = ({ onLayerSelected, isMobil
 
   const [longPressMenuLayerId, setLongPressMenuLayerId] = useState<string | null>(null);
   const [editingLayerId, setEditingLayerId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState<string>('');
+  const [editingName, setEditingName] = useState<string>("");
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const layerItemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -54,7 +54,7 @@ export const LayersList: React.FC<LayersListProps> = ({ onLayerSelected, isMobil
       const activeId = selectedLayerIds[0];
       const el = layerItemRefs.current[activeId];
       if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        el.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
     }
   }, [selectedLayerIds]);
@@ -96,16 +96,16 @@ export const LayersList: React.FC<LayersListProps> = ({ onLayerSelected, isMobil
 
   const renderThumbnail = (layer: Layer) => {
     switch (layer.type) {
-      case 'text':
+      case "text":
         return (
           <div
             className="w-8 h-8 rounded bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-xs text-blue-400 overflow-hidden select-none flex-shrink-0"
-            style={{ color: layer.color || '#60a5fa' }}
+            style={{ color: layer.color || "#60a5fa" }}
           >
-            {layer.text?.substring(0, 2) || 'Aa'}
+            {layer.text?.substring(0, 2) || "Aa"}
           </div>
         );
-      case 'image':
+      case "image":
         return layer.src ? (
           <img
             src={layer.src}
@@ -117,29 +117,29 @@ export const LayersList: React.FC<LayersListProps> = ({ onLayerSelected, isMobil
             <ImageIcon className="w-4 h-4" />
           </div>
         );
-      case 'placeholder':
+      case "placeholder":
         return (
           <div className="w-8 h-8 rounded bg-emerald-950/60 border border-emerald-700/60 flex items-center justify-center text-emerald-400 flex-shrink-0">
             <UserCheck className="w-4 h-4" />
           </div>
         );
-      case 'shape':
+      case "shape":
         return (
           <div className="w-8 h-8 rounded bg-slate-800 border border-slate-700 flex items-center justify-center text-pink-400 flex-shrink-0">
-            {layer.shapeType === 'circle' ? (
+            {layer.shapeType === "circle" ? (
               <CircleIcon className="w-4 h-4" />
             ) : (
               <Square className="w-4 h-4" />
             )}
           </div>
         );
-      case 'barcode':
+      case "barcode":
         return (
           <div className="w-8 h-8 rounded bg-slate-800 border border-slate-700 flex items-center justify-center text-amber-400 flex-shrink-0">
             <BarcodeIcon className="w-4 h-4" />
           </div>
         );
-      case 'qrcode':
+      case "qrcode":
         return (
           <div className="w-8 h-8 rounded bg-slate-800 border border-slate-700 flex items-center justify-center text-teal-400 flex-shrink-0">
             <QrCode className="w-4 h-4" />
@@ -156,20 +156,48 @@ export const LayersList: React.FC<LayersListProps> = ({ onLayerSelected, isMobil
 
   const getLayerTypeBadge = (type: string) => {
     switch (type) {
-      case 'text':
-        return <span className="text-[9px] px-1 py-0.2 rounded bg-blue-500/10 text-blue-400 font-mono font-bold">TEXT</span>;
-      case 'image':
-        return <span className="text-[9px] px-1 py-0.2 rounded bg-sky-500/10 text-sky-400 font-mono font-bold">IMAGE</span>;
-      case 'placeholder':
-        return <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-500/10 text-emerald-400 font-mono font-bold">HOLDER</span>;
-      case 'shape':
-        return <span className="text-[9px] px-1 py-0.2 rounded bg-pink-500/10 text-pink-400 font-mono font-bold">SHAPE</span>;
-      case 'barcode':
-        return <span className="text-[9px] px-1 py-0.2 rounded bg-amber-500/10 text-amber-400 font-mono font-bold">BARCODE</span>;
-      case 'qrcode':
-        return <span className="text-[9px] px-1 py-0.2 rounded bg-teal-500/10 text-teal-400 font-mono font-bold">QR</span>;
+      case "text":
+        return (
+          <span className="text-[9px] px-1 py-0.2 rounded bg-blue-500/10 text-blue-400 font-mono font-bold">
+            TEXT
+          </span>
+        );
+      case "image":
+        return (
+          <span className="text-[9px] px-1 py-0.2 rounded bg-sky-500/10 text-sky-400 font-mono font-bold">
+            IMAGE
+          </span>
+        );
+      case "placeholder":
+        return (
+          <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-500/10 text-emerald-400 font-mono font-bold">
+            HOLDER
+          </span>
+        );
+      case "shape":
+        return (
+          <span className="text-[9px] px-1 py-0.2 rounded bg-pink-500/10 text-pink-400 font-mono font-bold">
+            SHAPE
+          </span>
+        );
+      case "barcode":
+        return (
+          <span className="text-[9px] px-1 py-0.2 rounded bg-amber-500/10 text-amber-400 font-mono font-bold">
+            BARCODE
+          </span>
+        );
+      case "qrcode":
+        return (
+          <span className="text-[9px] px-1 py-0.2 rounded bg-teal-500/10 text-teal-400 font-mono font-bold">
+            QR
+          </span>
+        );
       default:
-        return <span className="text-[9px] px-1 py-0.2 rounded bg-slate-500/10 text-slate-400 font-mono font-bold">ITEM</span>;
+        return (
+          <span className="text-[9px] px-1 py-0.2 rounded bg-slate-500/10 text-slate-400 font-mono font-bold">
+            ITEM
+          </span>
+        );
     }
   };
 
@@ -232,8 +260,8 @@ export const LayersList: React.FC<LayersListProps> = ({ onLayerSelected, isMobil
                 }}
                 className={`p-2 sm:p-2.5 rounded-xl border flex items-center justify-between text-xs cursor-pointer transition-all min-h-[48px] select-none ${
                   isSelected
-                    ? 'bg-blue-600/20 border-blue-500 text-white shadow-sm ring-1 ring-blue-500/30'
-                    : 'bg-slate-800/60 border-slate-700/60 text-slate-300 hover:bg-slate-800/90'
+                    ? "bg-blue-600/20 border-blue-500 text-white shadow-sm ring-1 ring-blue-500/30"
+                    : "bg-slate-800/60 border-slate-700/60 text-slate-300 hover:bg-slate-800/90"
                 }`}
               >
                 {/* Left: Thumbnail, Type & Name */}
@@ -254,8 +282,8 @@ export const LayersList: React.FC<LayersListProps> = ({ onLayerSelected, isMobil
                           value={editingName}
                           onChange={(e) => setEditingName(e.target.value)}
                           onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleSaveRename(layer.id);
-                            if (e.key === 'Escape') setEditingLayerId(null);
+                            if (e.key === "Enter") handleSaveRename(layer.id);
+                            if (e.key === "Escape") setEditingLayerId(null);
                           }}
                           autoFocus
                           className="bg-slate-900 text-white text-xs px-1.5 py-0.5 rounded border border-blue-500 focus:outline-none w-full"
@@ -280,17 +308,20 @@ export const LayersList: React.FC<LayersListProps> = ({ onLayerSelected, isMobil
                 </div>
 
                 {/* Right: Quick Action Controls */}
-                <div className="flex items-center gap-0.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                <div
+                  className="flex items-center gap-0.5 flex-shrink-0"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {/* Reorder Up/Down */}
                   <button
-                    onClick={() => reorderLayer(layer.id, 'up')}
+                    onClick={() => reorderLayer(layer.id, "up")}
                     className="min-h-[36px] min-w-[32px] sm:min-h-0 sm:min-w-0 p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-white flex items-center justify-center transition-colors"
                     title="Bring Forward"
                   >
                     <ArrowUp className="w-3.5 h-3.5" />
                   </button>
                   <button
-                    onClick={() => reorderLayer(layer.id, 'down')}
+                    onClick={() => reorderLayer(layer.id, "down")}
                     className="min-h-[36px] min-w-[32px] sm:min-h-0 sm:min-w-0 p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-white flex items-center justify-center transition-colors"
                     title="Send Backward"
                   >
@@ -301,7 +332,7 @@ export const LayersList: React.FC<LayersListProps> = ({ onLayerSelected, isMobil
                   <button
                     onClick={() => toggleLayerVisibility(layer.id)}
                     className="min-h-[36px] min-w-[32px] sm:min-h-0 sm:min-w-0 p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-white flex items-center justify-center transition-colors"
-                    title={layer.hidden ? 'Show Layer' : 'Hide Layer'}
+                    title={layer.hidden ? "Show Layer" : "Hide Layer"}
                   >
                     {layer.hidden ? (
                       <EyeOff className="w-3.5 h-3.5 text-red-400" />
@@ -314,7 +345,7 @@ export const LayersList: React.FC<LayersListProps> = ({ onLayerSelected, isMobil
                   <button
                     onClick={() => toggleLayerLock(layer.id)}
                     className="min-h-[36px] min-w-[32px] sm:min-h-0 sm:min-w-0 p-1.5 hover:bg-slate-700 rounded text-slate-400 hover:text-white flex items-center justify-center transition-colors"
-                    title={layer.locked ? 'Unlock Layer' : 'Lock Layer'}
+                    title={layer.locked ? "Unlock Layer" : "Lock Layer"}
                   >
                     {layer.locked ? (
                       <Lock className="w-3.5 h-3.5 text-amber-400" />
@@ -361,7 +392,7 @@ export const LayersList: React.FC<LayersListProps> = ({ onLayerSelected, isMobil
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => {
-                  reorderLayer(longPressMenuLayerId, 'top');
+                  reorderLayer(longPressMenuLayerId, "top");
                   setLongPressMenuLayerId(null);
                 }}
                 className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-200 flex items-center gap-2 font-medium"
@@ -371,7 +402,7 @@ export const LayersList: React.FC<LayersListProps> = ({ onLayerSelected, isMobil
               </button>
               <button
                 onClick={() => {
-                  reorderLayer(longPressMenuLayerId, 'bottom');
+                  reorderLayer(longPressMenuLayerId, "bottom");
                   setLongPressMenuLayerId(null);
                 }}
                 className="p-2.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-200 flex items-center gap-2 font-medium"

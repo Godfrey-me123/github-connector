@@ -1,6 +1,6 @@
 // @ts-nocheck -- imported legacy BIGsta code
-import React from 'react';
-import { ShieldCheck } from 'lucide-react';
+import React from "react";
+import { ShieldCheck } from "lucide-react";
 
 export const PrivacyBanner: React.FC = () => {
   return (

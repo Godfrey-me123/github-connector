@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
-import { CheckCircle2, X, Barcode, ShieldCheck, ArrowRight } from 'lucide-react';
-import { useTemplateStore } from '../../store/useTemplateStore';
+import React, { useEffect } from "react";
+import { CheckCircle2, X, Barcode, ShieldCheck, ArrowRight } from "lucide-react";
+import { useTemplateStore } from "../../store/useTemplateStore";
 
 export const NidaSuccessToast: React.FC = () => {
   const { nidaSuccessNotification, setNidaSuccessNotification } = useTemplateStore();
@@ -34,11 +34,11 @@ export const NidaSuccessToast: React.FC = () => {
             <span
               className={`text-[9px] sm:text-[10px] font-mono font-bold px-2 py-0.5 rounded-full shrink-0 border ${
                 nidaSuccessNotification.isBackSide
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                  : 'bg-[#47A5FF]/20 text-[#47A5FF] border-[#47A5FF]/40'
+                  ? "bg-amber-500/20 text-amber-300 border-amber-500/30"
+                  : "bg-[#47A5FF]/20 text-[#47A5FF] border-[#47A5FF]/40"
               }`}
             >
-              {nidaSuccessNotification.isBackSide ? 'Back Side' : 'Front Side'}
+              {nidaSuccessNotification.isBackSide ? "Back Side" : "Front Side"}
             </span>
           </div>
 

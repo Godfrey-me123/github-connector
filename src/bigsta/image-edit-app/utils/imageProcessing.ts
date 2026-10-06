@@ -1,13 +1,13 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import { CropRect, WatermarkOptions, EnhanceOptions, ExportFormat } from '../types/imageTools';
-import { PDFDocument } from 'pdf-lib';
+import { CropRect, WatermarkOptions, EnhanceOptions, ExportFormat } from "../types/imageTools";
+import { PDFDocument } from "pdf-lib";
 
 /**
  * Compress PDF Document client-side
  */
 export async function compressPdfFile(
   pdfFile: File,
-  qualityPercent: number = 70
+  qualityPercent: number = 70,
 ): Promise<{ url: string; blob: Blob; size: number; pageCount: number }> {
   try {
     const arrayBuffer = await pdfFile.arrayBuffer();
@@ -20,7 +20,7 @@ export async function compressPdfFile(
       addDefaultPage: false,
     });
 
-    let blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
+    let blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
     let finalSize = blob.size;
 
     // Apply proportional stream optimization if qualityPercent < 90
@@ -32,9 +32,9 @@ export async function compressPdfFile(
     const url = URL.createObjectURL(blob);
     return { url, blob, size: finalSize, pageCount };
   } catch (err) {
-    console.error('PDF Compression Error, using stream blob fallback:', err);
+    console.error("PDF Compression Error, using stream blob fallback:", err);
     const fallbackSize = Math.round(pdfFile.size * Math.max(0.45, qualityPercent / 100));
-    const blob = new Blob([pdfFile], { type: 'application/pdf' });
+    const blob = new Blob([pdfFile], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
     return { url, blob, size: fallbackSize, pageCount: 1 };
   }
@@ -44,12 +44,12 @@ export async function compressPdfFile(
  * Utility to format bytes into readable strings
  */
 export function formatBytes(bytes: number, decimals = 1): string {
-  if (!bytes || bytes === 0) return '0 B';
+  if (!bytes || bytes === 0) return "0 B";
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
 }
 
 /**
@@ -59,7 +59,7 @@ export function loadImageFromFile(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    img.crossOrigin = "anonymous";
     img.onload = () => {
       URL.revokeObjectURL(url);
       resolve(img);
@@ -78,7 +78,7 @@ export function loadImageFromFile(file: File): Promise<HTMLImageElement> {
 export function loadImageFromUrl(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
-    img.crossOrigin = 'anonymous';
+    img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
     img.onerror = (err) => reject(err);
     img.src = url;
@@ -90,20 +90,20 @@ export function loadImageFromUrl(url: string): Promise<HTMLImageElement> {
  */
 export function canvasToBlobUrl(
   canvas: HTMLCanvasElement,
-  format: string = 'image/png',
-  quality: number = 0.92
+  format: string = "image/png",
+  quality: number = 0.92,
 ): Promise<{ url: string; blob: Blob; size: number }> {
   return new Promise((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
         if (!blob) {
-          return reject(new Error('Canvas to Blob conversion failed'));
+          return reject(new Error("Canvas to Blob conversion failed"));
         }
         const url = URL.createObjectURL(blob);
         resolve({ url, blob, size: blob.size });
       },
       format,
-      quality
+      quality,
     );
   });
 }
@@ -114,16 +114,16 @@ export function canvasToBlobUrl(
 export async function resizeImageCanvas(
   img: HTMLImageElement,
   targetWidth: number,
-  targetHeight: number
+  targetHeight: number,
 ): Promise<HTMLCanvasElement> {
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = Math.max(1, Math.round(targetWidth));
   canvas.height = Math.max(1, Math.round(targetHeight));
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Could not get 2D canvas context');
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Could not get 2D canvas context");
 
   ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
+  ctx.imageSmoothingQuality = "high";
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   return canvas;
 }
@@ -134,17 +134,17 @@ export async function resizeImageCanvas(
 export async function compressImageCanvas(
   img: HTMLImageElement,
   qualityPercent: number, // 1 to 100
-  mimeType: string = 'image/jpeg'
+  mimeType: string = "image/jpeg",
 ): Promise<HTMLCanvasElement> {
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = img.width;
   canvas.height = img.height;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Could not get 2D canvas context');
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Could not get 2D canvas context");
 
   // Fill white background for JPEG compression if transparent
-  if (mimeType === 'image/jpeg') {
-    ctx.fillStyle = '#FFFFFF';
+  if (mimeType === "image/jpeg") {
+    ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
@@ -157,25 +157,15 @@ export async function compressImageCanvas(
  */
 export async function cropImageCanvas(
   img: HTMLImageElement,
-  crop: { x: number; y: number; width: number; height: number; aspectRatio?: number | null }
+  crop: { x: number; y: number; width: number; height: number; aspectRatio?: number | null },
 ): Promise<HTMLCanvasElement> {
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = Math.max(1, Math.round(crop.width));
   canvas.height = Math.max(1, Math.round(crop.height));
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Could not get 2D canvas context');
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Could not get 2D canvas context");
 
-  ctx.drawImage(
-    img,
-    crop.x,
-    crop.y,
-    crop.width,
-    crop.height,
-    0,
-    0,
-    crop.width,
-    crop.height
-  );
+  ctx.drawImage(img, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
   return canvas;
 }
 
@@ -186,7 +176,7 @@ export async function rotateAndFlipCanvas(
   img: HTMLImageElement,
   angleDeg: number,
   flipH: boolean,
-  flipV: boolean
+  flipV: boolean,
 ): Promise<HTMLCanvasElement> {
   const rad = (angleDeg * Math.PI) / 180;
   const sin = Math.abs(Math.sin(rad));
@@ -195,11 +185,11 @@ export async function rotateAndFlipCanvas(
   const newWidth = Math.round(img.width * cos + img.height * sin);
   const newHeight = Math.round(img.width * sin + img.height * cos);
 
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = newWidth;
   canvas.height = newHeight;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Could not get 2D canvas context');
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Could not get 2D canvas context");
 
   ctx.translate(newWidth / 2, newHeight / 2);
   ctx.rotate(rad);
@@ -214,16 +204,16 @@ export async function rotateAndFlipCanvas(
  */
 export async function convertFormatCanvas(
   img: HTMLImageElement,
-  targetFormat: ExportFormat
+  targetFormat: ExportFormat,
 ): Promise<HTMLCanvasElement> {
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = img.width;
   canvas.height = img.height;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Could not get 2D canvas context');
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Could not get 2D canvas context");
 
-  if (targetFormat === 'image/jpeg') {
-    ctx.fillStyle = '#FFFFFF';
+  if (targetFormat === "image/jpeg") {
+    ctx.fillStyle = "#FFFFFF";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
@@ -236,30 +226,30 @@ export async function convertFormatCanvas(
  */
 export async function applyWatermarkCanvas(
   img: HTMLImageElement,
-  options: WatermarkOptions
+  options: WatermarkOptions,
 ): Promise<HTMLCanvasElement> {
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = img.width;
   canvas.height = img.height;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Could not get 2D canvas context');
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Could not get 2D canvas context");
 
   // Draw main image
   ctx.drawImage(img, 0, 0);
 
   ctx.globalAlpha = Math.max(0.05, Math.min(1, options.opacity));
 
-  if (options.mode === 'text' && options.text) {
+  if (options.mode === "text" && options.text) {
     const scaledFontSize = Math.max(12, Math.round((options.fontSize / 1000) * canvas.width));
-    ctx.font = `600 ${scaledFontSize}px ${options.fontFamily || 'sans-serif'}`;
-    ctx.fillStyle = options.textColor || '#ffffff';
-    ctx.textBaseline = 'middle';
+    ctx.font = `600 ${scaledFontSize}px ${options.fontFamily || "sans-serif"}`;
+    ctx.fillStyle = options.textColor || "#ffffff";
+    ctx.textBaseline = "middle";
 
     const textMetrics = ctx.measureText(options.text);
     const textWidth = textMetrics.width;
     const textHeight = scaledFontSize;
 
-    if (options.position === 'tiled') {
+    if (options.position === "tiled") {
       const stepX = textWidth + 120;
       const stepY = textHeight + 80;
       ctx.save();
@@ -276,56 +266,56 @@ export async function applyWatermarkCanvas(
       const padding = 24;
 
       switch (options.position) {
-        case 'top-left':
+        case "top-left":
           x = padding;
           y = padding + textHeight / 2;
-          ctx.textAlign = 'left';
+          ctx.textAlign = "left";
           break;
-        case 'top-center':
+        case "top-center":
           x = canvas.width / 2;
           y = padding + textHeight / 2;
-          ctx.textAlign = 'center';
+          ctx.textAlign = "center";
           break;
-        case 'top-right':
+        case "top-right":
           x = canvas.width - padding;
           y = padding + textHeight / 2;
-          ctx.textAlign = 'right';
+          ctx.textAlign = "right";
           break;
-        case 'center-left':
+        case "center-left":
           x = padding;
           y = canvas.height / 2;
-          ctx.textAlign = 'left';
+          ctx.textAlign = "left";
           break;
-        case 'center':
+        case "center":
           x = canvas.width / 2;
           y = canvas.height / 2;
-          ctx.textAlign = 'center';
+          ctx.textAlign = "center";
           break;
-        case 'center-right':
+        case "center-right":
           x = canvas.width - padding;
           y = canvas.height / 2;
-          ctx.textAlign = 'right';
+          ctx.textAlign = "right";
           break;
-        case 'bottom-left':
+        case "bottom-left":
           x = padding;
           y = canvas.height - padding - textHeight / 2;
-          ctx.textAlign = 'left';
+          ctx.textAlign = "left";
           break;
-        case 'bottom-center':
+        case "bottom-center":
           x = canvas.width / 2;
           y = canvas.height - padding - textHeight / 2;
-          ctx.textAlign = 'center';
+          ctx.textAlign = "center";
           break;
-        case 'bottom-right':
+        case "bottom-right":
           x = canvas.width - padding;
           y = canvas.height - padding - textHeight / 2;
-          ctx.textAlign = 'right';
+          ctx.textAlign = "right";
           break;
       }
 
       ctx.fillText(options.text, x, y);
     }
-  } else if (options.mode === 'image' && options.watermarkImageUrl) {
+  } else if (options.mode === "image" && options.watermarkImageUrl) {
     const wmImg = await loadImageFromUrl(options.watermarkImageUrl);
     const scale = options.watermarkScale || 0.2;
     const wmW = Math.round(canvas.width * scale);
@@ -336,39 +326,39 @@ export async function applyWatermarkCanvas(
     let y = (canvas.height - wmH) / 2;
 
     switch (options.position) {
-      case 'top-left':
+      case "top-left":
         x = padding;
         y = padding;
         break;
-      case 'top-center':
+      case "top-center":
         x = (canvas.width - wmW) / 2;
         y = padding;
         break;
-      case 'top-right':
+      case "top-right":
         x = canvas.width - wmW - padding;
         y = padding;
         break;
-      case 'center-left':
+      case "center-left":
         x = padding;
         y = (canvas.height - wmH) / 2;
         break;
-      case 'center':
+      case "center":
         x = (canvas.width - wmW) / 2;
         y = (canvas.height - wmH) / 2;
         break;
-      case 'center-right':
+      case "center-right":
         x = canvas.width - wmW - padding;
         y = (canvas.height - wmH) / 2;
         break;
-      case 'bottom-left':
+      case "bottom-left":
         x = padding;
         y = canvas.height - wmH - padding;
         break;
-      case 'bottom-center':
+      case "bottom-center":
         x = (canvas.width - wmW) / 2;
         y = canvas.height - wmH - padding;
         break;
-      case 'bottom-right':
+      case "bottom-right":
         x = canvas.width - wmW - padding;
         y = canvas.height - wmH - padding;
         break;
@@ -385,13 +375,13 @@ export async function applyWatermarkCanvas(
  */
 export async function removeBackgroundCanvas(
   img: HTMLImageElement,
-  analysis: any
+  analysis: any,
 ): Promise<HTMLCanvasElement> {
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = img.width;
   canvas.height = img.height;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Could not get 2D canvas context');
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Could not get 2D canvas context");
 
   ctx.drawImage(img, 0, 0);
 
@@ -441,22 +431,22 @@ export async function removeBackgroundCanvas(
  */
 export async function enhanceImageCanvas(
   img: HTMLImageElement,
-  options: EnhanceOptions
+  options: EnhanceOptions,
 ): Promise<HTMLCanvasElement> {
   const scale = options.scaleFactor || 1;
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = Math.round(img.width * scale);
   canvas.height = Math.round(img.height * scale);
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Could not get 2D canvas context');
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Could not get 2D canvas context");
 
   ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
+  ctx.imageSmoothingQuality = "high";
 
   // CSS Filters for Brightness, Contrast, Saturation
   ctx.filter = `brightness(${options.brightness}) contrast(${options.contrast}) saturate(${options.saturation})`;
   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-  ctx.filter = 'none';
+  ctx.filter = "none";
 
   // Apply convolution matrix for sharpening if sharpen > 1
   if (options.sharpen > 1) {
@@ -466,11 +456,7 @@ export async function enhanceImageCanvas(
     const h = canvas.height;
 
     const factor = options.sharpen - 1;
-    const kernel = [
-      0, -factor, 0,
-      -factor, 1 + 4 * factor, -factor,
-      0, -factor, 0
-    ];
+    const kernel = [0, -factor, 0, -factor, 1 + 4 * factor, -factor, 0, -factor, 0];
 
     const copy = new Uint8ClampedArray(data);
 
@@ -506,9 +492,9 @@ export async function enhanceImageCanvas(
 export function downloadProcessedFile(
   blobUrl: string,
   fileName: string,
-  autoDeleteAfterMs: number = 3000
+  autoDeleteAfterMs: number = 3000,
 ) {
-  const link = document.createElement('a');
+  const link = document.createElement("a");
   link.href = blobUrl;
   link.download = fileName;
   document.body.appendChild(link);

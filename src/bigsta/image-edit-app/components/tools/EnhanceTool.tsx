@@ -1,22 +1,14 @@
 // @ts-nocheck -- imported legacy BIGsta code
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  Zap,
-  Download,
-  Upload,
-  ArrowLeft,
-  Sparkles,
-  RefreshCw,
-  Sliders
-} from 'lucide-react';
-import { EnhanceOptions } from '../../types/imageTools';
+import React, { useState, useRef, useEffect } from "react";
+import { Zap, Download, Upload, ArrowLeft, Sparkles, RefreshCw, Sliders } from "lucide-react";
+import { EnhanceOptions } from "../../types/imageTools";
 import {
   formatBytes,
   loadImageFromFile,
   enhanceImageCanvas,
   canvasToBlobUrl,
-  downloadProcessedFile
-} from '../../utils/imageProcessing';
+  downloadProcessedFile,
+} from "../../utils/imageProcessing";
 
 interface EnhanceToolProps {
   initialFile?: File | null;
@@ -74,13 +66,13 @@ export const EnhanceTool: React.FC<EnhanceToolProps> = ({ initialFile, onBack })
         reader.readAsDataURL(fileToProcess);
       });
 
-      const res = await fetch('/api/ai/enhance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/ai/enhance", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           imageBase64: base64Data,
-          scaleFactor: currentOpts.scaleFactor
-        })
+          scaleFactor: currentOpts.scaleFactor,
+        }),
       });
 
       if (res.ok) {
@@ -92,13 +84,13 @@ export const EnhanceTool: React.FC<EnhanceToolProps> = ({ initialFile, onBack })
 
       // Render enhanced image canvas
       const canvas = await enhanceImageCanvas(img, currentOpts);
-      const mime = fileToProcess.type || 'image/png';
+      const mime = fileToProcess.type || "image/png";
       const result = await canvasToBlobUrl(canvas, mime, 0.95);
 
       setEnhancedUrl(result.url);
       setEnhancedSize(result.size);
     } catch (err) {
-      console.error('Enhancement error:', err);
+      console.error("Enhancement error:", err);
     } finally {
       setIsProcessing(false);
     }
@@ -112,8 +104,9 @@ export const EnhanceTool: React.FC<EnhanceToolProps> = ({ initialFile, onBack })
 
   const handleDownload = () => {
     if (!enhancedUrl || !file) return;
-    const ext = file.name.split('.').pop() || 'png';
-    const cleanName = file.name.replace(/\.[^/.]+$/, '') + `-enhanced-${options.scaleFactor}x.${ext}`;
+    const ext = file.name.split(".").pop() || "png";
+    const cleanName =
+      file.name.replace(/\.[^/.]+$/, "") + `-enhanced-${options.scaleFactor}x.${ext}`;
     downloadProcessedFile(enhancedUrl, cleanName);
   };
 
@@ -180,8 +173,8 @@ export const EnhanceTool: React.FC<EnhanceToolProps> = ({ initialFile, onBack })
                     onClick={() => handleOptionChange({ scaleFactor: scale as any })}
                     className={`py-2 px-3 rounded-xl text-xs font-bold border transition-colors ${
                       options.scaleFactor === scale
-                        ? 'bg-yellow-500 text-slate-950 border-yellow-400'
-                        : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'
+                        ? "bg-yellow-500 text-slate-950 border-yellow-400"
+                        : "bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700"
                     }`}
                   >
                     {scale}x Scale
@@ -248,7 +241,9 @@ export const EnhanceTool: React.FC<EnhanceToolProps> = ({ initialFile, onBack })
                 </span>
                 <div className="flex justify-between font-mono text-xs">
                   <span>Before: {analysisPlan.qualityScoreBefore}/100</span>
-                  <span className="text-emerald-400 font-bold">After: {analysisPlan.qualityScoreAfter}/100</span>
+                  <span className="text-emerald-400 font-bold">
+                    After: {analysisPlan.qualityScoreAfter}/100
+                  </span>
                 </div>
               </div>
             )}
@@ -259,7 +254,9 @@ export const EnhanceTool: React.FC<EnhanceToolProps> = ({ initialFile, onBack })
             {isProcessing ? (
               <div className="text-center space-y-3 p-8">
                 <div className="w-12 h-12 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin mx-auto" />
-                <p className="text-sm font-semibold text-white">Applying AI Upscale & Detail Enhancement...</p>
+                <p className="text-sm font-semibold text-white">
+                  Applying AI Upscale & Detail Enhancement...
+                </p>
               </div>
             ) : enhancedUrl && previewUrl ? (
               <div
@@ -282,7 +279,7 @@ export const EnhanceTool: React.FC<EnhanceToolProps> = ({ initialFile, onBack })
                     src={previewUrl}
                     alt="Original"
                     className="absolute inset-0 w-full h-full object-contain pointer-events-none max-w-none"
-                    style={{ width: containerRef.current?.clientWidth || '100%' }}
+                    style={{ width: containerRef.current?.clientWidth || "100%" }}
                   />
                 </div>
 

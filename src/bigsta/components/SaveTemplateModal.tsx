@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { X, Save, Copy, RefreshCw, CheckCircle, Tag, Layers, Star } from 'lucide-react';
-import { useTemplateStore } from '../store/useTemplateStore';
-import { CardTemplate, CardType, CardSide } from '../types';
+import React, { useState, useEffect } from "react";
+import { X, Save, Copy, RefreshCw, CheckCircle, Tag, Layers, Star } from "lucide-react";
+import { useTemplateStore } from "../store/useTemplateStore";
+import { CardTemplate, CardType, CardSide } from "../types";
 
 export const SaveTemplateModal: React.FC = () => {
   const {
@@ -18,25 +18,29 @@ export const SaveTemplateModal: React.FC = () => {
     lastEditingContext,
   } = useTemplateStore();
 
-  const [mode, setMode] = useState<'options' | 'saveAs'>('options');
-  const [templateName, setTemplateName] = useState('');
-  const [cardType, setCardType] = useState<CardType>('National ID');
-  const [side, setSide] = useState<CardSide>('Front Side');
+  const [mode, setMode] = useState<"options" | "saveAs">("options");
+  const [templateName, setTemplateName] = useState("");
+  const [cardType, setCardType] = useState<CardType>("National ID");
+  const [side, setSide] = useState<CardSide>("Front Side");
   const [existingTemplates, setExistingTemplates] = useState<CardTemplate[]>([]);
   const [conflictTemplate, setConflictTemplate] = useState<CardTemplate | null>(null);
   const [isSavedSuccess, setIsSavedSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('Template Saved');
+  const [successMessage, setSuccessMessage] = useState("Template Saved");
 
   useEffect(() => {
     if (isSaveModalOpen) {
       setTemplateName(currentTemplate.templateName);
-      setCardType(currentTemplate.cardType || 'National ID');
-      const isBack = currentTemplate.side === 'Back Side' || (currentTemplate.side as string) === 'back' || (lastEditingContext?.side === 'back' || lastEditingContext?.side === 'Back Side');
-      setSide(isBack ? 'Back Side' : 'Front Side');
-      setMode('options');
+      setCardType(currentTemplate.cardType || "National ID");
+      const isBack =
+        currentTemplate.side === "Back Side" ||
+        (currentTemplate.side as string) === "back" ||
+        lastEditingContext?.side === "back" ||
+        lastEditingContext?.side === "Back Side";
+      setSide(isBack ? "Back Side" : "Front Side");
+      setMode("options");
       setConflictTemplate(null);
       setIsSavedSuccess(false);
-      setSuccessMessage('Template Saved');
+      setSuccessMessage("Template Saved");
 
       loadSavedTemplates().then(setExistingTemplates);
     }
@@ -46,10 +50,10 @@ export const SaveTemplateModal: React.FC = () => {
   useEffect(() => {
     if (!isSaveModalOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setSaveModalOpen(false);
+      if (e.key === "Escape") setSaveModalOpen(false);
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isSaveModalOpen, setSaveModalOpen]);
 
   if (!isSaveModalOpen) return null;
@@ -58,10 +62,10 @@ export const SaveTemplateModal: React.FC = () => {
     const store = useTemplateStore.getState();
     const context = store.lastEditingContext;
 
-    setSuccessMessage(customMessage || 'Template Saved');
+    setSuccessMessage(customMessage || "Template Saved");
     setIsSavedSuccess(true);
 
-    if (context && (context.sourceScreen === 'preview' || context.serviceId)) {
+    if (context && (context.sourceScreen === "preview" || context.serviceId)) {
       setTimeout(() => {
         setIsSavedSuccess(false);
         setSaveModalOpen(false);
@@ -79,12 +83,12 @@ export const SaveTemplateModal: React.FC = () => {
   const handleQuickSave = async () => {
     updateTemplateMeta({ cardType, side });
     await saveCurrentTemplate();
-    handlePostSaveTransition('Template Saved');
+    handlePostSaveTransition("Template Saved");
   };
 
   const handleUniversalSave = async () => {
     updateTemplateMeta({ cardType, side, serviceId: activeServiceId });
-    
+
     const tplToSave = {
       ...currentTemplate,
       cardType,
@@ -93,13 +97,13 @@ export const SaveTemplateModal: React.FC = () => {
       templateName: templateName.trim() || currentTemplate.templateName,
     };
 
-    const isBack = side === 'Back Side' || (side as string) === 'back';
+    const isBack = side === "Back Side" || (side as string) === "back";
     if (isBack) {
       await saveUniversalBackTemplate(activeServiceId, tplToSave);
-      handlePostSaveTransition('Universal Saved');
+      handlePostSaveTransition("Universal Saved");
     } else {
       await saveUniversalFrontTemplate(activeServiceId, tplToSave);
-      handlePostSaveTransition('Universal Saved');
+      handlePostSaveTransition("Universal Saved");
     }
   };
 
@@ -108,14 +112,14 @@ export const SaveTemplateModal: React.FC = () => {
     if (!trimmed) return;
 
     const existingMatch = existingTemplates.find(
-      (t) => t.templateName.toLowerCase() === trimmed.toLowerCase() && t.id !== currentTemplate.id
+      (t) => t.templateName.toLowerCase() === trimmed.toLowerCase() && t.id !== currentTemplate.id,
     );
 
     if (existingMatch) {
       setConflictTemplate(existingMatch);
     } else {
       await saveAsNewTemplate(trimmed, cardType, side);
-      handlePostSaveTransition('Template Created');
+      handlePostSaveTransition("Template Created");
     }
   };
 
@@ -131,13 +135,13 @@ export const SaveTemplateModal: React.FC = () => {
     };
     useTemplateStore.getState().loadTemplate(updated);
     await saveCurrentTemplate();
-    handlePostSaveTransition('Template Replaced');
+    handlePostSaveTransition("Template Replaced");
   };
 
   const handleCreateNewCopy = async () => {
     const copyName = `${templateName.trim()} (Copy)`;
     await saveAsNewTemplate(copyName, cardType, side);
-    handlePostSaveTransition('Copy Created');
+    handlePostSaveTransition("Copy Created");
   };
 
   return (
@@ -180,8 +184,8 @@ export const SaveTemplateModal: React.FC = () => {
             /* Conflict Resolution View */
             <div className="space-y-4">
               <div className="p-4 bg-[#E7E9EB] border border-[#dadcdc] rounded-xl text-[#000000] text-xs leading-relaxed">
-                <span className="font-bold block mb-1 text-[#000000]">Name Already Exists</span>
-                A template named <span className="underline font-semibold">"{templateName}"</span>{' '}
+                <span className="font-bold block mb-1 text-[#000000]">Name Already Exists</span>A
+                template named <span className="underline font-semibold">"{templateName}"</span>{" "}
                 already exists in your library. Please choose how you want to proceed:
               </div>
 
@@ -227,7 +231,7 @@ export const SaveTemplateModal: React.FC = () => {
                 </button>
               </div>
             </div>
-          ) : mode === 'options' ? (
+          ) : mode === "options" ? (
             /* Save / Universal Save / Save As Choice */
             <div className="space-y-3">
               <div className="grid grid-cols-1 gap-3">
@@ -240,9 +244,7 @@ export const SaveTemplateModal: React.FC = () => {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <Save className="w-4 h-4 text-[#000000]" />
-                      <span className="font-bold text-sm text-[#000000]">
-                        1. Standard Save
-                      </span>
+                      <span className="font-bold text-sm text-[#000000]">1. Standard Save</span>
                     </div>
                     <p className="text-xs text-[#555555] font-medium">
                       Updates "{currentTemplate.templateName}" in your library normally.
@@ -268,24 +270,25 @@ export const SaveTemplateModal: React.FC = () => {
                       </span>
                     </div>
                     <p className="text-xs text-[#555555] font-medium">
-                      Saves template and sets Front + Back pair as the automatic default for all future NIDA filling sessions.
+                      Saves template and sets Front + Back pair as the automatic default for all
+                      future NIDA filling sessions.
                     </p>
                   </div>
-                  <span className="text-xs font-bold text-[#000000] shrink-0 ml-2">Universal Save →</span>
+                  <span className="text-xs font-bold text-[#000000] shrink-0 ml-2">
+                    Universal Save →
+                  </span>
                 </button>
 
                 {/* 3. Save As Copy */}
                 <button
                   type="button"
-                  onClick={() => setMode('saveAs')}
+                  onClick={() => setMode("saveAs")}
                   className="p-3.5 bg-[#FFFFFF] hover:bg-[#E7E9EB]/50 border border-[#E7E9EB] hover:border-[#000000] rounded-xl text-left flex items-start justify-between transition-all group cursor-pointer"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <Copy className="w-4 h-4 text-[#000000]" />
-                      <span className="font-bold text-xs text-[#000000]">
-                        Save As New Copy...
-                      </span>
+                      <span className="font-bold text-xs text-[#000000]">Save As New Copy...</span>
                     </div>
                     <p className="text-[11px] text-[#555555] font-medium">
                       Create a separate template with a unique name and metadata.
@@ -353,7 +356,7 @@ export const SaveTemplateModal: React.FC = () => {
               <div className="pt-2 flex items-center justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setMode('options')}
+                  onClick={() => setMode("options")}
                   className="px-4 py-2 bg-[#E7E9EB] hover:bg-[#dadcdc] text-[#000000] text-xs font-bold rounded-xl transition-colors cursor-pointer"
                 >
                   Cancel

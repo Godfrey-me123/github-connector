@@ -1,26 +1,23 @@
 // @ts-nocheck -- imported legacy BIGsta code
-import React, { useEffect } from 'react';
-import { ToolId, UserProfile } from '../types/imageTools';
-import { initNotificationAudio } from '../../utils/audioHandler';
+import React, { useEffect } from "react";
+import { ToolId, UserProfile } from "../types/imageTools";
+import { initNotificationAudio } from "../../utils/audioHandler";
 
 interface NavbarProps {
-  activeTool: ToolId | 'home';
-  onSelectTool: (tool: ToolId | 'home') => void;
+  activeTool: ToolId | "home";
+  onSelectTool: (tool: ToolId | "home") => void;
   userProfile: UserProfile;
   onOpenAccountModal: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({
-  activeTool,
-  onSelectTool,
-}) => {
+export const Navbar: React.FC<NavbarProps> = ({ activeTool, onSelectTool }) => {
   useEffect(() => {
     const handleUserInteraction = () => {
       initNotificationAudio();
-      window.removeEventListener('click', handleUserInteraction);
+      window.removeEventListener("click", handleUserInteraction);
     };
-    window.addEventListener('click', handleUserInteraction);
-    return () => window.removeEventListener('click', handleUserInteraction);
+    window.addEventListener("click", handleUserInteraction);
+    return () => window.removeEventListener("click", handleUserInteraction);
   }, []);
 
   return (
@@ -29,15 +26,13 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Brand */}
         <div className="flex items-center gap-3">
           <button
-            onClick={() => onSelectTool('home')}
+            onClick={() => onSelectTool("home")}
             className="flex items-center gap-2 text-left focus:outline-none cursor-pointer"
           >
             <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-sm shadow-xs">
               IE
             </div>
-            <span className="text-base font-extrabold tracking-tight text-slate-900">
-              Editor
-            </span>
+            <span className="text-base font-extrabold tracking-tight text-slate-900">Editor</span>
           </button>
         </div>
       </div>

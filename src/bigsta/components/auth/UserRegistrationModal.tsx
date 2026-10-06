@@ -1,6 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { User, Phone, Key, Eye, EyeOff, CheckCircle2, AlertCircle, X, Shield, ArrowRight } from 'lucide-react';
-import { useTemplateStore } from '../../store/useTemplateStore';
+import React, { useState, useEffect } from "react";
+import {
+  User,
+  Phone,
+  Key,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  AlertCircle,
+  X,
+  Shield,
+  ArrowRight,
+} from "lucide-react";
+import { useTemplateStore } from "../../store/useTemplateStore";
 
 interface UserRegistrationModalProps {
   isOpen: boolean;
@@ -13,73 +24,73 @@ export const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  console.log('[Auth Debug] UserRegistrationModal Render:', { isOpen });
+  console.log("[Auth Debug] UserRegistrationModal Render:", { isOpen });
   const { registerUserAccount } = useTemplateStore();
 
-  const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [passkey, setPasskey] = useState('');
-  const [confirmPasskey, setConfirmPasskey] = useState('');
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [passkey, setPasskey] = useState("");
+  const [confirmPasskey, setConfirmPasskey] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const [showPasskey, setShowPasskey] = useState(false);
   const [showConfirmPasskey, setShowConfirmPasskey] = useState(false);
 
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Escape key listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
   if (!isOpen) return null;
 
   const validateTzPhone = (p: string) => {
-    const cleaned = p.trim().replace(/\s+/g, '');
+    const cleaned = p.trim().replace(/\s+/g, "");
     return /^(?:\+255|255|0)[67]\d{8}$/.test(cleaned);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage('');
+    setErrorMessage("");
 
     if (!fullName.trim()) {
-      setErrorMessage('Please enter your Full Name');
+      setErrorMessage("Please enter your Full Name");
       return;
     }
 
     if (!phone.trim()) {
-      setErrorMessage('Please enter your Phone Number');
+      setErrorMessage("Please enter your Phone Number");
       return;
     }
 
     if (!validateTzPhone(phone)) {
-      setErrorMessage('Invalid phone number format (e.g., 0712345678 or +255712345678)');
+      setErrorMessage("Invalid phone number format (e.g., 0712345678 or +255712345678)");
       return;
     }
 
     if (!passkey.trim()) {
-      setErrorMessage('Please create your User Passkey');
+      setErrorMessage("Please create your User Passkey");
       return;
     }
 
     if (passkey.length < 4) {
-      setErrorMessage('Passkey must be at least 4 characters long');
+      setErrorMessage("Passkey must be at least 4 characters long");
       return;
     }
 
     if (passkey !== confirmPasskey) {
-      setErrorMessage('Passkeys do not match');
+      setErrorMessage("Passkeys do not match");
       return;
     }
 
     if (!acceptedTerms) {
-      setErrorMessage('Please accept the Terms and Conditions to continue');
+      setErrorMessage("Please accept the Terms and Conditions to continue");
       return;
     }
 
@@ -103,7 +114,7 @@ export const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({
       onClose();
     } catch (err: any) {
       setIsSubmitting(false);
-      setErrorMessage(err.message || 'Registration failed');
+      setErrorMessage(err.message || "Registration failed");
     }
   };
 
@@ -155,7 +166,7 @@ export const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({
                 value={fullName}
                 onChange={(e) => {
                   setFullName(e.target.value);
-                  if (errorMessage) setErrorMessage('');
+                  if (errorMessage) setErrorMessage("");
                 }}
                 placeholder="e.g. Godfrey Joseph Rashid"
                 className="w-full pl-10 pr-4 py-2.5 bg-[#0B132B] border border-white/15 rounded-xl text-white text-sm placeholder-slate-500 focus:outline-none focus:border-[#47A5FF] focus:ring-1 focus:ring-[#47A5FF]"
@@ -176,7 +187,7 @@ export const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({
                 value={phone}
                 onChange={(e) => {
                   setPhone(e.target.value);
-                  if (errorMessage) setErrorMessage('');
+                  if (errorMessage) setErrorMessage("");
                 }}
                 placeholder="e.g. 0712345678 or +255712345678"
                 className="w-full pl-10 pr-4 py-2.5 bg-[#0B132B] border border-white/15 rounded-xl text-white text-sm font-mono placeholder-slate-500 focus:outline-none focus:border-[#47A5FF] focus:ring-1 focus:ring-[#47A5FF]"
@@ -195,11 +206,11 @@ export const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({
               <div className="relative flex items-center">
                 <Key className="w-4 h-4 text-slate-400 absolute left-3.5" />
                 <input
-                  type={showPasskey ? 'text' : 'password'}
+                  type={showPasskey ? "text" : "password"}
                   value={passkey}
                   onChange={(e) => {
                     setPasskey(e.target.value);
-                    if (errorMessage) setErrorMessage('');
+                    if (errorMessage) setErrorMessage("");
                   }}
                   placeholder="Enter Passkey"
                   className="w-full pl-10 pr-10 py-2.5 bg-[#0B132B] border border-white/15 rounded-xl text-white text-sm font-mono placeholder-slate-500 focus:outline-none focus:border-[#47A5FF]"
@@ -222,11 +233,11 @@ export const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({
               <div className="relative flex items-center">
                 <Key className="w-4 h-4 text-slate-400 absolute left-3.5" />
                 <input
-                  type={showConfirmPasskey ? 'text' : 'password'}
+                  type={showConfirmPasskey ? "text" : "password"}
                   value={confirmPasskey}
                   onChange={(e) => {
                     setConfirmPasskey(e.target.value);
-                    if (errorMessage) setErrorMessage('');
+                    if (errorMessage) setErrorMessage("");
                   }}
                   placeholder="Confirm Passkey"
                   className="w-full pl-10 pr-10 py-2.5 bg-[#0B132B] border border-white/15 rounded-xl text-white text-sm font-mono placeholder-slate-500 focus:outline-none focus:border-[#47A5FF]"
@@ -237,7 +248,11 @@ export const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({
                   onClick={() => setShowConfirmPasskey(!showConfirmPasskey)}
                   className="absolute right-3 text-slate-400 hover:text-white"
                 >
-                  {showConfirmPasskey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showConfirmPasskey ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>
@@ -251,12 +266,13 @@ export const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({
                 checked={acceptedTerms}
                 onChange={(e) => {
                   setAcceptedTerms(e.target.checked);
-                  if (errorMessage) setErrorMessage('');
+                  if (errorMessage) setErrorMessage("");
                 }}
                 className="mt-0.5 rounded border-white/20 bg-[#0B132B] text-blue-600 focus:ring-[#47A5FF]"
               />
               <span>
-                I accept the BIGsta Terms & Conditions. All accounts are registered with the <strong>USER</strong> role.
+                I accept the BIGsta Terms & Conditions. All accounts are registered with the{" "}
+                <strong>USER</strong> role.
               </span>
             </label>
           </div>
@@ -279,8 +295,20 @@ export const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
                   <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      fill="none"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
                   </svg>
                   Registering Account...
                 </span>

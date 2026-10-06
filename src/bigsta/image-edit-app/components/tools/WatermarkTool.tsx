@@ -1,22 +1,14 @@
 // @ts-nocheck -- imported legacy BIGsta code
-import React, { useState, useEffect } from 'react';
-import {
-  Stamp,
-  Type,
-  Image as ImageIcon,
-  Download,
-  Upload,
-  ArrowLeft,
-  Grid
-} from 'lucide-react';
-import { WatermarkOptions } from '../../types/imageTools';
+import React, { useState, useEffect } from "react";
+import { Stamp, Type, Image as ImageIcon, Download, Upload, ArrowLeft, Grid } from "lucide-react";
+import { WatermarkOptions } from "../../types/imageTools";
 import {
   formatBytes,
   loadImageFromFile,
   applyWatermarkCanvas,
   canvasToBlobUrl,
-  downloadProcessedFile
-} from '../../utils/imageProcessing';
+  downloadProcessedFile,
+} from "../../utils/imageProcessing";
 
 interface WatermarkToolProps {
   initialFile?: File | null;
@@ -28,13 +20,13 @@ export const WatermarkTool: React.FC<WatermarkToolProps> = ({ initialFile, onBac
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const [watermarkOptions, setWatermarkOptions] = useState<WatermarkOptions>({
-    mode: 'text',
-    text: '© IMAGE EDIT · CONFIDENTIAL',
-    textColor: '#ffffff',
-    fontFamily: 'sans-serif',
+    mode: "text",
+    text: "© IMAGE EDIT · CONFIDENTIAL",
+    textColor: "#ffffff",
+    fontFamily: "sans-serif",
     fontSize: 48,
     opacity: 0.7,
-    position: 'bottom-right',
+    position: "bottom-right",
     watermarkScale: 0.25,
   });
 
@@ -66,13 +58,13 @@ export const WatermarkTool: React.FC<WatermarkToolProps> = ({ initialFile, onBac
       const img = await loadImageFromFile(activeFile);
       const canvas = await applyWatermarkCanvas(img, activeOpts);
 
-      const mime = activeFile.type || 'image/png';
+      const mime = activeFile.type || "image/png";
       const result = await canvasToBlobUrl(canvas, mime, 0.95);
 
       setProcessedUrl(result.url);
       setProcessedSize(result.size);
     } catch (err) {
-      console.error('Watermark error:', err);
+      console.error("Watermark error:", err);
     } finally {
       setIsProcessing(false);
     }
@@ -88,7 +80,7 @@ export const WatermarkTool: React.FC<WatermarkToolProps> = ({ initialFile, onBac
     const url = URL.createObjectURL(logoFile);
     const updated = {
       ...watermarkOptions,
-      mode: 'image' as const,
+      mode: "image" as const,
       watermarkImageFile: logoFile,
       watermarkImageUrl: url,
     };
@@ -98,15 +90,21 @@ export const WatermarkTool: React.FC<WatermarkToolProps> = ({ initialFile, onBac
 
   const handleDownload = () => {
     if (!processedUrl || !file) return;
-    const ext = file.name.split('.').pop() || 'png';
-    const cleanName = file.name.replace(/\.[^/.]+$/, '') + `-watermarked.${ext}`;
+    const ext = file.name.split(".").pop() || "png";
+    const cleanName = file.name.replace(/\.[^/.]+$/, "") + `-watermarked.${ext}`;
     downloadProcessedFile(processedUrl, cleanName);
   };
 
-  const positions: WatermarkOptions['position'][] = [
-    'top-left', 'top-center', 'top-right',
-    'center-left', 'center', 'center-right',
-    'bottom-left', 'bottom-center', 'bottom-right',
+  const positions: WatermarkOptions["position"][] = [
+    "top-left",
+    "top-center",
+    "top-right",
+    "center-left",
+    "center",
+    "center-right",
+    "bottom-left",
+    "bottom-center",
+    "bottom-right",
   ];
 
   return (
@@ -163,28 +161,28 @@ export const WatermarkTool: React.FC<WatermarkToolProps> = ({ initialFile, onBac
             {/* Mode Switcher */}
             <div className="flex items-center p-1 bg-slate-950 rounded-xl border border-slate-800">
               <button
-                onClick={() => handleOptionChange({ mode: 'text' })}
+                onClick={() => handleOptionChange({ mode: "text" })}
                 className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5 ${
-                  watermarkOptions.mode === 'text'
-                    ? 'bg-rose-500 text-slate-950'
-                    : 'text-slate-400 hover:text-white'
+                  watermarkOptions.mode === "text"
+                    ? "bg-rose-500 text-slate-950"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
                 <Type className="w-3.5 h-3.5" /> Text
               </button>
               <button
-                onClick={() => handleOptionChange({ mode: 'image' })}
+                onClick={() => handleOptionChange({ mode: "image" })}
                 className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5 ${
-                  watermarkOptions.mode === 'image'
-                    ? 'bg-rose-500 text-slate-950'
-                    : 'text-slate-400 hover:text-white'
+                  watermarkOptions.mode === "image"
+                    ? "bg-rose-500 text-slate-950"
+                    : "text-slate-400 hover:text-white"
                 }`}
               >
                 <ImageIcon className="w-3.5 h-3.5" /> Logo Image
               </button>
             </div>
 
-            {watermarkOptions.mode === 'text' ? (
+            {watermarkOptions.mode === "text" ? (
               <div className="space-y-4">
                 <div>
                   <label className="text-xs text-slate-400 block mb-1">Watermark Text</label>
@@ -252,7 +250,9 @@ export const WatermarkTool: React.FC<WatermarkToolProps> = ({ initialFile, onBac
                       max={0.8}
                       step={0.05}
                       value={watermarkOptions.watermarkScale || 0.2}
-                      onChange={(e) => handleOptionChange({ watermarkScale: Number(e.target.value) })}
+                      onChange={(e) =>
+                        handleOptionChange({ watermarkScale: Number(e.target.value) })
+                      }
                       className="w-full accent-emerald-500"
                     />
                   </div>
@@ -284,11 +284,11 @@ export const WatermarkTool: React.FC<WatermarkToolProps> = ({ initialFile, onBac
               <div className="flex justify-between items-center mb-2">
                 <span className="text-xs text-slate-400 font-medium">Placement Grid</span>
                 <button
-                  onClick={() => handleOptionChange({ position: 'tiled' })}
+                  onClick={() => handleOptionChange({ position: "tiled" })}
                   className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
-                    watermarkOptions.position === 'tiled'
-                      ? 'bg-rose-500 text-slate-950 border-rose-400'
-                      : 'bg-slate-950 text-slate-400 border-slate-800'
+                    watermarkOptions.position === "tiled"
+                      ? "bg-rose-500 text-slate-950 border-rose-400"
+                      : "bg-slate-950 text-slate-400 border-slate-800"
                   }`}
                 >
                   Tile Repeating
@@ -302,11 +302,11 @@ export const WatermarkTool: React.FC<WatermarkToolProps> = ({ initialFile, onBac
                     onClick={() => handleOptionChange({ position: pos })}
                     className={`h-8 rounded-lg text-[10px] font-bold uppercase transition-colors ${
                       watermarkOptions.position === pos
-                        ? 'bg-rose-500 text-slate-950 shadow-md'
-                        : 'bg-slate-900 text-slate-400 hover:text-slate-200'
+                        ? "bg-rose-500 text-slate-950 shadow-md"
+                        : "bg-slate-900 text-slate-400 hover:text-slate-200"
                     }`}
                   >
-                    {pos.replace('-', ' ')}
+                    {pos.replace("-", " ")}
                   </button>
                 ))}
               </div>
@@ -318,7 +318,11 @@ export const WatermarkTool: React.FC<WatermarkToolProps> = ({ initialFile, onBac
             {processedUrl ? (
               <div className="space-y-4 text-center">
                 <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 max-h-[380px] flex items-center justify-center overflow-hidden">
-                  <img src={processedUrl} alt="Watermarked" className="max-h-[340px] object-contain rounded-lg" />
+                  <img
+                    src={processedUrl}
+                    alt="Watermarked"
+                    className="max-h-[340px] object-contain rounded-lg"
+                  />
                 </div>
                 <span className="text-xs text-slate-400 font-mono block">
                   Watermarked Output ({formatBytes(processedSize || 0)})

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { X, Type, Check, Layers, AlertCircle } from 'lucide-react';
-import { FontScope, getStoredFontScope, setStoredFontScope } from '../utils/fonts';
-import { Layer } from '../types';
+import React, { useState, useEffect } from "react";
+import { X, Type, Check, Layers, AlertCircle } from "lucide-react";
+import { FontScope, getStoredFontScope, setStoredFontScope } from "../utils/fonts";
+import { Layer } from "../types";
 
 interface FontChangeModalProps {
   isOpen: boolean;
@@ -20,7 +20,7 @@ export const FontChangeModal: React.FC<FontChangeModalProps> = ({
   selectedLayerName,
   textLayers,
 }) => {
-  const [selectedScope, setSelectedScope] = useState<FontScope>('selected');
+  const [selectedScope, setSelectedScope] = useState<FontScope>("selected");
 
   useEffect(() => {
     if (isOpen) {
@@ -32,10 +32,10 @@ export const FontChangeModal: React.FC<FontChangeModalProps> = ({
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -46,7 +46,7 @@ export const FontChangeModal: React.FC<FontChangeModalProps> = ({
     onClose();
   };
 
-  const selectedTextLayerName = selectedLayerName || 'Selected Text Layer';
+  const selectedTextLayerName = selectedLayerName || "Selected Text Layer";
   const textCount = textLayers.length;
 
   return (
@@ -67,7 +67,10 @@ export const FontChangeModal: React.FC<FontChangeModalProps> = ({
             <div>
               <h3 className="text-sm font-bold text-white tracking-wide">Font Change Options</h3>
               <p className="text-xs text-slate-400">
-                Selected Font: <span className="text-blue-400 font-semibold" style={{ fontFamily: pendingFont }}>{pendingFont}</span>
+                Selected Font:{" "}
+                <span className="text-blue-400 font-semibold" style={{ fontFamily: pendingFont }}>
+                  {pendingFont}
+                </span>
               </p>
             </div>
           </div>
@@ -81,18 +84,16 @@ export const FontChangeModal: React.FC<FontChangeModalProps> = ({
 
         {/* Modal Content */}
         <div className="p-5 space-y-4 text-xs">
-          <p className="text-slate-300 font-medium text-xs">
-            Apply Font To:
-          </p>
+          <p className="text-slate-300 font-medium text-xs">Apply Font To:</p>
 
           <div className="space-y-3">
             {/* Option 1: Selected Text Only */}
             <label
-              onClick={() => setSelectedScope('selected')}
+              onClick={() => setSelectedScope("selected")}
               className={`flex items-start gap-3 p-3.5 rounded-lg border cursor-pointer transition-all ${
-                selectedScope === 'selected'
-                  ? 'bg-blue-950/40 border-blue-500/60 ring-1 ring-blue-500/30'
-                  : 'bg-slate-800/60 border-slate-700/80 hover:bg-slate-800 hover:border-slate-600'
+                selectedScope === "selected"
+                  ? "bg-blue-950/40 border-blue-500/60 ring-1 ring-blue-500/30"
+                  : "bg-slate-800/60 border-slate-700/80 hover:bg-slate-800 hover:border-slate-600"
               }`}
             >
               <div className="mt-0.5 flex items-center justify-center">
@@ -100,8 +101,8 @@ export const FontChangeModal: React.FC<FontChangeModalProps> = ({
                   type="radio"
                   name="fontScope"
                   value="selected"
-                  checked={selectedScope === 'selected'}
-                  onChange={() => setSelectedScope('selected')}
+                  checked={selectedScope === "selected"}
+                  onChange={() => setSelectedScope("selected")}
                   className="w-4 h-4 text-blue-600 bg-slate-800 border-slate-600 focus:ring-blue-500 cursor-pointer"
                 />
               </div>
@@ -113,18 +114,20 @@ export const FontChangeModal: React.FC<FontChangeModalProps> = ({
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
-                  Change the font only for <strong className="text-slate-200">{selectedTextLayerName}</strong>. All other text layers remain unchanged.
+                  Change the font only for{" "}
+                  <strong className="text-slate-200">{selectedTextLayerName}</strong>. All other
+                  text layers remain unchanged.
                 </p>
               </div>
             </label>
 
             {/* Option 2: Entire Template */}
             <label
-              onClick={() => setSelectedScope('all')}
+              onClick={() => setSelectedScope("all")}
               className={`flex items-start gap-3 p-3.5 rounded-lg border cursor-pointer transition-all ${
-                selectedScope === 'all'
-                  ? 'bg-blue-950/40 border-blue-500/60 ring-1 ring-blue-500/30'
-                  : 'bg-slate-800/60 border-slate-700/80 hover:bg-slate-800 hover:border-slate-600'
+                selectedScope === "all"
+                  ? "bg-blue-950/40 border-blue-500/60 ring-1 ring-blue-500/30"
+                  : "bg-slate-800/60 border-slate-700/80 hover:bg-slate-800 hover:border-slate-600"
               }`}
             >
               <div className="mt-0.5 flex items-center justify-center">
@@ -132,8 +135,8 @@ export const FontChangeModal: React.FC<FontChangeModalProps> = ({
                   type="radio"
                   name="fontScope"
                   value="all"
-                  checked={selectedScope === 'all'}
-                  onChange={() => setSelectedScope('all')}
+                  checked={selectedScope === "all"}
+                  onChange={() => setSelectedScope("all")}
                   className="w-4 h-4 text-blue-600 bg-slate-800 border-slate-600 focus:ring-blue-500 cursor-pointer"
                 />
               </div>
@@ -141,11 +144,12 @@ export const FontChangeModal: React.FC<FontChangeModalProps> = ({
                 <div className="font-semibold text-white text-xs flex items-center justify-between">
                   <span>Entire Template</span>
                   <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-mono">
-                    {textCount} Layer{textCount !== 1 ? 's' : ''}
+                    {textCount} Layer{textCount !== 1 ? "s" : ""}
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
-                  Change all text layers in the current template to <strong className="text-slate-200">{pendingFont}</strong> in one action.
+                  Change all text layers in the current template to{" "}
+                  <strong className="text-slate-200">{pendingFont}</strong> in one action.
                 </p>
 
                 {/* Layer preview list */}

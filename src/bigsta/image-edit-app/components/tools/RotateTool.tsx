@@ -1,5 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   RotateCw,
   RotateCcw,
@@ -8,15 +8,15 @@ import {
   Download,
   Upload,
   ArrowLeft,
-  RefreshCw
-} from 'lucide-react';
+  RefreshCw,
+} from "lucide-react";
 import {
   formatBytes,
   loadImageFromFile,
   rotateAndFlipCanvas,
   canvasToBlobUrl,
-  downloadProcessedFile
-} from '../../utils/imageProcessing';
+  downloadProcessedFile,
+} from "../../utils/imageProcessing";
 
 interface RotateToolProps {
   initialFile?: File | null;
@@ -52,12 +52,7 @@ export const RotateTool: React.FC<RotateToolProps> = ({ initialFile, onBack }) =
     await processRotation(selectedFile, 0, false, false);
   };
 
-  const processRotation = async (
-    targetFile?: File,
-    a?: number,
-    fh?: boolean,
-    fv?: boolean
-  ) => {
+  const processRotation = async (targetFile?: File, a?: number, fh?: boolean, fv?: boolean) => {
     const activeFile = targetFile || file;
     if (!activeFile) return;
 
@@ -70,13 +65,13 @@ export const RotateTool: React.FC<RotateToolProps> = ({ initialFile, onBack }) =
       const img = await loadImageFromFile(activeFile);
       const canvas = await rotateAndFlipCanvas(img, activeAngle, activeFlipH, activeFlipV);
 
-      const mime = activeFile.type || 'image/png';
+      const mime = activeFile.type || "image/png";
       const result = await canvasToBlobUrl(canvas, mime, 0.95);
 
       setProcessedUrl(result.url);
       setProcessedSize(result.size);
     } catch (err) {
-      console.error('Rotation Error:', err);
+      console.error("Rotation Error:", err);
     } finally {
       setIsProcessing(false);
     }
@@ -102,8 +97,8 @@ export const RotateTool: React.FC<RotateToolProps> = ({ initialFile, onBack }) =
 
   const handleDownload = () => {
     if (!processedUrl || !file) return;
-    const ext = file.name.split('.').pop() || 'png';
-    const cleanName = file.name.replace(/\.[^/.]+$/, '') + `-rotated.${ext}`;
+    const ext = file.name.split(".").pop() || "png";
+    const cleanName = file.name.replace(/\.[^/.]+$/, "") + `-rotated.${ext}`;
     downloadProcessedFile(processedUrl, cleanName);
   };
 
@@ -185,8 +180,8 @@ export const RotateTool: React.FC<RotateToolProps> = ({ initialFile, onBack }) =
                   onClick={toggleFlipH}
                   className={`py-2.5 px-3 border rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
                     flipH
-                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500'
-                      : 'bg-slate-950 text-slate-300 border-slate-800 hover:bg-slate-800'
+                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500"
+                      : "bg-slate-950 text-slate-300 border-slate-800 hover:bg-slate-800"
                   }`}
                 >
                   <FlipHorizontal className="w-4 h-4" /> Flip Horizontal
@@ -195,8 +190,8 @@ export const RotateTool: React.FC<RotateToolProps> = ({ initialFile, onBack }) =
                   onClick={toggleFlipV}
                   className={`py-2.5 px-3 border rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${
                     flipV
-                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500'
-                      : 'bg-slate-950 text-slate-300 border-slate-800 hover:bg-slate-800'
+                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500"
+                      : "bg-slate-950 text-slate-300 border-slate-800 hover:bg-slate-800"
                   }`}
                 >
                   <FlipVertical className="w-4 h-4" /> Flip Vertical
@@ -230,10 +225,15 @@ export const RotateTool: React.FC<RotateToolProps> = ({ initialFile, onBack }) =
             {processedUrl ? (
               <div className="space-y-4 text-center">
                 <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 max-h-[380px] flex items-center justify-center overflow-hidden">
-                  <img src={processedUrl} alt="Rotated" className="max-h-[340px] object-contain rounded-lg" />
+                  <img
+                    src={processedUrl}
+                    alt="Rotated"
+                    className="max-h-[340px] object-contain rounded-lg"
+                  />
                 </div>
                 <span className="text-xs text-slate-400 font-mono block">
-                  Angle: {angle}° · Flip H: {flipH ? 'Yes' : 'No'} · Flip V: {flipV ? 'Yes' : 'No'} ({formatBytes(processedSize || 0)})
+                  Angle: {angle}° · Flip H: {flipH ? "Yes" : "No"} · Flip V: {flipV ? "Yes" : "No"}{" "}
+                  ({formatBytes(processedSize || 0)})
                 </span>
               </div>
             ) : (

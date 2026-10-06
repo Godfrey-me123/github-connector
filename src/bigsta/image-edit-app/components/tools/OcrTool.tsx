@@ -1,5 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   FileText,
   Copy,
@@ -9,10 +9,10 @@ import {
   Check,
   Search,
   Sparkles,
-  RefreshCw
-} from 'lucide-react';
-import { OcrResult } from '../../types/imageTools';
-import { formatBytes } from '../../utils/imageProcessing';
+  RefreshCw,
+} from "lucide-react";
+import { OcrResult } from "../../types/imageTools";
+import { formatBytes } from "../../utils/imageProcessing";
 
 interface OcrToolProps {
   initialFile?: File | null;
@@ -54,21 +54,21 @@ export const OcrTool: React.FC<OcrToolProps> = ({ initialFile, onBack }) => {
         reader.readAsDataURL(targetFile);
       });
 
-      const res = await fetch('/api/ai/ocr', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: base64Data })
+      const res = await fetch("/api/ai/ocr", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64: base64Data }),
       });
 
       const json = await res.json();
       if (!res.ok || !json.success) {
-        throw new Error(json.error || 'OCR processing failed');
+        throw new Error(json.error || "OCR processing failed");
       }
 
       setOcrResult(json.data);
     } catch (err: any) {
-      console.error('OCR Error:', err);
-      setError(err.message || 'Error extracting text from image');
+      console.error("OCR Error:", err);
+      setError(err.message || "Error extracting text from image");
     } finally {
       setIsProcessing(false);
     }
@@ -83,11 +83,11 @@ export const OcrTool: React.FC<OcrToolProps> = ({ initialFile, onBack }) => {
 
   const handleDownloadTxt = () => {
     if (!ocrResult?.extractedText || !file) return;
-    const blob = new Blob([ocrResult.extractedText], { type: 'text/plain;charset=utf-8' });
+    const blob = new Blob([ocrResult.extractedText], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
-    link.download = file.name.replace(/\.[^/.]+$/, '') + '-ocr.txt';
+    link.download = file.name.replace(/\.[^/.]+$/, "") + "-ocr.txt";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -110,8 +110,12 @@ export const OcrTool: React.FC<OcrToolProps> = ({ initialFile, onBack }) => {
               onClick={handleCopyText}
               className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl flex items-center gap-1.5 transition-colors"
             >
-              {copied ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-              {copied ? 'Copied to Clipboard!' : 'Copy Text'}
+              {copied ? (
+                <Check className="w-4 h-4 text-emerald-400" />
+              ) : (
+                <Copy className="w-4 h-4" />
+              )}
+              {copied ? "Copied to Clipboard!" : "Copy Text"}
             </button>
             <button
               onClick={handleDownloadTxt}
@@ -169,18 +173,24 @@ export const OcrTool: React.FC<OcrToolProps> = ({ initialFile, onBack }) => {
 
             {previewUrl && (
               <div className="bg-slate-950 border border-slate-800 rounded-2xl p-2 max-h-[420px] flex items-center justify-center overflow-hidden">
-                <img src={previewUrl} alt="Source" className="max-h-[380px] object-contain rounded-lg" />
+                <img
+                  src={previewUrl}
+                  alt="Source"
+                  className="max-h-[380px] object-contain rounded-lg"
+                />
               </div>
             )}
 
             <div className="flex items-center justify-between text-xs text-slate-400">
-              <span>{file.name} ({formatBytes(file.size)})</span>
+              <span>
+                {file.name} ({formatBytes(file.size)})
+              </span>
               <button
                 onClick={() => processOcr(file)}
                 disabled={isProcessing}
                 className="text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${isProcessing ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-3.5 h-3.5 ${isProcessing ? "animate-spin" : ""}`} />
                 Re-scan OCR
               </button>
             </div>

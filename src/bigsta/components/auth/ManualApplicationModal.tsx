@@ -1,6 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { X, Phone, MessageSquare, User, Send, CheckCircle2, Clock, AlertCircle, RefreshCw } from 'lucide-react';
-import { useTemplateStore } from '../../store/useTemplateStore';
+import React, { useState, useEffect } from "react";
+import {
+  X,
+  Phone,
+  MessageSquare,
+  User,
+  Send,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  RefreshCw,
+} from "lucide-react";
+import { useTemplateStore } from "../../store/useTemplateStore";
 
 export const ManualApplicationModal: React.FC = () => {
   const {
@@ -11,10 +21,10 @@ export const ManualApplicationModal: React.FC = () => {
     manualRequests,
   } = useTemplateStore();
 
-  const [fullName, setFullName] = useState('');
-  const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [fullName, setFullName] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
   const [showConfirmCommunication, setShowConfirmCommunication] = useState(false);
-  const [submittedState, setSubmittedState] = useState<'IDLE' | 'CONFIRMED'>('IDLE');
+  const [submittedState, setSubmittedState] = useState<"IDLE" | "CONFIRMED">("IDLE");
   const [isEditingNew, setIsEditingNew] = useState(false);
 
   // Check if there is an existing request for this service
@@ -27,14 +37,14 @@ export const ManualApplicationModal: React.FC = () => {
   useEffect(() => {
     if (isManualAppModalOpen) {
       setShowConfirmCommunication(false);
-      setSubmittedState('IDLE');
+      setSubmittedState("IDLE");
       setIsEditingNew(false);
       if (existingRequest) {
-        setFullName(existingRequest.fullName || '');
-        setWhatsappNumber(existingRequest.whatsappNumber || '');
+        setFullName(existingRequest.fullName || "");
+        setWhatsappNumber(existingRequest.whatsappNumber || "");
       } else {
-        setFullName('');
-        setWhatsappNumber('');
+        setFullName("");
+        setWhatsappNumber("");
       }
     }
   }, [isManualAppModalOpen, existingRequest]);
@@ -44,7 +54,7 @@ export const ManualApplicationModal: React.FC = () => {
   const handleInitialFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName.trim() || !whatsappNumber.trim()) {
-      alert('Please provide your real full names and your WhatsApp or active contact number.');
+      alert("Please provide your real full names and your WhatsApp or active contact number.");
       return;
     }
     // Prompt if user is ready for communication
@@ -53,44 +63,44 @@ export const ManualApplicationModal: React.FC = () => {
 
   const handleConfirmCommunication = () => {
     submitManualRequest({
-      serviceId: selectedManualService?.id || 'manual_service',
-      serviceName: selectedManualService?.name || 'Manual Document Application',
+      serviceId: selectedManualService?.id || "manual_service",
+      serviceName: selectedManualService?.name || "Manual Document Application",
       fullName: fullName.trim(),
       whatsappNumber: whatsappNumber.trim(),
       normalNumber: whatsappNumber.trim(),
     });
 
     setShowConfirmCommunication(false);
-    setSubmittedState('CONFIRMED');
+    setSubmittedState("CONFIRMED");
     setIsEditingNew(false);
   };
 
   // Status badge styling helper
   const renderStatusBadge = (status: string) => {
     switch (status) {
-      case 'PENDING':
+      case "PENDING":
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-amber-500/15 text-amber-800 border border-amber-500/30">
             <Clock className="w-3.5 h-3.5 text-amber-600 animate-spin" />
             <span>Under Admin Review</span>
           </span>
         );
-      case 'PROCESSING':
+      case "PROCESSING":
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-blue-500/15 text-blue-800 border border-blue-500/30">
             <RefreshCw className="w-3.5 h-3.5 text-blue-600 animate-spin" />
             <span>On Progress</span>
           </span>
         );
-      case 'APPROVED':
-      case 'COMPLETED':
+      case "APPROVED":
+      case "COMPLETED":
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-500/15 text-emerald-800 border border-emerald-500/30">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
             <span>Accepted</span>
           </span>
         );
-      case 'REJECTED':
+      case "REJECTED":
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-rose-500/15 text-rose-800 border border-rose-500/30">
             <AlertCircle className="w-3.5 h-3.5 text-rose-600" />
@@ -132,15 +142,13 @@ export const ManualApplicationModal: React.FC = () => {
             </div>
 
             <div className="text-center space-y-2">
-              <h3 className="text-lg font-bold text-[#101010]">
-                Communication Confirmation
-              </h3>
+              <h3 className="text-lg font-bold text-[#101010]">Communication Confirmation</h3>
               <p className="text-sm font-semibold text-[#101010]/80 max-w-xs mx-auto">
-                Are you ready for communication via WhatsApp or phone call on{' '}
+                Are you ready for communication via WhatsApp or phone call on{" "}
                 <strong className="text-[#101010]">{whatsappNumber}</strong>?
               </p>
               <p className="text-xs text-[#101010]/60 max-w-xs mx-auto">
-                Once confirmed, your application state will change directly to{' '}
+                Once confirmed, your application state will change directly to{" "}
                 <strong className="text-[#101010]">Admin Review</strong>.
               </p>
             </div>
@@ -164,7 +172,7 @@ export const ManualApplicationModal: React.FC = () => {
               </button>
             </div>
           </div>
-        ) : submittedState === 'CONFIRMED' || (existingRequest && !isEditingNew) ? (
+        ) : submittedState === "CONFIRMED" || (existingRequest && !isEditingNew) ? (
           /* 2. EXISTING APPLICATION STATE DISPLAY */
           <div className="space-y-4 animate-in fade-in">
             <div className="flex items-center gap-3 mb-2">
@@ -176,7 +184,7 @@ export const ManualApplicationModal: React.FC = () => {
                   Application Status
                 </span>
                 <h3 className="text-lg font-bold text-[#101010] mt-0.5">
-                  {selectedManualService?.name || 'Manual Document Application'}
+                  {selectedManualService?.name || "Manual Document Application"}
                 </h3>
               </div>
             </div>
@@ -186,29 +194,35 @@ export const ManualApplicationModal: React.FC = () => {
                 <span className="text-[11px] font-bold text-[#101010]/70 uppercase tracking-wider">
                   Current State
                 </span>
-                {renderStatusBadge(existingRequest?.status || 'PENDING')}
+                {renderStatusBadge(existingRequest?.status || "PENDING")}
               </div>
 
               {/* State Explanatory Text */}
               <div className="p-3 bg-[#E7E2DE] rounded-xl text-xs text-[#101010]">
-                {(!existingRequest || existingRequest.status === 'PENDING') && (
+                {(!existingRequest || existingRequest.status === "PENDING") && (
                   <p className="font-semibold text-amber-900 leading-relaxed">
-                    <strong>Admin Review</strong>. We have received your manual application. Our administrators are currently reviewing your request. Please keep your phone reachable.
+                    <strong>Admin Review</strong>. We have received your manual application. Our
+                    administrators are currently reviewing your request. Please keep your phone
+                    reachable.
                   </p>
                 )}
-                {existingRequest?.status === 'PROCESSING' && (
+                {existingRequest?.status === "PROCESSING" && (
                   <p className="font-semibold text-blue-900 leading-relaxed">
-                    <strong>On Progress</strong>. Your manual application is actively being processed by our operations desk.
+                    <strong>On Progress</strong>. Your manual application is actively being
+                    processed by our operations desk.
                   </p>
                 )}
-                {(existingRequest?.status === 'APPROVED' || existingRequest?.status === 'COMPLETED') && (
+                {(existingRequest?.status === "APPROVED" ||
+                  existingRequest?.status === "COMPLETED") && (
                   <p className="font-semibold text-emerald-900 leading-relaxed">
-                    <strong>Accepted</strong>. Your manual request was approved! Get ready for an admin call or WhatsApp message on your provided number.
+                    <strong>Accepted</strong>. Your manual request was approved! Get ready for an
+                    admin call or WhatsApp message on your provided number.
                   </p>
                 )}
-                {existingRequest?.status === 'REJECTED' && (
+                {existingRequest?.status === "REJECTED" && (
                   <p className="font-semibold text-rose-900 leading-relaxed">
-                    <strong>Rejected</strong>. Your request could not be processed at this time. You can submit a new application below.
+                    <strong>Rejected</strong>. Your request could not be processed at this time. You
+                    can submit a new application below.
                   </p>
                 )}
               </div>
@@ -217,11 +231,15 @@ export const ManualApplicationModal: React.FC = () => {
               <div className="space-y-1.5 pt-1 text-xs text-[#101010]">
                 <div className="flex items-center justify-between">
                   <span className="text-[#101010]/60 font-medium">Applicant Name:</span>
-                  <span className="font-bold text-[#101010]">{existingRequest?.fullName || fullName}</span>
+                  <span className="font-bold text-[#101010]">
+                    {existingRequest?.fullName || fullName}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[#101010]/60 font-medium">WhatsApp / Active Number:</span>
-                  <span className="font-bold text-[#101010]">{existingRequest?.whatsappNumber || whatsappNumber}</span>
+                  <span className="font-bold text-[#101010]">
+                    {existingRequest?.whatsappNumber || whatsappNumber}
+                  </span>
                 </div>
                 {existingRequest?.date && (
                   <div className="flex items-center justify-between">
@@ -233,7 +251,7 @@ export const ManualApplicationModal: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-3 pt-2">
-              {existingRequest?.status === 'REJECTED' ? (
+              {existingRequest?.status === "REJECTED" ? (
                 <button
                   type="button"
                   onClick={() => setIsEditingNew(true)}
@@ -273,13 +291,14 @@ export const ManualApplicationModal: React.FC = () => {
                   Request Manual Application
                 </span>
                 <h3 className="text-lg font-bold text-[#101010] mt-0.5">
-                  {selectedManualService?.name || 'Manual Document Application'}
+                  {selectedManualService?.name || "Manual Document Application"}
                 </h3>
               </div>
             </div>
 
             <p className="text-xs text-[#101010]/80 leading-relaxed mb-5 font-medium">
-              Fill in your contact details below. Our administrative team will review your application and reach out via WhatsApp or phone call.
+              Fill in your contact details below. Our administrative team will review your
+              application and reach out via WhatsApp or phone call.
             </p>
 
             <form onSubmit={handleInitialFormSubmit} className="space-y-4">

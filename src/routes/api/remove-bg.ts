@@ -42,10 +42,13 @@ export const Route = createFileRoute("/api/remove-bg")({
             headers: { "Content-Type": file.type || "image/png" },
           });
         } catch (err: any) {
-          return new Response(JSON.stringify({ error: err.message || "Failed to process background removal" }), {
-            status: 500,
-            headers: { "Content-Type": "application/json" },
-          });
+          return new Response(
+            JSON.stringify({ error: err.message || "Failed to process background removal" }),
+            {
+              status: 500,
+              headers: { "Content-Type": "application/json" },
+            },
+          );
         }
       },
     },

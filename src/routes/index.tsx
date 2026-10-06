@@ -15,7 +15,8 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "BIGsta - ID Card Template Designer & Renderer" },
       {
         property: "og:description",
-        content: "Design and render ID cards with precise templates, variables and multi-format export.",
+        content:
+          "Design and render ID cards with precise templates, variables and multi-format export.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

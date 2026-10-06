@@ -4,33 +4,33 @@ export interface PassportDocumentSpec {
   widthMm: number;
   heightMm: number;
   dpi: number;
-  backgroundRequirements: 'white' | 'blue' | 'red' | 'any';
+  backgroundRequirements: "white" | "blue" | "red" | "any";
   minResolution: { width: number; height: number };
   maxFileSizeKb: number;
-  allowedFormats: ('jpg' | 'png')[];
+  allowedFormats: ("jpg" | "png")[];
 }
 
 export const PASSPORT_SPECS: PassportDocumentSpec[] = [
   {
-    country: 'Tanzania',
-    document: 'Passport',
+    country: "Tanzania",
+    document: "Passport",
     widthMm: 35,
     heightMm: 45,
     dpi: 300,
-    backgroundRequirements: 'white',
+    backgroundRequirements: "white",
     minResolution: { width: 413, height: 531 },
     maxFileSizeKb: 200,
-    allowedFormats: ['jpg'],
+    allowedFormats: ["jpg"],
   },
   {
-    country: 'United Kingdom',
-    document: 'Passport',
+    country: "United Kingdom",
+    document: "Passport",
     widthMm: 35,
     heightMm: 45,
     dpi: 300,
-    backgroundRequirements: 'white',
+    backgroundRequirements: "white",
     minResolution: { width: 413, height: 531 },
     maxFileSizeKb: 1024,
-    allowedFormats: ['jpg'],
+    allowedFormats: ["jpg"],
   },
 ];

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { CheckCircle2, XCircle } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { CheckCircle2, XCircle } from "lucide-react";
 
 export const StartupDisclaimerModal: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -7,8 +7,8 @@ export const StartupDisclaimerModal: React.FC = () => {
 
   useEffect(() => {
     try {
-      const accepted = localStorage.getItem('bigsta_startup_disclaimer_accepted');
-      if (accepted !== 'true') {
+      const accepted = localStorage.getItem("bigsta_startup_disclaimer_accepted");
+      if (accepted !== "true") {
         setIsOpen(true);
       }
     } catch (e) {
@@ -18,7 +18,7 @@ export const StartupDisclaimerModal: React.FC = () => {
 
   const handleAgree = () => {
     try {
-      localStorage.setItem('bigsta_startup_disclaimer_accepted', 'true');
+      localStorage.setItem("bigsta_startup_disclaimer_accepted", "true");
     } catch (e) {}
     setIsOpen(false);
   };
@@ -36,7 +36,8 @@ export const StartupDisclaimerModal: React.FC = () => {
           </div>
           <h2 className="text-xl font-extrabold text-white tracking-tight">Access Restricted</h2>
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-            You must agree to the Terms of Use and unofficial platform notice before accessing BIGsta. Please refresh the page if you wish to accept.
+            You must agree to the Terms of Use and unofficial platform notice before accessing
+            BIGsta. Please refresh the page if you wish to accept.
           </p>
         </div>
       </div>
@@ -57,18 +58,26 @@ export const StartupDisclaimerModal: React.FC = () => {
         <div className="p-6 space-y-4 text-xs sm:text-sm text-slate-300 leading-relaxed max-h-[60vh] overflow-y-auto">
           <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-amber-200 font-medium leading-relaxed">
             <p>
-              This platform is independent and is not affiliated with any government entity or official system. All templates, cards, and generated outputs are unofficial and intended solely for personal reference, memory keeping, demonstration, design, testing, or educational purposes.
+              This platform is independent and is not affiliated with any government entity or
+              official system. All templates, cards, and generated outputs are unofficial and
+              intended solely for personal reference, memory keeping, demonstration, design,
+              testing, or educational purposes.
             </p>
           </div>
 
           <div className="space-y-2 text-slate-300 text-xs sm:text-sm">
             <p className="flex items-start gap-2">
               <span className="text-amber-400 font-bold">•</span>
-              <span>BIGsta does not connect to, access, or verify records from government databases.</span>
+              <span>
+                BIGsta does not connect to, access, or verify records from government databases.
+              </span>
             </p>
             <p className="flex items-start gap-2">
               <span className="text-amber-400 font-bold">•</span>
-              <span>Generated outputs must not be used for official identity verification, legal transactions, or government submissions.</span>
+              <span>
+                Generated outputs must not be used for official identity verification, legal
+                transactions, or government submissions.
+              </span>
             </p>
           </div>
 

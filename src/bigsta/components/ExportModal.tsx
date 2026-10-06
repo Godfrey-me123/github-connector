@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   X,
   Download,
@@ -10,9 +10,9 @@ import {
   RotateCcw,
   Sliders,
   Layers,
-} from 'lucide-react';
-import { useTemplateStore } from '../store/useTemplateStore';
-import { playNotificationSound } from '../utils/audioHandler';
+} from "lucide-react";
+import { useTemplateStore } from "../store/useTemplateStore";
+import { playNotificationSound } from "../utils/audioHandler";
 import {
   downloadPNG,
   downloadJPG,
@@ -21,7 +21,7 @@ import {
   downloadJSON,
   renderTemplateToCanvas,
   CropRegion,
-} from '../utils/export';
+} from "../utils/export";
 
 export const ExportModal: React.FC = () => {
   const { isExportModalOpen, setExportModalOpen, currentTemplate, setMergeModalOpen } =
@@ -35,7 +35,7 @@ export const ExportModal: React.FC = () => {
     height: currentTemplate.cardHeight,
   });
 
-  const [previewSrc, setPreviewSrc] = useState<string>('');
+  const [previewSrc, setPreviewSrc] = useState<string>("");
   const [isDragging, setIsDragging] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
@@ -56,24 +56,24 @@ export const ExportModal: React.FC = () => {
   useEffect(() => {
     if (isExportModalOpen) {
       const store = useTemplateStore.getState();
-      
-      // Strict data association to prevent leaks between card types
-      const templateName = (currentTemplate.templateName || '').toLowerCase();
-      const templateId = (currentTemplate.id || '').toLowerCase();
-      const serviceId = (currentTemplate.serviceId || '').toLowerCase();
-      
-      const isDrivingLicense = 
-        currentTemplate.cardType === 'Driving License' || 
-        serviceId === 'driving_license' || 
-        templateName.includes('driving') ||
-        templateId.includes('dl_') ||
-        store.activeServiceId === 'driving_license';
 
-      const isNhif = 
-        serviceId === 'nhif' || 
-        templateName.includes('nhif') ||
-        templateId.includes('nhif') ||
-        store.activeServiceId === 'nhif';
+      // Strict data association to prevent leaks between card types
+      const templateName = (currentTemplate.templateName || "").toLowerCase();
+      const templateId = (currentTemplate.id || "").toLowerCase();
+      const serviceId = (currentTemplate.serviceId || "").toLowerCase();
+
+      const isDrivingLicense =
+        currentTemplate.cardType === "Driving License" ||
+        serviceId === "driving_license" ||
+        templateName.includes("driving") ||
+        templateId.includes("dl_") ||
+        store.activeServiceId === "driving_license";
+
+      const isNhif =
+        serviceId === "nhif" ||
+        templateName.includes("nhif") ||
+        templateId.includes("nhif") ||
+        store.activeServiceId === "nhif";
 
       let formData = {};
       if (isNhif) {
@@ -86,7 +86,7 @@ export const ExportModal: React.FC = () => {
       }
 
       renderTemplateToCanvas(currentTemplate, formData, 150).then((canvas) => {
-        setPreviewSrc(canvas.toDataURL('image/png'));
+        setPreviewSrc(canvas.toDataURL("image/png"));
       });
     }
   }, [isExportModalOpen, currentTemplate]);
@@ -95,10 +95,10 @@ export const ExportModal: React.FC = () => {
   useEffect(() => {
     if (!isExportModalOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setExportModalOpen(false);
+      if (e.key === "Escape") setExportModalOpen(false);
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isExportModalOpen, setExportModalOpen]);
 
   if (!isExportModalOpen) return null;
@@ -229,7 +229,9 @@ export const ExportModal: React.FC = () => {
                 <div className="p-3 bg-[#FFFFFF] border border-[#E7E9EB] rounded-xl flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Sliders className="w-4 h-4 text-[#000000]" />
-                    <span className="text-xs font-bold text-[#000000]">Live Output Dimensions:</span>
+                    <span className="text-xs font-bold text-[#000000]">
+                      Live Output Dimensions:
+                    </span>
                   </div>
                   <span className="text-xs font-bold font-mono text-[#000000] bg-[#E7E9EB] px-3 py-1 rounded-lg border border-[#dadcdc]">
                     Width: {crop.width.toFixed(1)} mm Height: {crop.height.toFixed(1)} mm
@@ -251,7 +253,13 @@ export const ExportModal: React.FC = () => {
                       onChange={(e) =>
                         setCrop({
                           ...crop,
-                          x: Math.max(0, Math.min(Number(e.target.value), currentTemplate.cardWidth - crop.width)),
+                          x: Math.max(
+                            0,
+                            Math.min(
+                              Number(e.target.value),
+                              currentTemplate.cardWidth - crop.width,
+                            ),
+                          ),
                         })
                       }
                       className="w-full px-2.5 py-1.5 bg-[#FFFFFF] border border-[#E7E9EB] rounded-lg text-xs font-mono font-bold text-[#000000]"
@@ -271,7 +279,13 @@ export const ExportModal: React.FC = () => {
                       onChange={(e) =>
                         setCrop({
                           ...crop,
-                          y: Math.max(0, Math.min(Number(e.target.value), currentTemplate.cardHeight - crop.height)),
+                          y: Math.max(
+                            0,
+                            Math.min(
+                              Number(e.target.value),
+                              currentTemplate.cardHeight - crop.height,
+                            ),
+                          ),
                         })
                       }
                       className="w-full px-2.5 py-1.5 bg-[#FFFFFF] border border-[#E7E9EB] rounded-lg text-xs font-mono font-bold text-[#000000]"
@@ -291,7 +305,10 @@ export const ExportModal: React.FC = () => {
                       onChange={(e) =>
                         setCrop({
                           ...crop,
-                          width: Math.max(10, Math.min(Number(e.target.value), currentTemplate.cardWidth - crop.x)),
+                          width: Math.max(
+                            10,
+                            Math.min(Number(e.target.value), currentTemplate.cardWidth - crop.x),
+                          ),
                         })
                       }
                       className="w-full px-2.5 py-1.5 bg-[#FFFFFF] border border-[#E7E9EB] rounded-lg text-xs font-mono font-bold text-[#000000]"
@@ -311,7 +328,10 @@ export const ExportModal: React.FC = () => {
                       onChange={(e) =>
                         setCrop({
                           ...crop,
-                          height: Math.max(10, Math.min(Number(e.target.value), currentTemplate.cardHeight - crop.y)),
+                          height: Math.max(
+                            10,
+                            Math.min(Number(e.target.value), currentTemplate.cardHeight - crop.y),
+                          ),
                         })
                       }
                       className="w-full px-2.5 py-1.5 bg-[#FFFFFF] border border-[#E7E9EB] rounded-lg text-xs font-mono font-bold text-[#000000]"
@@ -339,14 +359,14 @@ export const ExportModal: React.FC = () => {
                 type="button"
                 onClick={async () => {
                   const store = useTemplateStore.getState();
-                  const val = store.validateExportAccess('json');
+                  const val = store.validateExportAccess("json");
                   if (!val.allowed) return;
                   try {
                     await downloadJSON(currentTemplate);
-                    store.consumeUsage('JSON Template Export', undefined, 1);
+                    store.consumeUsage("JSON Template Export", undefined, 1);
                     playNotificationSound();
                   } catch (e) {
-                    console.error('JSON export failed', e);
+                    console.error("JSON export failed", e);
                   }
                 }}
                 className="w-full py-2 bg-[#000000] hover:bg-[#222222] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer text-center whitespace-nowrap"
@@ -363,38 +383,48 @@ export const ExportModal: React.FC = () => {
                   <span className="font-bold text-xs text-[#000000]">Print PDF</span>
                 </div>
                 <p className="text-[11px] text-[#555555] mb-3 font-medium">
-                  High-precision PDF set to physical card dimensions ({crop.width.toFixed(1)} × {crop.height.toFixed(1)} mm).
+                  High-precision PDF set to physical card dimensions ({crop.width.toFixed(1)} ×{" "}
+                  {crop.height.toFixed(1)} mm).
                 </p>
               </div>
               <button
                 type="button"
                 onClick={async () => {
                   const store = useTemplateStore.getState();
-                  const val = store.validateExportAccess('pdf');
+                  const val = store.validateExportAccess("pdf");
                   if (!val.allowed) return;
-                  
+
                   // Strict data association to prevent leaks
-                  const isDrivingLicense = 
-                    currentTemplate.cardType === 'Driving License' || 
-                    (currentTemplate.serviceId || '').toLowerCase() === 'driving_license' || 
-                    (currentTemplate.templateName || '').toLowerCase().includes('driving') ||
-                    (currentTemplate.id || '').toLowerCase().includes('dl_') ||
-                    store.activeServiceId === 'driving_license';
+                  const isDrivingLicense =
+                    currentTemplate.cardType === "Driving License" ||
+                    (currentTemplate.serviceId || "").toLowerCase() === "driving_license" ||
+                    (currentTemplate.templateName || "").toLowerCase().includes("driving") ||
+                    (currentTemplate.id || "").toLowerCase().includes("dl_") ||
+                    store.activeServiceId === "driving_license";
 
-                  const isNhif = 
-                    (currentTemplate.serviceId || '').toLowerCase() === 'nhif' || 
-                    (currentTemplate.templateName || '').toLowerCase().includes('nhif') ||
-                    (currentTemplate.id || '').toLowerCase().includes('nhif') ||
-                    store.activeServiceId === 'nhif';
+                  const isNhif =
+                    (currentTemplate.serviceId || "").toLowerCase() === "nhif" ||
+                    (currentTemplate.templateName || "").toLowerCase().includes("nhif") ||
+                    (currentTemplate.id || "").toLowerCase().includes("nhif") ||
+                    store.activeServiceId === "nhif";
 
-                  const formData = (isNhif ? store.lastNhifFormData : isDrivingLicense ? store.lastDrivingLicenseFormData : store.lastNidaFormData) || {};
-                  
+                  const formData =
+                    (isNhif
+                      ? store.lastNhifFormData
+                      : isDrivingLicense
+                        ? store.lastDrivingLicenseFormData
+                        : store.lastNidaFormData) || {};
+
                   try {
                     await downloadPDF(currentTemplate, formData, undefined, cropPayload);
-                    store.consumeUsage(`${currentTemplate.templateName || 'Card'} PDF Export`, undefined, 1);
+                    store.consumeUsage(
+                      `${currentTemplate.templateName || "Card"} PDF Export`,
+                      undefined,
+                      1,
+                    );
                     playNotificationSound();
                   } catch (e) {
-                    console.error('PDF export failed', e);
+                    console.error("PDF export failed", e);
                   }
                 }}
                 className="w-full py-2 bg-[#000000] hover:bg-[#222222] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer text-center whitespace-nowrap"
@@ -418,30 +448,39 @@ export const ExportModal: React.FC = () => {
                 type="button"
                 onClick={async () => {
                   const store = useTemplateStore.getState();
-                  const val = store.validateExportAccess('png');
+                  const val = store.validateExportAccess("png");
                   if (!val.allowed) return;
-                  
-                  const isDrivingLicense = 
-                    currentTemplate.cardType === 'Driving License' || 
-                    (currentTemplate.serviceId || '').toLowerCase() === 'driving_license' || 
-                    (currentTemplate.templateName || '').toLowerCase().includes('driving') ||
-                    (currentTemplate.id || '').toLowerCase().includes('dl_') ||
-                    store.activeServiceId === 'driving_license';
 
-                  const isNhif = 
-                    (currentTemplate.serviceId || '').toLowerCase() === 'nhif' || 
-                    (currentTemplate.templateName || '').toLowerCase().includes('nhif') ||
-                    (currentTemplate.id || '').toLowerCase().includes('nhif') ||
-                    store.activeServiceId === 'nhif';
+                  const isDrivingLicense =
+                    currentTemplate.cardType === "Driving License" ||
+                    (currentTemplate.serviceId || "").toLowerCase() === "driving_license" ||
+                    (currentTemplate.templateName || "").toLowerCase().includes("driving") ||
+                    (currentTemplate.id || "").toLowerCase().includes("dl_") ||
+                    store.activeServiceId === "driving_license";
 
-                  const formData = (isNhif ? store.lastNhifFormData : isDrivingLicense ? store.lastDrivingLicenseFormData : store.lastNidaFormData) || {};
-                  
+                  const isNhif =
+                    (currentTemplate.serviceId || "").toLowerCase() === "nhif" ||
+                    (currentTemplate.templateName || "").toLowerCase().includes("nhif") ||
+                    (currentTemplate.id || "").toLowerCase().includes("nhif") ||
+                    store.activeServiceId === "nhif";
+
+                  const formData =
+                    (isNhif
+                      ? store.lastNhifFormData
+                      : isDrivingLicense
+                        ? store.lastDrivingLicenseFormData
+                        : store.lastNidaFormData) || {};
+
                   try {
                     await downloadPNG(currentTemplate, formData, undefined, cropPayload);
-                    store.consumeUsage(`${currentTemplate.templateName || 'Card'} PNG Export`, undefined, 1);
+                    store.consumeUsage(
+                      `${currentTemplate.templateName || "Card"} PNG Export`,
+                      undefined,
+                      1,
+                    );
                     playNotificationSound();
                   } catch (e) {
-                    console.error('PNG export failed', e);
+                    console.error("PNG export failed", e);
                   }
                 }}
                 className="w-full py-2 bg-[#000000] hover:bg-[#222222] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer text-center whitespace-nowrap"
@@ -465,30 +504,39 @@ export const ExportModal: React.FC = () => {
                 type="button"
                 onClick={async () => {
                   const store = useTemplateStore.getState();
-                  const val = store.validateExportAccess('jpg');
+                  const val = store.validateExportAccess("jpg");
                   if (!val.allowed) return;
-                  
-                  const isDrivingLicense = 
-                    currentTemplate.cardType === 'Driving License' || 
-                    (currentTemplate.serviceId || '').toLowerCase() === 'driving_license' || 
-                    (currentTemplate.templateName || '').toLowerCase().includes('driving') ||
-                    (currentTemplate.id || '').toLowerCase().includes('dl_') ||
-                    store.activeServiceId === 'driving_license';
 
-                  const isNhif = 
-                    (currentTemplate.serviceId || '').toLowerCase() === 'nhif' || 
-                    (currentTemplate.templateName || '').toLowerCase().includes('nhif') ||
-                    (currentTemplate.id || '').toLowerCase().includes('nhif') ||
-                    store.activeServiceId === 'nhif';
+                  const isDrivingLicense =
+                    currentTemplate.cardType === "Driving License" ||
+                    (currentTemplate.serviceId || "").toLowerCase() === "driving_license" ||
+                    (currentTemplate.templateName || "").toLowerCase().includes("driving") ||
+                    (currentTemplate.id || "").toLowerCase().includes("dl_") ||
+                    store.activeServiceId === "driving_license";
 
-                  const formData = (isNhif ? store.lastNhifFormData : isDrivingLicense ? store.lastDrivingLicenseFormData : store.lastNidaFormData) || {};
-                  
+                  const isNhif =
+                    (currentTemplate.serviceId || "").toLowerCase() === "nhif" ||
+                    (currentTemplate.templateName || "").toLowerCase().includes("nhif") ||
+                    (currentTemplate.id || "").toLowerCase().includes("nhif") ||
+                    store.activeServiceId === "nhif";
+
+                  const formData =
+                    (isNhif
+                      ? store.lastNhifFormData
+                      : isDrivingLicense
+                        ? store.lastDrivingLicenseFormData
+                        : store.lastNidaFormData) || {};
+
                   try {
                     await downloadJPG(currentTemplate, formData, undefined, cropPayload);
-                    store.consumeUsage(`${currentTemplate.templateName || 'Card'} JPG Export`, undefined, 1);
+                    store.consumeUsage(
+                      `${currentTemplate.templateName || "Card"} JPG Export`,
+                      undefined,
+                      1,
+                    );
                     playNotificationSound();
                   } catch (e) {
-                    console.error('JPG export failed', e);
+                    console.error("JPG export failed", e);
                   }
                 }}
                 className="w-full py-2 bg-[#000000] hover:bg-[#222222] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer text-center whitespace-nowrap"
@@ -512,14 +560,14 @@ export const ExportModal: React.FC = () => {
                 type="button"
                 onClick={async () => {
                   const store = useTemplateStore.getState();
-                  const val = store.validateExportAccess('svg');
+                  const val = store.validateExportAccess("svg");
                   if (!val.allowed) return;
                   try {
                     await downloadSVG(currentTemplate);
-                    store.consumeUsage('SVG Vector Export', undefined, 1);
+                    store.consumeUsage("SVG Vector Export", undefined, 1);
                     playNotificationSound();
                   } catch (e) {
-                    console.error('SVG export failed', e);
+                    console.error("SVG export failed", e);
                   }
                 }}
                 className="w-full py-2 bg-[#000000] hover:bg-[#222222] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer text-center whitespace-nowrap"

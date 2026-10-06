@@ -1,8 +1,8 @@
 // @ts-nocheck
-import React from 'react';
-import { PassportTool } from './tools/PassportTool';
-import { useTemplateStore } from '../store/useTemplateStore';
-import { UniversalBackButton } from './common/UniversalBackButton';
+import React from "react";
+import { PassportTool } from "./tools/PassportTool";
+import { useTemplateStore } from "../store/useTemplateStore";
+import { UniversalBackButton } from "./common/UniversalBackButton";
 
 export const PassportStudioScreen: React.FC = () => {
   const { setActiveScreen } = useTemplateStore();
@@ -26,7 +26,7 @@ export const PassportStudioScreen: React.FC = () => {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 pt-6">
-        <PassportTool onBack={() => setActiveScreen('home')} />
+        <PassportTool onBack={() => setActiveScreen("home")} />
       </div>
     </div>
   );

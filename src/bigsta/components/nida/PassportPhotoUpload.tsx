@@ -1,5 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from "react";
 import {
   Upload,
   Crop,
@@ -9,11 +9,11 @@ import {
   AlertCircle,
   Image as ImageIcon,
   Sparkles,
-} from 'lucide-react';
-import { PhotoCropModal } from './PhotoCropModal';
+} from "lucide-react";
+import { PhotoCropModal } from "./PhotoCropModal";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
-const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 interface PassportPhotoUploadProps {
   value?: string | null;
@@ -27,16 +27,16 @@ async function applyAlphaMatting(blob: Blob): Promise<Blob> {
     const url = URL.createObjectURL(blob);
     const img = new Image();
     img.onload = () => {
-      const canvas = document.createElement('canvas');
+      const canvas = document.createElement("canvas");
       canvas.width = img.width;
       canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext("2d");
       if (!ctx) {
         resolve(blob);
         return;
       }
       ctx.drawImage(img, 0, 0);
-      
+
       const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const data = imgData.data;
 
@@ -55,9 +55,13 @@ async function applyAlphaMatting(blob: Blob): Promise<Blob> {
       }
 
       ctx.putImageData(imgData, 0, 0);
-      canvas.toBlob((b) => {
-        resolve(b || blob);
-      }, 'image/png', 1.0);
+      canvas.toBlob(
+        (b) => {
+          resolve(b || blob);
+        },
+        "image/png",
+        1.0,
+      );
     };
     img.onerror = () => resolve(blob);
     img.src = url;
@@ -83,7 +87,7 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
 
     // Format validation
     if (!ALLOWED_TYPES.includes(file.type.toLowerCase())) {
-      setError('Unsupported file format. Please upload JPG, JPEG, PNG, or WEBP.');
+      setError("Unsupported file format. Please upload JPG, JPEG, PNG, or WEBP.");
       return;
     }
 
@@ -101,15 +105,15 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
     if (autoRemoveBg) {
       try {
         const formData = new FormData();
-        formData.append('image', file);
-        const res = await fetch('/api/remove-bg', { method: 'POST', body: formData });
+        formData.append("image", file);
+        const res = await fetch("/api/remove-bg", { method: "POST", body: formData });
         if (res.ok) {
           const blob = await res.blob();
           const mattedBlob = await applyAlphaMatting(blob);
-          workingFile = new File([mattedBlob], 'nobg.png', { type: 'image/png' });
+          workingFile = new File([mattedBlob], "nobg.png", { type: "image/png" });
         }
       } catch (err) {
-        console.warn('Auto background removal fallback:', err);
+        console.warn("Auto background removal fallback:", err);
       }
     }
 
@@ -117,7 +121,7 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
     reader.onload = (e) => {
       const dataUrl = e.target?.result as string;
       if (!dataUrl) {
-        setError('Failed to read image file.');
+        setError("Failed to read image file.");
         setIsProcessing(false);
         return;
       }
@@ -128,7 +132,7 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
     };
 
     reader.onerror = () => {
-      setError('Error reading file. Please try again.');
+      setError("Error reading file. Please try again.");
       setIsProcessing(false);
     };
 
@@ -141,7 +145,7 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
       processFile(file);
     }
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
@@ -205,7 +209,7 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
             <div
               onClick={() => !disabled && !isProcessing && fileInputRef.current?.click()}
               className={`relative border-2 border-dashed border-[#C8C2BE] hover:border-[#101010] hover:bg-[#E7E2DE]/50 rounded-2xl p-6 sm:p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-200 group ${
-                disabled || isProcessing ? 'opacity-50 pointer-events-none' : ''
+                disabled || isProcessing ? "opacity-50 pointer-events-none" : ""
               }`}
             >
               <div className="w-14 h-14 rounded-2xl bg-[#E7E2DE] border border-[#C8C2BE] group-hover:border-[#101010] flex items-center justify-center mb-3 shadow-xs transition-all">
@@ -217,7 +221,7 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
               </div>
 
               <h3 className="text-sm font-bold text-[#101010]">
-                {isProcessing ? 'Removing Background & Matting...' : 'Upload Passport Photo'}
+                {isProcessing ? "Removing Background & Matting..." : "Upload Passport Photo"}
               </h3>
               <p className="text-xs text-[#101010]/70 mt-1 max-w-xs font-medium">
                 Supports JPG, JPEG, PNG, or WEBP up to 10MB.

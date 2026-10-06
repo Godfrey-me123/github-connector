@@ -1,20 +1,13 @@
 // @ts-nocheck -- imported legacy BIGsta code
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  Crop as CropIcon,
-  Download,
-  Upload,
-  ArrowLeft,
-  Check,
-  RotateCcw
-} from 'lucide-react';
+import React, { useState, useRef, useEffect } from "react";
+import { Crop as CropIcon, Download, Upload, ArrowLeft, Check, RotateCcw } from "lucide-react";
 import {
   formatBytes,
   loadImageFromFile,
   cropImageCanvas,
   canvasToBlobUrl,
-  downloadProcessedFile
-} from '../../utils/imageProcessing';
+  downloadProcessedFile,
+} from "../../utils/imageProcessing";
 
 interface CropToolProps {
   initialFile?: File | null;
@@ -27,14 +20,14 @@ export const CropTool: React.FC<CropToolProps> = ({ initialFile, onBack }) => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   // Aspect ratio selected
-  const [aspectPreset, setAspectPreset] = useState<string>('free');
+  const [aspectPreset, setAspectPreset] = useState<string>("free");
 
   // Crop Box Coordinates relative to original image px
   const [cropBox, setCropBox] = useState<{ x: number; y: number; width: number; height: number }>({
     x: 0,
     y: 0,
     width: 400,
-    height: 400
+    height: 400,
   });
 
   const [croppedUrl, setCroppedUrl] = useState<string | null>(null);
@@ -72,11 +65,11 @@ export const CropTool: React.FC<CropToolProps> = ({ initialFile, onBack }) => {
     if (!imageObj) return;
 
     let targetRatio: number | null = null;
-    if (preset === '1:1') targetRatio = 1;
-    else if (preset === '16:9') targetRatio = 16 / 9;
-    else if (preset === '4:3') targetRatio = 4 / 3;
-    else if (preset === '3:2') targetRatio = 3 / 2;
-    else if (preset === '9:16') targetRatio = 9 / 16;
+    if (preset === "1:1") targetRatio = 1;
+    else if (preset === "16:9") targetRatio = 16 / 9;
+    else if (preset === "4:3") targetRatio = 4 / 3;
+    else if (preset === "3:2") targetRatio = 3 / 2;
+    else if (preset === "9:16") targetRatio = 9 / 16;
 
     if (targetRatio) {
       let newW = cropBox.width;
@@ -91,7 +84,7 @@ export const CropTool: React.FC<CropToolProps> = ({ initialFile, onBack }) => {
         x: Math.max(0, Math.min(cropBox.x, imageObj.width - newW)),
         y: Math.max(0, Math.min(cropBox.y, imageObj.height - newH)),
         width: newW,
-        height: newH
+        height: newH,
       };
 
       setCropBox(newBox);
@@ -107,13 +100,13 @@ export const CropTool: React.FC<CropToolProps> = ({ initialFile, onBack }) => {
     setIsProcessing(true);
     try {
       const canvas = await cropImageCanvas(activeImg, activeBox);
-      const mime = file.type || 'image/png';
+      const mime = file.type || "image/png";
       const result = await canvasToBlobUrl(canvas, mime, 0.95);
 
       setCroppedUrl(result.url);
       setCroppedSize(result.size);
     } catch (err) {
-      console.error('Crop Error:', err);
+      console.error("Crop Error:", err);
     } finally {
       setIsProcessing(false);
     }
@@ -121,8 +114,8 @@ export const CropTool: React.FC<CropToolProps> = ({ initialFile, onBack }) => {
 
   const handleDownload = () => {
     if (!croppedUrl || !file) return;
-    const ext = file.name.split('.').pop() || 'png';
-    const cleanName = file.name.replace(/\.[^/.]+$/, '') + `-cropped.${ext}`;
+    const ext = file.name.split(".").pop() || "png";
+    const cleanName = file.name.replace(/\.[^/.]+$/, "") + `-cropped.${ext}`;
     downloadProcessedFile(croppedUrl, cleanName);
   };
 
@@ -181,14 +174,14 @@ export const CropTool: React.FC<CropToolProps> = ({ initialFile, onBack }) => {
             <div>
               <label className="text-xs text-slate-400 block mb-2 font-medium">Aspect Ratios</label>
               <div className="grid grid-cols-3 gap-2">
-                {['free', '1:1', '16:9', '4:3', '3:2', '9:16'].map((r) => (
+                {["free", "1:1", "16:9", "4:3", "3:2", "9:16"].map((r) => (
                   <button
                     key={r}
                     onClick={() => handleAspectPreset(r)}
                     className={`py-1.5 px-2 rounded-xl text-xs font-semibold border transition-colors ${
                       aspectPreset === r
-                        ? 'bg-amber-500 text-slate-950 border-amber-400'
-                        : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'
+                        ? "bg-amber-500 text-slate-950 border-amber-400"
+                        : "bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700"
                     }`}
                   >
                     {r.toUpperCase()}
@@ -243,10 +236,15 @@ export const CropTool: React.FC<CropToolProps> = ({ initialFile, onBack }) => {
             {croppedUrl ? (
               <div className="space-y-4 text-center">
                 <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 max-h-[380px] flex items-center justify-center overflow-hidden">
-                  <img src={croppedUrl} alt="Cropped" className="max-h-[340px] object-contain rounded-lg" />
+                  <img
+                    src={croppedUrl}
+                    alt="Cropped"
+                    className="max-h-[340px] object-contain rounded-lg"
+                  />
                 </div>
                 <span className="text-xs text-slate-400 font-mono block">
-                  Cropped Dimensions: {cropBox.width} × {cropBox.height} px ({formatBytes(croppedSize || 0)})
+                  Cropped Dimensions: {cropBox.width} × {cropBox.height} px (
+                  {formatBytes(croppedSize || 0)})
                 </span>
               </div>
             ) : (

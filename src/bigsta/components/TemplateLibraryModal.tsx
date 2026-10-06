@@ -1,5 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from "react";
 import {
   X,
   FolderOpen,
@@ -12,12 +12,12 @@ import {
   FileJson,
   CreditCard,
   Edit,
-} from 'lucide-react';
-import { useTemplateStore } from '../store/useTemplateStore';
-import { CardTemplate } from '../types';
-import { downloadJSON } from '../utils/export';
+} from "lucide-react";
+import { useTemplateStore } from "../store/useTemplateStore";
+import { CardTemplate } from "../types";
+import { downloadJSON } from "../utils/export";
 
-import { TemplateBadge } from './TemplateBadge';
+import { TemplateBadge } from "./TemplateBadge";
 
 export const TemplateLibraryModal: React.FC = () => {
   const {
@@ -31,8 +31,8 @@ export const TemplateLibraryModal: React.FC = () => {
   } = useTemplateStore();
 
   const [templates, setTemplates] = useState<CardTemplate[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<'private' | 'universal'>('private');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState<"private" | "universal">("private");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -45,17 +45,17 @@ export const TemplateLibraryModal: React.FC = () => {
   useEffect(() => {
     if (!isTemplateLibraryOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setTemplateLibraryOpen(false);
+      if (e.key === "Escape") setTemplateLibraryOpen(false);
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isTemplateLibraryOpen, setTemplateLibraryOpen]);
 
   if (!isTemplateLibraryOpen) return null;
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('Are you sure you want to delete this template?')) {
+    if (confirm("Are you sure you want to delete this template?")) {
       await deleteSavedTemplate(id);
       const updated = await loadSavedTemplates();
       setTemplates(updated);
@@ -66,11 +66,11 @@ export const TemplateLibraryModal: React.FC = () => {
     e.stopPropagation();
     const copy: CardTemplate = {
       ...JSON.parse(JSON.stringify(tpl)),
-      id: 'template_' + Date.now(),
+      id: "template_" + Date.now(),
       templateName: `${tpl.templateName} Copy`,
-      visibility: 'private',
+      visibility: "private",
       isUniversal: false,
-      status: 'draft',
+      status: "draft",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -93,19 +93,19 @@ export const TemplateLibraryModal: React.FC = () => {
           const parsed = JSON.parse(event.target?.result as string);
           if (parsed.cardWidth && parsed.cardHeight && Array.isArray(parsed.layers)) {
             const imported: CardTemplate = {
-              id: 'template_' + Date.now(),
-              templateName: parsed.templateName || 'Imported Template',
+              id: "template_" + Date.now(),
+              templateName: parsed.templateName || "Imported Template",
               cardWidth: parsed.cardWidth,
               cardHeight: parsed.cardHeight,
-              unit: parsed.unit || 'mm',
+              unit: parsed.unit || "mm",
               dpi: parsed.dpi || 300,
-              orientation: parsed.cardWidth >= parsed.cardHeight ? 'landscape' : 'portrait',
-              background: parsed.background || { type: 'color', color: '#ffffff' },
+              orientation: parsed.cardWidth >= parsed.cardHeight ? "landscape" : "portrait",
+              background: parsed.background || { type: "color", color: "#ffffff" },
               layers: parsed.layers,
               guides: parsed.guides || [],
-              visibility: 'private',
+              visibility: "private",
               isUniversal: false,
-              status: 'draft',
+              status: "draft",
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
             };
@@ -114,22 +114,22 @@ export const TemplateLibraryModal: React.FC = () => {
             await saveCurrentTemplate();
             setTemplateLibraryOpen(false);
           } else {
-            alert('Invalid JSON template format.');
+            alert("Invalid JSON template format.");
           }
         } catch {
-          alert('Could not parse JSON file.');
+          alert("Could not parse JSON file.");
         }
       };
       reader.readAsText(e.target.files[0]);
     }
   };
 
-  const privateTemplates = templates.filter((t) => t.visibility === 'private' || !t.isUniversal);
-  const universalTemplates = templates.filter((t) => t.visibility === 'universal' || t.isUniversal);
+  const privateTemplates = templates.filter((t) => t.visibility === "private" || !t.isUniversal);
+  const universalTemplates = templates.filter((t) => t.visibility === "universal" || t.isUniversal);
 
-  const currentTabList = activeTab === 'private' ? privateTemplates : universalTemplates;
+  const currentTabList = activeTab === "private" ? privateTemplates : universalTemplates;
   const filtered = currentTabList.filter((t) =>
-    t.templateName.toLowerCase().includes(searchTerm.toLowerCase())
+    t.templateName.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -183,11 +183,11 @@ export const TemplateLibraryModal: React.FC = () => {
         {/* Tabs: Private vs Universal */}
         <div className="px-6 pt-4 bg-slate-900 border-b border-slate-800 flex items-center gap-2">
           <button
-            onClick={() => setActiveTab('private')}
+            onClick={() => setActiveTab("private")}
             className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === 'private'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'
+              activeTab === "private"
+                ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+                : "bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700"
             }`}
           >
             <span>My Private Templates</span>
@@ -196,11 +196,11 @@ export const TemplateLibraryModal: React.FC = () => {
             </span>
           </button>
           <button
-            onClick={() => setActiveTab('universal')}
+            onClick={() => setActiveTab("universal")}
             className={`px-4 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === 'universal'
-                ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'
+              activeTab === "universal"
+                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
+                : "bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700"
             }`}
           >
             <span>Universal Published Templates</span>
@@ -234,7 +234,7 @@ export const TemplateLibraryModal: React.FC = () => {
                 onClick={() => {
                   loadTemplate(tpl);
                   setTemplateLibraryOpen(false);
-                  setActiveScreen('editor');
+                  setActiveScreen("editor");
                 }}
                 className="group p-4 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 hover:border-blue-500 rounded-xl transition-all cursor-pointer flex flex-col justify-between"
               >

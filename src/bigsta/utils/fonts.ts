@@ -1,49 +1,49 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 export const FONT_LIBRARY = [
-  'Archivo Black',
-  'Arial Black',
-  'Arial',
-  'Helvetica',
-  'Times New Roman',
-  'Courier New',
-  'Impact',
-  'Trebuchet MS',
-  'Georgia',
-  'Verdana',
-  'Comic Sans MS',
-  'Tahoma',
+  "Archivo Black",
+  "Arial Black",
+  "Arial",
+  "Helvetica",
+  "Times New Roman",
+  "Courier New",
+  "Impact",
+  "Trebuchet MS",
+  "Georgia",
+  "Verdana",
+  "Comic Sans MS",
+  "Tahoma",
 ];
 
 export interface FontWeightOption {
   label: string;
   value: number; // 300, 400, 500, 600, 700, 800, 900
-  name: string;  // Light, Regular, Medium, Semi Bold, Bold, Extra Bold, Black
+  name: string; // Light, Regular, Medium, Semi Bold, Bold, Extra Bold, Black
 }
 
 export const ALL_FONT_WEIGHTS: FontWeightOption[] = [
-  { label: 'Light — 300', value: 300, name: 'Light' },
-  { label: 'Regular — 400', value: 400, name: 'Regular' },
-  { label: 'Medium — 500', value: 500, name: 'Medium' },
-  { label: 'Semi Bold — 600', value: 600, name: 'Semi Bold' },
-  { label: 'Bold — 700', value: 700, name: 'Bold' },
-  { label: 'Extra Bold — 800', value: 800, name: 'Extra Bold' },
-  { label: 'Black — 900', value: 900, name: 'Black' },
+  { label: "Light — 300", value: 300, name: "Light" },
+  { label: "Regular — 400", value: 400, name: "Regular" },
+  { label: "Medium — 500", value: 500, name: "Medium" },
+  { label: "Semi Bold — 600", value: 600, name: "Semi Bold" },
+  { label: "Bold — 700", value: 700, name: "Bold" },
+  { label: "Extra Bold — 800", value: 800, name: "Extra Bold" },
+  { label: "Black — 900", value: 900, name: "Black" },
 ];
 
 // Available weights mapping per font family based on standard font files and web availability
 export const FONT_WEIGHTS_BY_FAMILY: Record<string, number[]> = {
-  'Archivo Black': [400],
-  'Arial': [400, 700],
-  'Arial Black': [900],
-  'Helvetica': [300, 400, 500, 700],
-  'Times New Roman': [400, 700],
-  'Courier New': [400, 700],
-  'Impact': [400, 900],
-  'Trebuchet MS': [400, 700],
-  'Georgia': [400, 700],
-  'Verdana': [400, 700],
-  'Comic Sans MS': [400, 700],
-  'Tahoma': [400, 700],
+  "Archivo Black": [400],
+  Arial: [400, 700],
+  "Arial Black": [900],
+  Helvetica: [300, 400, 500, 700],
+  "Times New Roman": [400, 700],
+  "Courier New": [400, 700],
+  Impact: [400, 900],
+  "Trebuchet MS": [400, 700],
+  Georgia: [400, 700],
+  Verdana: [400, 700],
+  "Comic Sans MS": [400, 700],
+  Tahoma: [400, 700],
 };
 
 export function getAvailableWeightsForFont(fontFamily: string): FontWeightOption[] {
@@ -73,21 +73,21 @@ export function getWeightLabel(value: number): string {
   return match ? match.label : `Weight ${value}`;
 }
 
-export const FONT_SCOPE_STORAGE_KEY = 'id_card_font_scope_preference';
-export const WEIGHT_SCOPE_STORAGE_KEY = 'id_card_weight_scope_preference';
+export const FONT_SCOPE_STORAGE_KEY = "id_card_font_scope_preference";
+export const WEIGHT_SCOPE_STORAGE_KEY = "id_card_weight_scope_preference";
 
-export type FontScope = 'selected' | 'all';
+export type FontScope = "selected" | "all";
 
 export function getStoredFontScope(): FontScope {
   try {
     const saved = localStorage.getItem(FONT_SCOPE_STORAGE_KEY);
-    if (saved === 'selected' || saved === 'all') {
+    if (saved === "selected" || saved === "all") {
       return saved;
     }
   } catch (e) {
     // Ignore localStorage errors
   }
-  return 'selected';
+  return "selected";
 }
 
 export function setStoredFontScope(scope: FontScope): void {
@@ -101,13 +101,13 @@ export function setStoredFontScope(scope: FontScope): void {
 export function getStoredWeightScope(): FontScope {
   try {
     const saved = localStorage.getItem(WEIGHT_SCOPE_STORAGE_KEY);
-    if (saved === 'selected' || saved === 'all') {
+    if (saved === "selected" || saved === "all") {
       return saved;
     }
   } catch (e) {
     // Ignore localStorage errors
   }
-  return 'selected';
+  return "selected";
 }
 
 export function setStoredWeightScope(scope: FontScope): void {
@@ -117,4 +117,3 @@ export function setStoredWeightScope(scope: FontScope): void {
     // Ignore localStorage errors
   }
 }
-

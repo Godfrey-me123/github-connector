@@ -1,5 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   FileType,
   Download,
@@ -8,16 +8,16 @@ import {
   CheckCircle2,
   RefreshCw,
   Layers,
-  Trash2
-} from 'lucide-react';
-import { ExportFormat } from '../../types/imageTools';
+  Trash2,
+} from "lucide-react";
+import { ExportFormat } from "../../types/imageTools";
 import {
   formatBytes,
   loadImageFromFile,
   convertFormatCanvas,
   canvasToBlobUrl,
-  downloadProcessedFile
-} from '../../utils/imageProcessing';
+  downloadProcessedFile,
+} from "../../utils/imageProcessing";
 
 interface ConvertToolProps {
   initialFiles?: File[] | null;
@@ -30,19 +30,19 @@ interface BatchConvertItem {
   targetFormat: ExportFormat;
   convertedUrl?: string;
   convertedSize?: number;
-  status: 'idle' | 'processing' | 'done' | 'error';
+  status: "idle" | "processing" | "done" | "error";
 }
 
 export const ConvertTool: React.FC<ConvertToolProps> = ({ initialFiles, onBack }) => {
-  const [targetFormat, setTargetFormat] = useState<ExportFormat>('image/png');
+  const [targetFormat, setTargetFormat] = useState<ExportFormat>("image/png");
   const [quality, setQuality] = useState<number>(90);
   const [items, setItems] = useState<BatchConvertItem[]>(() => {
     if (initialFiles && initialFiles.length > 0) {
       return initialFiles.map((f) => ({
         id: Math.random().toString(36).substring(7),
         file: f,
-        targetFormat: 'image/png',
-        status: 'idle',
+        targetFormat: "image/png",
+        status: "idle",
       }));
     }
     return [];
@@ -55,7 +55,7 @@ export const ConvertTool: React.FC<ConvertToolProps> = ({ initialFiles, onBack }
       id: Math.random().toString(36).substring(7),
       file: f,
       targetFormat,
-      status: 'idle',
+      status: "idle",
     }));
     setItems((prev) => [...prev, ...newItems]);
   };
@@ -66,7 +66,7 @@ export const ConvertTool: React.FC<ConvertToolProps> = ({ initialFiles, onBack }
     const updated = [...items];
     for (let i = 0; i < updated.length; i++) {
       const item = updated[i];
-      item.status = 'processing';
+      item.status = "processing";
       setItems([...updated]);
 
       try {
@@ -77,10 +77,10 @@ export const ConvertTool: React.FC<ConvertToolProps> = ({ initialFiles, onBack }
         item.convertedUrl = result.url;
         item.convertedSize = result.size;
         item.targetFormat = targetFormat;
-        item.status = 'done';
+        item.status = "done";
       } catch (err) {
-        console.error('Convert item error:', err);
-        item.status = 'error';
+        console.error("Convert item error:", err);
+        item.status = "error";
       }
 
       setItems([...updated]);
@@ -96,14 +96,14 @@ export const ConvertTool: React.FC<ConvertToolProps> = ({ initialFiles, onBack }
   const downloadItem = (item: BatchConvertItem) => {
     if (!item.convertedUrl) return;
     const ext =
-      item.targetFormat === 'image/jpeg'
-        ? 'jpg'
-        : item.targetFormat === 'image/webp'
-        ? 'webp'
-        : item.targetFormat === 'image/avif'
-        ? 'avif'
-        : 'png';
-    const cleanName = item.file.name.replace(/\.[^/.]+$/, '') + `.${ext}`;
+      item.targetFormat === "image/jpeg"
+        ? "jpg"
+        : item.targetFormat === "image/webp"
+          ? "webp"
+          : item.targetFormat === "image/avif"
+            ? "avif"
+            : "png";
+    const cleanName = item.file.name.replace(/\.[^/.]+$/, "") + `.${ext}`;
     downloadProcessedFile(item.convertedUrl, cleanName);
   };
 
@@ -117,10 +117,10 @@ export const ConvertTool: React.FC<ConvertToolProps> = ({ initialFiles, onBack }
           <ArrowLeft className="w-4 h-4" /> Back to Tools
         </button>
 
-        {items.some((i) => i.status === 'done') && (
+        {items.some((i) => i.status === "done") && (
           <div className="flex items-center gap-2">
             <button
-              onClick={() => items.filter((i) => i.status === 'done').forEach(downloadItem)}
+              onClick={() => items.filter((i) => i.status === "done").forEach(downloadItem)}
               className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-emerald-950/30 transition-colors"
             >
               <Download className="w-4 h-4" /> Download All Converted
@@ -165,18 +165,18 @@ export const ConvertTool: React.FC<ConvertToolProps> = ({ initialFiles, onBack }
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
                 {[
-                  { label: 'PNG', mime: 'image/png' },
-                  { label: 'JPG', mime: 'image/jpeg' },
-                  { label: 'WEBP', mime: 'image/webp' },
-                  { label: 'AVIF', mime: 'image/avif' },
+                  { label: "PNG", mime: "image/png" },
+                  { label: "JPG", mime: "image/jpeg" },
+                  { label: "WEBP", mime: "image/webp" },
+                  { label: "AVIF", mime: "image/avif" },
                 ].map((fmt) => (
                   <button
                     key={fmt.label}
                     onClick={() => setTargetFormat(fmt.mime as any)}
                     className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-colors ${
                       targetFormat === fmt.mime
-                        ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                        : 'text-slate-400 hover:text-white'
+                        ? "bg-emerald-500 text-slate-950 shadow-sm"
+                        : "text-slate-400 hover:text-white"
                     }`}
                   >
                     {fmt.label}
@@ -202,7 +202,7 @@ export const ConvertTool: React.FC<ConvertToolProps> = ({ initialFiles, onBack }
                 disabled={isBatchProcessing}
                 className="px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold rounded-xl transition-colors flex items-center gap-2 shadow-md shadow-emerald-950/20"
               >
-                <RefreshCw className={`w-4 h-4 ${isBatchProcessing ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`w-4 h-4 ${isBatchProcessing ? "animate-spin" : ""}`} />
                 Convert {items.length} Files
               </button>
             </div>
@@ -220,24 +220,25 @@ export const ConvertTool: React.FC<ConvertToolProps> = ({ initialFiles, onBack }
                 <div key={item.id} className="p-4 flex items-center justify-between gap-4 text-xs">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center font-bold text-[10px] text-teal-400 uppercase">
-                      {item.file.name.split('.').pop() || 'IMG'}
+                      {item.file.name.split(".").pop() || "IMG"}
                     </div>
                     <div>
                       <span className="font-semibold text-white block">{item.file.name}</span>
                       <span className="text-slate-400 block font-mono">
-                        {formatBytes(item.file.size)}{' '}
-                        {item.convertedSize && `→ ${formatBytes(item.convertedSize)} (${item.targetFormat.split('/')[1].toUpperCase()})`}
+                        {formatBytes(item.file.size)}{" "}
+                        {item.convertedSize &&
+                          `→ ${formatBytes(item.convertedSize)} (${item.targetFormat.split("/")[1].toUpperCase()})`}
                       </span>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    {item.status === 'processing' && (
+                    {item.status === "processing" && (
                       <span className="text-amber-400 font-semibold flex items-center gap-1.5">
                         <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Converting...
                       </span>
                     )}
-                    {item.status === 'done' && (
+                    {item.status === "done" && (
                       <button
                         onClick={() => downloadItem(item)}
                         className="px-3 py-1.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded-xl font-bold flex items-center gap-1.5 hover:bg-emerald-500/30 transition-colors"

@@ -1,5 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   FileArchive,
   Download,
@@ -7,16 +7,16 @@ import {
   ArrowLeft,
   RefreshCw,
   Sparkles,
-  FileText
-} from 'lucide-react';
+  FileText,
+} from "lucide-react";
 import {
   formatBytes,
   loadImageFromFile,
   compressImageCanvas,
   compressPdfFile,
   canvasToBlobUrl,
-  downloadProcessedFile
-} from '../../utils/imageProcessing';
+  downloadProcessedFile,
+} from "../../utils/imageProcessing";
 
 interface CompressToolProps {
   initialFile?: File | null;
@@ -26,7 +26,9 @@ interface CompressToolProps {
 export const CompressTool: React.FC<CompressToolProps> = ({ initialFile, onBack }) => {
   const [file, setFile] = useState<File | null>(initialFile || null);
   const [quality, setQuality] = useState<number>(75);
-  const [targetFormat, setTargetFormat] = useState<'image/jpeg' | 'image/webp' | 'image/png' | 'application/pdf'>('image/jpeg');
+  const [targetFormat, setTargetFormat] = useState<
+    "image/jpeg" | "image/webp" | "image/png" | "application/pdf"
+  >("image/jpeg");
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [compressedUrl, setCompressedUrl] = useState<string | null>(null);
@@ -40,23 +42,30 @@ export const CompressTool: React.FC<CompressToolProps> = ({ initialFile, onBack 
     }
   }, [initialFile]);
 
-  const isPdf = file?.type === 'application/pdf' || file?.name.toLowerCase().endsWith('.pdf');
+  const isPdf = file?.type === "application/pdf" || file?.name.toLowerCase().endsWith(".pdf");
 
   const handleFileSelect = async (selectedFile: File) => {
     setFile(selectedFile);
     const url = URL.createObjectURL(selectedFile);
     setPreviewUrl(url);
 
-    if (selectedFile.type === 'application/pdf' || selectedFile.name.toLowerCase().endsWith('.pdf')) {
-      setTargetFormat('application/pdf');
+    if (
+      selectedFile.type === "application/pdf" ||
+      selectedFile.name.toLowerCase().endsWith(".pdf")
+    ) {
+      setTargetFormat("application/pdf");
       await processPdfCompression(selectedFile, 75);
     } else {
-      if (selectedFile.type === 'image/png') {
-        setTargetFormat('image/webp');
+      if (selectedFile.type === "image/png") {
+        setTargetFormat("image/webp");
       } else {
-        setTargetFormat('image/jpeg');
+        setTargetFormat("image/jpeg");
       }
-      await processCompression(selectedFile, 75, selectedFile.type === 'image/png' ? 'image/webp' : 'image/jpeg');
+      await processCompression(
+        selectedFile,
+        75,
+        selectedFile.type === "image/png" ? "image/webp" : "image/jpeg",
+      );
     }
   };
 
@@ -68,7 +77,7 @@ export const CompressTool: React.FC<CompressToolProps> = ({ initialFile, onBack 
       setCompressedSize(res.size);
       setPdfPageCount(res.pageCount);
     } catch (err) {
-      console.error('PDF Compress Error:', err);
+      console.error("PDF Compress Error:", err);
     } finally {
       setIsProcessing(false);
     }
@@ -78,7 +87,7 @@ export const CompressTool: React.FC<CompressToolProps> = ({ initialFile, onBack 
     const activeFile = targetFile || file;
     if (!activeFile) return;
 
-    if (activeFile.type === 'application/pdf' || activeFile.name.toLowerCase().endsWith('.pdf')) {
+    if (activeFile.type === "application/pdf" || activeFile.name.toLowerCase().endsWith(".pdf")) {
       return processPdfCompression(activeFile, qVal !== undefined ? qVal : quality);
     }
 
@@ -95,7 +104,7 @@ export const CompressTool: React.FC<CompressToolProps> = ({ initialFile, onBack 
       setCompressedUrl(result.url);
       setCompressedSize(result.size);
     } catch (err) {
-      console.error('Compression Error:', err);
+      console.error("Compression Error:", err);
     } finally {
       setIsProcessing(false);
     }
@@ -106,7 +115,9 @@ export const CompressTool: React.FC<CompressToolProps> = ({ initialFile, onBack 
     processCompression(file || undefined, newVal, targetFormat);
   };
 
-  const handleFormatChange = (newFormat: 'image/jpeg' | 'image/webp' | 'image/png' | 'application/pdf') => {
+  const handleFormatChange = (
+    newFormat: "image/jpeg" | "image/webp" | "image/png" | "application/pdf",
+  ) => {
     setTargetFormat(newFormat);
     processCompression(file || undefined, quality, newFormat);
   };
@@ -114,11 +125,12 @@ export const CompressTool: React.FC<CompressToolProps> = ({ initialFile, onBack 
   const handleDownload = () => {
     if (!compressedUrl || !file) return;
     if (isPdf) {
-      const cleanName = file.name.replace(/\.pdf$/i, '') + `-compressed.pdf`;
+      const cleanName = file.name.replace(/\.pdf$/i, "") + `-compressed.pdf`;
       downloadProcessedFile(compressedUrl, cleanName);
     } else {
-      const ext = targetFormat === 'image/webp' ? 'webp' : targetFormat === 'image/png' ? 'png' : 'jpg';
-      const cleanName = file.name.replace(/\.[^/.]+$/, '') + `-compressed.${ext}`;
+      const ext =
+        targetFormat === "image/webp" ? "webp" : targetFormat === "image/png" ? "png" : "jpg";
+      const cleanName = file.name.replace(/\.[^/.]+$/, "") + `-compressed.${ext}`;
       downloadProcessedFile(compressedUrl, cleanName);
     }
   };
@@ -143,7 +155,7 @@ export const CompressTool: React.FC<CompressToolProps> = ({ initialFile, onBack 
             onClick={handleDownload}
             className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold rounded-xl flex items-center gap-2 shadow-lg shadow-emerald-950/30 transition-colors"
           >
-            <Download className="w-4 h-4" /> Download Compressed {isPdf ? 'PDF' : 'Image'}
+            <Download className="w-4 h-4" /> Download Compressed {isPdf ? "PDF" : "Image"}
           </button>
         )}
       </div>
@@ -176,7 +188,8 @@ export const CompressTool: React.FC<CompressToolProps> = ({ initialFile, onBack 
           {/* Controls Column */}
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-6">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
-              <FileArchive className="w-4 h-4 text-purple-400" /> {isPdf ? 'PDF' : 'Image'} Compression
+              <FileArchive className="w-4 h-4 text-purple-400" /> {isPdf ? "PDF" : "Image"}{" "}
+              Compression
             </h3>
 
             {/* Target Format */}
@@ -228,7 +241,7 @@ export const CompressTool: React.FC<CompressToolProps> = ({ initialFile, onBack 
                 <div>
                   <span className="text-slate-500 text-[10px] block">Compressed</span>
                   <span className="text-emerald-400 font-bold">
-                    {compressedSize ? formatBytes(compressedSize) : 'Calculating...'}
+                    {compressedSize ? formatBytes(compressedSize) : "Calculating..."}
                   </span>
                 </div>
               </div>
@@ -254,12 +267,14 @@ export const CompressTool: React.FC<CompressToolProps> = ({ initialFile, onBack 
                 <div>
                   <h4 className="text-base font-bold text-white block">{file.name}</h4>
                   <p className="text-xs text-slate-400 mt-1">
-                    {pdfPageCount ? `${pdfPageCount} pages document` : 'PDF Document'}
+                    {pdfPageCount ? `${pdfPageCount} pages document` : "PDF Document"}
                   </p>
                 </div>
                 <div className="p-3 bg-slate-950 rounded-xl font-mono text-xs text-emerald-400">
                   {compressedSize ? (
-                    <span>Original: {formatBytes(file.size)} → Compressed: {formatBytes(compressedSize)}</span>
+                    <span>
+                      Original: {formatBytes(file.size)} → Compressed: {formatBytes(compressedSize)}
+                    </span>
                   ) : (
                     <span>Compressing PDF streams...</span>
                   )}
@@ -269,7 +284,11 @@ export const CompressTool: React.FC<CompressToolProps> = ({ initialFile, onBack 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
                 <div className="space-y-2 text-center">
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 max-h-[360px] flex items-center justify-center overflow-hidden">
-                    <img src={previewUrl} alt="Original" className="max-h-[320px] object-contain rounded-lg" />
+                    <img
+                      src={previewUrl}
+                      alt="Original"
+                      className="max-h-[320px] object-contain rounded-lg"
+                    />
                   </div>
                   <span className="text-xs font-bold text-slate-400 block">
                     Original ({formatBytes(file.size)})
@@ -278,7 +297,11 @@ export const CompressTool: React.FC<CompressToolProps> = ({ initialFile, onBack 
 
                 <div className="space-y-2 text-center">
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-2 max-h-[360px] flex items-center justify-center overflow-hidden">
-                    <img src={compressedUrl} alt="Compressed" className="max-h-[320px] object-contain rounded-lg" />
+                    <img
+                      src={compressedUrl}
+                      alt="Compressed"
+                      className="max-h-[320px] object-contain rounded-lg"
+                    />
                   </div>
                   <span className="text-xs font-bold text-emerald-400 block">
                     Compressed ({formatBytes(compressedSize || 0)})

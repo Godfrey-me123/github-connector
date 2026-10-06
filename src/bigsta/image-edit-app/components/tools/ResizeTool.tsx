@@ -1,21 +1,13 @@
 // @ts-nocheck -- imported legacy BIGsta code
-import React, { useState, useEffect } from 'react';
-import {
-  Maximize2,
-  Lock,
-  Unlock,
-  Download,
-  Upload,
-  ArrowLeft,
-  RefreshCw
-} from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Maximize2, Lock, Unlock, Download, Upload, ArrowLeft, RefreshCw } from "lucide-react";
 import {
   formatBytes,
   loadImageFromFile,
   resizeImageCanvas,
   canvasToBlobUrl,
-  downloadProcessedFile
-} from '../../utils/imageProcessing';
+  downloadProcessedFile,
+} from "../../utils/imageProcessing";
 
 interface ResizeToolProps {
   initialFile?: File | null;
@@ -24,12 +16,15 @@ interface ResizeToolProps {
 
 export const ResizeTool: React.FC<ResizeToolProps> = ({ initialFile, onBack }) => {
   const [file, setFile] = useState<File | null>(initialFile || null);
-  const [originalDimensions, setOriginalDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [originalDimensions, setOriginalDimensions] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
   const [width, setWidth] = useState<number>(1080);
   const [height, setHeight] = useState<number>(1080);
   const [maintainRatio, setMaintainRatio] = useState<boolean>(true);
   const [aspectRatio, setAspectRatio] = useState<number>(1);
-  const [preset, setPreset] = useState<string>('custom');
+  const [preset, setPreset] = useState<string>("custom");
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [resizedUrl, setResizedUrl] = useState<string | null>(null);
@@ -63,7 +58,7 @@ export const ResizeTool: React.FC<ResizeToolProps> = ({ initialFile, onBack }) =
     if (maintainRatio && aspectRatio) {
       setHeight(Math.round(newWidth / aspectRatio));
     }
-    setPreset('custom');
+    setPreset("custom");
   };
 
   const handleHeightChange = (val: number) => {
@@ -72,7 +67,7 @@ export const ResizeTool: React.FC<ResizeToolProps> = ({ initialFile, onBack }) =
     if (maintainRatio && aspectRatio) {
       setWidth(Math.round(newHeight * aspectRatio));
     }
-    setPreset('custom');
+    setPreset("custom");
   };
 
   const handlePresetSelect = (presetKey: string) => {
@@ -83,31 +78,31 @@ export const ResizeTool: React.FC<ResizeToolProps> = ({ initialFile, onBack }) =
     let targetH = originalDimensions.height;
 
     switch (presetKey) {
-      case 'instagram-square':
+      case "instagram-square":
         targetW = 1080;
         targetH = 1080;
         break;
-      case 'instagram-story':
+      case "instagram-story":
         targetW = 1080;
         targetH = 1920;
         break;
-      case 'youtube-thumb':
+      case "youtube-thumb":
         targetW = 1280;
         targetH = 720;
         break;
-      case 'full-hd':
+      case "full-hd":
         targetW = 1920;
         targetH = 1080;
         break;
-      case 'website-banner':
+      case "website-banner":
         targetW = 1200;
         targetH = 630;
         break;
-      case 'half-size':
+      case "half-size":
         targetW = Math.round(originalDimensions.width * 0.5);
         targetH = Math.round(originalDimensions.height * 0.5);
         break;
-      case 'double-size':
+      case "double-size":
         targetW = Math.round(originalDimensions.width * 2);
         targetH = Math.round(originalDimensions.height * 2);
         break;
@@ -126,13 +121,13 @@ export const ResizeTool: React.FC<ResizeToolProps> = ({ initialFile, onBack }) =
       const targetH = h || height;
 
       const canvas = await resizeImageCanvas(targetImg, targetW, targetH);
-      const mime = file.type || 'image/png';
+      const mime = file.type || "image/png";
       const result = await canvasToBlobUrl(canvas, mime, 0.95);
 
       setResizedUrl(result.url);
       setResizedSize(result.size);
     } catch (err) {
-      console.error('Resize Error:', err);
+      console.error("Resize Error:", err);
     } finally {
       setIsProcessing(false);
     }
@@ -140,8 +135,8 @@ export const ResizeTool: React.FC<ResizeToolProps> = ({ initialFile, onBack }) =
 
   const handleDownload = () => {
     if (!resizedUrl || !file) return;
-    const extension = file.name.split('.').pop() || 'png';
-    const cleanName = file.name.replace(/\.[^/.]+$/, '') + `-${width}x${height}.${extension}`;
+    const extension = file.name.split(".").pop() || "png";
+    const cleanName = file.name.replace(/\.[^/.]+$/, "") + `-${width}x${height}.${extension}`;
     downloadProcessedFile(resizedUrl, cleanName);
   };
 
@@ -223,12 +218,16 @@ export const ResizeTool: React.FC<ResizeToolProps> = ({ initialFile, onBack }) =
                   onClick={() => setMaintainRatio(!maintainRatio)}
                   className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors ${
                     maintainRatio
-                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
-                      : 'bg-slate-800 text-slate-400 border-slate-700'
+                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                      : "bg-slate-800 text-slate-400 border-slate-700"
                   }`}
                 >
-                  {maintainRatio ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
-                  <span>Aspect Ratio {maintainRatio ? 'Locked' : 'Unlocked'}</span>
+                  {maintainRatio ? (
+                    <Lock className="w-3.5 h-3.5" />
+                  ) : (
+                    <Unlock className="w-3.5 h-3.5" />
+                  )}
+                  <span>Aspect Ratio {maintainRatio ? "Locked" : "Unlocked"}</span>
                 </button>
               </div>
 
@@ -259,7 +258,7 @@ export const ResizeTool: React.FC<ResizeToolProps> = ({ initialFile, onBack }) =
               disabled={isProcessing}
               className="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isProcessing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${isProcessing ? "animate-spin" : ""}`} />
               Apply New Dimensions
             </button>
           </div>
@@ -276,8 +275,16 @@ export const ResizeTool: React.FC<ResizeToolProps> = ({ initialFile, onBack }) =
                   />
                 </div>
                 <div className="flex items-center justify-center gap-4 text-xs text-slate-400 font-mono">
-                  <span>New Size: <strong className="text-white">{width} × {height} px</strong></span>
-                  <span>File Size: <strong className="text-emerald-400">{formatBytes(resizedSize || 0)}</strong></span>
+                  <span>
+                    New Size:{" "}
+                    <strong className="text-white">
+                      {width} × {height} px
+                    </strong>
+                  </span>
+                  <span>
+                    File Size:{" "}
+                    <strong className="text-emerald-400">{formatBytes(resizedSize || 0)}</strong>
+                  </span>
                 </div>
               </div>
             ) : (

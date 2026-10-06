@@ -1,5 +1,5 @@
-import React from 'react';
-import { AlertCircle, PlusCircle, FolderOpen, X, ShieldAlert } from 'lucide-react';
+import React from "react";
+import { AlertCircle, PlusCircle, FolderOpen, X, ShieldAlert } from "lucide-react";
 
 export interface TemplateRequiredModalProps {
   isOpen: boolean;
@@ -48,11 +48,17 @@ export const TemplateRequiredModal: React.FC<TemplateRequiredModalProps> = ({
             <ShieldAlert className="w-7 h-7" />
           </div>
 
-          <h2 id="template-required-title" className="text-xl sm:text-2xl font-bold tracking-tight text-[#FFFFFF]">
+          <h2
+            id="template-required-title"
+            className="text-xl sm:text-2xl font-bold tracking-tight text-[#FFFFFF]"
+          >
             Template Required
           </h2>
 
-          <p id="template-required-message" className="text-sm text-[#A0A4A8] mt-2 max-w-xs leading-relaxed">
+          <p
+            id="template-required-message"
+            className="text-sm text-[#A0A4A8] mt-2 max-w-xs leading-relaxed"
+          >
             No template has been selected or created.
           </p>
         </div>
@@ -63,11 +69,15 @@ export const TemplateRequiredModal: React.FC<TemplateRequiredModalProps> = ({
             Available Options:
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-4 h-4 rounded-full bg-[#47A5FF]/20 text-[#47A5FF] flex items-center justify-center text-[10px] font-bold">1</span>
+            <span className="w-4 h-4 rounded-full bg-[#47A5FF]/20 text-[#47A5FF] flex items-center justify-center text-[10px] font-bold">
+              1
+            </span>
             <span>Create New Template: Upload background and configure elements.</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-4 h-4 rounded-full bg-[#FF8F00]/20 text-[#FF8F00] flex items-center justify-center text-[10px] font-bold">2</span>
+            <span className="w-4 h-4 rounded-full bg-[#FF8F00]/20 text-[#FF8F00] flex items-center justify-center text-[10px] font-bold">
+              2
+            </span>
             <span>Use Existing Template: Pick from pre-configured national ID templates.</span>
           </div>
         </div>

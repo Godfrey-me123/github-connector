@@ -1,13 +1,13 @@
 // @ts-nocheck -- imported legacy BIGsta code
-import React, { useState } from 'react';
-import { X, ShieldCheck, Check, Zap, Server, Trash2, Key, RefreshCw } from 'lucide-react';
-import { UserProfile } from '../types/imageTools';
+import React, { useState } from "react";
+import { X, ShieldCheck, Check, Zap, Server, Trash2, Key, RefreshCw } from "lucide-react";
+import { UserProfile } from "../types/imageTools";
 
 interface AccountModalProps {
   isOpen: boolean;
   onClose: () => void;
   userProfile: UserProfile;
-  onUpdateSettings: (newSettings: UserProfile['settings']) => void;
+  onUpdateSettings: (newSettings: UserProfile["settings"]) => void;
 }
 
 export const AccountModal: React.FC<AccountModalProps> = ({
@@ -16,7 +16,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
   userProfile,
   onUpdateSettings,
 }) => {
-  const [activeTab, setActiveTab] = useState<'profile' | 'plans' | 'privacy'>('profile');
+  const [activeTab, setActiveTab] = useState<"profile" | "plans" | "privacy">("profile");
   const [settings, setSettings] = useState(userProfile.settings);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
@@ -55,31 +55,31 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         {/* Tab Navigation */}
         <div className="flex items-center gap-1 px-6 pt-3 border-b border-slate-800 bg-slate-950/40">
           <button
-            onClick={() => setActiveTab('profile')}
+            onClick={() => setActiveTab("profile")}
             className={`px-4 py-2 text-xs font-semibold border-b-2 transition-colors ${
-              activeTab === 'profile'
-                ? 'border-emerald-500 text-emerald-400'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+              activeTab === "profile"
+                ? "border-emerald-500 text-emerald-400"
+                : "border-transparent text-slate-400 hover:text-slate-200"
             }`}
           >
             Profile & Settings
           </button>
           <button
-            onClick={() => setActiveTab('plans')}
+            onClick={() => setActiveTab("plans")}
             className={`px-4 py-2 text-xs font-semibold border-b-2 transition-colors ${
-              activeTab === 'plans'
-                ? 'border-emerald-500 text-emerald-400'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+              activeTab === "plans"
+                ? "border-emerald-500 text-emerald-400"
+                : "border-transparent text-slate-400 hover:text-slate-200"
             }`}
           >
             Subscription Plans
           </button>
           <button
-            onClick={() => setActiveTab('privacy')}
+            onClick={() => setActiveTab("privacy")}
             className={`px-4 py-2 text-xs font-semibold border-b-2 transition-colors ${
-              activeTab === 'privacy'
-                ? 'border-emerald-500 text-emerald-400'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
+              activeTab === "privacy"
+                ? "border-emerald-500 text-emerald-400"
+                : "border-transparent text-slate-400 hover:text-slate-200"
             }`}
           >
             Privacy Guarantee
@@ -88,7 +88,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
 
         {/* Content */}
         <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
-          {activeTab === 'profile' && (
+          {activeTab === "profile" && (
             <div className="space-y-5">
               {/* Profile Card */}
               <div className="p-4 rounded-xl bg-slate-850 border border-slate-800 flex items-center justify-between">
@@ -217,7 +217,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
             </div>
           )}
 
-          {activeTab === 'plans' && (
+          {activeTab === "plans" && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* Free Plan */}
@@ -277,7 +277,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
             </div>
           )}
 
-          {activeTab === 'privacy' && (
+          {activeTab === "privacy" && (
             <div className="space-y-4 text-xs text-slate-300 leading-relaxed">
               <div className="p-4 rounded-xl bg-emerald-950/30 border border-emerald-900/50 space-y-2">
                 <div className="flex items-center gap-2 text-emerald-400 font-bold">
@@ -289,7 +289,9 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                 </p>
                 <ul className="list-disc list-inside space-y-1 text-slate-400 pl-2">
                   <li>User images are NEVER saved to any database tables or disk storage.</li>
-                  <li>Client-side canvas tools execute entirely inside your device's browser memory.</li>
+                  <li>
+                    Client-side canvas tools execute entirely inside your device's browser memory.
+                  </li>
                   <li>
                     Server-assisted AI endpoints (Remove BG, OCR, Enhance) use RAM buffer streams
                     and immediately destroy byte buffers upon response delivery.

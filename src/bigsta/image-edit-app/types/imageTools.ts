@@ -1,15 +1,15 @@
 export type ToolId =
-  | 'remove-bg'
-  | 'resize'
-  | 'compress'
-  | 'crop'
-  | 'rotate'
-  | 'convert'
-  | 'watermark'
-  | 'ocr'
-  | 'enhance'
-  | 'rename'
-  | 'passport';
+  | "remove-bg"
+  | "resize"
+  | "compress"
+  | "crop"
+  | "rotate"
+  | "convert"
+  | "watermark"
+  | "ocr"
+  | "enhance"
+  | "rename"
+  | "passport";
 
 export interface ImageItem {
   id: string;
@@ -22,7 +22,7 @@ export interface ImageItem {
   previewUrl: string;
   processedUrl?: string;
   processedSize?: number;
-  status: 'idle' | 'processing' | 'completed' | 'error';
+  status: "idle" | "processing" | "completed" | "error";
   errorMessage?: string;
 }
 
@@ -30,14 +30,14 @@ export interface ResizeOptions {
   width: number;
   height: number;
   maintainAspectRatio: boolean;
-  unit: 'px' | '%';
+  unit: "px" | "%";
   percentage: number;
   preset: string; // e.g. 'custom', 'instagram-square', 'youtube-thumb', 'hd-1080'
 }
 
 export interface CompressOptions {
   quality: number; // 1 - 100
-  targetFormat: 'original' | 'image/jpeg' | 'image/webp' | 'image/png';
+  targetFormat: "original" | "image/jpeg" | "image/webp" | "image/png";
 }
 
 export interface CropRect {
@@ -54,7 +54,7 @@ export interface RotateOptions {
   flipVertical: boolean;
 }
 
-export type ExportFormat = 'image/png' | 'image/jpeg' | 'image/webp' | 'image/avif';
+export type ExportFormat = "image/png" | "image/jpeg" | "image/webp" | "image/avif";
 
 export interface ConvertOptions {
   targetFormat: ExportFormat;
@@ -62,13 +62,24 @@ export interface ConvertOptions {
 }
 
 export interface WatermarkOptions {
-  mode: 'text' | 'image';
+  mode: "text" | "image";
   text: string;
   textColor: string;
   fontFamily: string;
   fontSize: number;
   opacity: number; // 0.1 - 1
-  position: 'top-left' | 'top-center' | 'top-right' | 'center-left' | 'center' | 'center-right' | 'bottom-left' | 'bottom-center' | 'bottom-right' | 'tiled' | 'custom';
+  position:
+    | "top-left"
+    | "top-center"
+    | "top-right"
+    | "center-left"
+    | "center"
+    | "center-right"
+    | "bottom-left"
+    | "bottom-center"
+    | "bottom-right"
+    | "tiled"
+    | "custom";
   customX?: number;
   customY?: number;
   watermarkImageFile?: File;
@@ -98,7 +109,7 @@ export interface EnhanceOptions {
 }
 
 export interface RenameOptions {
-  patternMode: 'custom' | 'prefix-suffix' | 'sequential' | 'find-replace' | 'clean';
+  patternMode: "custom" | "prefix-suffix" | "sequential" | "find-replace" | "clean";
   customName: string;
   prefix: string;
   suffix: string;
@@ -106,20 +117,20 @@ export interface RenameOptions {
   numberPadding: number; // e.g. 1 (1), 2 (01), 3 (001)
   findText: string;
   replaceText: string;
-  casing: 'preserve' | 'lowercase' | 'uppercase' | 'titlecase';
-  spaceReplacement: 'none' | 'hyphen' | 'underscore';
+  casing: "preserve" | "lowercase" | "uppercase" | "titlecase";
+  spaceReplacement: "none" | "hyphen" | "underscore";
 }
 
 export interface UserProfile {
   id: string;
   name: string;
   email: string;
-  plan: 'Free' | 'Pro' | 'Business';
+  plan: "Free" | "Pro" | "Business";
   dailyUsageLimit: number;
   dailyUsageCount: number;
   tokensRemaining: number;
   settings: {
-    defaultExportFormat: 'PNG' | 'JPG' | 'WEBP' | 'AVIF';
+    defaultExportFormat: "PNG" | "JPG" | "WEBP" | "AVIF";
     defaultCompressionQuality: number;
     autoDeleteAfterDownload: boolean;
     highDpiExport: boolean;

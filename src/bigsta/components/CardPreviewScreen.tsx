@@ -1,5 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   Download,
   ArrowLeft,
@@ -19,17 +19,23 @@ import {
   Layers,
   Home,
   FileCode,
-} from 'lucide-react';
-import { useTemplateStore } from '../store/useTemplateStore';
-import { UserUsageBadge } from './auth/UserUsageBadge';
-import { renderTemplateToCanvas, downloadPDF, downloadPNG, download2In1PDF } from '../utils/export';
-import { HorizontalActionRow } from './common/HorizontalActionRow';
-import { AppFooter } from './common/AppFooter';
-import { SAMPLE_TEMPLATES } from '../utils/sampleTemplates';
-import { applyTemplateMapping, isBackSideTemplate, matchLayerToBinding, SupportedBinding, formatDrivingLicenceCategoriesFront } from '../utils/templateMappingEngine';
-import { UniversalBackButton } from './common/UniversalBackButton';
-import { CardTemplate, LastEditingContext } from '../types';
-import { FieldMappingInspectorModal } from './nida/FieldMappingInspectorModal';
+} from "lucide-react";
+import { useTemplateStore } from "../store/useTemplateStore";
+import { UserUsageBadge } from "./auth/UserUsageBadge";
+import { renderTemplateToCanvas, downloadPDF, downloadPNG, download2In1PDF } from "../utils/export";
+import { HorizontalActionRow } from "./common/HorizontalActionRow";
+import { AppFooter } from "./common/AppFooter";
+import { SAMPLE_TEMPLATES } from "../utils/sampleTemplates";
+import {
+  applyTemplateMapping,
+  isBackSideTemplate,
+  matchLayerToBinding,
+  SupportedBinding,
+  formatDrivingLicenceCategoriesFront,
+} from "../utils/templateMappingEngine";
+import { UniversalBackButton } from "./common/UniversalBackButton";
+import { CardTemplate, LastEditingContext } from "../types";
+import { FieldMappingInspectorModal } from "./nida/FieldMappingInspectorModal";
 
 export const CardPreviewScreen: React.FC = () => {
   const {
@@ -49,18 +55,25 @@ export const CardPreviewScreen: React.FC = () => {
     lastEditingContext,
   } = useTemplateStore();
 
-  const targetFormScreen = activeServiceId === 'driving_license' ? 'driving_license' : activeServiceId === 'nhif' ? 'nhif' : 'nida';
+  const targetFormScreen =
+    activeServiceId === "driving_license"
+      ? "driving_license"
+      : activeServiceId === "nhif"
+        ? "nhif"
+        : "nida";
 
   // Output selection: Single Card vs Front + Back (Merge 2-in-1) with lastEditingContext caching
-  const [outputMode, setOutputMode] = useState<'single' | 'merge'>(() => {
-    return lastEditingContext?.outputMode || 'single';
+  const [outputMode, setOutputMode] = useState<"single" | "merge">(() => {
+    return lastEditingContext?.outputMode || "single";
   });
 
-  const [activeSide, setActiveSide] = useState<'front' | 'back'>(() => {
+  const [activeSide, setActiveSide] = useState<"front" | "back">(() => {
     if (lastEditingContext?.activeSide) return lastEditingContext.activeSide;
-    if (lastEditingContext?.side === 'back' || lastEditingContext?.side === 'Back Side') return 'back';
-    if (lastEditingContext?.side === 'front' || lastEditingContext?.side === 'Front Side') return 'front';
-    return isBackSideTemplate(currentTemplate) ? 'back' : 'front';
+    if (lastEditingContext?.side === "back" || lastEditingContext?.side === "Back Side")
+      return "back";
+    if (lastEditingContext?.side === "front" || lastEditingContext?.side === "Front Side")
+      return "front";
+    return isBackSideTemplate(currentTemplate) ? "back" : "front";
   });
 
   const [zoomLevel, setZoomLevel] = useState<number>(() => {
@@ -69,27 +82,27 @@ export const CardPreviewScreen: React.FC = () => {
 
   // Synchronize when returning from Studio via lastEditingContext
   useEffect(() => {
-    if (lastEditingContext && lastEditingContext.sourceScreen === 'preview') {
+    if (lastEditingContext && lastEditingContext.sourceScreen === "preview") {
       if (lastEditingContext.activeSide) {
         setActiveSide(lastEditingContext.activeSide);
-      } else if (lastEditingContext.side === 'back' || lastEditingContext.side === 'Back Side') {
-        setActiveSide('back');
-      } else if (lastEditingContext.side === 'front' || lastEditingContext.side === 'Front Side') {
-        setActiveSide('front');
+      } else if (lastEditingContext.side === "back" || lastEditingContext.side === "Back Side") {
+        setActiveSide("back");
+      } else if (lastEditingContext.side === "front" || lastEditingContext.side === "Front Side") {
+        setActiveSide("front");
       }
 
       if (lastEditingContext.outputMode) {
         setOutputMode(lastEditingContext.outputMode);
       }
 
-      if (typeof lastEditingContext.zoomLevel === 'number') {
+      if (typeof lastEditingContext.zoomLevel === "number") {
         setZoomLevel(lastEditingContext.zoomLevel);
       }
     }
   }, [lastEditingContext]);
-  const [previewDataUrl, setPreviewDataUrl] = useState<string>('');
-  const [mergeFrontUrl, setMergeFrontUrl] = useState<string>('');
-  const [mergeBackUrl, setMergeBackUrl] = useState<string>('');
+  const [previewDataUrl, setPreviewDataUrl] = useState<string>("");
+  const [mergeFrontUrl, setMergeFrontUrl] = useState<string>("");
+  const [mergeBackUrl, setMergeBackUrl] = useState<string>("");
   const [isRendering, setIsRendering] = useState<boolean>(true);
   const [isPrinting, setIsPrinting] = useState<boolean>(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
@@ -98,12 +111,12 @@ export const CardPreviewScreen: React.FC = () => {
   const [isInspectorOpen, setIsInspectorOpen] = useState<boolean>(false);
   const [selectedFieldId, setSelectedFieldId] = useState<SupportedBinding | null>(null);
 
-  const isDevMode = typeof window !== 'undefined' && (
-    (import.meta as any).env?.DEV ||
-    window.location.search.includes('debug') ||
-    window.location.search.includes('inspect') ||
-    window.location.search.includes('dev')
-  );
+  const isDevMode =
+    typeof window !== "undefined" &&
+    ((import.meta as any).env?.DEV ||
+      window.location.search.includes("debug") ||
+      window.location.search.includes("inspect") ||
+      window.location.search.includes("dev"));
 
   const containerRef = useRef<HTMLDivElement>(null);
   const touchStartDistRef = useRef<number | null>(null);
@@ -111,45 +124,61 @@ export const CardPreviewScreen: React.FC = () => {
   // Keyboard shortcut Ctrl+Shift+D or Cmd+Shift+D for Dev Inspector
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "D" || e.key === "d")) {
         e.preventDefault();
         setIsInspectorOpen((prev) => !prev);
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   // Active template based on selected side
   const activeTemplate: CardTemplate = React.useMemo(() => {
-    if (activeSide === 'back' && backPopulatedTemplate) {
+    if (activeSide === "back" && backPopulatedTemplate) {
       return backPopulatedTemplate;
     }
-    if (activeSide === 'front' && frontPopulatedTemplate) {
+    if (activeSide === "front" && frontPopulatedTemplate) {
       return frontPopulatedTemplate;
     }
     return currentTemplate;
   }, [activeSide, frontPopulatedTemplate, backPopulatedTemplate, currentTemplate]);
 
   // Determine service and templates
-  const isDL = activeServiceId === 'driving_license' || currentTemplate.cardType === 'Driving License';
-  const isNHIF = activeServiceId === 'nhif' || (currentTemplate.cardType as string) === 'NHIF Card' || currentTemplate.cardType === 'NHIF Membership Card' || currentTemplate.serviceId === 'nhif';
-  const activeFormData = (isDL ? lastDrivingLicenseFormData : isNHIF ? lastNhifFormData : lastNidaFormData) || {};
+  const isDL =
+    activeServiceId === "driving_license" || currentTemplate.cardType === "Driving License";
+  const isNHIF =
+    activeServiceId === "nhif" ||
+    (currentTemplate.cardType as string) === "NHIF Card" ||
+    currentTemplate.cardType === "NHIF Membership Card" ||
+    currentTemplate.serviceId === "nhif";
+  const activeFormData =
+    (isDL ? lastDrivingLicenseFormData : isNHIF ? lastNhifFormData : lastNidaFormData) || {};
 
   // Ensure current template in store is synchronized when side changes
-  const handleSideSwitch = (side: 'front' | 'back') => {
+  const handleSideSwitch = (side: "front" | "back") => {
     setActiveSide(side);
-    if (side === 'front' && frontPopulatedTemplate) {
+    if (side === "front" && frontPopulatedTemplate) {
       setCurrentTemplate(frontPopulatedTemplate);
-    } else if (side === 'back' && backPopulatedTemplate) {
+    } else if (side === "back" && backPopulatedTemplate) {
       setCurrentTemplate(backPopulatedTemplate);
-    } else if (side === 'back' && !backPopulatedTemplate && (lastDrivingLicenseFormData || lastNidaFormData || lastNhifFormData)) {
+    } else if (
+      side === "back" &&
+      !backPopulatedTemplate &&
+      (lastDrivingLicenseFormData || lastNidaFormData || lastNhifFormData)
+    ) {
       const { getUniversalBackTemplate } = useTemplateStore.getState();
       const resolvedBack = getUniversalBackTemplate(activeServiceId);
-      const activeData = (isDL ? lastDrivingLicenseFormData : isNHIF ? lastNhifFormData : lastNidaFormData) as any;
+      const activeData = (
+        isDL ? lastDrivingLicenseFormData : isNHIF ? lastNhifFormData : lastNidaFormData
+      ) as any;
       if (resolvedBack && activeData) {
         const result = applyTemplateMapping(resolvedBack, activeData);
-        setPopulatedCardPair(frontPopulatedTemplate || currentTemplate, result.populatedTemplate, activeData);
+        setPopulatedCardPair(
+          frontPopulatedTemplate || currentTemplate,
+          result.populatedTemplate,
+          activeData,
+        );
         setCurrentTemplate(result.populatedTemplate);
       }
     }
@@ -158,20 +187,21 @@ export const CardPreviewScreen: React.FC = () => {
   const handleOpenEditInStudio = () => {
     const store = useTemplateStore.getState();
     const service = activeServiceId;
-    
+
     // Exact template currently assigned to preview for current activeSide
-    const templateToEdit = activeSide === 'back'
-      ? (backPopulatedTemplate || store.getUniversalBackTemplate(service) || currentTemplate)
-      : (frontPopulatedTemplate || store.getUniversalFrontTemplate(service) || currentTemplate);
+    const templateToEdit =
+      activeSide === "back"
+        ? backPopulatedTemplate || store.getUniversalBackTemplate(service) || currentTemplate
+        : frontPopulatedTemplate || store.getUniversalFrontTemplate(service) || currentTemplate;
 
     const safeTemplate = {
       ...templateToEdit,
       serviceId: service,
-      side: activeSide === 'back' ? ('Back Side' as const) : ('Front Side' as const),
+      side: activeSide === "back" ? ("Back Side" as const) : ("Front Side" as const),
     };
 
     const context: LastEditingContext = {
-      sourceScreen: 'preview',
+      sourceScreen: "preview",
       serviceId: service,
       side: activeSide,
       activeSide: activeSide,
@@ -188,7 +218,7 @@ export const CardPreviewScreen: React.FC = () => {
 
     store.setLastEditingContext(context);
     store.loadTemplate(safeTemplate);
-    store.navigateSafely('editor', service, true);
+    store.navigateSafely("editor", service, true);
   };
 
   const fTpl = React.useMemo(() => {
@@ -206,16 +236,16 @@ export const CardPreviewScreen: React.FC = () => {
     let isCancelled = false;
     setIsRendering(true);
 
-    if (outputMode === 'single') {
+    if (outputMode === "single") {
       renderTemplateToCanvas(activeTemplate, activeFormData, 300)
         .then((canvas) => {
           if (!isCancelled) {
-            setPreviewDataUrl(canvas.toDataURL('image/png'));
+            setPreviewDataUrl(canvas.toDataURL("image/png"));
             setIsRendering(false);
           }
         })
         .catch((err) => {
-          console.error('Failed to render preview canvas:', err);
+          console.error("Failed to render preview canvas:", err);
           if (!isCancelled) setIsRendering(false);
         });
     } else {
@@ -225,13 +255,13 @@ export const CardPreviewScreen: React.FC = () => {
       ])
         .then(([frontCanvas, backCanvas]) => {
           if (!isCancelled) {
-            setMergeFrontUrl(frontCanvas.toDataURL('image/png'));
-            setMergeBackUrl(backCanvas.toDataURL('image/png'));
+            setMergeFrontUrl(frontCanvas.toDataURL("image/png"));
+            setMergeBackUrl(backCanvas.toDataURL("image/png"));
             setIsRendering(false);
           }
         })
         .catch((err) => {
-          console.error('Failed to render merge canvas:', err);
+          console.error("Failed to render merge canvas:", err);
           if (!isCancelled) setIsRendering(false);
         });
     }
@@ -257,14 +287,18 @@ export const CardPreviewScreen: React.FC = () => {
   // Direct single card PDF download
   const handleDownloadSinglePDF = async () => {
     const store = useTemplateStore.getState();
-    const val = store.validateExportAccess('pdf');
+    const val = store.validateExportAccess("pdf");
     if (!val.allowed) return;
     setIsDownloadingPdf(true);
     try {
-      await downloadPDF(activeTemplate, activeFormData, `${activeTemplate.templateName || 'card'}.pdf`);
-      store.consumeUsage('Single Card PDF Download', undefined, 1);
+      await downloadPDF(
+        activeTemplate,
+        activeFormData,
+        `${activeTemplate.templateName || "card"}.pdf`,
+      );
+      store.consumeUsage("Single Card PDF Download", undefined, 1);
     } catch (e) {
-      console.error('Download failed', e);
+      console.error("Download failed", e);
     } finally {
       setIsDownloadingPdf(false);
     }
@@ -273,14 +307,14 @@ export const CardPreviewScreen: React.FC = () => {
   // Direct 2-in-1 merge PDF download
   const handleDownload2In1PDF = async () => {
     const store = useTemplateStore.getState();
-    const val = store.validateExportAccess('pdf_merge');
+    const val = store.validateExportAccess("pdf_merge");
     if (!val.allowed) return;
     setIsDownloadingPdf(true);
     try {
       await download2In1PDF(fTpl, bTpl, activeFormData);
-      store.consumeUsage('2-in-1 Sheet PDF Download', undefined, 1);
+      store.consumeUsage("2-in-1 Sheet PDF Download", undefined, 1);
     } catch (e) {
-      console.error('2-in-1 download failed', e);
+      console.error("2-in-1 download failed", e);
     } finally {
       setIsDownloadingPdf(false);
     }
@@ -289,19 +323,23 @@ export const CardPreviewScreen: React.FC = () => {
   // Direct quick print action
   const handleQuickPrint = async () => {
     const store = useTemplateStore.getState();
-    const val = store.validateExportAccess('quick_print');
+    const val = store.validateExportAccess("quick_print");
     if (!val.allowed) return;
 
     try {
       setIsPrinting(true);
-      if (outputMode === 'merge') {
+      if (outputMode === "merge") {
         await download2In1PDF(fTpl, bTpl, activeFormData);
       } else {
-        await downloadPDF(activeTemplate, activeFormData, `${activeTemplate.templateName || 'card'}.pdf`);
+        await downloadPDF(
+          activeTemplate,
+          activeFormData,
+          `${activeTemplate.templateName || "card"}.pdf`,
+        );
       }
-      store.consumeUsage(`${activeTemplate.templateName || 'Card'} Quick Print`, undefined, 1);
+      store.consumeUsage(`${activeTemplate.templateName || "Card"} Quick Print`, undefined, 1);
     } catch (e) {
-      console.error('Print failed', e);
+      console.error("Print failed", e);
     } finally {
       setIsPrinting(false);
     }
@@ -312,7 +350,7 @@ export const CardPreviewScreen: React.FC = () => {
     if (e.touches.length === 2) {
       const dist = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
+        e.touches[0].clientY - e.touches[1].clientY,
       );
       touchStartDistRef.current = dist;
     }
@@ -322,7 +360,7 @@ export const CardPreviewScreen: React.FC = () => {
     if (e.touches.length === 2 && touchStartDistRef.current !== null) {
       const dist = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
+        e.touches[0].clientY - e.touches[1].clientY,
       );
       const diff = (dist - touchStartDistRef.current) / 200;
       setZoomLevel((prev) => Math.min(2.0, Math.max(0.65, +(prev + diff).toFixed(2))));
@@ -336,27 +374,43 @@ export const CardPreviewScreen: React.FC = () => {
 
   // Extract meta details for display
   const holderName = lastNidaFormData
-    ? `${lastNidaFormData.firstName || ''} ${lastNidaFormData.middleName || ''} ${lastNidaFormData.lastName || ''}`.trim()
-    : 'Identity Document';
-  const nidaNumber = lastNidaFormData?.nidaNumber || '';
-  const gender = lastNidaFormData?.gender ? (lastNidaFormData.gender.toUpperCase().startsWith('M') ? 'M' : 'F') : 'M';
+    ? `${lastNidaFormData.firstName || ""} ${lastNidaFormData.middleName || ""} ${lastNidaFormData.lastName || ""}`.trim()
+    : "Identity Document";
+  const nidaNumber = lastNidaFormData?.nidaNumber || "";
+  const gender = lastNidaFormData?.gender
+    ? lastNidaFormData.gender.toUpperCase().startsWith("M")
+      ? "M"
+      : "F"
+    : "M";
 
   const dlName = lastDrivingLicenseFormData
-    ? [lastDrivingLicenseFormData.firstName, lastDrivingLicenseFormData.secondName, lastDrivingLicenseFormData.thirdName].filter(Boolean).join(' ')
-    : '';
-  const dlLicenceNo = lastDrivingLicenseFormData?.licenceNumber || '';
-  const dlPin = lastDrivingLicenseFormData?.pinNumber || '';
+    ? [
+        lastDrivingLicenseFormData.firstName,
+        lastDrivingLicenseFormData.secondName,
+        lastDrivingLicenseFormData.thirdName,
+      ]
+        .filter(Boolean)
+        .join(" ")
+    : "";
+  const dlLicenceNo = lastDrivingLicenseFormData?.licenceNumber || "";
+  const dlPin = lastDrivingLicenseFormData?.pinNumber || "";
   const dlCategories = lastDrivingLicenseFormData?.classes
     ? formatDrivingLicenceCategoriesFront(lastDrivingLicenseFormData.classes)
-    : '';
+    : "";
 
-  const nhifMemberName = lastNhifFormData?.fullName || lastNhifFormData?.full_name || '';
-  const nhifCardNo = lastNhifFormData?.cardNumber || lastNhifFormData?.card_no || '';
-  const nhifStatus = lastNhifFormData?.cardStatus || lastNhifFormData?.card_status || 'Active';
-  const nhifDob = lastNhifFormData?.dob || '';
+  const nhifMemberName = lastNhifFormData?.fullName || lastNhifFormData?.full_name || "";
+  const nhifCardNo = lastNhifFormData?.cardNumber || lastNhifFormData?.card_no || "";
+  const nhifStatus = lastNhifFormData?.cardStatus || lastNhifFormData?.card_status || "Active";
+  const nhifDob = lastNhifFormData?.dob || "";
 
   const hasBackCounterpart = Boolean(
-    backPopulatedTemplate || SAMPLE_TEMPLATES.some((t) => t.id === 'sample_tanzania_nida_back' || t.id === 'sample_driving_license_back' || t.id === 'sample_nhif_back')
+    backPopulatedTemplate ||
+    SAMPLE_TEMPLATES.some(
+      (t) =>
+        t.id === "sample_tanzania_nida_back" ||
+        t.id === "sample_driving_license_back" ||
+        t.id === "sample_nhif_back",
+    ),
   );
 
   return (
@@ -368,7 +422,7 @@ export const CardPreviewScreen: React.FC = () => {
             <UniversalBackButton />
             <button
               type="button"
-              onClick={() => setActiveScreen('home')}
+              onClick={() => setActiveScreen("home")}
               className="p-2 sm:p-2.5 rounded-xl bg-[#1C1F26] hover:bg-[#282C37] text-slate-300 hover:text-white border border-[#4C5055]/50 transition-colors flex items-center justify-center cursor-pointer"
               title="Return to Home Portal"
               aria-label="Return to Home Portal"
@@ -377,7 +431,11 @@ export const CardPreviewScreen: React.FC = () => {
             </button>
             <div className="min-w-0">
               <h1 className="text-xs sm:text-sm font-bold text-white tracking-wide truncate">
-                {isDL ? 'DRIVING LICENCE PREVIEW' : isNHIF ? 'NHIF CARD PREVIEW' : 'NIDA CARD PREVIEW'}
+                {isDL
+                  ? "DRIVING LICENCE PREVIEW"
+                  : isNHIF
+                    ? "NHIF CARD PREVIEW"
+                    : "NIDA CARD PREVIEW"}
               </h1>
             </div>
           </div>
@@ -385,7 +443,7 @@ export const CardPreviewScreen: React.FC = () => {
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <UserUsageBadge />
 
-            {isDevMode && authRole === 'admin' && (
+            {isDevMode && authRole === "admin" && (
               <button
                 id="dev-mapping-inspector-btn"
                 type="button"
@@ -409,7 +467,7 @@ export const CardPreviewScreen: React.FC = () => {
               <span>Edit Form</span>
             </button>
 
-            {authRole === 'admin' && (
+            {authRole === "admin" && (
               <button
                 id="header-studio-btn"
                 type="button"
@@ -433,11 +491,11 @@ export const CardPreviewScreen: React.FC = () => {
             <button
               id="preview-mode-single-btn"
               type="button"
-              onClick={() => setOutputMode('single')}
+              onClick={() => setOutputMode("single")}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-                outputMode === 'single'
-                  ? 'bg-gradient-to-r from-[#47A5FF] to-[#2563eb] text-white shadow-md'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                outputMode === "single"
+                  ? "bg-gradient-to-r from-[#47A5FF] to-[#2563eb] text-white shadow-md"
+                  : "text-slate-400 hover:text-white hover:bg-white/5"
               }`}
             >
               <CreditCard className="w-3.5 h-3.5" />
@@ -447,11 +505,11 @@ export const CardPreviewScreen: React.FC = () => {
             <button
               id="preview-mode-merge-btn"
               type="button"
-              onClick={() => setOutputMode('merge')}
+              onClick={() => setOutputMode("merge")}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-                outputMode === 'merge'
-                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+                outputMode === "merge"
+                  ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md"
+                  : "text-slate-400 hover:text-white hover:bg-white/5"
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
@@ -460,16 +518,16 @@ export const CardPreviewScreen: React.FC = () => {
           </div>
 
           {/* Front / Back Side Switcher (Only in Single mode) */}
-          {outputMode === 'single' && hasBackCounterpart && (
+          {outputMode === "single" && hasBackCounterpart && (
             <div className="p-1 rounded-2xl bg-[#14171D] border border-[#4C5055]/60 flex items-center gap-1 shadow-inner">
               <button
                 id="preview-side-front-btn"
                 type="button"
-                onClick={() => handleSideSwitch('front')}
+                onClick={() => handleSideSwitch("front")}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  activeSide === 'front'
-                    ? 'bg-white/20 text-white shadow-xs'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  activeSide === "front"
+                    ? "bg-white/20 text-white shadow-xs"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
                 }`}
               >
                 <span>Front Side</span>
@@ -478,11 +536,11 @@ export const CardPreviewScreen: React.FC = () => {
               <button
                 id="preview-side-back-btn"
                 type="button"
-                onClick={() => handleSideSwitch('back')}
+                onClick={() => handleSideSwitch("back")}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  activeSide === 'back'
-                    ? 'bg-white/20 text-white shadow-xs'
-                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  activeSide === "back"
+                    ? "bg-white/20 text-white shadow-xs"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
                 }`}
               >
                 <span>Back Side</span>
@@ -501,20 +559,22 @@ export const CardPreviewScreen: React.FC = () => {
         >
           {/* Card Viewer Canvas Box */}
           <div className="w-full flex items-center justify-center min-h-[240px] sm:min-h-[380px] relative overflow-hidden">
-            {isRendering && (!previewDataUrl && !mergeFrontUrl) && (
+            {isRendering && !previewDataUrl && !mergeFrontUrl && (
               <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0E1015]/80 z-10 gap-2">
                 <RefreshCw className="w-7 h-7 text-[#47A5FF] animate-spin" />
-                <span className="text-xs text-slate-400 font-medium">Rendering card preview...</span>
+                <span className="text-xs text-slate-400 font-medium">
+                  Rendering card preview...
+                </span>
               </div>
             )}
 
-            {outputMode === 'single' ? (
+            {outputMode === "single" ? (
               previewDataUrl ? (
                 <div
                   className="transition-transform duration-150 ease-out origin-center select-none flex items-center justify-center relative"
                   style={{
                     transform: `scale(${zoomLevel})`,
-                    maxWidth: '100%',
+                    maxWidth: "100%",
                   }}
                 >
                   <div className="relative rounded-2xl shadow-[0_15px_35px_rgba(0,0,0,0.6)] border border-slate-700/50 overflow-hidden bg-white">
@@ -526,36 +586,38 @@ export const CardPreviewScreen: React.FC = () => {
                     />
 
                     {/* Dev Visual Highlight Overlay for Inspected Element */}
-                    {selectedFieldId && (() => {
-                      const matchedLayer = activeTemplate.layers.find((l) =>
-                        matchLayerToBinding(l, selectedFieldId, activeTemplate.layers)
-                      );
-                      if (!matchedLayer) return null;
+                    {selectedFieldId &&
+                      (() => {
+                        const matchedLayer = activeTemplate.layers.find((l) =>
+                          matchLayerToBinding(l, selectedFieldId, activeTemplate.layers),
+                        );
+                        if (!matchedLayer) return null;
 
-                      const tWidth = activeTemplate.cardWidth || 85.6;
-                      const tHeight = activeTemplate.cardHeight || 53.98;
+                        const tWidth = activeTemplate.cardWidth || 85.6;
+                        const tHeight = activeTemplate.cardHeight || 53.98;
 
-                      const leftPct = (matchedLayer.x / tWidth) * 100;
-                      const topPct = (matchedLayer.y / tHeight) * 100;
-                      const widthPct = (matchedLayer.width / tWidth) * 100;
-                      const heightPct = (matchedLayer.height / tHeight) * 100;
+                        const leftPct = (matchedLayer.x / tWidth) * 100;
+                        const topPct = (matchedLayer.y / tHeight) * 100;
+                        const widthPct = (matchedLayer.width / tWidth) * 100;
+                        const heightPct = (matchedLayer.height / tHeight) * 100;
 
-                      return (
-                        <div
-                          className="absolute border-2 border-[#47A5FF] bg-[#47A5FF]/20 rounded shadow-[0_0_15px_#47A5FF] pointer-events-none z-20 animate-pulse"
-                          style={{
-                            left: `${leftPct}%`,
-                            top: `${topPct}%`,
-                            width: `${widthPct}%`,
-                            height: `${heightPct}%`,
-                          }}
-                        >
-                          <div className="absolute -top-6 left-0 px-2 py-0.5 bg-[#47A5FF] text-white text-[9px] font-mono font-bold rounded shadow whitespace-nowrap">
-                            {selectedFieldId}: {matchedLayer.name} ({matchedLayer.width}×{matchedLayer.height}mm)
+                        return (
+                          <div
+                            className="absolute border-2 border-[#47A5FF] bg-[#47A5FF]/20 rounded shadow-[0_0_15px_#47A5FF] pointer-events-none z-20 animate-pulse"
+                            style={{
+                              left: `${leftPct}%`,
+                              top: `${topPct}%`,
+                              width: `${widthPct}%`,
+                              height: `${heightPct}%`,
+                            }}
+                          >
+                            <div className="absolute -top-6 left-0 px-2 py-0.5 bg-[#47A5FF] text-white text-[9px] font-mono font-bold rounded shadow whitespace-nowrap">
+                              {selectedFieldId}: {matchedLayer.name} ({matchedLayer.width}×
+                              {matchedLayer.height}mm)
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })()}
+                        );
+                      })()}
                   </div>
                 </div>
               ) : (
@@ -569,7 +631,7 @@ export const CardPreviewScreen: React.FC = () => {
                 className="transition-transform duration-150 ease-out origin-center select-none flex items-center justify-center relative w-full py-2"
                 style={{
                   transform: `scale(${zoomLevel})`,
-                  maxWidth: '100%',
+                  maxWidth: "100%",
                 }}
               >
                 <div className="w-full max-w-sm bg-[#14171E] border border-[#4C5055]/70 rounded-2xl p-4 flex flex-col items-center gap-3 shadow-xl">
@@ -621,12 +683,16 @@ export const CardPreviewScreen: React.FC = () => {
           <div className="mt-4 pt-3 border-t border-[#4C5055]/40 w-full flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
               <span className="font-semibold text-white">
-                {outputMode === 'single'
-                  ? (activeSide === 'front' ? 'Front Side Card' : 'Back Side Card')
-                  : 'Front + Back 2-in-1 Sheet'}
+                {outputMode === "single"
+                  ? activeSide === "front"
+                    ? "Front Side Card"
+                    : "Back Side Card"
+                  : "Front + Back 2-in-1 Sheet"}
               </span>
               <span>•</span>
-              <span>{outputMode === 'single' ? 'CR80 (85.6 × 54.0 mm)' : 'A4 Print Sheet Layout'}</span>
+              <span>
+                {outputMode === "single" ? "CR80 (85.6 × 54.0 mm)" : "A4 Print Sheet Layout"}
+              </span>
             </div>
 
             <div className="flex items-center gap-1 bg-[#14171E] border border-[#4C5055]/60 rounded-xl p-1">
@@ -668,7 +734,7 @@ export const CardPreviewScreen: React.FC = () => {
         {/* Action Center */}
         <div className="w-full mt-6 space-y-4">
           {/* Primary Action Button */}
-          {outputMode === 'single' ? (
+          {outputMode === "single" ? (
             <button
               id="primary-download-single-btn"
               type="button"
@@ -677,7 +743,7 @@ export const CardPreviewScreen: React.FC = () => {
               className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-[#2563eb] hover:from-emerald-500 hover:to-blue-600 text-white font-bold text-sm sm:text-base shadow-[0_10px_35px_rgba(16,185,129,0.35)] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap disabled:opacity-50"
             >
               <Download className="w-5 h-5" />
-              <span>{isDownloadingPdf ? 'Generating PDF...' : 'Download Single Card (PDF)'}</span>
+              <span>{isDownloadingPdf ? "Generating PDF..." : "Download Single Card (PDF)"}</span>
             </button>
           ) : (
             <button
@@ -688,7 +754,11 @@ export const CardPreviewScreen: React.FC = () => {
               className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-400 hover:to-amber-600 text-white font-bold text-sm sm:text-base shadow-[0_10px_35px_rgba(245,158,11,0.35)] active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap disabled:opacity-50"
             >
               <Printer className="w-5 h-5" />
-              <span>{isDownloadingPdf ? 'Generating 2-in-1 Sheet...' : 'Download Front + Back (Merge 2-in-1 PDF)'}</span>
+              <span>
+                {isDownloadingPdf
+                  ? "Generating 2-in-1 Sheet..."
+                  : "Download Front + Back (Merge 2-in-1 PDF)"}
+              </span>
             </button>
           )}
 
@@ -722,10 +792,10 @@ export const CardPreviewScreen: React.FC = () => {
               className="px-4 py-2.5 rounded-xl bg-[#14171E] hover:bg-[#1E222A] text-slate-200 hover:text-white border border-[#4C5055]/70 text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer shrink-0 disabled:opacity-50 whitespace-nowrap"
             >
               <Printer className="w-3.5 h-3.5 text-[#FF8F00]" />
-              <span>{isPrinting ? 'Printing' : 'Print'}</span>
+              <span>{isPrinting ? "Printing" : "Print"}</span>
             </button>
 
-            {authRole === 'admin' && (
+            {authRole === "admin" && (
               <button
                 id="action-edit-studio-btn"
                 type="button"
@@ -746,15 +816,15 @@ export const CardPreviewScreen: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <span className="text-[10px] uppercase text-[#A0A4A8] font-bold block">
-                  {isDL ? 'Driver Name' : isNHIF ? 'Member Name' : 'Cardholder'}
+                  {isDL ? "Driver Name" : isNHIF ? "Member Name" : "Cardholder"}
                 </span>
                 <span className="font-semibold text-white truncate block">
-                  {isDL ? dlName : isNHIF ? (nhifMemberName || 'NHIF Member') : holderName}
+                  {isDL ? dlName : isNHIF ? nhifMemberName || "NHIF Member" : holderName}
                 </span>
               </div>
               <div>
                 <span className="text-[10px] uppercase text-[#A0A4A8] font-bold block">
-                  {isDL ? 'Licence Number' : isNHIF ? 'Card Number' : 'NIDA Number'}
+                  {isDL ? "Licence Number" : isNHIF ? "Card Number" : "NIDA Number"}
                 </span>
                 <span className="font-mono font-semibold text-[#47A5FF] block">
                   {isDL ? dlLicenceNo : isNHIF ? nhifCardNo : nidaNumber}
@@ -762,10 +832,14 @@ export const CardPreviewScreen: React.FC = () => {
               </div>
               <div>
                 <span className="text-[10px] uppercase text-[#A0A4A8] font-bold block">
-                  {isDL ? 'Categories / PIN' : isNHIF ? 'Status / Details' : 'Gender / Sex'}
+                  {isDL ? "Categories / PIN" : isNHIF ? "Status / Details" : "Gender / Sex"}
                 </span>
                 <span className="font-semibold text-white block">
-                  {isDL ? `${dlCategories || 'None'}${dlPin ? ` (PIN: ${dlPin})` : ''}` : isNHIF ? `${nhifStatus}${nhifDob ? ` • DOB: ${nhifDob}` : ''}` : gender}
+                  {isDL
+                    ? `${dlCategories || "None"}${dlPin ? ` (PIN: ${dlPin})` : ""}`
+                    : isNHIF
+                      ? `${nhifStatus}${nhifDob ? ` • DOB: ${nhifDob}` : ""}`
+                      : gender}
                 </span>
               </div>
             </div>
