@@ -313,6 +313,7 @@ export type Database = {
           name: string | null
           passkey: string | null
           phone: string | null
+          region: string | null
           role: string | null
           status: string | null
           tokens: number | null
@@ -325,6 +326,7 @@ export type Database = {
           name?: string | null
           passkey?: string | null
           phone?: string | null
+          region?: string | null
           role?: string | null
           status?: string | null
           tokens?: number | null
@@ -337,6 +339,7 @@ export type Database = {
           name?: string | null
           passkey?: string | null
           phone?: string | null
+          region?: string | null
           role?: string | null
           status?: string | null
           tokens?: number | null
@@ -696,6 +699,69 @@ export type Database = {
           id?: string
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_feedback: {
+        Row: {
+          admin_reply: string | null
+          attachment_data: string | null
+          attachment_name: string | null
+          attachment_path: string | null
+          attachment_url: string | null
+          category: string | null
+          comment: string | null
+          created_at: string
+          feedback_type: string | null
+          id: string
+          message: string | null
+          rating: number | null
+          status: string
+          subject: string | null
+          updated_at: string
+          user_contact: string | null
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          admin_reply?: string | null
+          attachment_data?: string | null
+          attachment_name?: string | null
+          attachment_path?: string | null
+          attachment_url?: string | null
+          category?: string | null
+          comment?: string | null
+          created_at?: string
+          feedback_type?: string | null
+          id: string
+          message?: string | null
+          rating?: number | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+          user_contact?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          admin_reply?: string | null
+          attachment_data?: string | null
+          attachment_name?: string | null
+          attachment_path?: string | null
+          attachment_url?: string | null
+          category?: string | null
+          comment?: string | null
+          created_at?: string
+          feedback_type?: string | null
+          id?: string
+          message?: string | null
+          rating?: number | null
+          status?: string
+          subject?: string | null
+          updated_at?: string
+          user_contact?: string | null
+          user_id?: string | null
+          user_name?: string | null
         }
         Relationships: []
       }
