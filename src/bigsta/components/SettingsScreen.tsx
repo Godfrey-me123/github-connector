@@ -190,10 +190,11 @@ export const SettingsScreen: React.FC = () => {
       };
 
       // Try inserting into Supabase
-      try {
-        await supabase.from('user_feedback').insert([newFeedback]);
-      } catch {
-        // ignore error if table missing
+      const { error: insErr } = await supabase.from('user_feedback').insert([{ ...newFeedback, user_id: currentAuthKey || null }]);
+      if (insErr) {
+        setFeedbackBanner('Could not send: ' + insErr.message);
+        triggerToast('Feedback not sent, please try again');
+        return;
       }
 
       // Always save locally to localStorage as fallback
