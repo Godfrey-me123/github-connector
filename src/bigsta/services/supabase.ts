@@ -1581,3 +1581,14 @@ export async function fetchTokenHistorySupabase(ownerIds?: string[], limit = 200
     return null;
   }
 }
+
+// Save only the user's editable profile fields (never touches tokens/role).
+export async function saveOwnProfileSupabase(key: string, p: { name?: string; phone?: string; email?: string; region?: string }): Promise<boolean> {
+  if (!supabase || !key) return false;
+  const id = getUUID(key);
+  const base = { id, name: p.name ?? null, phone: p.phone ?? null, email: p.email ?? null, passkey: key, updated_at: new Date().toISOString() };
+  const { error } = await supabase.from('profiles').upsert({ ...base, region: p.region ?? null });
+  await supabase.from('user_profiles').upsert(base);
+  if (error) { console.error('Profile save failed:', error.message); return false; }
+  return true;
+}

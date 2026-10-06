@@ -1260,13 +1260,8 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       
       const { currentAuthKey } = get();
       if (currentAuthKey) {
-        import('../services/supabase').then(({ syncProfileSupabase }) => {
-          syncProfileSupabase({
-            id: currentAuthKey,
-            ...updated,
-            role: 'user', // Assuming user role for profile updates
-            tokens: 0 // Will need to be handled carefully
-          });
+        import('../services/supabase').then(({ saveOwnProfileSupabase }) => {
+          saveOwnProfileSupabase(currentAuthKey, updated);
         }).catch(e => console.error('Failed to sync profile to Supabase', e));
       }
     },
@@ -3103,6 +3098,15 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         activePasskeys: updatedList,
       });
 
+      // Load this account's own profile from the database
+      try {
+        const { fetchProfileSupabase } = await import('../services/supabase');
+        const prof = await fetchProfileSupabase(match.key);
+        const loaded = { name: prof?.name || match.description || '', phone: prof?.phone || '', email: prof?.email || '', region: prof?.region || '' };
+        safeLocalStorageSetItem('bigsta_user_profile', JSON.stringify(loaded));
+        set({ userProfile: loaded });
+      } catch (e) {}
+
       // Sync lastUsed to Supabase backend
       try {
         const { syncPasskeySupabase } = await import('../services/supabase');
@@ -3117,7 +3121,8 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         localStorage.removeItem('bigsta_auth_role');
         localStorage.removeItem('bigsta_auth_key');
       } catch (e) {}
-      set({ authRole: null, currentAuthKey: null, activeScreen: 'home' });
+      try { localStorage.removeItem('bigsta_user_profile'); } catch (e) {}
+      set({ authRole: null, currentAuthKey: null, activeScreen: 'home', userProfile: { name: '', phone: '', email: '', region: '' } });
     },
 
     addPasskey: (item) => {
