@@ -161,7 +161,8 @@ export interface LicenceCategoryLayer extends BaseLayer {
   field_type: 'label' | 'issue_date' | 'expiry_date';
   date_value?: string; // Stored date
   display_format?: 'MMM DD, YYYY' | 'DD MMM YYYY' | 'DD/MM/YYYY' | 'DD-MM-YYYY';
-
+  visibility?: boolean; // visibility state
+  
   // Text Styling Properties (mirrored from TextLayer)
   fontFamily: string;
   fontSize: number; // in pt or mm

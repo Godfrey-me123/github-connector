@@ -353,6 +353,7 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({ onElementAdded }) 
       opacity: 1,
       locked: false,
       hidden: false,
+      visibility: true,
     } as any; // Cast as any to bypass Layer type checking
     addLayer(newLayer);
     onElementAdded?.();

@@ -1217,13 +1217,17 @@ export const CanvasWorkspace: React.FC = () => {
                         }
                     }
 
+                    // Show placeholder if in editor and no data
+                    const isEditor = true; // Simplified for now, should check if we're in edit mode
+                    const showPlaceholder = !displayText && isEditor;
+                    
                     return (
                         <KonvaText
                             {...commonProps}
-                            text={displayText}
+                            text={showPlaceholder ? `[${catLayer.category_code} ${catLayer.field_type.replace('_', ' ')}]` : displayText}
                             fontFamily={catLayer.fontFamily || 'Helvetica'}
                             fontSize={(catLayer.fontSize || 3.5) * pxPerMm}
-                            fill={catLayer.color || '#000000'}
+                            fill={showPlaceholder ? '#999' : (catLayer.color || '#000000')}
                             width={wPx}
                             height={hPx}
                             align={catLayer.align || 'center'}
