@@ -79,11 +79,13 @@ export const SettingsScreen: React.FC = () => {
   }, [adminSettings]);
 
   // Support & Feedback Form State
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [supportMessage, setSupportMessage] = useState('');
   const [issueType, setIssueType] = useState('App Maintenance & Feedback');
   const [feedbackRating, setFeedbackRating] = useState<number>(5);
   const [feedbackFile, setFeedbackFile] = useState<File | null>(null);
   const [sendingSupport, setSendingSupport] = useState<boolean>(false);
+  const [feedbackBanner, setFeedbackBanner] = useState<string | null>(null);
 
   const triggerToast = (msg: string) => {
     setSaveToast(msg);
@@ -141,6 +143,7 @@ export const SettingsScreen: React.FC = () => {
     e.preventDefault();
     if (!supportMessage.trim()) return;
     setSendingSupport(true);
+    setFeedbackBanner(null);
 
     try {
       let attachmentPath = null;
@@ -180,7 +183,7 @@ export const SettingsScreen: React.FC = () => {
         comment: supportMessage.trim(),
         attachment_path: attachmentPath,
         attachment_name: attachmentName,
-        attachment_data: attachmentData,
+        attachment_data: attachmentData && attachmentData.length < 500000 ? attachmentData : null,
         status: 'PENDING',
         created_at: new Date().toISOString(),
       };
@@ -193,16 +196,29 @@ export const SettingsScreen: React.FC = () => {
       }
 
       // Always save locally to localStorage as fallback
+      const localRecord = { ...newFeedback, attachment_data: attachmentData };
       const existingLocal = JSON.parse(localStorage.getItem('bigsta_user_feedbacks') || '[]');
-      localStorage.setItem('bigsta_user_feedbacks', JSON.stringify([newFeedback, ...existingLocal]));
+      localStorage.setItem('bigsta_user_feedbacks', JSON.stringify([localRecord, ...existingLocal]));
 
-      triggerToast('Thank you for your advice, check regularly to see changes anytime');
+      const msg = 'Thank you for your advice, check regularly to see changes anytime';
+      triggerToast(msg);
+      setFeedbackBanner(msg);
+
+      // Reset form controls including file input
       setSupportMessage('');
       setFeedbackFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } catch {
-      triggerToast('Thank you for your advice, check regularly to see changes anytime');
+      const msg = 'Thank you for your advice, check regularly to see changes anytime';
+      triggerToast(msg);
+      setFeedbackBanner(msg);
       setSupportMessage('');
       setFeedbackFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } finally {
       setSendingSupport(false);
     }
@@ -776,6 +792,7 @@ export const SettingsScreen: React.FC = () => {
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Attach Photo or PDF Document (Optional)</label>
                     <div className="flex items-center gap-2">
                       <input
+                        ref={fileInputRef}
                         type="file"
                         accept="image/*,application/pdf"
                         onChange={(e) => setFeedbackFile(e.target.files?.[0] || null)}
@@ -789,12 +806,20 @@ export const SettingsScreen: React.FC = () => {
                     </div>
                   </div>
 
+                  {feedbackBanner && (
+                    <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 text-xs font-bold flex items-center gap-2 animate-fadeIn">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <span>{feedbackBanner}</span>
+                    </div>
+                  )}
+
                   <button
                     type="submit"
                     disabled={sendingSupport}
                     className="px-5 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 disabled:opacity-50 transition-colors cursor-pointer"
                   >
-                    <Send className="w-4 h-4" /> {sendingSupport ? 'Sending...' : 'Send Feedback to Admin'}
+                    <Send className={`w-4 h-4 ${sendingSupport ? 'animate-spin' : ''}`} />
+                    {sendingSupport ? 'Sending feedback to admin, please wait...' : 'Send Feedback to Admin'}
                   </button>
                 </form>
               </div>

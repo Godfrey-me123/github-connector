@@ -101,7 +101,7 @@ export const NidaRequestsAdminPanel: React.FC = () => {
 
       let path2 = null;
       let name2 = null;
-      if (file && file2) {
+      if (file && file2 && file !== file2 && file.name !== file2.name) {
         path2 = `${respondTo.id}/${Date.now()}-2-${file2.name.replace(/[^\w.-]/g, '_')}`;
         const up2 = await supabase.storage.from(BUCKET).upload(path2, file2, { contentType: file2.type });
         if (up2.error) throw up2.error;
