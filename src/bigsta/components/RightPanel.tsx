@@ -125,6 +125,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
     toggleTemplateActive,
     isSaving,
     activeServiceId,
+    updateAllLicenceCategoryStyle,
   } = useTemplateStore();
 
   const [isSavedNotice, setIsSavedNotice] = useState(false);
@@ -883,7 +884,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                         <label className="block text-[11px] font-semibold text-[#000000] mb-1">Display Format</label>
                         <select
                             value={(selectedLayer as any).display_format || 'MMM DD, YYYY'}
-                            onChange={(e) => updateLayer(selectedLayer.id, { display_format: e.target.value })}
+                            onChange={(e) => updateAllLicenceCategoryStyle({ display_format: e.target.value })}
                             className="w-full px-2 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded text-xs text-[#000000] font-semibold"
                         >
                             <option value="MMM DD, YYYY">Jun 16, 1981</option>
@@ -898,22 +899,56 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
 
                 {/* Styling Properties */}
                 <div>
-                    <label className="block text-[11px] font-semibold text-[#000000] mb-1">Font Size (mm)</label>
-                    <input
-                        type="number"
-                        step="0.1"
-                        value={(selectedLayer as any).fontSize}
-                        onChange={(e) => updateLayer(selectedLayer.id, { fontSize: parseFloat(e.target.value) || 3.5 })}
-                        className="w-full px-2.5 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded-lg text-xs font-mono text-[#000000]"
-                    />
+                    <label className="block text-[11px] font-semibold text-[#000000] mb-1">Font Family</label>
+                    <select
+                        value={(selectedLayer as any).fontFamily || 'Helvetica'}
+                        onChange={(e) => updateAllLicenceCategoryStyle({ fontFamily: e.target.value })}
+                        className="w-full px-2 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded text-xs text-[#000000] font-semibold"
+                    >
+                        {['Helvetica', 'Arial', 'Times New Roman', 'Courier New'].map(f => <option key={f} value={f}>{f}</option>)}
+                    </select>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                    <div>
+                        <label className="block text-[11px] font-semibold text-[#000000] mb-1">Font Size (mm)</label>
+                        <input
+                            type="number"
+                            step="0.1"
+                            value={(selectedLayer as any).fontSize || 3.5}
+                            onChange={(e) => updateAllLicenceCategoryStyle({ fontSize: parseFloat(e.target.value) || 3.5 })}
+                            className="w-full px-2.5 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded-lg text-xs font-mono text-[#000000]"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-[11px] font-semibold text-[#000000] mb-1">Weight</label>
+                        <input
+                            type="number"
+                            step="100"
+                            value={(selectedLayer as any).fontWeight || 700}
+                            onChange={(e) => updateAllLicenceCategoryStyle({ fontWeight: parseInt(e.target.value) || 700 })}
+                            className="w-full px-2.5 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded-lg text-xs font-mono text-[#000000]"
+                        />
+                    </div>
                 </div>
                 <div>
                     <label className="block text-[11px] font-semibold text-[#000000] mb-1">Color</label>
                     <input
                         type="color"
                         value={(selectedLayer as any).color || '#000000'}
-                        onChange={(e) => updateLayer(selectedLayer.id, { color: e.target.value })}
+                        onChange={(e) => updateAllLicenceCategoryStyle({ color: e.target.value })}
                         className="w-full h-8 cursor-pointer"
+                    />
+                </div>
+                <div>
+                    <label className="block text-[11px] font-semibold text-[#000000] mb-1">Opacity</label>
+                    <input
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.1"
+                        value={(selectedLayer as any).opacity ?? 1}
+                        onChange={(e) => updateAllLicenceCategoryStyle({ opacity: parseFloat(e.target.value) })}
+                        className="w-full"
                     />
                 </div>
             </div>

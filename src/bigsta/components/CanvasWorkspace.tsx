@@ -1198,13 +1198,12 @@ export const CanvasWorkspace: React.FC = () => {
                     const catLayer = layer as any;
                     const classes = lastDrivingLicenseFormData?.classes || [];
                     const cls = classes.find((c: any) => c.classCode === catLayer.category_code && c.enabled);
-                    if (!cls) return null;
-
+                    
                     let displayText = '';
                     if (catLayer.field_type === 'label') {
                         displayText = catLayer.category_code;
                     } else {
-                        const dateStr = catLayer.field_type === 'issue_date' ? cls.issueDate : cls.expiryDate;
+                        const dateStr = cls ? (catLayer.field_type === 'issue_date' ? cls.issueDate : cls.expiryDate) : '';
                         if (dateStr) {
                             const [d, m, y] = dateStr.split('/');
                             const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
@@ -1231,6 +1230,7 @@ export const CanvasWorkspace: React.FC = () => {
                             verticalAlign="middle"
                             opacity={(catLayer.opacity ?? 1)}
                             fontStyle={catLayer.fontStyle}
+                            fontWeight={catLayer.fontWeight || 700}
                             textDecoration={catLayer.textDecoration === 'underline' ? 'underline' : ''}
                         />
                     );

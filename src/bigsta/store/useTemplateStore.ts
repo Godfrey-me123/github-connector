@@ -691,6 +691,7 @@ interface TemplateState {
   loadSavedTemplates: (force?: boolean) => Promise<CardTemplate[]>;
   deleteSavedTemplate: (id: string) => Promise<void>;
 
+  updateAllLicenceCategoryStyle: (stylePatch: Partial<LicenceCategoryLayer>) => void;
   // NIDA Template Selection & Universal Default Actions
   setSelectedFrontTemplateId: (id: string | null) => void;
   setSelectedBackTemplateId: (id: string | null) => void;
@@ -3983,6 +3984,24 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     const updatedLayers = template.layers.map((l) =>
       l.id === id ? ({ ...l, ...patch } as Layer) : l
     );
+    const updated = {
+      ...template,
+      layers: updatedLayers,
+      updatedAt: new Date().toISOString(),
+    };
+    set({ currentTemplate: updated, hasUnsavedChanges: true });
+    get().pushHistoryState(updated);
+    get().saveStudioDraft();
+  },
+
+  updateAllLicenceCategoryStyle: (stylePatch) => {
+    const template = get().currentTemplate;
+    const updatedLayers = template.layers.map((l) => {
+      if (l.type === 'licence_category') {
+        return { ...l, ...stylePatch } as Layer;
+      }
+      return l;
+    });
     const updated = {
       ...template,
       layers: updatedLayers,
