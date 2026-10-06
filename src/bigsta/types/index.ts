@@ -195,7 +195,6 @@ export type Layer =
   | ShapeLayer
   | BarcodeLayer
   | QRCodeLayer
-  | GroupLayer
   | LicenceCategoryLayer;
 
 export interface BackgroundConfig {
