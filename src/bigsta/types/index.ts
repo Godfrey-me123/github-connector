@@ -100,18 +100,16 @@ export interface TextLayer extends BaseLayer {
   widthPreset?: 'normal' | 'condensed' | 'semi_condensed' | 'expanded' | 'semi_expanded';
 
   // Driving License Specific Custom Properties
-  licenseCategoryGroup?: string; // Legacy support (A, A1, B, C, etc.)
+  licenseCategoryGroup?: string; // (A, A1, B, C, C1, etc.)
   licenseCategoryDateType?: 'issueDate' | 'expiryDate';
+  dateFormat?: string; // (dd/MM/yyyy, MMM dd, yyyy, etc.)
   licenseCategoriesSeparator?: 'spaceSeparated' | 'commaSeparated' | 'slashSeparated';
 
-  // Master Category Engine Properties (Prompt Rebuild)
-  isCategoryElement?: boolean;
+  // Compatibility category properties
   categoryCode?: string;
-  displayMode?: 'code' | 'issueDate' | 'expiryDate' | 'fullRow' | 'custom';
-  linkedIssueDateElementId?: string;
-  linkedExpiryDateElementId?: string;
-  visibilityRule?: 'showIfSelected' | 'alwaysShow' | 'hideIfSelected';
-  linkedElementIds?: string[];
+  category_code?: string;
+  field_type?: string;
+  display_format?: string;
 }
 
 export interface ImageLayer extends BaseLayer {

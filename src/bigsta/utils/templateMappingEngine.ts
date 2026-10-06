@@ -1,7 +1,7 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import { CardTemplate, Layer, TextLayer, ImageLayer, PlaceholderLayer, BarcodeLayer, QRCodeLayer } from '../types';
 import { NidaFormData } from '../components/nida/NidaFormScreen';
-import { normalizeDateInput, formatToDdMmYyyy, formatToMmmDdYyyy, toTitleCase } from './dateValidation';
+import { normalizeDateInput, formatToDdMmYyyy, formatToMmmDdYyyy, formatLicenceDate, toTitleCase } from './dateValidation';
 
 export type { NidaFormData };
 
@@ -1148,19 +1148,51 @@ export function planTemplateMapping(template: CardTemplate, formData: Partial<Ni
   const bindingsToCheck: SupportedBinding[] = (isBackSide && !isDL) ? ['NIDA_NUMBER'] : ALL_SUPPORTED_BINDINGS;
 
   for (const layer of sanitizedTemplate.layers) {
-    if (layer.type === 'text') {
+    if (layer.type === 'text' || (layer as any).type === 'licence_category') {
       const textLayer = layer as TextLayer;
-      if (textLayer.licenseCategoryGroup !== undefined) {
+      const isCategoryDateLayer =
+        textLayer.licenseCategoryGroup !== undefined ||
+        (textLayer as any).category_code !== undefined ||
+        (textLayer as any).categoryCode !== undefined;
+
+      if (isCategoryDateLayer) {
         const classes = (formData as any).classes || (formData as any).categories || [];
-        const matchedClass = classes.find((c: any) => c && c.classCode === textLayer.licenseCategoryGroup);
-        const isEnabled = matchedClass && !!matchedClass.enabled;
+        const groupCode = String(
+          textLayer.licenseCategoryGroup ||
+          (textLayer as any).category_code ||
+          (textLayer as any).categoryCode ||
+          ''
+        ).trim().toUpperCase();
+
+        const dateType = String(
+          textLayer.licenseCategoryDateType ||
+          (textLayer as any).field_type ||
+          (textLayer as any).dateType ||
+          'issueDate'
+        ).trim();
+
+        const dateFormat = textLayer.dateFormat || (textLayer as any).display_format || 'dd/MM/yyyy';
+
+        const matchedClass = Array.isArray(classes)
+          ? classes.find((c: any) => c && String(c.classCode || c.code || c.category_code || '').trim().toUpperCase() === groupCode)
+          : undefined;
+
+        const isEnabled = matchedClass && Boolean(matchedClass.enabled || matchedClass.selected || matchedClass.checked);
         let dateValue = '';
-        if (isEnabled) {
-          const rawDate = textLayer.licenseCategoryDateType === 'expiryDate'
-            ? (matchedClass.expiryDate || (formData as any).dateOfExpiry || (formData as any).expiryDate || '')
-            : (matchedClass.issueDate || (formData as any).dateOfIssue || (formData as any).issueDate || '');
-          dateValue = rawDate ? formatToDdMmYyyy(rawDate) : '';
+
+        if (isEnabled && matchedClass) {
+          if (dateType === 'label' || dateType === 'categoryLabel') {
+            dateValue = groupCode;
+          } else {
+            const isExpiryType = dateType === 'expiryDate' || dateType === 'expiry_date' || /exp/i.test(dateType);
+            const rawDate = isExpiryType
+              ? String(matchedClass.expiryDate || matchedClass.expiry_date || '').trim()
+              : String(matchedClass.issueDate || matchedClass.issue_date || '').trim();
+
+            dateValue = rawDate ? formatLicenceDate(rawDate, dateFormat) : '';
+          }
         }
+
         fieldMappings.push({
           binding: 'CUSTOM_CATEGORY_DATE' as any,
           layerId: layer.id,
@@ -1245,23 +1277,54 @@ export function applyTemplateMapping(template: CardTemplate, formData: NidaFormD
   let skippedCount = 0;
 
   for (const layer of sanitizedTemplate.layers) {
-    if (layer.type === 'text') {
+    if (layer.type === 'text' || (layer as any).type === 'licence_category') {
       const textLayer = layer as TextLayer;
-      if (textLayer.licenseCategoryGroup !== undefined) {
+      const isCategoryDateLayer =
+        textLayer.licenseCategoryGroup !== undefined ||
+        (textLayer as any).category_code !== undefined ||
+        (textLayer as any).categoryCode !== undefined;
+
+      if (isCategoryDateLayer) {
         const classes = (formData as any).classes || (formData as any).categories || [];
-        const groupCode = String(textLayer.licenseCategoryGroup || '').trim().toUpperCase();
-        const matchedClass = classes.find((c: any) => c && String(c.classCode || '').trim().toUpperCase() === groupCode);
-        const isEnabled = matchedClass && !!(matchedClass.enabled || matchedClass.selected || matchedClass.checked);
+        const groupCode = String(
+          textLayer.licenseCategoryGroup ||
+          (textLayer as any).category_code ||
+          (textLayer as any).categoryCode ||
+          ''
+        ).trim().toUpperCase();
+
+        const dateType = String(
+          textLayer.licenseCategoryDateType ||
+          (textLayer as any).field_type ||
+          (textLayer as any).dateType ||
+          'issueDate'
+        ).trim();
+
+        const dateFormat = textLayer.dateFormat || (textLayer as any).display_format || 'dd/MM/yyyy';
+
+        const matchedClass = Array.isArray(classes)
+          ? classes.find((c: any) => c && String(c.classCode || c.code || c.category_code || '').trim().toUpperCase() === groupCode)
+          : undefined;
+
+        const isEnabled = matchedClass && Boolean(matchedClass.enabled || matchedClass.selected || matchedClass.checked);
         let dateValue = '';
-        if (isEnabled) {
-          const isExpiryType = textLayer.licenseCategoryDateType === 'expiryDate' || /exp/i.test(String(textLayer.licenseCategoryDateType || ''));
-          const rawDate = isExpiryType
-            ? (matchedClass.expiryDate || (formData as any).dateOfExpiry || (formData as any).expiryDate || (formData as any).date_of_expiry || '')
-            : (matchedClass.issueDate || (formData as any).dateOfIssue || (formData as any).issueDate || (formData as any).date_of_issue || '');
-          dateValue = rawDate ? formatToDdMmYyyy(rawDate) : '';
+
+        if (isEnabled && matchedClass) {
+          if (dateType === 'label' || dateType === 'categoryLabel') {
+            dateValue = groupCode;
+          } else {
+            const isExpiryType = dateType === 'expiryDate' || dateType === 'expiry_date' || /exp/i.test(dateType);
+            const rawDate = isExpiryType
+              ? String(matchedClass.expiryDate || matchedClass.expiry_date || '').trim()
+              : String(matchedClass.issueDate || matchedClass.issue_date || '').trim();
+
+            dateValue = rawDate ? formatLicenceDate(rawDate, dateFormat) : '';
+          }
         }
+
         clonedLayers.push({
           ...textLayer,
+          type: 'text',
           text: dateValue,
         });
         populatedCount++;

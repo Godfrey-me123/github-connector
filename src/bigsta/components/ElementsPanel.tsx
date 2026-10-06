@@ -264,11 +264,24 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({ onElementAdded }) 
     e.target.value = '';
   };
 
-  const handleAddCategoryDate = (code = 'A', dateType: 'issueDate' | 'expiryDate' = 'issueDate') => {
-    const isExpiry = dateType === 'expiryDate';
+  const handleAddCategoryDate = (code = 'A', dateType: 'issueDate' | 'expiryDate' | 'label' = 'issueDate') => {
+    // Inherit font styling from existing category element if available
+    const existingCatLayer = currentTemplate.layers.find(
+      (l) => (l as any).licenseCategoryGroup !== undefined || (l as any).category_code !== undefined
+    );
+
+    const fontFamily = existingCatLayer?.fontFamily || 'Helvetica';
+    const fontSize = existingCatLayer?.fontSize || 3.0;
+    const fontWeight = existingCatLayer?.fontWeight || 700;
+    const fontStyle = existingCatLayer?.fontStyle || 'bold';
+    const color = existingCatLayer?.color || '#000000';
+    const align = existingCatLayer?.align || 'left';
+
+    const normFieldType = dateType === 'issueDate' ? 'issue_date' : dateType === 'expiryDate' ? 'expiry_date' : 'label';
+
     const newLayer: Layer = {
       id: 'dl_gdate_' + Date.now(),
-      name: `Class ${code} ${isExpiry ? 'Expiry' : 'Issue'} Date`,
+      name: `Category ${code} ${dateType === 'issueDate' ? 'Issue Date' : dateType === 'expiryDate' ? 'Expiry Date' : 'Label'}`,
       type: 'text',
       x: 10,
       y: 10,
@@ -278,16 +291,22 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({ onElementAdded }) 
       opacity: 1,
       locked: false,
       hidden: false,
-      text: isExpiry ? '12/05/2029' : '12/05/2026',
+      text: dateType === 'label' ? code : dateType === 'expiryDate' ? '12/05/2031' : '12/05/2026',
       licenseCategoryGroup: code,
+      category_code: code,
+      categoryCode: code,
       licenseCategoryDateType: dateType,
-      fontFamily: 'Helvetica',
-      fontSize: 3.0,
-      fontWeight: 700,
-      fontStyle: 'bold',
+      field_type: normFieldType,
+      dateType: dateType,
+      dateFormat: 'dd/MM/yyyy',
+      display_format: 'dd/MM/yyyy',
+      fontFamily,
+      fontSize,
+      fontWeight,
+      fontStyle,
       textDecoration: 'none',
-      color: '#0f172a',
-      align: 'left',
+      color,
+      align,
       letterSpacing: 0,
       lineHeight: 1.1,
     } as any;

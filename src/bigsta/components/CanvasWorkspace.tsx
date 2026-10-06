@@ -37,6 +37,7 @@ import { replaceTextTokens } from '../utils/templateMappingEngine';
 import { mmToPx, pxToMm, calculateCanvasPxSize } from '../utils/units';
 import { generateBarcodeDataUrl, generateQRCodeDataUrl } from '../utils/barcodes';
 import { FONT_WEIGHTS_BY_FAMILY } from '../utils/fonts';
+import { formatLicenceDate } from '../utils/dateValidation';
 import { Layer, SmartGuide } from '../types';
 import { TopRuler, LeftRuler } from './Rulers';
 
@@ -1110,8 +1111,8 @@ export const CanvasWorkspace: React.FC = () => {
                     onTransformEnd: () => handleTransformEnd(layer.id),
                   };
 
-                  if (layer.type === 'text') {
-                    const fontSizePx = layer.fontSize * pxPerMm;
+                  if (layer.type === 'text' || layer.type === 'licence_category') {
+                    const fontSizePx = (layer.fontSize || 3.5) * pxPerMm;
 
                     // Text width preset scaling (Normal, Condensed, Expanded)
                     const PRESET_SCALES: Record<string, number> = {
@@ -1126,7 +1127,63 @@ export const CanvasWorkspace: React.FC = () => {
 
                     // Text Case display transformation (Display-only, original unchanged)
                     let displayText = layer.text || '';
-                    if (lastNidaFormData && displayText.includes('{{')) {
+                    
+                    const isCategoryDateLayer =
+                      layer.type === 'licence_category' ||
+                      (layer as any).licenseCategoryGroup !== undefined ||
+                      (layer as any).category_code !== undefined ||
+                      (layer as any).categoryCode !== undefined;
+
+                    if (isCategoryDateLayer) {
+                      const catCode = String(
+                        (layer as any).licenseCategoryGroup ||
+                        (layer as any).category_code ||
+                        (layer as any).categoryCode ||
+                        'A'
+                      ).trim().toUpperCase();
+
+                      const dateTypeRaw = String(
+                        (layer as any).licenseCategoryDateType ||
+                        (layer as any).field_type ||
+                        (layer as any).dateType ||
+                        'issueDate'
+                      ).trim();
+
+                      const isExpiry = dateTypeRaw === 'expiryDate' || dateTypeRaw === 'expiry_date' || /exp/i.test(dateTypeRaw);
+                      const isLabel = dateTypeRaw === 'label' || dateTypeRaw === 'categoryLabel';
+
+                      const fmt = (layer as any).dateFormat || (layer as any).display_format || 'dd/MM/yyyy';
+
+                      const classes = lastDrivingLicenseFormData?.classes || lastDrivingLicenseFormData?.categories || [];
+                      const matchedClass = Array.isArray(classes)
+                        ? classes.find((c: any) => c && String(c.classCode || c.code || c.category_code || '').trim().toUpperCase() === catCode)
+                        : undefined;
+
+                      const isEnabled = matchedClass && Boolean(matchedClass.enabled || matchedClass.selected || matchedClass.checked);
+
+                      if (lastDrivingLicenseFormData && Object.keys(lastDrivingLicenseFormData).length > 0) {
+                        if (isEnabled && matchedClass) {
+                          if (isLabel) {
+                            displayText = catCode;
+                          } else {
+                            const rawDate = isExpiry
+                              ? String(matchedClass.expiryDate || matchedClass.expiry_date || '').trim()
+                              : String(matchedClass.issueDate || matchedClass.issue_date || '').trim();
+                            displayText = rawDate ? formatLicenceDate(rawDate, fmt) : '';
+                          }
+                        } else {
+                          displayText = ''; // Category not selected by cardholder -> hide
+                        }
+                      } else {
+                        // Admin Design Studio preview mode (no user form data)
+                        if (isLabel) {
+                          displayText = catCode;
+                        } else {
+                          const sampleRawDate = isExpiry ? '12/05/2031' : '12/05/2026';
+                          displayText = formatLicenceDate(sampleRawDate, fmt);
+                        }
+                      }
+                    } else if (lastNidaFormData && displayText.includes('{{')) {
                       displayText = replaceTextTokens(displayText, lastNidaFormData);
                     }
                     const textCase = (layer as any).textCase || 'original';
@@ -1191,52 +1248,6 @@ export const CanvasWorkspace: React.FC = () => {
                         shadowOpacity={layer.shadowEnabled ? (layer.shadowOpacity ?? 50) / 100 : 0}
                         shadowEnabled={layer.shadowEnabled ?? false}
                       />
-                    );
-                  }
-
-                  if (layer.type === 'licence_category') {
-                    const catLayer = layer as any;
-                    const classes = lastDrivingLicenseFormData?.classes || [];
-                    const cls = classes.find((c: any) => c.classCode === catLayer.category_code && c.enabled);
-                    
-                    let displayText = '';
-                    if (catLayer.field_type === 'label') {
-                        displayText = catLayer.category_code;
-                    } else {
-                        const dateStr = cls ? (catLayer.field_type === 'issue_date' ? cls.issueDate : cls.expiryDate) : '';
-                        if (dateStr) {
-                            const [d, m, y] = dateStr.split('/');
-                            const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-                            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                            
-                            const format = catLayer.display_format || 'MMM DD, YYYY';
-                            if (format === 'MMM DD, YYYY') displayText = `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
-                            else if (format === 'DD MMM YYYY') displayText = `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
-                            else if (format === 'DD/MM/YYYY') displayText = dateStr;
-                            else if (format === 'DD-MM-YYYY') displayText = `${d}-${m}-${y}`;
-                        }
-                    }
-
-                    // Show placeholder if in editor and no data
-                    const isEditor = true; // Simplified for now, should check if we're in edit mode
-                    const showPlaceholder = !displayText && isEditor;
-                    
-                    return (
-                        <KonvaText
-                            {...commonProps}
-                            text={showPlaceholder ? `[${catLayer.category_code} ${catLayer.field_type.replace('_', ' ')}]` : displayText}
-                            fontFamily={catLayer.fontFamily || 'Helvetica'}
-                            fontSize={(catLayer.fontSize || 3.5) * pxPerMm}
-                            fill={showPlaceholder ? '#999' : (catLayer.color || '#000000')}
-                            width={wPx}
-                            height={hPx}
-                            align={catLayer.align || 'center'}
-                            verticalAlign="middle"
-                            opacity={(catLayer.opacity ?? 1)}
-                            fontStyle={catLayer.fontStyle}
-                            fontWeight={catLayer.fontWeight || 700}
-                            textDecoration={catLayer.textDecoration === 'underline' ? 'underline' : ''}
-                        />
                     );
                   }
 

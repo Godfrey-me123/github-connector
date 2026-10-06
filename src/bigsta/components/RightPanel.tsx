@@ -839,123 +839,117 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
           />
         </div>
 
-        {/* 1. COMPACT UNIFIED TEXT PROPERTIES SECTION (User requirement) */}
-        {selectedLayer.type === 'licence_category' && (
+        {/* 1. UNIFIED LICENCE CATEGORY DATE PROPERTIES SECTION */}
+        {(selectedLayer.type === 'licence_category' ||
+          (selectedLayer as any).licenseCategoryGroup !== undefined ||
+          (selectedLayer as any).category_code !== undefined ||
+          (selectedLayer as any).categoryCode !== undefined) && (
           <CollapsibleSection
             id="licenceCategoryProps"
-            title="Category Block Settings"
+            title="Licence Date Element Settings"
             icon={<Tag className="w-3.5 h-3.5 text-[#000000]" />}
-            badge={`${(selectedLayer as any).category_code}`}
+            badge={`${(selectedLayer as any).licenseCategoryGroup || (selectedLayer as any).category_code || 'A'}`}
             isOpen={true}
             onToggle={() => {}}
           >
             <div className="space-y-3">
-                {/* Basic Settings */}
-                <div className="grid grid-cols-2 gap-2">
-                    <div>
-                        <label className="block text-[11px] font-semibold text-[#000000] mb-1">Category</label>
-                        <select
-                            value={(selectedLayer as any).category_code}
-                            onChange={(e) => updateLayer(selectedLayer.id, { category_code: e.target.value })}
-                            className="w-full px-2 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded text-xs text-[#000000] font-semibold"
-                        >
-                            {['A', 'A1', 'A2', 'A3', 'B', 'B1', 'B2', 'C', 'C1', 'C2', 'C3', 'D', 'D1', 'D2', 'E', 'F', 'G'].map((cat) => (
-                                <option key={cat} value={cat}>{cat}</option>
-                            ))}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-[11px] font-semibold text-[#000000] mb-1">Date Type</label>
-                        <select
-                            value={(selectedLayer as any).field_type}
-                            onChange={(e) => updateLayer(selectedLayer.id, { field_type: e.target.value })}
-                            className="w-full px-2 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded text-xs text-[#000000] font-semibold"
-                        >
-                            <option value="label">Category Label</option>
-                            <option value="issue_date">Issue Date</option>
-                            <option value="expiry_date">Expiry Date</option>
-                        </select>
-                    </div>
+              {/* Category Code and Date Type */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#000000] mb-1">Category</label>
+                  <select
+                    value={(selectedLayer as any).licenseCategoryGroup || (selectedLayer as any).category_code || 'A'}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      updateLayer(selectedLayer.id, {
+                        licenseCategoryGroup: val,
+                        category_code: val,
+                        categoryCode: val,
+                      });
+                    }}
+                    className="w-full px-2 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded text-xs text-[#000000] font-semibold focus:outline-none focus:border-[#000000]"
+                  >
+                    {['A', 'A1', 'A2', 'A3', 'B', 'B1', 'B2', 'C', 'C1', 'C2', 'C3', 'D', 'D1', 'D2', 'E', 'F', 'G'].map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
                 </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-[#000000] mb-1">Date Type</label>
+                  <select
+                    value={
+                      (selectedLayer as any).licenseCategoryDateType === 'expiryDate' || (selectedLayer as any).field_type === 'expiry_date'
+                        ? 'expiryDate'
+                        : (selectedLayer as any).field_type === 'label'
+                        ? 'label'
+                        : 'issueDate'
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value as 'issueDate' | 'expiryDate' | 'label';
+                      const normFieldType = val === 'issueDate' ? 'issue_date' : val === 'expiryDate' ? 'expiry_date' : 'label';
+                      updateLayer(selectedLayer.id, {
+                        licenseCategoryDateType: val,
+                        field_type: normFieldType,
+                        dateType: val,
+                      });
+                    }}
+                    className="w-full px-2 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded text-xs text-[#000000] font-semibold focus:outline-none focus:border-[#000000]"
+                  >
+                    <option value="issueDate">Issue Date</option>
+                    <option value="expiryDate">Expiry Date</option>
+                    <option value="label">Category Label</option>
+                  </select>
+                </div>
+              </div>
 
-                {/* Display Format */}
-                {((selectedLayer as any).field_type === 'issue_date' || (selectedLayer as any).field_type === 'expiry_date') && (
-                    <div>
-                        <label className="block text-[11px] font-semibold text-[#000000] mb-1">Display Format</label>
-                        <select
-                            value={(selectedLayer as any).display_format || 'MMM DD, YYYY'}
-                            onChange={(e) => updateAllLicenceCategoryStyle({ display_format: e.target.value })}
-                            className="w-full px-2 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded text-xs text-[#000000] font-semibold"
-                        >
-                            <option value="MMM DD, YYYY">Jun 16, 1981</option>
-                            <option value="DD MMM YYYY">16 Jun 1981</option>
-                            <option value="DD/MM/YYYY">16/06/1981</option>
-                            <option value="DD-MM-YYYY">16-06-1981</option>
-                        </select>
-                    </div>
-                )}
-                
-                <hr className="border-[#dadcdc]" />
-
-                {/* Styling Properties */}
+              {/* Editable Date Format */}
+              {((selectedLayer as any).licenseCategoryDateType !== 'label' && (selectedLayer as any).field_type !== 'label') && (
                 <div>
-                    <label className="block text-[11px] font-semibold text-[#000000] mb-1">Font Family</label>
-                    <select
-                        value={(selectedLayer as any).fontFamily || 'Helvetica'}
-                        onChange={(e) => updateAllLicenceCategoryStyle({ fontFamily: e.target.value })}
-                        className="w-full px-2 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded text-xs text-[#000000] font-semibold"
-                    >
-                        {['Helvetica', 'Arial', 'Times New Roman', 'Courier New'].map(f => <option key={f} value={f}>{f}</option>)}
-                    </select>
+                  <label className="block text-[11px] font-semibold text-[#000000] mb-1">
+                    Date Format <span className="text-[10px] text-[#666] font-normal">(e.g. dd/MM/yyyy, MMM dd, yyyy)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={(selectedLayer as any).dateFormat || (selectedLayer as any).display_format || 'dd/MM/yyyy'}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      updateLayer(selectedLayer.id, {
+                        dateFormat: val,
+                        display_format: val,
+                      });
+                    }}
+                    placeholder="dd/MM/yyyy"
+                    className="w-full px-2.5 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded-lg text-xs font-mono text-[#000000] focus:outline-none focus:border-[#000000]"
+                  />
+                  {/* Preset Format Quick Pickers */}
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {['dd/MM/yyyy', 'MM/dd/yyyy', 'dd-MM-yyyy', 'MMM dd, yyyy', 'dd MMM yyyy', 'yyyy-MM-dd'].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => {
+                          updateLayer(selectedLayer.id, {
+                            dateFormat: preset,
+                            display_format: preset,
+                          });
+                        }}
+                        className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors ${
+                          ((selectedLayer as any).dateFormat === preset || (selectedLayer as any).display_format === preset)
+                            ? 'bg-[#000000] text-white border-[#000000]'
+                            : 'bg-white text-[#333] border-[#dadcdc] hover:bg-gray-100'
+                        }`}
+                      >
+                        {preset}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                    <div>
-                        <label className="block text-[11px] font-semibold text-[#000000] mb-1">Font Size (mm)</label>
-                        <input
-                            type="number"
-                            step="0.1"
-                            value={(selectedLayer as any).fontSize || 3.5}
-                            onChange={(e) => updateAllLicenceCategoryStyle({ fontSize: parseFloat(e.target.value) || 3.5 })}
-                            className="w-full px-2.5 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded-lg text-xs font-mono text-[#000000]"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-[11px] font-semibold text-[#000000] mb-1">Weight</label>
-                        <input
-                            type="number"
-                            step="100"
-                            value={(selectedLayer as any).fontWeight || 700}
-                            onChange={(e) => updateAllLicenceCategoryStyle({ fontWeight: parseInt(e.target.value) || 700 })}
-                            className="w-full px-2.5 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded-lg text-xs font-mono text-[#000000]"
-                        />
-                    </div>
-                </div>
-                <div>
-                    <label className="block text-[11px] font-semibold text-[#000000] mb-1">Color</label>
-                    <input
-                        type="color"
-                        value={(selectedLayer as any).color || '#000000'}
-                        onChange={(e) => updateAllLicenceCategoryStyle({ color: e.target.value })}
-                        className="w-full h-8 cursor-pointer"
-                    />
-                </div>
-                <div>
-                    <label className="block text-[11px] font-semibold text-[#000000] mb-1">Opacity</label>
-                    <input
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.1"
-                        value={(selectedLayer as any).opacity ?? 1}
-                        onChange={(e) => updateAllLicenceCategoryStyle({ opacity: parseFloat(e.target.value) })}
-                        className="w-full"
-                    />
-                </div>
+              )}
             </div>
           </CollapsibleSection>
         )}
         
-        {selectedLayer.type === 'text' && (
+        {(selectedLayer.type === 'text' || selectedLayer.type === 'licence_category') && (
           <CollapsibleSection
             id="textProps"
             title="Text Appearance"

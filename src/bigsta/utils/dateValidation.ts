@@ -445,3 +445,83 @@ export function formatToMmmDdYyyy(val: string | null | undefined): string {
 
   return trimmed;
 }
+
+/**
+ * Universal Date Formatter for Driving Licence Back Category Dates.
+ * Strictly formats any date string into the specified dateFormat (e.g. dd/MM/yyyy, MMM dd, yyyy, dd-MM-yyyy, etc.)
+ */
+export function formatLicenceDate(rawDateStr: string | null | undefined, formatStr: string = 'dd/MM/yyyy'): string {
+  if (!rawDateStr || typeof rawDateStr !== 'string') return '';
+  const trimmed = rawDateStr.trim();
+  if (!trimmed) return '';
+
+  let year: number | null = null;
+  let month: number | null = null; // 1-12
+  let day: number | null = null; // 1-31
+
+  const MONTH_NAMES_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const MONTH_NAMES_UPPER = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    const parts = trimmed.split('-');
+    year = parseInt(parts[0], 10);
+    month = parseInt(parts[1], 10);
+    day = parseInt(parts[2], 10);
+  } else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmed)) {
+    const parts = trimmed.split('/');
+    day = parseInt(parts[0], 10);
+    month = parseInt(parts[1], 10);
+    year = parseInt(parts[2], 10);
+  } else if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(trimmed)) {
+    const parts = trimmed.split('-');
+    day = parseInt(parts[0], 10);
+    month = parseInt(parts[1], 10);
+    year = parseInt(parts[2], 10);
+  } else if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(trimmed)) {
+    const parts = trimmed.split('/');
+    year = parseInt(parts[0], 10);
+    month = parseInt(parts[1], 10);
+    day = parseInt(parts[2], 10);
+  } else if (/^\d{8}$/.test(trimmed)) {
+    year = parseInt(trimmed.slice(0, 4), 10);
+    month = parseInt(trimmed.slice(4, 6), 10);
+    day = parseInt(trimmed.slice(6, 8), 10);
+  } else {
+    const cleanStr = trimmed.replace(',', '');
+    const parts = cleanStr.split(/\s+/);
+    if (parts.length === 3) {
+      const p0Idx = MONTH_NAMES_UPPER.indexOf(parts[0].toUpperCase());
+      const p1Idx = MONTH_NAMES_UPPER.indexOf(parts[1].toUpperCase());
+      if (p0Idx !== -1) {
+        month = p0Idx + 1;
+        day = parseInt(parts[1], 10);
+        year = parseInt(parts[2], 10);
+      } else if (p1Idx !== -1) {
+        day = parseInt(parts[0], 10);
+        month = p1Idx + 1;
+        year = parseInt(parts[2], 10);
+      }
+    }
+  }
+
+  if (!year || !month || !day || isNaN(year) || isNaN(month) || isNaN(day) || month < 1 || month > 12 || day < 1 || day > 31) {
+    return trimmed;
+  }
+
+  const dd = day.toString().padStart(2, '0');
+  const mm = month.toString().padStart(2, '0');
+  const yyyy = year.toString();
+  const mmm = MONTH_NAMES_SHORT[month - 1];
+
+  let fmt = formatStr || 'dd/MM/yyyy';
+
+  fmt = fmt.replace(/yyyy/gi, yyyy);
+  fmt = fmt.replace(/MMM/g, mmm);
+  fmt = fmt.replace(/Mmm/g, mmm);
+  fmt = fmt.replace(/MM/g, mm);
+  fmt = fmt.replace(/mm/g, mm);
+  fmt = fmt.replace(/dd/g, dd);
+  fmt = fmt.replace(/DD/g, dd);
+
+  return fmt;
+}

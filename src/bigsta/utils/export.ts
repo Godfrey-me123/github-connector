@@ -11,7 +11,7 @@ import {
   formatDrivingLicenceCategoriesBack,
   getLayerBinding,
 } from './templateMappingEngine';
-import { formatToDdMmYyyy, formatToMmmDdYyyy, toTitleCase } from './dateValidation';
+import { formatToDdMmYyyy, formatToMmmDdYyyy, formatLicenceDate, toTitleCase } from './dateValidation';
 import { FONT_WEIGHTS_BY_FAMILY } from './fonts';
 import { useTemplateStore } from '../store/useTemplateStore';
 import { SAMPLE_TEMPLATES } from './sampleTemplates';
@@ -281,30 +281,59 @@ export async function renderTemplateToCanvas(
       ctx.translate(-(x + w / 2), -(y + h / 2));
     }
 
-    if (layer.type === 'text') {
+    if (layer.type === 'text' || (layer as any).type === 'licence_category') {
       const isCategoryLayer = (layer as any).licenseCategoriesSeparator !== undefined ||
         layer.id === 'dl_var_categories' ||
         layer.name?.toLowerCase().includes('categories of vehicles') ||
         layer.name?.toLowerCase().includes('licence categories') ||
         layer.name?.toLowerCase().includes('license categories');
 
-      const isCategoryDateLayer = (layer as any).licenseCategoryGroup !== undefined;
+      const isCategoryDateLayer =
+        (layer as any).type === 'licence_category' ||
+        (layer as any).licenseCategoryGroup !== undefined ||
+        (layer as any).category_code !== undefined ||
+        (layer as any).categoryCode !== undefined;
 
       let textVal = replaceVars(layer.text) || '';
 
       if (isCategoryDateLayer) {
         const classes = cardData.classes || effectiveCardData.classes || (cardData as any).categories || [];
-        const groupCode = String((layer as any).licenseCategoryGroup || '').trim().toUpperCase();
+        const groupCode = String(
+          (layer as any).licenseCategoryGroup ||
+          (layer as any).category_code ||
+          (layer as any).categoryCode ||
+          ''
+        ).trim().toUpperCase();
+
+        const dateType = String(
+          (layer as any).licenseCategoryDateType ||
+          (layer as any).field_type ||
+          (layer as any).dateType ||
+          'issueDate'
+        ).trim();
+
+        const fmt =
+          (layer as any).dateFormat ||
+          (layer as any).display_format ||
+          (layer as any).date_format ||
+          'dd/MM/yyyy';
+
         const matchedClass = Array.isArray(classes)
-          ? classes.find((c: any) => c && String(c.classCode || '').trim().toUpperCase() === groupCode)
+          ? classes.find((c: any) => c && String(c.classCode || c.code || c.category_code || '').trim().toUpperCase() === groupCode)
           : undefined;
+
         const isEnabled = matchedClass && Boolean(matchedClass.enabled || matchedClass.selected || matchedClass.checked);
-        if (isEnabled) {
-          const isExpiryType = (layer as any).licenseCategoryDateType === 'expiryDate' || /exp/i.test(String((layer as any).licenseCategoryDateType || ''));
-          const rawDate = isExpiryType
-            ? (matchedClass.expiryDate || cardData.dateOfExpiry || effectiveCardData.dateOfExpiry || cardData.expiryDate || effectiveCardData.expiryDate || '')
-            : (matchedClass.issueDate || cardData.dateOfIssue || effectiveCardData.dateOfIssue || cardData.issueDate || effectiveCardData.issueDate || '');
-          textVal = rawDate ? formatToDdMmYyyy(rawDate) : '';
+        if (isEnabled && matchedClass) {
+          if (dateType === 'label' || dateType === 'categoryLabel') {
+            textVal = groupCode;
+          } else {
+            const isExpiryType = dateType === 'expiryDate' || dateType === 'expiry_date' || /exp/i.test(dateType);
+            const rawDate = isExpiryType
+              ? String(matchedClass.expiryDate || matchedClass.expiry_date || '').trim()
+              : String(matchedClass.issueDate || matchedClass.issue_date || '').trim();
+
+            textVal = rawDate ? formatLicenceDate(rawDate, fmt) : '';
+          }
         } else {
           textVal = '';
         }
