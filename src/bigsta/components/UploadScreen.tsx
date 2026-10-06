@@ -116,6 +116,7 @@ export const UploadScreen: React.FC = () => {
   };
 
   const handleCreateTemplate = async () => {
+    console.log('handleCreateTemplate called', { previewImage: !!previewImage, imageMeta });
     if (previewImage && imageMeta) {
       const isPortrait = imageMeta.height > imageMeta.width;
       await addUploadedBackground({
@@ -135,7 +136,9 @@ export const UploadScreen: React.FC = () => {
         },
         customName || 'Custom ID Template'
       );
+      setActiveScreen('editor');
     } else {
+      console.log('Creating template with default background');
       // Create with clean default background
       createNewTemplate(
         {
@@ -144,6 +147,7 @@ export const UploadScreen: React.FC = () => {
         },
         'Blank ID Template'
       );
+      setActiveScreen('editor');
     }
   };
 
