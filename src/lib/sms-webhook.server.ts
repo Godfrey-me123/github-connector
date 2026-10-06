@@ -8,30 +8,45 @@ async function admin() {
 }
 
 export async function getWebhookSecret(): Promise<string> {
-  const db = await admin();
-  const { data } = await db.from("system_settings").select("config_value").eq("id", SECRET_KEY).maybeSingle();
-  const stored = (data?.config_value as { secret?: string } | null)?.secret;
-  if (stored) return stored;
   if (process.env["WEBHOOK_SECRET_KEY"]) return process.env["WEBHOOK_SECRET_KEY"]!;
-  return regenerateWebhookSecret();
+  try {
+    const db = await admin();
+    const { data, error } = await db.from("system_settings").select("config_value").eq("id", SECRET_KEY).maybeSingle();
+    if (!error && data?.config_value) {
+      const stored = (data.config_value as { secret?: string } | null)?.secret;
+      if (stored) return stored;
+    }
+    return await regenerateWebhookSecret();
+  } catch (e) {
+    console.warn("[Webhook Secret] Could not load from system_settings, using fallback secret:", e);
+    return "BIGsta_SEC_DEFAULT_WEBHOOK_SECRET";
+  }
 }
 
 export async function regenerateWebhookSecret(): Promise<string> {
-  const db = await admin();
   const secret = "BIGsta_SEC_" + crypto.randomUUID().replace(/-/g, "");
-  const { error } = await db
-    .from("system_settings")
-    .upsert({ id: SECRET_KEY, config_key: SECRET_KEY, config_value: { secret }, updated_at: new Date().toISOString() });
-  if (error) throw new Error(error.message);
+  try {
+    const db = await admin();
+    const { error } = await db
+      .from("system_settings")
+      .upsert({ id: SECRET_KEY, config_key: SECRET_KEY, config_value: { secret }, updated_at: new Date().toISOString() });
+    if (error) console.warn("[Webhook Secret] Could not persist secret:", error.message);
+  } catch (e) {
+    console.warn("[Webhook Secret] Could not reach database to persist secret:", e);
+  }
   return secret;
 }
 
 export async function saveWebhookSettings(value: Record<string, unknown>) {
-  const db = await admin();
-  const { error } = await db
-    .from("system_settings")
-    .upsert({ id: "webhook_settings", config_key: "webhook_settings", config_value: value as never, updated_at: new Date().toISOString() });
-  if (error) throw new Error(error.message);
+  try {
+    const db = await admin();
+    const { error } = await db
+      .from("system_settings")
+      .upsert({ id: "webhook_settings", config_key: "webhook_settings", config_value: value as never, updated_at: new Date().toISOString() });
+    if (error) console.warn("[Webhook Settings] Could not persist settings:", error.message);
+  } catch (e) {
+    console.warn("[Webhook Settings] Could not reach database to save settings:", e);
+  }
 }
 
 const json = (body: unknown, status = 200) => Response.json(body, { status });

@@ -89,41 +89,56 @@ export const NidaRequestsAdminPanel: React.FC = () => {
     setBusy(true);
     try {
       if (respondTo.response_file_path) {
-        await supabase.storage.from(BUCKET).remove([respondTo.response_file_path]);
+        try { await supabase.storage.from(BUCKET).remove([respondTo.response_file_path]); } catch {}
       }
       if (respondTo.response_file_path_2) {
-        await supabase.storage.from(BUCKET).remove([respondTo.response_file_path_2]);
+        try { await supabase.storage.from(BUCKET).remove([respondTo.response_file_path_2]); } catch {}
       }
 
       const path1 = `${respondTo.id}/${Date.now()}-1-${primaryFile.name.replace(/[^\w.-]/g, '_')}`;
-      const up1 = await supabase.storage.from(BUCKET).upload(path1, primaryFile, { contentType: primaryFile.type });
+      const up1 = await supabase.storage.from(BUCKET).upload(path1, primaryFile, { contentType: primaryFile.type, upsert: true });
       if (up1.error) throw up1.error;
 
       let path2 = null;
       let name2 = null;
       if (file && file2 && file !== file2 && file.name !== file2.name) {
         path2 = `${respondTo.id}/${Date.now()}-2-${file2.name.replace(/[^\w.-]/g, '_')}`;
-        const up2 = await supabase.storage.from(BUCKET).upload(path2, file2, { contentType: file2.type });
+        const up2 = await supabase.storage.from(BUCKET).upload(path2, file2, { contentType: file2.type, upsert: true });
         if (up2.error) throw up2.error;
         name2 = file2.name;
       }
 
-      const { error } = await supabase.from('nida_requests').update({
+      const updateData: any = {
         status: 'RESPONDED',
         response_file_path: path1,
         response_file_name: primaryFile.name,
-        response_file_path_2: path2,
-        response_file_name_2: name2,
         admin_message: message || null,
         responded_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      }).eq('id', respondTo.id);
+      };
+
+      if (path2) {
+        updateData.response_file_path_2 = path2;
+        updateData.response_file_name_2 = name2;
+      }
+
+      let { error } = await supabase.from('nida_requests').update(updateData).eq('id', respondTo.id);
+
+      // Fallback in case schema update is still processing on remote database
+      if (error && (error.message?.includes('response_file_path_2') || error.message?.includes('column'))) {
+        delete updateData.response_file_path_2;
+        delete updateData.response_file_name_2;
+        const retry = await supabase.from('nida_requests').update(updateData).eq('id', respondTo.id);
+        error = retry.error;
+      }
+
       if (error) throw error;
+
       setRespondTo(null); setFile(null); setFile2(null); setMessage('');
       fetchRequests();
       alert('Response with file(s) sent successfully!');
     } catch (e: any) {
-      alert('Failed to send: ' + (e?.message || e));
+      alert('Failed to send response: ' + (e?.message || e));
     } finally {
       setBusy(false);
     }

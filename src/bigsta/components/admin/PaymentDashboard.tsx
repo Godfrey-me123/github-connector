@@ -201,10 +201,13 @@ export const PaymentDashboard: React.FC = () => {
   const fetchWebhookSecret = async () => {
     try {
       const response = await fetch('/api/admin/webhook-secret');
+      if (!response.ok) throw new Error('HTTP ' + response.status);
       const data = await response.json();
-      setWebhookSecret(data.secret);
+      if (data?.secret) setWebhookSecret(data.secret);
+      else setWebhookSecret('BIGsta_SEC_DEFAULT_WEBHOOK_SECRET');
     } catch (err) {
-      console.error('Failed to fetch webhook secret');
+      console.warn('Could not fetch webhook secret, using default:', err);
+      setWebhookSecret('BIGsta_SEC_DEFAULT_WEBHOOK_SECRET');
     }
   };
 
@@ -213,10 +216,14 @@ export const PaymentDashboard: React.FC = () => {
     try {
       const response = await fetch('/api/admin/webhook-secret/regenerate', { method: 'POST' });
       const data = await response.json();
-      setWebhookSecret(data.secret);
-      alert('Secret key regenerated successfully!');
+      if (data?.secret) {
+        setWebhookSecret(data.secret);
+        alert('Secret key regenerated successfully!');
+      } else {
+        throw new Error('No secret returned');
+      }
     } catch (err) {
-      alert('Failed to regenerate secret');
+      alert('Failed to regenerate secret: ' + (err as Error).message);
     }
   };
 
