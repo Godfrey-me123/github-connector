@@ -629,7 +629,7 @@ export const NidaFormScreen: React.FC<NidaFormScreenProps> = ({ onSuccess, onCan
                         icon={User}
                         value={formData.firstName}
                         onChange={(e) => handleFieldChange('firstName', e.target.value)}
-                        placeholder="e.g. Juma"
+                        placeholder="e.g. GODFREY"
                         autoComplete="given-name"
                       />
                     )}
@@ -640,7 +640,7 @@ export const NidaFormScreen: React.FC<NidaFormScreenProps> = ({ onSuccess, onCan
                         icon={User}
                         value={formData.middleName}
                         onChange={(e) => handleFieldChange('middleName', e.target.value)}
-                        placeholder="e.g. Ali"
+                        placeholder="e.g. JOSEPH"
                         autoComplete="additional-name"
                       />
                     )}
@@ -652,7 +652,7 @@ export const NidaFormScreen: React.FC<NidaFormScreenProps> = ({ onSuccess, onCan
                       icon={User}
                       value={formData.lastName}
                       onChange={(e) => handleFieldChange('lastName', e.target.value)}
-                      placeholder="e.g. Mwangi"
+                      placeholder="e.g. RASHID"
                       autoComplete="family-name"
                     />
                   )}

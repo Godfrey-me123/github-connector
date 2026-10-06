@@ -41,6 +41,7 @@ export const NidaRequestsAdminPanel: React.FC = () => {
   const [preview, setPreview] = useState<any | null>(null);
   const [respondTo, setRespondTo] = useState<any | null>(null);
   const [file, setFile] = useState<File | null>(null);
+  const [file2, setFile2] = useState<File | null>(null);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -81,29 +82,46 @@ export const NidaRequestsAdminPanel: React.FC = () => {
   };
 
   const sendResponse = async () => {
-    if (!respondTo || !file) return alert('Choose a picture or PDF first.');
-    if (!/^image\/|application\/pdf/.test(file.type)) return alert('Only pictures or PDFs are allowed.');
+    if (!respondTo || (!file && !file2)) return alert('Choose at least one picture or PDF file.');
+    const primaryFile = file || file2;
+    if (primaryFile && !/^image\/|application\/pdf/.test(primaryFile.type)) return alert('Only pictures or PDFs are allowed.');
+    if (file2 && !/^image\/|application\/pdf/.test(file2.type)) return alert('Only pictures or PDFs are allowed.');
     setBusy(true);
     try {
-      // Replace any older undelivered file so storage never accumulates.
       if (respondTo.response_file_path) {
         await supabase.storage.from(BUCKET).remove([respondTo.response_file_path]);
       }
-      const path = `${respondTo.id}/${Date.now()}-${file.name.replace(/[^\w.-]/g, '_')}`;
-      const up = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type });
-      if (up.error) throw up.error;
+      if (respondTo.response_file_path_2) {
+        await supabase.storage.from(BUCKET).remove([respondTo.response_file_path_2]);
+      }
+
+      const path1 = `${respondTo.id}/${Date.now()}-1-${primaryFile.name.replace(/[^\w.-]/g, '_')}`;
+      const up1 = await supabase.storage.from(BUCKET).upload(path1, primaryFile, { contentType: primaryFile.type });
+      if (up1.error) throw up1.error;
+
+      let path2 = null;
+      let name2 = null;
+      if (file && file2) {
+        path2 = `${respondTo.id}/${Date.now()}-2-${file2.name.replace(/[^\w.-]/g, '_')}`;
+        const up2 = await supabase.storage.from(BUCKET).upload(path2, file2, { contentType: file2.type });
+        if (up2.error) throw up2.error;
+        name2 = file2.name;
+      }
+
       const { error } = await supabase.from('nida_requests').update({
         status: 'RESPONDED',
-        response_file_path: path,
-        response_file_name: file.name,
+        response_file_path: path1,
+        response_file_name: primaryFile.name,
+        response_file_path_2: path2,
+        response_file_name_2: name2,
         admin_message: message || null,
         responded_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }).eq('id', respondTo.id);
       if (error) throw error;
-      setRespondTo(null); setFile(null); setMessage('');
+      setRespondTo(null); setFile(null); setFile2(null); setMessage('');
       fetchRequests();
-      alert('Response sent. The file is deleted automatically once the user downloads it.');
+      alert('Response with file(s) sent successfully!');
     } catch (e: any) {
       alert('Failed to send: ' + (e?.message || e));
     } finally {
@@ -134,7 +152,9 @@ export const NidaRequestsAdminPanel: React.FC = () => {
                   <p className="text-xs text-gray-600 flex items-center gap-1">
                     <MessageCircle className="w-3 h-3" /> {r.whatsapp_number || 'No WhatsApp'} · {new Date(r.created_at).toLocaleString()}
                   </p>
-                  <p className="text-xs text-gray-600">Needs: {r.request_type}</p>
+                  <p className="text-xs font-semibold text-gray-700">
+                    Needs: <span className="font-bold text-blue-700">{r.request_type === 'soft_copy' ? 'NIDA Card Soft Copy (PDF / Photo)' : r.request_type}</span>
+                  </p>
                 </div>
                 <span className={`text-[10px] font-black px-2 py-1 rounded-full ${statusColor(r.status)}`}>{r.status}</span>
               </div>
@@ -169,10 +189,19 @@ export const NidaRequestsAdminPanel: React.FC = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
           <div className="bg-white rounded-2xl p-5 w-full max-w-md">
             <div className="flex justify-between mb-3"><h3 className="font-black">Respond to NIDA {respondTo.nida_no}</h3><button onClick={() => setRespondTo(null)}><X className="w-5 h-5" /></button></div>
-            <p className="text-xs text-gray-600 mb-3">Upload a picture or PDF. It is kept only until the user downloads it, then deleted.</p>
-            <input type="file" accept="image/*,application/pdf" onChange={e => setFile(e.target.files?.[0] || null)} className="mb-3 text-sm" />
-            <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Optional message to the user" className="w-full border rounded-lg p-2 text-sm mb-3" rows={3} />
-            <button disabled={busy || !file} onClick={sendResponse} className="w-full bg-blue-600 text-white rounded-lg p-2.5 text-sm font-bold disabled:opacity-50">{busy ? 'Sending…' : 'Send to user'}</button>
+            <p className="text-xs text-gray-600 mb-3">Upload picture(s) or PDF(s). You can upload up to 2 files if the user requested two items.</p>
+            <div className="space-y-2 mb-3">
+              <div>
+                <label className="block text-[11px] font-bold text-gray-700 mb-0.5">Primary File 1</label>
+                <input type="file" accept="image/*,application/pdf" onChange={e => setFile(e.target.files?.[0] || null)} className="text-xs w-full" />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-gray-700 mb-0.5">Second File 2 (Optional)</label>
+                <input type="file" accept="image/*,application/pdf" onChange={e => setFile2(e.target.files?.[0] || null)} className="text-xs w-full" />
+              </div>
+            </div>
+            <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Optional message to the user" className="w-full border rounded-lg p-2 text-sm mb-3" rows={2} />
+            <button disabled={busy || (!file && !file2)} onClick={sendResponse} className="w-full bg-blue-600 text-white rounded-lg p-2.5 text-sm font-bold disabled:opacity-50">{busy ? 'Sending…' : 'Send to user'}</button>
           </div>
         </div>
       )}

@@ -157,7 +157,7 @@ export const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({
                   setFullName(e.target.value);
                   if (errorMessage) setErrorMessage('');
                 }}
-                placeholder="e.g. Juma Ally Rashidi"
+                placeholder="e.g. Godfrey Joseph Rashid"
                 className="w-full pl-10 pr-4 py-2.5 bg-[#0B132B] border border-white/15 rounded-xl text-white text-sm placeholder-slate-500 focus:outline-none focus:border-[#47A5FF] focus:ring-1 focus:ring-[#47A5FF]"
                 required
               />

@@ -16,7 +16,7 @@ export const NidaRequestFormScreen: React.FC = () => {
   const [ward, setWard] = useState('');
   const [district, setDistrict] = useState('');
   const [place, setPlace] = useState('');
-  const [type, setType] = useState<'picture' | 'signature' | 'both'>('picture');
+  const [type, setType] = useState<'picture' | 'signature' | 'both' | 'soft_copy'>('picture');
   const [loading, setLoading] = useState(false);
   const [myRequests, setMyRequests] = useState<any[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -75,21 +75,43 @@ export const NidaRequestFormScreen: React.FC = () => {
     loadMine();
   };
 
+  const downloadSingleFile = async (filePath: string, fileName?: string) => {
+    if (!filePath) return;
+    const { data, error } = await supabase.storage.from(BUCKET).download(filePath);
+    if (error || !data) throw error || new Error('File not found');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(data);
+    a.download = fileName || 'nida-response';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  };
+
   const downloadResponse = async (r: any) => {
     setDownloading(r.id);
     try {
-      const { data, error } = await supabase.storage.from(BUCKET).download(r.response_file_path);
-      if (error || !data) throw error || new Error('File not found');
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(data);
-      a.download = r.response_file_name || 'nida-response';
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-      // Delivered: remove from storage so nothing is kept.
-      await supabase.storage.from(BUCKET).remove([r.response_file_path]);
+      const pathsToRemove: string[] = [];
+      if (r.response_file_path) {
+        await downloadSingleFile(r.response_file_path, r.response_file_name || 'File-1');
+        pathsToRemove.push(r.response_file_path);
+      }
+      if (r.response_file_path_2) {
+        await downloadSingleFile(r.response_file_path_2, r.response_file_name_2 || 'File-2');
+        pathsToRemove.push(r.response_file_path_2);
+      }
+
+      if (pathsToRemove.length > 0) {
+        await supabase.storage.from(BUCKET).remove(pathsToRemove);
+      }
+
       await supabase.from('nida_requests').update({
-        status: 'DELIVERED', response_file_path: null, updated_at: new Date().toISOString(),
+        status: 'DELIVERED',
+        response_file_path: null,
+        response_file_path_2: null,
+        updated_at: new Date().toISOString(),
       }).eq('id', r.id);
+
       loadMine();
     } catch (e: any) {
       alert('Download failed: ' + (e?.message || e));
@@ -114,10 +136,19 @@ export const NidaRequestFormScreen: React.FC = () => {
 
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700">Choose what you need</label>
-          <div className="flex gap-4">
-            <label><input type="radio" value="picture" checked={type === 'picture'} onChange={() => setType('picture')} /> Picture</label>
-            <label><input type="radio" value="signature" checked={type === 'signature'} onChange={() => setType('signature')} /> Signature</label>
-            <label><input type="radio" value="both" checked={type === 'both'} onChange={() => setType('both')} /> Both</label>
+          <div className="flex flex-wrap gap-3 sm:gap-4 text-xs font-semibold text-gray-800">
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input type="radio" value="picture" checked={type === 'picture'} onChange={() => setType('picture')} /> Picture
+            </label>
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input type="radio" value="signature" checked={type === 'signature'} onChange={() => setType('signature')} /> Signature
+            </label>
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input type="radio" value="both" checked={type === 'both'} onChange={() => setType('both')} /> Both
+            </label>
+            <label className="flex items-center gap-1.5 cursor-pointer text-blue-700 font-bold">
+              <input type="radio" value="soft_copy" checked={type === 'soft_copy'} onChange={() => setType('soft_copy')} /> NIDA Card Soft Copy (PDF / Photo)
+            </label>
           </div>
         </div>
 
@@ -138,9 +169,9 @@ export const NidaRequestFormScreen: React.FC = () => {
                 {r.status === 'INFO_REQUESTED' && (
                   <button onClick={() => fillFrom(r)} className="mt-2 w-full bg-amber-500 text-white rounded-lg p-2 text-xs font-bold">Correct & resubmit</button>
                 )}
-                {r.response_file_path && (
+                {(r.response_file_path || r.response_file_path_2) && (
                   <button disabled={downloading === r.id} onClick={() => downloadResponse(r)} className="mt-2 w-full flex items-center justify-center gap-1 bg-emerald-600 text-white rounded-lg p-2 text-xs font-bold">
-                    <Download className="w-4 h-4" /> {downloading === r.id ? 'Downloading…' : `Download ${r.response_file_name || 'file'}`}
+                    <Download className="w-4 h-4" /> {downloading === r.id ? 'Downloading…' : `Download Response File${r.response_file_path_2 ? 's (2 files)' : ''}`}
                   </button>
                 )}
                 {r.status === 'DELIVERED' && <p className="mt-2 text-xs text-emerald-700">Downloaded — file removed from our servers.</p>}

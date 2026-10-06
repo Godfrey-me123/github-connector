@@ -32,6 +32,7 @@ import {
   ShieldCheck as ShieldCheckIcon,
   Bug,
   Edit,
+  MessageSquare,
 } from 'lucide-react';
 import { paymentService } from '../../services/paymentService';
 import { PaymentRecord, PaymentStatus, VerificationLog } from '../../types';
@@ -41,6 +42,7 @@ import { SmsTransactionsPanel } from './SmsTransactionsPanel';
 import { SmsGatewayPanel } from './SmsGatewayPanel';
 import { SmsDiagnosticsPanel } from './SmsDiagnosticsPanel';
 import { NidaRequestsAdminPanel } from './NidaRequestsAdminPanel';
+import { UserFeedbackAdminPanel } from './UserFeedbackAdminPanel';
 import { useUnreviewedSmsCount } from '../../hooks/useUnreviewedSmsCount';
 
 export const PaymentDashboard: React.FC = () => {
@@ -1388,6 +1390,7 @@ const renderSettings = () => {
                   { id: 'sms_logs', label: unreviewedSms > 0 ? `SMS Transactions (${unreviewedSms})` : 'SMS Transactions', icon: Smartphone },
                   { id: 'sms_diagnostics', label: 'Diagnostics', icon: Activity },
                   { id: 'nida', label: 'NIDA Requests', icon: Receipt },
+                  { id: 'feedback', label: 'User Feedback', icon: MessageSquare },
                   { id: 'settings', label: 'Settings', icon: Settings },
                   { id: 'debug', label: 'Debug', icon: Bug },
                 ].map((tab) => (
@@ -1415,6 +1418,7 @@ const renderSettings = () => {
             activeTab === 'sms_logs' ? renderSmsLogs() :
             activeTab === 'sms_diagnostics' ? renderSmsDiagnostics() :
             activeTab === 'nida' ? <NidaRequestsAdminPanel /> :
+            activeTab === 'feedback' ? <UserFeedbackAdminPanel /> :
             activeTab === 'gateway' ? <SmsGatewayPanel /> :
             renderPaymentList()
           )}

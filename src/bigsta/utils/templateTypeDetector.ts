@@ -60,7 +60,7 @@ export const TEMPLATE_TYPE_PROFILES: Record<DetectedTemplateType, TemplateTypePr
         label: 'First Name',
         type: 'text',
         required: true,
-        placeholder: 'e.g. Juma',
+        placeholder: 'e.g. GODFREY',
         description: 'First or given name as registered',
       },
       {
@@ -69,7 +69,7 @@ export const TEMPLATE_TYPE_PROFILES: Record<DetectedTemplateType, TemplateTypePr
         label: 'Middle Name',
         type: 'text',
         required: false,
-        placeholder: 'e.g. Ali',
+        placeholder: 'e.g. JOSEPH',
         description: 'Second or patronymic name',
       },
       {
@@ -78,7 +78,7 @@ export const TEMPLATE_TYPE_PROFILES: Record<DetectedTemplateType, TemplateTypePr
         label: 'Last Name',
         type: 'text',
         required: true,
-        placeholder: 'e.g. Mwangi',
+        placeholder: 'e.g. RASHID',
         description: 'Family or surname',
       },
       {

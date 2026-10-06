@@ -293,7 +293,7 @@ export const ManualApplicationModal: React.FC = () => {
                   required
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="e.g. Juma Ally Mohamed"
+                  placeholder="e.g. Godfrey Joseph Rashid"
                   className="w-full px-4 py-3 bg-white border border-[#C8C2BE] rounded-xl text-xs font-semibold text-[#101010] focus:outline-none focus:border-[#101010] shadow-xs"
                 />
               </div>

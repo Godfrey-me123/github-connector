@@ -434,7 +434,7 @@ CREATE TABLE IF NOT EXISTS public.nida_requests (
   ward_of_residence TEXT,
   district_of_birth TEXT,
   nida_registration_place TEXT,
-  request_type TEXT CHECK (request_type IN ('picture', 'signature', 'both')),
+  request_type TEXT CHECK (request_type IN ('picture', 'signature', 'both', 'soft_copy')),
   status TEXT DEFAULT 'pending',
   picture_url TEXT,
   signature_url TEXT,

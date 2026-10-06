@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '../services/supabase';
 import {
   Settings as SettingsIcon,
   User,
@@ -25,7 +26,10 @@ import {
   Database,
   Sliders,
   CheckCircle2,
-  Lock
+  Lock,
+  Paperclip,
+  Star,
+  Send,
 } from 'lucide-react';
 import { useTemplateStore } from '../store/useTemplateStore';
 import { UniversalBackButton } from './common/UniversalBackButton';
@@ -74,13 +78,16 @@ export const SettingsScreen: React.FC = () => {
     setAdminForm(adminSettings);
   }, [adminSettings]);
 
-  // Support Form State
+  // Support & Feedback Form State
   const [supportMessage, setSupportMessage] = useState('');
-  const [issueType, setIssueType] = useState('Payment Issue');
+  const [issueType, setIssueType] = useState('App Maintenance & Feedback');
+  const [feedbackRating, setFeedbackRating] = useState<number>(5);
+  const [feedbackFile, setFeedbackFile] = useState<File | null>(null);
+  const [sendingSupport, setSendingSupport] = useState<boolean>(false);
 
   const triggerToast = (msg: string) => {
     setSaveToast(msg);
-    setTimeout(() => setSaveToast(null), 3000);
+    setTimeout(() => setSaveToast(null), 4000);
   };
 
   const handleSaveProfile = (e: React.FormEvent) => {
@@ -130,11 +137,75 @@ export const SettingsScreen: React.FC = () => {
     }
   };
 
-  const handleSendSupport = (e: React.FormEvent) => {
+  const handleSendSupport = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supportMessage.trim()) return;
-    triggerToast(`Support ticket submitted (${issueType}). Admin notified.`);
-    setSupportMessage('');
+    setSendingSupport(true);
+
+    try {
+      let attachmentPath = null;
+      let attachmentName = feedbackFile ? feedbackFile.name : null;
+      let attachmentData = null;
+
+      if (feedbackFile) {
+        try {
+          const path = `${Date.now()}-${feedbackFile.name.replace(/[^\w.-]/g, '_')}`;
+          const up = await supabase.storage.from('feedback_attachments').upload(path, feedbackFile);
+          if (!up.error) {
+            attachmentPath = path;
+          }
+        } catch {
+          // ignore bucket upload failure
+        }
+
+        // Convert file to Base64 data string as reliable fallback
+        try {
+          const reader = new FileReader();
+          attachmentData = await new Promise<string>((resolve) => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => resolve('');
+            reader.readAsDataURL(feedbackFile);
+          });
+        } catch {
+          attachmentData = null;
+        }
+      }
+
+      const newFeedback = {
+        id: 'fb_' + Date.now(),
+        user_name: userProfile?.name || 'User',
+        user_contact: userProfile?.phone || userProfile?.email || 'N/A',
+        feedback_type: issueType,
+        rating: feedbackRating,
+        comment: supportMessage.trim(),
+        attachment_path: attachmentPath,
+        attachment_name: attachmentName,
+        attachment_data: attachmentData,
+        status: 'PENDING',
+        created_at: new Date().toISOString(),
+      };
+
+      // Try inserting into Supabase
+      try {
+        await supabase.from('user_feedback').insert([newFeedback]);
+      } catch {
+        // ignore error if table missing
+      }
+
+      // Always save locally to localStorage as fallback
+      const existingLocal = JSON.parse(localStorage.getItem('bigsta_user_feedbacks') || '[]');
+      localStorage.setItem('bigsta_user_feedbacks', JSON.stringify([newFeedback, ...existingLocal]));
+
+      triggerToast('Thank you for your advice, check regularly to see changes anytime');
+      setSupportMessage('');
+      setFeedbackFile(null);
+    } catch {
+      triggerToast('Thank you for your advice, check regularly to see changes anytime');
+      setSupportMessage('');
+      setFeedbackFile(null);
+    } finally {
+      setSendingSupport(false);
+    }
   };
 
   return (
@@ -655,36 +726,75 @@ export const SettingsScreen: React.FC = () => {
                 </div>
 
                 <form onSubmit={handleSendSupport} className="space-y-4 pt-2">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Issue Category</label>
-                    <select
-                      value={issueType}
-                      onChange={(e) => setIssueType(e.target.value)}
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#14171A] text-slate-900 dark:text-white text-xs font-semibold"
-                    >
-                      <option>Payment Verification</option>
-                      <option>NIDA Form Export</option>
-                      <option>Driving License Export</option>
-                      <option>Token Balance Question</option>
-                    </select>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Feedback Category</label>
+                      <select
+                        value={issueType}
+                        onChange={(e) => setIssueType(e.target.value)}
+                        className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#14171A] text-slate-900 dark:text-white text-xs font-semibold"
+                      >
+                        <option value="App Maintenance & Feedback">App Maintenance & Feedback</option>
+                        <option value="Feature Suggestion">Feature Suggestion</option>
+                        <option value="Bug Report">Bug Report</option>
+                        <option value="User Review">User Review</option>
+                        <option value="Payment Verification">Payment Verification</option>
+                        <option value="General Question">General Question</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Rating</label>
+                      <div className="flex items-center gap-1 py-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setFeedbackRating(star)}
+                            className="p-1 text-amber-400 hover:scale-110 transition-transform cursor-pointer"
+                          >
+                            <Star className={`w-5 h-5 ${star <= feedbackRating ? 'fill-amber-400 text-amber-400' : 'text-slate-300 dark:text-slate-600'}`} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Message Description</label>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Comments & Maintenance Notes</label>
                     <textarea
                       rows={3}
+                      required
                       value={supportMessage}
                       onChange={(e) => setSupportMessage(e.target.value)}
-                      placeholder="Describe your question or issue..."
-                      className="w-full p-3 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#14171A] text-slate-900 dark:text-white text-xs"
+                      placeholder="Write your advice, review, or maintenance comments here..."
+                      className="w-full p-3 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#14171A] text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#2563EB]"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Attach Photo or PDF Document (Optional)</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        onChange={(e) => setFeedbackFile(e.target.files?.[0] || null)}
+                        className="text-xs text-slate-600 dark:text-slate-300 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 dark:file:bg-blue-950/40 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 cursor-pointer"
+                      />
+                      {feedbackFile && (
+                        <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                          <Paperclip className="w-3.5 h-3.5" /> Attached
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <button
                     type="submit"
-                    className="px-5 py-2.5 bg-[#2563EB] text-white rounded-xl text-xs font-bold flex items-center gap-2"
+                    disabled={sendingSupport}
+                    className="px-5 py-2.5 bg-[#2563EB] hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 disabled:opacity-50 transition-colors cursor-pointer"
                   >
-                    Submit Support Ticket
+                    <Send className="w-4 h-4" /> {sendingSupport ? 'Sending...' : 'Send Feedback to Admin'}
                   </button>
                 </form>
               </div>

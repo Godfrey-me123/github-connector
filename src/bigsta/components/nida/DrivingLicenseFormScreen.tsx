@@ -519,14 +519,14 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
                 onChange={(e) => setFormData((prev) => ({ ...prev, firstName: e.target.value }))}
                 onBlur={() => setTouched((p) => ({ ...p, firstName: true }))}
                 error={touched.firstName ? errors.firstName : undefined}
-                placeholder="e.g. JACKSON"
+                placeholder="e.g. GODFREY"
               />
               <FloatingInput
                 id="secondName"
                 label="SECOND NAME"
                 value={formData.secondName}
                 onChange={(e) => setFormData((prev) => ({ ...prev, secondName: e.target.value }))}
-                placeholder="e.g. FERDINANDI"
+                placeholder="e.g. JOSEPH"
               />
               <FloatingInput
                 id="thirdName"
@@ -535,7 +535,7 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
                 onChange={(e) => setFormData((prev) => ({ ...prev, thirdName: e.target.value }))}
                 onBlur={() => setTouched((p) => ({ ...p, thirdName: true }))}
                 error={touched.thirdName ? errors.thirdName : undefined}
-                placeholder="e.g. MWANGI"
+                placeholder="e.g. RASHID"
               />
             </div>
 
