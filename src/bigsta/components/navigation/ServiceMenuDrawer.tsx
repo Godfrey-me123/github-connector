@@ -40,7 +40,7 @@ export const ServiceMenuDrawer: React.FC<ServiceMenuDrawerProps> = ({
   onClose,
   onSelectInfoService,
 }) => {
-  const { setActiveScreen, activeScreen, authRole, setPasskeyManagerOpen, setRechargeModalOpen, logoutPasskey } = useTemplateStore();
+  const { setActiveScreen, activeScreen, authRole, setPasskeyManagerOpen, setRechargeModalOpen, logoutPasskey, setManualRequestService } = useTemplateStore();
   const unreviewedSms = useUnreviewedSmsCount(authRole === 'admin');
 
   // Root dropdown state: 'none' | 'dashboard' | 'services' (collapsed by default)
@@ -313,6 +313,7 @@ export const ServiceMenuDrawer: React.FC<ServiceMenuDrawerProps> = ({
                     <div className="ml-4 pl-2 border-l border-slate-200 my-1 space-y-1">
                       <button
                         onClick={() => {
+                          setManualRequestService('NIDA Services');
                           setActiveScreen('nida');
                           onClose();
                         }}
@@ -322,6 +323,7 @@ export const ServiceMenuDrawer: React.FC<ServiceMenuDrawerProps> = ({
                       </button>
                       <button
                         onClick={() => {
+                          setManualRequestService('NHIF Membership Card');
                           setActiveScreen('nhif');
                           onClose();
                         }}
@@ -349,6 +351,7 @@ export const ServiceMenuDrawer: React.FC<ServiceMenuDrawerProps> = ({
                     <div className="ml-4 pl-2 border-l border-slate-200 my-1 space-y-1">
                       <button
                         onClick={() => {
+                          setManualRequestService('Driving Licence Services');
                           setActiveScreen('driving_license');
                           onClose();
                         }}
@@ -383,6 +386,7 @@ export const ServiceMenuDrawer: React.FC<ServiceMenuDrawerProps> = ({
                         <button
                           key={svc}
                           onClick={() => {
+                            setManualRequestService(svc);
                             setActiveScreen('nida_request');
                             onClose();
                           }}
@@ -417,6 +421,7 @@ export const ServiceMenuDrawer: React.FC<ServiceMenuDrawerProps> = ({
                         <button
                           key={svc}
                           onClick={() => {
+                            setManualRequestService(svc);
                             setActiveScreen('nida_request');
                             onClose();
                           }}
@@ -456,6 +461,7 @@ export const ServiceMenuDrawer: React.FC<ServiceMenuDrawerProps> = ({
                         <button
                           key={svc}
                           onClick={() => {
+                            setManualRequestService(svc);
                             setActiveScreen('nida_request');
                             onClose();
                           }}

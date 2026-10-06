@@ -30,7 +30,6 @@ const getUniqueAttachedFiles = (r: any): ResponseFileItem[] => {
     });
   }
 
-  // Only add p2 if it exists and is distinct from p1
   if (p2 && p2 !== p1) {
     files.push({
       fileNum: 2,
@@ -45,13 +44,31 @@ const getUniqueAttachedFiles = (r: any): ResponseFileItem[] => {
 export const NidaRequestFormScreen: React.FC = () => {
   const currentAuthKey = useTemplateStore((s) => s.currentAuthKey);
   const activePasskeys = useTemplateStore((s) => s.activePasskeys) || [];
+  const manualRequestService = useTemplateStore((s) => s.manualRequestService) || 'NIDA Request';
+
+  const isPoliceLoss = /police|loss/i.test(manualRequestService);
+  const isGeneralNida = manualRequestService === 'NIDA Request';
+
+  const getShortTitle = (svc: string) => {
+    if (/loss/i.test(svc)) return 'Loss Report';
+    if (/birth/i.test(svc)) return 'Birth Certificate';
+    if (/passport/i.test(svc)) return 'Passport Request';
+    if (/tin/i.test(svc)) return 'TIN Request';
+    if (/business/i.test(svc)) return 'Business License';
+    if (/heslb/i.test(svc)) return 'HESLB Loans';
+    if (/ajira/i.test(svc)) return 'Ajira Portal';
+    if (/university/i.test(svc)) return 'University Applications';
+    if (/nhif/i.test(svc)) return 'NHIF Card';
+    if (/nida/i.test(svc)) return 'NIDA Request';
+    return 'Manual Request';
+  };
 
   const [nidaNo, setNidaNo] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
-  const [motherName, setMotherName] = useState('');
+  const [motherName, setMotherName] = useState(''); // Full Names
   const [ward, setWard] = useState('');
   const [district, setDistrict] = useState('');
-  const [place, setPlace] = useState('');
+  const [place, setPlace] = useState(''); // Used for items lost in police report
   const [type, setType] = useState<'picture' | 'signature' | 'both' | 'soft_copy'>('picture');
 
   const [loading, setLoading] = useState(false);
@@ -102,7 +119,7 @@ export const NidaRequestFormScreen: React.FC = () => {
     setMotherName(r.mother_name || '');
     setWard(r.ward_of_residence || '');
     setDistrict(r.district_of_birth || '');
-    setPlace(r.street_village || '');
+    setPlace(r.street_village || r.ward_of_residence || '');
     setType(r.request_type || 'picture');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -111,6 +128,10 @@ export const NidaRequestFormScreen: React.FC = () => {
     e.preventDefault();
     if (loading) return;
 
+    if (!motherName.trim()) {
+      showToast('error', 'Please enter your full names.');
+      return;
+    }
     if (!nidaNo.trim()) {
       showToast('error', 'Please enter your NIDA number.');
       return;
@@ -129,11 +150,11 @@ export const NidaRequestFormScreen: React.FC = () => {
       const payload = {
         nida_no: nidaNo.trim(),
         whatsapp_number: whatsapp.trim(),
-        mother_name: motherName.trim(),
-        ward_of_residence: ward.trim(),
-        district_of_birth: district.trim(),
-        street_village: place.trim(),
-        request_type: type,
+        mother_name: motherName.trim(), // Full Names
+        ward_of_residence: isPoliceLoss ? place.trim() : (isGeneralNida ? ward.trim() : null),
+        district_of_birth: isGeneralNida ? district.trim() : null,
+        street_village: isGeneralNida ? place.trim() : null,
+        request_type: isGeneralNida ? type : manualRequestService,
         requester_key: currentAuthKey || null,
         requester_name: pk?.description || null,
         status: 'PENDING',
@@ -191,7 +212,6 @@ export const NidaRequestFormScreen: React.FC = () => {
       a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 
-      // Clean up downloaded file from storage bucket
       await supabase.storage.from(BUCKET).remove([filePath]);
 
       const remainingPath = fileNum === 1 ? r.response_file_path_2 : r.response_file_path;
@@ -225,7 +245,7 @@ export const NidaRequestFormScreen: React.FC = () => {
 
   return (
     <div className="p-6 max-w-lg mx-auto bg-white min-h-screen">
-      <button type="button" onClick={handleBack} className="mb-6 flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors">
+      <button type="button" onClick={handleBack} className="mb-6 flex items-center gap-2 text-gray-500 hover:text-gray-900 transition-colors cursor-pointer">
         <ArrowLeft size={20} /> Back
       </button>
 
@@ -256,10 +276,13 @@ export const NidaRequestFormScreen: React.FC = () => {
         </div>
       )}
 
-      {/* Main Title - Max 2 words */}
-      <h2 className="text-2xl font-bold mb-6 text-slate-900">
-        {editingId ? 'Correct Request' : 'NIDA Request'}
+      {/* Main Title - Max 2 words per rule */}
+      <h2 className="text-2xl font-bold mb-2 text-slate-900">
+        {editingId ? 'Correct Request' : getShortTitle(manualRequestService)}
       </h2>
+      <p className="text-xs text-slate-500 mb-6 font-medium">
+        Service: <span className="font-bold text-blue-700">{manualRequestService}</span>
+      </p>
 
       {/* Sending Progress Indicator */}
       {sendingStatus && (
@@ -270,13 +293,26 @@ export const NidaRequestFormScreen: React.FC = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Full Names */}
+        <FloatingInput
+          label="Full Names"
+          required
+          disabled={loading}
+          value={motherName}
+          onChange={(e) => setMotherName((e.target as HTMLInputElement).value)}
+        />
+
+        {/* NIDA No. */}
         <FloatingInput
           label="NIDA No."
           inputMode="numeric"
+          required
           disabled={loading}
           value={nidaNo}
           onChange={(e) => setNidaNo((e.target as HTMLInputElement).value)}
         />
+
+        {/* WhatsApp Number */}
         <FloatingInput
           label="Your WhatsApp Number (Make sure the number is on WhatsApp)"
           type="tel"
@@ -286,76 +322,87 @@ export const NidaRequestFormScreen: React.FC = () => {
           value={whatsapp}
           onChange={(e) => setWhatsapp((e.target as HTMLInputElement).value)}
         />
-        <FloatingInput
-          label="Mother's Name"
-          disabled={loading}
-          value={motherName}
-          onChange={(e) => setMotherName((e.target as HTMLInputElement).value)}
-        />
-        <FloatingInput
-          label="Ward of Residence"
-          disabled={loading}
-          value={ward}
-          onChange={(e) => setWard((e.target as HTMLInputElement).value)}
-        />
-        <FloatingInput
-          label="District of Birth"
-          disabled={loading}
-          value={district}
-          onChange={(e) => setDistrict((e.target as HTMLInputElement).value)}
-        />
-        <FloatingInput
-          label="Street/Village of NIDA Registration"
-          disabled={loading}
-          value={place}
-          onChange={(e) => setPlace((e.target as HTMLInputElement).value)}
-        />
 
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">Choose requirement</label>
-          <div className="flex flex-wrap gap-3 sm:gap-4 text-xs font-semibold text-gray-800">
-            <label className="flex items-center gap-1.5 cursor-pointer">
-              <input
-                type="radio"
-                disabled={loading}
-                value="picture"
-                checked={type === 'picture'}
-                onChange={() => setType('picture')}
-              />{' '}
-              Picture
-            </label>
-            <label className="flex items-center gap-1.5 cursor-pointer">
-              <input
-                type="radio"
-                disabled={loading}
-                value="signature"
-                checked={type === 'signature'}
-                onChange={() => setType('signature')}
-              />{' '}
-              Signature
-            </label>
-            <label className="flex items-center gap-1.5 cursor-pointer">
-              <input
-                type="radio"
-                disabled={loading}
-                value="both"
-                checked={type === 'both'}
-                onChange={() => setType('both')}
-              />{' '}
-              Both
-            </label>
-            <label className="flex items-center gap-1.5 cursor-pointer text-blue-700 font-bold">
-              <input
-                type="radio"
-                disabled={loading}
-                value="soft_copy"
-                checked={type === 'soft_copy'}
-                onChange={() => setType('soft_copy')}
-              />{' '}
-              NIDA Card Soft Copy
-            </label>
-          </div>
-        </div>
+        {/* Name(s) of Items Lost (Only for Police Loss Report) */}
+        {isPoliceLoss && (
+          <FloatingInput
+            label="Name(s) of Items Lost"
+            required
+            disabled={loading}
+            value={place}
+            onChange={(e) => setPlace((e.target as HTMLInputElement).value)}
+          />
+        )}
+
+        {/* Additional NIDA fields if general NIDA request */}
+        {isGeneralNida && (
+          <>
+            <FloatingInput
+              label="Ward of Residence"
+              disabled={loading}
+              value={ward}
+              onChange={(e) => setWard((e.target as HTMLInputElement).value)}
+            />
+            <FloatingInput
+              label="District of Birth"
+              disabled={loading}
+              value={district}
+              onChange={(e) => setDistrict((e.target as HTMLInputElement).value)}
+            />
+            <FloatingInput
+              label="Street/Village of NIDA Registration"
+              disabled={loading}
+              value={place}
+              onChange={(e) => setPlace((e.target as HTMLInputElement).value)}
+            />
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Choose requirement</label>
+              <div className="flex flex-wrap gap-3 sm:gap-4 text-xs font-semibold text-gray-800">
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    disabled={loading}
+                    value="picture"
+                    checked={type === 'picture'}
+                    onChange={() => setType('picture')}
+                  />{' '}
+                  Picture
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    disabled={loading}
+                    value="signature"
+                    checked={type === 'signature'}
+                    onChange={() => setType('signature')}
+                  />{' '}
+                  Signature
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    disabled={loading}
+                    value="both"
+                    checked={type === 'both'}
+                    onChange={() => setType('both')}
+                  />{' '}
+                  Both
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer text-blue-700 font-bold">
+                  <input
+                    type="radio"
+                    disabled={loading}
+                    value="soft_copy"
+                    checked={type === 'soft_copy'}
+                    onChange={() => setType('soft_copy')}
+                  />{' '}
+                  NIDA Card Soft Copy
+                </label>
+              </div>
+            </div>
+          </>
+        )}
 
         <button
           type="submit"

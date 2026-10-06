@@ -45,12 +45,24 @@ export const DownloadsScreen: React.FC = () => {
               Downloads Center is currently in progress.
             </p>
           </div>
-          <button
-            onClick={() => navigateSafely('home')}
-            className="w-full py-3 bg-[#2563EB] hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md transition-all active:scale-95 cursor-pointer"
-          >
-            OK
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => navigateSafely('home')}
+              className="flex-1 py-3 bg-[#2563EB] hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <Home className="w-4 h-4" /> Home
+            </button>
+            <button
+              onClick={() => {
+                const store = useTemplateStore.getState();
+                if (typeof store.goBack === 'function') store.goBack();
+                else store.setActiveScreen('home');
+              }}
+              className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm border border-slate-200 transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
+          </div>
         </div>
       </div>
     );

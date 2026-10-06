@@ -409,9 +409,11 @@ interface TemplateState {
   lastNidaFormData: any | null;
   lastDrivingLicenseFormData: any | null;
   lastNhifFormData: any | null;
+  manualRequestService: string;
   setLastNidaFormData: (data: any) => void;
   setLastDrivingLicenseFormData: (data: any) => void;
   setLastNhifFormData: (data: any) => void;
+  setManualRequestService: (s: string) => void;
   customTemplates: CardTemplate[];
 
   // PROMPT 40: Payment Methods, Settings & User Profile
@@ -1135,9 +1137,11 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     lastNidaFormData: null,
     lastDrivingLicenseFormData: null,
     lastNhifFormData: null,
+    manualRequestService: 'NIDA Request',
     setLastNidaFormData: (data: any) => set({ lastNidaFormData: data }),
     setLastDrivingLicenseFormData: (data: any) => set({ lastDrivingLicenseFormData: data }),
     setLastNhifFormData: (data: any) => set({ lastNhifFormData: data }),
+    setManualRequestService: (s: string) => set({ manualRequestService: s }),
     customTemplates: [],
 
     paymentMethods: initialPaymentMethods,
