@@ -1471,13 +1471,29 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
 
     importTemplateJSON: async (jsonString, asNew = false) => {
       try {
+        // First try GSON parser (dummy)
         const result = parseUniversalGSON(jsonString, asNew);
-        if (!result.success || !result.template) {
-          return { success: false, message: result.message };
+        if (result.success && result.template) {
+           const template = result.template;
+           if (asNew) {
+             await saveTemplateDB(template);
+             const all = await getAllTemplatesDB();
+             set({ customTemplates: all });
+           } else {
+             get().loadTemplate(template);
+           }
+           return { success: true, message: result.message };
         }
-
-        const template = result.template;
-
+        
+        // Fallback to direct JSON parsing
+        console.log('GSON import not supported or failed, trying direct JSON parse...');
+        const template = JSON.parse(jsonString);
+        
+        // Basic validation
+        if (!template.layers || !Array.isArray(template.layers)) {
+            return { success: false, message: 'Invalid template format: Missing layers' };
+        }
+        
         if (asNew) {
           await saveTemplateDB(template);
           const all = await getAllTemplatesDB();
@@ -1485,7 +1501,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         } else {
           get().loadTemplate(template);
         }
-        return { success: true, message: result.message };
+        return { success: true, message: 'Template imported successfully' };
       } catch (e: any) {
         return { success: false, message: e.message || 'Import failed' };
       }
