@@ -20,10 +20,14 @@ export const Route = createFileRoute("/api/remove-bg")({
           bgninjaFormData.append("src", "image-edit-app");
 
           try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
             const r = await fetch("https://bgninja.com/api/remove", {
               method: "POST",
               body: bgninjaFormData,
+              signal: controller.signal,
             });
+            clearTimeout(timeoutId);
             if (r.ok) {
               const buffer = await r.arrayBuffer();
               return new Response(buffer, {
