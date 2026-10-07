@@ -150,7 +150,9 @@ export type Database = {
           requester_name: string | null
           responded_at: string | null
           response_file_name: string | null
+          response_file_name_2: string | null
           response_file_path: string | null
+          response_file_path_2: string | null
           status: string
           street_village: string | null
           updated_at: string
@@ -169,7 +171,9 @@ export type Database = {
           requester_name?: string | null
           responded_at?: string | null
           response_file_name?: string | null
+          response_file_name_2?: string | null
           response_file_path?: string | null
+          response_file_path_2?: string | null
           status?: string
           street_village?: string | null
           updated_at?: string
@@ -188,7 +192,9 @@ export type Database = {
           requester_name?: string | null
           responded_at?: string | null
           response_file_name?: string | null
+          response_file_name_2?: string | null
           response_file_path?: string | null
+          response_file_path_2?: string | null
           status?: string
           street_village?: string | null
           updated_at?: string
