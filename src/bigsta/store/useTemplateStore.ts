@@ -2707,10 +2707,10 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         const { syncProfileSupabase, syncPasskeySupabase } = await import("../services/supabase");
         await Promise.all([
           syncProfileSupabase({
-            id: newUser.id,
+            id: newUser.passkey,
             name: newUser.fullName,
             phone: newUser.phone,
-            email: `${newUser.phone.replace(/[^0-9]/g, "")}@bigsta.tz`,
+            email: "",
             role: newUser.role,
             tokens: grantedTokens,
             passkey: newUser.passkey,
@@ -3617,9 +3617,10 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       try {
         const { fetchProfileSupabase } = await import("../services/supabase");
         const prof = await fetchProfileSupabase(match.key);
+        const reg = /Registered User:\s*(.+?)\s*\(([^)]+)\)/.exec(match.description || "");
         const loaded = {
-          name: prof?.name || match.description || "",
-          phone: prof?.phone || "",
+          name: prof?.name || reg?.[1] || match.createdBy || "",
+          phone: prof?.phone || reg?.[2] || "",
           email: prof?.email || "",
           region: prof?.region || "",
         };

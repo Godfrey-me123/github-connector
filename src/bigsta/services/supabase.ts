@@ -1042,9 +1042,16 @@ export async function fetchProfileSupabase(userId: string): Promise<any | null> 
       .from("profiles")
       .select("*")
       .eq("id", getUUID(userId))
-      .single();
-    if (error || !data) return null;
-    return data;
+      .maybeSingle();
+    if (data) return data;
+    // Fallback: profile saved at registration under another id — find it by passkey
+    const { data: byKey } = await supabase
+      .from("profiles")
+      .select("*")
+      .ilike("passkey", userId)
+      .order("updated_at", { ascending: false })
+      .limit(1);
+    return byKey?.[0] || null;
   } catch (e) {
     return null;
   }
