@@ -1,0 +1,1 @@
+ALTER TABLE public.nida_requests ADD COLUMN IF NOT EXISTS response_file_path_2 text, ADD COLUMN IF NOT EXISTS response_file_name_2 text;
