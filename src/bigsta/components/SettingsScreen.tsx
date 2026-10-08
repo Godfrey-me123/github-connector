@@ -497,12 +497,41 @@ export const SettingsScreen: React.FC = () => {
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                       Region / Location
                     </label>
-                    <input
-                      type="text"
-                      value={profileForm.region}
-                      onChange={(e) => setProfileForm({ ...profileForm, region: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#14171A] text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={profileForm.region}
+                        placeholder="e.g. Dar es Salaam, Tanzania"
+                        onChange={(e) => setProfileForm({ ...profileForm, region: e.target.value })}
+                        className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-white/15 bg-white dark:bg-[#14171A] text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const fmt = (r: string, c: string) => [r, c].filter(Boolean).join(', ');
+                          const ipFallback = async () => {
+                            try {
+                              const j = await (await fetch('https://ipapi.co/json/')).json();
+                              const v = fmt(j.region || j.city, j.country_name);
+                              if (v) setProfileForm((p: any) => ({ ...p, region: v }));
+                              else alert('Could not detect location.');
+                            } catch { alert('Could not detect location.'); }
+                          };
+                          if (!navigator.geolocation) return ipFallback();
+                          navigator.geolocation.getCurrentPosition(async (pos) => {
+                            try {
+                              const { latitude, longitude } = pos.coords;
+                              const j = await (await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`)).json();
+                              const v = fmt(j.principalSubdivision || j.city, j.countryName);
+                              if (v) setProfileForm((p: any) => ({ ...p, region: v })); else ipFallback();
+                            } catch { ipFallback(); }
+                          }, () => ipFallback(), { timeout: 10000 });
+                        }}
+                        className="px-3 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-bold whitespace-nowrap"
+                      >
+                        📍 Detect
+                      </button>
+                    </div>
                   </div>
 
                   <button
