@@ -1340,14 +1340,25 @@ export const CanvasWorkspace: React.FC = () => {
                     return (
                       <Group {...commonProps} key={layer.id}>
                         {imgObj ? (
-                          <KonvaImage 
-                            image={imgObj} 
-                            width={wPx} 
-                            height={hPx} 
-                            // Note: Edge fade would likely need a custom filter or a mask.
-                            // Given the requirement to not redesign, I will just render the image for now,
-                            // and if edge fade is critical, it would require applying a mask layer.
-                          />
+                          <>
+                            <KonvaImage image={imgObj} width={wPx} height={hPx} />
+                            {isSticker && stickerLayer?.edgeFade?.enabled && (
+                              <Group width={wPx} height={hPx} globalCompositeOperation="destination-out">
+                                {stickerLayer.edgeFade.top && (
+                                  <Rect width={wPx} height={hPx * stickerLayer.edgeFade.distance} fillLinearGradientStartPoint={{x: 0, y: hPx * stickerLayer.edgeFade.distance}} fillLinearGradientEndPoint={{x: 0, y: 0}} fillLinearGradientColorStops={[0, `rgba(0,0,0,0)`, 1, `rgba(0,0,0,${stickerLayer.edgeFade.strength})`]} />
+                                )}
+                                {stickerLayer.edgeFade.bottom && (
+                                  <Rect y={hPx * (1 - stickerLayer.edgeFade.distance)} width={wPx} height={hPx * stickerLayer.edgeFade.distance} fillLinearGradientStartPoint={{x: 0, y: hPx * (1 - stickerLayer.edgeFade.distance)}} fillLinearGradientEndPoint={{x: 0, y: hPx}} fillLinearGradientColorStops={[0, `rgba(0,0,0,0)`, 1, `rgba(0,0,0,${stickerLayer.edgeFade.strength})`]} />
+                                )}
+                                {stickerLayer.edgeFade.left && (
+                                  <Rect width={wPx * stickerLayer.edgeFade.distance} height={hPx} fillLinearGradientStartPoint={{x: wPx * stickerLayer.edgeFade.distance, y: 0}} fillLinearGradientEndPoint={{x: 0, y: 0}} fillLinearGradientColorStops={[0, `rgba(0,0,0,0)`, 1, `rgba(0,0,0,${stickerLayer.edgeFade.strength})`]} />
+                                )}
+                                {stickerLayer.edgeFade.right && (
+                                  <Rect x={wPx * (1 - stickerLayer.edgeFade.distance)} width={wPx * stickerLayer.edgeFade.distance} height={hPx} fillLinearGradientStartPoint={{x: wPx * (1 - stickerLayer.edgeFade.distance), y: 0}} fillLinearGradientEndPoint={{x: wPx, y: 0}} fillLinearGradientColorStops={[0, `rgba(0,0,0,0)`, 1, `rgba(0,0,0,${stickerLayer.edgeFade.strength})`]} />
+                                )}
+                              </Group>
+                            )}
+                          </>
                         ) : (
                           <>
                             <Rect
