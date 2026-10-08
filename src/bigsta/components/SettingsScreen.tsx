@@ -84,6 +84,30 @@ export const SettingsScreen: React.FC = () => {
     setProfileForm(userProfile);
   }, [userProfile]);
 
+  // Always refresh this account's profile from the database and split any "Label: Name (phone)" text
+  useEffect(() => {
+    const key = useTemplateStore.getState().currentAuthKey;
+    if (!key) return;
+    (async () => {
+      try {
+        const { fetchProfileSupabase } = await import("../services/supabase");
+        const prof: any = await fetchProfileSupabase(key);
+        const pk = useTemplateStore.getState().activePasskeys?.find((p: any) => p.key === key);
+        const split = (s: string) => /^(?:[^:]*:\s*)?(.+?)\s*\(([^)]+)\)/.exec(s || "");
+        const cur: any = useTemplateStore.getState().userProfile || {};
+        const fromDesc = split(pk?.description || "");
+        let name = prof?.name || cur.name || fromDesc?.[1] || "";
+        let phone = prof?.phone || cur.phone || fromDesc?.[2] || "";
+        const m = /[:(]/.test(name) ? split(name) : null;
+        if (m) { name = m[1]; phone = phone || m[2]; }
+        name = name.replace(/^[^:]*:\s*/, "").replace(/\s*\[.*\]$/, "").trim();
+        const loaded = { name, phone, email: prof?.email || cur.email || "", region: prof?.region || cur.region || "" };
+        try { localStorage.setItem("bigsta_user_profile", JSON.stringify(loaded)); } catch {}
+        useTemplateStore.setState({ userProfile: loaded });
+      } catch {}
+    })();
+  }, []);
+
   useEffect(() => {
     setPrefsForm(userPreferences);
   }, [userPreferences]);
