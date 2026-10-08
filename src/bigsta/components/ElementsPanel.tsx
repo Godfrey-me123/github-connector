@@ -27,6 +27,7 @@ interface ElementsPanelProps {
 export const ElementsPanel: React.FC<ElementsPanelProps> = ({ onElementAdded }) => {
   const { addLayer, currentTemplate, activeServiceId } = useTemplateStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const stickerInputRef = useRef<HTMLInputElement>(null);
 
   const handleAddText = (defaultText: string = "{{first_name}}") => {
     const isVar = defaultText.startsWith("{{");
@@ -267,6 +268,33 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({ onElementAdded }) 
     };
     reader.readAsDataURL(file);
     e.target.value = "";
+  };
+
+  const handleAddSticker = () => {
+    const newLayer: StickerLayer = {
+      id: "sticker_" + Date.now(),
+      name: "Sticker",
+      type: "sticker",
+      x: 10,
+      y: 10,
+      width: 20,
+      height: 20,
+      rotation: 0,
+      opacity: 1,
+      locked: false,
+      hidden: false,
+      edgeFade: {
+        enabled: false,
+        strength: 0.5,
+        distance: 0.2,
+        top: false,
+        bottom: false,
+        left: false,
+        right: false,
+      },
+    };
+    addLayer(newLayer);
+    onElementAdded?.();
   };
 
   const handleAddCategoryDate = (
@@ -792,6 +820,13 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({ onElementAdded }) 
           >
             <BarcodeIcon className="w-4 h-4 text-[#000000] flex-shrink-0" />
             <span className="truncate">PDF417 2D</span>
+          </button>
+          <button
+            onClick={handleAddSticker}
+            className="p-2.5 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-2 transition-colors min-h-[42px] cursor-pointer"
+          >
+            <Tag className="w-4 h-4 text-[#000000] flex-shrink-0" />
+            <span className="truncate">Add Sticker</span>
           </button>
         </div>
       </div>

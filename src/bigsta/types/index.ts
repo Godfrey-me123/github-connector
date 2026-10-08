@@ -29,7 +29,21 @@ export type CardType =
 export type CardSide = "Front Side" | "Back Side" | "Full Card" | "Single Side";
 
 export type LayerType =
-  "text" | "image" | "placeholder" | "shape" | "barcode" | "qrcode" | "group" | "licence_category";
+  "text" | "image" | "placeholder" | "shape" | "barcode" | "qrcode" | "group" | "licence_category" | "sticker";
+
+export interface StickerLayer extends BaseLayer {
+  type: "sticker";
+  src?: string; // base64 or url
+  edgeFade?: {
+    enabled: boolean;
+    strength: number; // 0-1
+    distance: number; // 0-0.5
+    top: boolean;
+    bottom: boolean;
+    left: boolean;
+    right: boolean;
+  };
+}
 
 export type ShapeType = "rectangle" | "circle" | "line" | "polygon";
 
@@ -219,7 +233,8 @@ export type Layer =
   | ShapeLayer
   | BarcodeLayer
   | QRCodeLayer
-  | LicenceCategoryLayer;
+  | LicenceCategoryLayer
+  | StickerLayer;
 
 export interface BackgroundConfig {
   type: "image" | "color";

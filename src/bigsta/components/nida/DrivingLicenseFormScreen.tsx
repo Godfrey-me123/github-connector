@@ -51,6 +51,7 @@ export interface DrivingLicenseFormData {
   photoUrl?: string | null;
   signatureUrl?: string | null;
   termsAccepted: boolean;
+  includeStickers: boolean;
   classes: VehicleClassItem[];
 }
 
@@ -108,6 +109,7 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
           issueDate: c.issueDate ? formatToDdMmYyyy(c.issueDate) : "",
           expiryDate: c.expiryDate ? formatToDdMmYyyy(c.expiryDate) : "",
         })),
+        includeStickers: lastDrivingLicenseFormData.includeStickers || false,
       };
     }
     return {
@@ -126,6 +128,7 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
       photoUrl: null,
       signatureUrl: null,
       termsAccepted: false,
+      includeStickers: false,
       classes: SUPPORTED_CLASS_CODES.map((code) => ({
         classCode: code,
         enabled: code === "B", // Default enable Class B
@@ -931,6 +934,24 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
 
           {/* SECTION 4: STATUTORY TERMS */}
           <div className="p-4 sm:p-5 bg-[#FFFFFF] border border-[#C8C2BE] rounded-2xl shadow-xs space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+              <h2 className="text-xs font-bold uppercase tracking-wider text-[#101010]">
+                Additional Options
+              </h2>
+            </div>
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={formData.includeStickers}
+                onChange={(e) => setFormData((prev) => ({ ...prev, includeStickers: e.target.checked }))}
+                className="w-5 h-5 rounded border-2 border-[#C8C2BE] text-[#101010] focus:ring-[#101010] cursor-pointer"
+              />
+              <span className="text-xs font-bold text-[#101010] group-hover:underline">
+                Include Stickers from Template
+              </span>
+            </label>
+
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
               <h2 className="text-xs font-bold uppercase tracking-wider text-[#101010]">

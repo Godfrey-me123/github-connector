@@ -1,5 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Sliders,
   Type,
@@ -106,6 +106,7 @@ interface RightPanelProps {
 }
 
 export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }) => {
+  const stickerInputRef = useRef<HTMLInputElement>(null);
   const {
     currentTemplate,
     updateTemplateMeta,
@@ -2818,6 +2819,77 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                   onChange={(e) => updateLayer(selectedLayer.id, { data: e.target.value })}
                   className="w-full px-2.5 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded font-mono text-xs text-[#000000] focus:outline-none focus:border-[#000000]"
                 />
+              </div>
+            </div>
+          )}
+
+          {/* Sticker Specific Configuration */}
+          {selectedLayer.type === "sticker" && (
+            <div className="space-y-4 pt-2 border-t border-[#E7E9EB]">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => stickerInputRef.current?.click()}
+                  className="flex-1 px-2.5 py-1.5 bg-[#E7E9EB] hover:bg-[#dadcdc] rounded text-xs font-semibold text-[#000000] transition-colors cursor-pointer"
+                >
+                  {selectedLayer.src ? "Replace Sticker" : "Upload Sticker"}
+                </button>
+                <input
+                  ref={stickerInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (ev) => updateLayer(selectedLayer.id, { src: ev.target?.result as string });
+                      reader.readAsDataURL(file);
+                    }
+                    e.target.value = "";
+                  }}
+                  className="hidden"
+                />
+                {selectedLayer.src && (
+                  <button
+                    onClick={() => updateLayer(selectedLayer.id, { src: "" })}
+                    className="px-2.5 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 rounded text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+
+              {/* Edge Fade Settings */}
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-[#000000] font-semibold text-[11px]">
+                  <input
+                    type="checkbox"
+                    checked={selectedLayer.edgeFade?.enabled || false}
+                    onChange={(e) => updateLayer(selectedLayer.id, {
+                      edgeFade: { ...(selectedLayer.edgeFade || { strength: 0.5, distance: 0.2, top: false, bottom: false, left: false, right: false }), enabled: e.target.checked }
+                    })}
+                  />
+                  Enable Edge Fade
+                </label>
+                {selectedLayer.edgeFade?.enabled && (
+                  <div className="pl-6 space-y-2">
+                    <div>
+                      <label className="block text-[10px] text-[#555] mb-0.5">Strength</label>
+                      <input type="range" min="0" max="1" step="0.1" value={selectedLayer.edgeFade.strength} onChange={(e) => updateLayer(selectedLayer.id, { edgeFade: { ...selectedLayer.edgeFade!, strength: parseFloat(e.target.value) } })} className="w-full" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-[#555] mb-0.5">Distance</label>
+                      <input type="range" min="0" max="0.5" step="0.05" value={selectedLayer.edgeFade.distance} onChange={(e) => updateLayer(selectedLayer.id, { edgeFade: { ...selectedLayer.edgeFade!, distance: parseFloat(e.target.value) } })} className="w-full" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-1 text-[10px]">
+                      {(['top', 'bottom', 'left', 'right'] as const).map(dir => (
+                        <label key={dir} className="flex items-center gap-1 capitalize">
+                          <input type="checkbox" checked={selectedLayer.edgeFade![dir]} onChange={(e) => updateLayer(selectedLayer.id, { edgeFade: { ...selectedLayer.edgeFade!, [dir]: e.target.checked } })} />
+                          {dir}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
