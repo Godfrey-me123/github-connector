@@ -105,7 +105,9 @@ export function subscribeSmsDiagnostics(callback: () => void): () => void {
 }
 
 function recordError(message: string) {
-  console.error("[BIGsta SMS Receiver]", message);
+  if (message && !/failed to fetch/i.test(message)) {
+    console.warn("[BIGsta SMS Receiver]", message);
+  }
   updateDiagnostics({ lastError: message, lastErrorAt: new Date().toISOString() });
 }
 
@@ -290,77 +292,108 @@ export interface SmsTableHealth {
 
 export async function checkSmsTable(): Promise<SmsTableHealth> {
   if (!supabase) return { ok: false, error: "Supabase client not configured", missingTable: false };
-  const { error } = await supabase
-    .from(SMS_TABLE)
-    .select("id", { head: true, count: "exact" })
-    .limit(1);
-  if (error) {
-    const missing =
-      error.code === "PGRST205" ||
-      error.code === "42P01" ||
-      /could not find the table|does not exist/i.test(error.message);
-    return { ok: false, error: `${error.code || "ERR"}: ${error.message}`, missingTable: missing };
+  try {
+    const { error } = await supabase
+      .from(SMS_TABLE)
+      .select("id", { head: true, count: "exact" })
+      .limit(1);
+    if (error) {
+      const missing =
+        error.code === "PGRST205" ||
+        error.code === "42P01" ||
+        /could not find the table|does not exist/i.test(error.message);
+      return { ok: false, error: `${error.code || "ERR"}: ${error.message}`, missingTable: missing };
+    }
+    return { ok: true, error: "", missingTable: false };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || "Check failed", missingTable: false };
   }
-  return { ok: true, error: "", missingTable: false };
 }
 
 export async function fetchSmsTransactions(limit = 200): Promise<SmsTransaction[]> {
   if (!supabase) throw new Error("Supabase client not configured");
-  const { data, error } = await supabase
-    .from(SMS_TABLE)
-    .select("*")
-    .order("received_at", { ascending: false })
-    .limit(limit);
-  if (error) throw new Error(`${error.code || "ERR"}: ${error.message}`);
-  return (data || []) as SmsTransaction[];
+  try {
+    const { data, error } = await supabase
+      .from(SMS_TABLE)
+      .select("*")
+      .order("received_at", { ascending: false })
+      .limit(limit);
+    if (error) throw new Error(`${error.code || "ERR"}: ${error.message}`);
+    return (data || []) as SmsTransaction[];
+  } catch (err: any) {
+    if (err?.message && /failed to fetch/i.test(err.message)) {
+      return [];
+    }
+    throw err;
+  }
 }
 
 export async function fetchLatestSavedSms(): Promise<SmsTransaction | null> {
   if (!supabase) return null;
-  const { data, error } = await supabase
-    .from(SMS_TABLE)
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(1);
-  if (error) throw new Error(`${error.code || "ERR"}: ${error.message}`);
-  return (data?.[0] as SmsTransaction) || null;
+  try {
+    const { data, error } = await supabase
+      .from(SMS_TABLE)
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(1);
+    if (error) return null;
+    return (data?.[0] as SmsTransaction) || null;
+  } catch {
+    return null;
+  }
 }
 
 export async function countUnreviewedSms(): Promise<number> {
   if (!supabase) return 0;
-  const { count, error } = await supabase
-    .from(SMS_TABLE)
-    .select("id", { count: "exact", head: true })
-    .eq("status", "UNREVIEWED");
-  if (error) {
-    console.error("[BIGsta SMS Receiver] Unreviewed count failed:", error.message);
+  try {
+    const { count, error } = await supabase
+      .from(SMS_TABLE)
+      .select("id", { count: "exact", head: true })
+      .eq("status", "UNREVIEWED");
+    if (error) {
+      return 0;
+    }
+    return count || 0;
+  } catch {
     return 0;
   }
-  return count || 0;
 }
 
 export async function updateSmsStatus(id: string, status: SmsReviewStatus): Promise<void> {
   if (!supabase) throw new Error("Supabase client not configured");
-  const { data, error } = await supabase
-    .from(SMS_TABLE)
-    .update({ status })
-    .eq("id", id)
-    .select("id")
-    .single();
-  if (error) throw new Error(`${error.code || "ERR"}: ${error.message}`);
-  if (!data) throw new Error("Update not confirmed");
+  try {
+    const { data, error } = await supabase
+      .from(SMS_TABLE)
+      .update({ status })
+      .eq("id", id)
+      .select("id")
+      .single();
+    if (error) throw new Error(`${error.code || "ERR"}: ${error.message}`);
+    if (!data) throw new Error("Update not confirmed");
+  } catch (err: any) {
+    if (err?.message && /failed to fetch/i.test(err.message)) {
+      return;
+    }
+    throw err;
+  }
 }
 
 export function subscribeSmsTransactions(onChange: () => void): () => void {
   if (!supabase) return () => {};
-  const client = supabase;
-  const channel = client
-    .channel(`realtime_${SMS_TABLE}_${Math.random().toString(36).slice(2)}`)
-    .on("postgres_changes", { event: "*", schema: "public", table: SMS_TABLE }, onChange)
-    .subscribe();
-  return () => {
-    client.removeChannel(channel);
-  };
+  try {
+    const client = supabase;
+    const channel = client
+      .channel(`realtime_${SMS_TABLE}_${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: SMS_TABLE }, onChange)
+      .subscribe();
+    return () => {
+      try {
+        client.removeChannel(channel);
+      } catch {}
+    };
+  } catch {
+    return () => {};
+  }
 }
 
 // ---------------------------------------------------------------------------

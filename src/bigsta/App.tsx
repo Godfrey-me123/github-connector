@@ -20,6 +20,7 @@ import { NidaFormScreen } from "./components/nida";
 import { NidaRequestFormScreen } from "./components/nida/NidaRequestFormScreen";
 import { DrivingLicenseFormScreen } from "./components/nida/DrivingLicenseFormScreen";
 import { NhifFormScreen } from "./components/nida/NhifFormScreen";
+import { NrcZambiaFormScreen } from "./components/nida/NrcZambiaFormScreen";
 import { NidaSuccessToast } from "./components/nida/NidaSuccessToast";
 import { HomeScreen } from "./components/HomeScreen";
 import { CardPreviewScreen } from "./components/CardPreviewScreen";
@@ -418,6 +419,27 @@ export default function App() {
       <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
         <NhifFormScreen
+          onCancel={() => useTemplateStore.getState().goBack()}
+          onSuccess={() => {
+            // Handled in workflow -> transitions to preview screen
+          }}
+        />
+        <PasskeyManagerModal />
+        <RechargeModal />
+        <ExportModal />
+        <SaveTemplateModal />
+        <MergeCardModal />
+        <TemplateLibraryModal />
+        <CardGeneratorModal />
+      </div>
+    );
+  }
+
+  if (activeScreen === "nrc_zambia") {
+    return (
+      <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
+        <UsageExhaustedBanner />
+        <NrcZambiaFormScreen
           onCancel={() => useTemplateStore.getState().goBack()}
           onSuccess={() => {
             // Handled in workflow -> transitions to preview screen

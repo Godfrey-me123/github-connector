@@ -37,6 +37,7 @@ export const CardGeneratorModal: React.FC = () => {
     lastDrivingLicenseFormData,
     lastNidaFormData,
     lastNhifFormData,
+    lastNrcFormData,
     activeServiceId,
     getUniversalFrontTemplate,
     getUniversalBackTemplate,
@@ -62,9 +63,11 @@ export const CardGeneratorModal: React.FC = () => {
   const submittedData: any =
     activeServiceId === "nhif"
       ? lastNhifFormData || {}
-      : isDL
-        ? lastDrivingLicenseFormData || {}
-        : lastNidaFormData || {};
+      : activeServiceId === "nrc_zambia"
+        ? lastNrcFormData || {}
+        : isDL
+          ? lastDrivingLicenseFormData || {}
+          : lastNidaFormData || {};
 
   // Resolve front & back templates
   const resolvedFrontTemplate: CardTemplate = React.useMemo(() => {

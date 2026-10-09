@@ -361,6 +361,16 @@ export const ServiceMenuDrawer: React.FC<ServiceMenuDrawerProps> = ({
                       >
                         NHIF Membership Card
                       </button>
+                      <button
+                        onClick={() => {
+                          setManualRequestService("NRC card-zambia");
+                          setActiveScreen("nrc_zambia");
+                          onClose();
+                        }}
+                        className="w-full text-left px-2.5 py-1.5 rounded-md text-[11px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+                      >
+                        NRC card-zambia
+                      </button>
                     </div>
                   )}
                 </div>

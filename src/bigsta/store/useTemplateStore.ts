@@ -348,6 +348,24 @@ export const INITIAL_SERVICES: ServiceData[] = [
     processingMode: "auto",
   },
   {
+    id: "nrc_zambia",
+    name: "NRC card-zambia",
+    authority: "National Registration Department",
+    description:
+      "Official Zambia National Registration Card (NRC) issuance, verification and CR80 card generation.",
+    category: "identity",
+    iconName: "CreditCard",
+    active: true,
+    tokenCost: 1,
+    features: [
+      "NRC Number Verification",
+      "Biometric Photo Cropping",
+      "Digital Signature Specimen",
+      "Barcode & QR Validation",
+    ],
+    processingMode: "auto",
+  },
+  {
     id: "ajira",
     name: "Ajira Portal Services",
     authority: "Public Service Recruitment Secretariat",
@@ -476,6 +494,7 @@ interface TemplateState {
     | "downloads"
     | "driving_license"
     | "nhif"
+    | "nrc_zambia"
     | "admin-payments"
     | "billing"
     | "settings";
@@ -485,10 +504,12 @@ interface TemplateState {
   lastNidaFormData: any | null;
   lastDrivingLicenseFormData: any | null;
   lastNhifFormData: any | null;
+  lastNrcFormData: any | null;
   manualRequestService: string;
   setLastNidaFormData: (data: any) => void;
   setLastDrivingLicenseFormData: (data: any) => void;
   setLastNhifFormData: (data: any) => void;
+  setLastNrcFormData: (data: any) => void;
   setManualRequestService: (s: string) => void;
   customTemplates: CardTemplate[];
 
@@ -558,6 +579,7 @@ interface TemplateState {
       | "downloads"
       | "driving_license"
       | "nhif"
+      | "nrc_zambia"
       | "admin-payments"
       | "billing"
       | "settings";
@@ -595,6 +617,7 @@ interface TemplateState {
       | "downloads"
       | "driving_license"
       | "nhif"
+      | "nrc_zambia"
       | "admin-payments"
       | "billing"
       | "settings",
@@ -799,6 +822,8 @@ interface TemplateState {
       | "preview"
       | "downloads"
       | "driving_license"
+      | "nhif"
+      | "nrc_zambia"
       | "admin-payments"
       | "billing"
       | "settings",
@@ -1374,10 +1399,12 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     lastNidaFormData: null,
     lastDrivingLicenseFormData: null,
     lastNhifFormData: null,
+    lastNrcFormData: null,
     manualRequestService: "NIDA Request",
     setLastNidaFormData: (data: any) => set({ lastNidaFormData: data }),
     setLastDrivingLicenseFormData: (data: any) => set({ lastDrivingLicenseFormData: data }),
     setLastNhifFormData: (data: any) => set({ lastNhifFormData: data }),
+    setLastNrcFormData: (data: any) => set({ lastNrcFormData: data }),
     setManualRequestService: (s: string) => set({ manualRequestService: s }),
     customTemplates: [],
 
@@ -1882,12 +1909,13 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         return;
       }
 
-      // 1. Any service form (nida, driving_license, nhif) must ALWAYS navigate directly to 'home' when back is pressed!
+      // 1. Any service form (nida, driving_license, nhif, nrc_zambia) must ALWAYS navigate directly to 'home' when back is pressed!
       if (
         current === "nida" ||
         current === "nida_request" ||
         current === "driving_license" ||
-        current === "nhif"
+        current === "nhif" ||
+        current === "nrc_zambia"
       ) {
         const cleanedHistory = get().navigationHistory.filter(
           (h) => h.screen !== "preview" && h.screen !== "downloads" && h.screen !== current,
@@ -1924,7 +1952,9 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
             ? "driving_license"
             : get().activeServiceId === "nhif"
               ? "nhif"
-              : "nida";
+              : get().activeServiceId === "nrc_zambia"
+                ? "nrc_zambia"
+                : "nida";
 
         const cleanedHistory = get().navigationHistory.filter(
           (h) => h.screen !== "preview" && h.screen !== "downloads",
@@ -2037,6 +2067,15 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
             tType.includes("health")
           );
         }
+        if (sId === "nrc_zambia" || sId === "nrc card-zambia" || sId === "nrc") {
+          return (
+            tServ === "nrc_zambia" ||
+            tServ === "nrc card-zambia" ||
+            tId.includes("nrc") ||
+            tType.includes("nrc") ||
+            tType.includes("national registration")
+          );
+        }
         if (sId === "birth_certificate") {
           return tServ === "birth_certificate" || tId.includes("birth") || tType.includes("birth");
         }
@@ -2131,6 +2170,15 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
             tId.includes("nhif") ||
             tType.includes("nhif") ||
             tType.includes("health")
+          );
+        }
+        if (sId === "nrc_zambia" || sId === "nrc card-zambia" || sId === "nrc") {
+          return (
+            tServ === "nrc_zambia" ||
+            tServ === "nrc card-zambia" ||
+            tId.includes("nrc") ||
+            tType.includes("nrc") ||
+            tType.includes("national registration")
           );
         }
         if (sId === "birth_certificate") {
@@ -4416,6 +4464,9 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       if (ctx.lastNhifFormData && !get().lastNhifFormData) {
         updates.lastNhifFormData = ctx.lastNhifFormData;
       }
+      if (ctx.lastNrcFormData && !get().lastNrcFormData) {
+        updates.lastNrcFormData = ctx.lastNrcFormData;
+      }
 
       set(updates);
     },
@@ -4437,6 +4488,8 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         | "preview"
         | "downloads"
         | "driving_license"
+        | "nhif"
+        | "nrc_zambia"
         | "admin-payments",
     ) => {
       get().navigateSafely(screen);
@@ -4455,6 +4508,11 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         front?.serviceId === "nhif" ||
         (formData &&
           ("cardNumber" in formData || "cardStatus" in formData || "card_no" in formData));
+      const isNRC =
+        activeService === "nrc_zambia" ||
+        front?.cardType === "National Registration Card (NRC)" ||
+        front?.serviceId === "nrc_zambia" ||
+        (formData && ("nrcNumber" in formData || "village" in formData || "chief" in formData));
 
       if (isDL) {
         set({
@@ -4468,6 +4526,12 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
           frontPopulatedTemplate: front,
           backPopulatedTemplate: back,
           lastNhifFormData: formData !== undefined ? formData : get().lastNhifFormData,
+        });
+      } else if (isNRC) {
+        set({
+          frontPopulatedTemplate: front,
+          backPopulatedTemplate: back,
+          lastNrcFormData: formData !== undefined ? formData : get().lastNrcFormData,
         });
       } else {
         set({

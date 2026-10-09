@@ -24,6 +24,59 @@ export const SampleDataPreviewModal: React.FC<SampleDataPreviewModalProps> = ({
 
   // Generate realistic sample data based on active service
   const sampleData = useMemo(() => {
+    if (activeServiceId === "nrc_zambia") {
+      return {
+        serviceId: "nrc_zambia",
+        nrcNumber: "123456/78/1",
+        nrc_number: "123456/78/1",
+        nrcNo: "123456/78/1",
+        cardNumber: "123456/78/1",
+        fullName: "CHANDA BWALYA MWANSA",
+        full_name: "CHANDA BWALYA MWANSA",
+        name: "CHANDA BWALYA MWANSA",
+        gender: "MALE",
+        sex: "MALE",
+        dateOfBirth: "12/04/1990",
+        date_of_birth: "12/04/1990",
+        dob: "12/04/1990",
+        dateOfIssue: "15/06/2010",
+        date_of_issue: "15/06/2010",
+        issue_date: "15/06/2010",
+        placeOfBirth: "KASAMA",
+        place_of_birth: "KASAMA",
+        district: "LUSAKA",
+        village: "CHIMWEMWE",
+        chief: "MWAMBA",
+        photoUrl:
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80",
+        photo:
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80",
+        signatureUrl:
+          "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iNTAiPjxwYXRoIGQ9Ik0xMCAzMCBRIDMwIDEwIDUwIDMwIFQgOTAgMzAgVCAxMzAgMzAiIHN0cm9rZT0iIzA5MGIxMCIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIi8+PC9zdmc+",
+        signature:
+          "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iNTAiPjxwYXRoIGQ9Ik0xMCAzMCBRIDMwIDEwIDUwIDMwIFQgOTAgMzAgVCAxMzAgMzAiIHN0cm9rZT0iIzA5MGIxMCIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIi8+PC9zdmc+",
+      };
+    }
+
+    if (activeServiceId === "nhif") {
+      return {
+        serviceId: "nhif",
+        fullName: "FATUMA JUMA HASSAN",
+        full_name: "FATUMA JUMA HASSAN",
+        name: "FATUMA JUMA HASSAN",
+        cardNumber: "NHIF-2024-987654",
+        card_no: "NHIF-2024-987654",
+        cardStatus: "Active",
+        card_status: "Active",
+        dob: "22/11/1993",
+        gender: "FEMALE",
+        photo:
+          "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80",
+        signature:
+          "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iNTAiPjxwYXRoIGQ9Ik0xMCAzMCBRIDMwIDEwIDUwIDMwIFQgOTAgMzAgVCAxMzAgMzAiIHN0cm9rZT0iIzA5MGIxMCIgc3Ryb2tlLXdpZHRoPSIzIiBmaWxsPSJub25lIi8+PC9zdmc+",
+      };
+    }
+
     if (activeServiceId === "driving_license") {
       return {
         serviceId: "driving_license",

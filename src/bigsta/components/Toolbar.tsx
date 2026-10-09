@@ -198,6 +198,7 @@ export const Toolbar: React.FC = () => {
               <option value="business_license">Business License</option>
               <option value="heslb">HESLB</option>
               <option value="nhif">NHIF Health Card</option>
+              <option value="nrc_zambia">NRC card-zambia</option>
               <option value="ajira">Ajira Portal</option>
             </select>
           </div>

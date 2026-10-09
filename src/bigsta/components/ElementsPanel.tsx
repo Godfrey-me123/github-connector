@@ -626,7 +626,100 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({ onElementAdded }) 
             </>
           )}
 
-          {activeServiceId !== "driving_license" && activeServiceId !== "nhif" && (
+          {activeServiceId === "nrc_zambia" && (
+            <>
+              <button
+                onClick={() => handleAddText("{{nrc_number}}")}
+                className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer col-span-2"
+              >
+                <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
+                <span className="truncate">NRC Number</span>
+              </button>
+              <button
+                onClick={() => handleAddText("{{full_name}}")}
+                className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer col-span-2"
+              >
+                <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
+                <span className="truncate">Full Name</span>
+              </button>
+              <button
+                onClick={() => handleAddText("{{dob}}")}
+                className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
+              >
+                <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
+                <span className="truncate">Date of Birth</span>
+              </button>
+              <button
+                onClick={() => handleAddText("{{gender}}")}
+                className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
+              >
+                <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
+                <span className="truncate">Sex / Gender</span>
+              </button>
+              <button
+                onClick={() => handleAddText("{{district}}")}
+                className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
+              >
+                <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
+                <span className="truncate">District</span>
+              </button>
+              <button
+                onClick={() => handleAddText("{{issue_date}}")}
+                className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
+              >
+                <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
+                <span className="truncate">Date of Issue</span>
+              </button>
+              <button
+                onClick={() => handleAddText("{{place_of_birth}}")}
+                className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
+              >
+                <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
+                <span className="truncate">Place of Birth</span>
+              </button>
+              <button
+                onClick={() => handleAddText("{{village}}")}
+                className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
+              >
+                <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
+                <span className="truncate">Village</span>
+              </button>
+              <button
+                onClick={() => handleAddText("{{chief}}")}
+                className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer col-span-2"
+              >
+                <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
+                <span className="truncate">Chief</span>
+              </button>
+              <button
+                onClick={() =>
+                  handleAddPlaceholder("photo", "NRC Applicant Photo", "photo")
+                }
+                className="p-2 rounded-lg bg-[#CEE9B9] hover:bg-[#bddeaa] border border-[#a3d489] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
+              >
+                <ImageIcon className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
+                <span className="truncate">Applicant Photo</span>
+              </button>
+              <button
+                onClick={() =>
+                  handleAddPlaceholder("signature", "NRC Specimen Signature", "signature")
+                }
+                className="p-2 rounded-lg bg-[#FEF08A] hover:bg-[#fde047] border border-[#eab308] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
+              >
+                <PenTool className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
+                <span className="truncate">Signature</span>
+              </button>
+              <button
+                onClick={() => handleAddQRCode("{{nrc_number}}", "NRC QR Code", "nrc_qr")}
+                className="p-2 rounded-lg bg-[#ECA6FC] hover:bg-[#e48efa] border border-[#dd76f8] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer col-span-2"
+              >
+                <QrCode className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
+                <span className="truncate">NRC QR Code</span>
+              </button>
+            </>
+          )}
+
+          {activeServiceId !== "driving_license" && activeServiceId !== "nhif" && activeServiceId !== "nrc_zambia" && (
             <>
               <button
                 onClick={() => handleAddText("{{first_name}}")}

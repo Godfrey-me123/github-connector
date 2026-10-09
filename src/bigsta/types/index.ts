@@ -9,6 +9,7 @@ export type ActiveScreen =
   | "downloads"
   | "driving_license"
   | "nhif"
+  | "nrc_zambia"
   | "admin-payments"
   | "billing"
   | "settings"
@@ -25,6 +26,7 @@ export type CardType =
   | "NHIF Membership Card"
   | "Access Badge"
   | "Driving License"
+  | "National Registration Card (NRC)"
   | "Other";
 export type CardSide = "Front Side" | "Back Side" | "Full Card" | "Single Side";
 
@@ -474,5 +476,6 @@ export interface LastEditingContext {
   lastNidaFormData?: any;
   lastDrivingLicenseFormData?: any;
   lastNhifFormData?: any;
+  lastNrcFormData?: any;
   timestamp?: number;
 }

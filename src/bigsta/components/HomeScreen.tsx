@@ -83,6 +83,7 @@ export const HomeScreen: React.FC = () => {
         iconColor: "text-amber-400",
       },
       nhif: { iconBg: "bg-rose-500/15 border-rose-500/30", iconColor: "text-rose-400" },
+      nrc_zambia: { iconBg: "bg-emerald-600/15 border-emerald-600/30", iconColor: "text-emerald-500" },
       custom_studio: { iconBg: "bg-blue-600/20 border-blue-500/40", iconColor: "text-blue-400" },
       birth_certificate: {
         iconBg: "bg-emerald-500/15 border-emerald-500/30",
@@ -256,6 +257,31 @@ export const HomeScreen: React.FC = () => {
           "Principal & Dependent Mapping",
           "Hospital Tier Endorsements",
           "Smart Card Chip Specs",
+        ],
+        isPinned: true,
+      },
+      {
+        id: "nrc_zambia",
+        name: "NRC card-zambia",
+        authority: "National Registration Department",
+        description:
+          "Official Zambia National Registration Card (NRC) issuance, verification and CR80 card generation.",
+        category: "identity",
+        icon: CreditCard,
+        iconBg: colorMap.nrc_zambia.iconBg,
+        iconColor: colorMap.nrc_zambia.iconColor,
+        status: "active",
+        badgeText: "Ready (1 Token)",
+        action: () => {
+          useTemplateStore.getState().setManualRequestService("NRC card-zambia");
+          navigateSafely("nrc_zambia", "nrc_zambia");
+        },
+        primaryActionLabel: "Open Service",
+        features: [
+          "NRC Number Verification",
+          "Biometric Photo Upload",
+          "Digital Signature Pad",
+          "CR80 Layout Sync",
         ],
         isPinned: true,
       },

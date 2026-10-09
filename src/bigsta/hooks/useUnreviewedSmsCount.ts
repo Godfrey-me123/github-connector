@@ -7,17 +7,32 @@ export function useUnreviewedSmsCount(enabled = true): number {
   useEffect(() => {
     if (!enabled) return;
     let active = true;
+
     const refresh = () => {
-      countUnreviewedSms().then((n) => {
-        if (active) setCount(n);
-      });
+      if (typeof navigator !== "undefined" && !navigator.onLine) return;
+      try {
+        countUnreviewedSms()
+          .then((n) => {
+            if (active && typeof n === "number") setCount(n);
+          })
+          .catch(() => {});
+      } catch {
+        // Safe fallback
+      }
     };
+
     refresh();
-    const unsubscribe = subscribeSmsTransactions(refresh);
-    const interval = setInterval(refresh, 30000);
+    let unsubscribe = () => {};
+    try {
+      unsubscribe = subscribeSmsTransactions(refresh);
+    } catch {}
+
+    const interval = setInterval(refresh, 60000);
     return () => {
       active = false;
-      unsubscribe();
+      try {
+        unsubscribe();
+      } catch {}
       clearInterval(interval);
     };
   }, [enabled]);

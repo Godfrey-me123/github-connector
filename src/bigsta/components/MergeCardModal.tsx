@@ -48,6 +48,18 @@ export const MergeCardModal: React.FC = () => {
       store.currentTemplate?.cardType === "Driving License" ||
       store.currentTemplate?.id?.includes("driving_license") ||
       !!store.lastDrivingLicenseFormData;
+    const isNHIF =
+      store.activeServiceId === "nhif" ||
+      store.currentTemplate?.cardType === "NHIF Card" ||
+      store.currentTemplate?.cardType === "NHIF Membership Card" ||
+      store.currentTemplate?.serviceId === "nhif" ||
+      !!store.lastNhifFormData;
+    const isNRC =
+      store.activeServiceId === "nrc_zambia" ||
+      store.currentTemplate?.cardType === "National Registration Card (NRC)" ||
+      store.currentTemplate?.cardType === "NRC Zambia" ||
+      store.currentTemplate?.serviceId === "nrc_zambia" ||
+      !!store.lastNrcFormData;
 
     if (store.frontPopulatedTemplate && store.backPopulatedTemplate) {
       setFrontTemplateId(store.frontPopulatedTemplate.id);
@@ -72,7 +84,43 @@ export const MergeCardModal: React.FC = () => {
           list[0];
         setFrontTemplateId(dlFront.id);
         setBackTemplateId(dlBack.id);
-        setLayoutName("Driving Licence 2-in-1");
+        setLayoutName("Driving Licence");
+      } else if (isNHIF) {
+        const nhifFront =
+          list.find(
+            (t) =>
+              t.id === "sample_nhif_front" ||
+              t.templateName.toLowerCase().includes("nhif"),
+          ) || list[0];
+        const nhifBack =
+          list.find(
+            (t) =>
+              t.id === "sample_nhif_back" ||
+              (t.templateName.toLowerCase().includes("nhif") && t.side === "Back Side"),
+          ) ||
+          list[1] ||
+          list[0];
+        setFrontTemplateId(nhifFront.id);
+        setBackTemplateId(nhifBack.id);
+        setLayoutName("NHIF Card");
+      } else if (isNRC) {
+        const nrcFront =
+          list.find(
+            (t) =>
+              t.id === "sample_nrc_zambia_front" ||
+              t.templateName.toLowerCase().includes("nrc"),
+          ) || list[0];
+        const nrcBack =
+          list.find(
+            (t) =>
+              t.id === "sample_nrc_zambia_back" ||
+              (t.templateName.toLowerCase().includes("nrc") && t.side === "Back Side"),
+          ) ||
+          list[1] ||
+          list[0];
+        setFrontTemplateId(nrcFront.id);
+        setBackTemplateId(nrcBack.id);
+        setLayoutName("NRC Zambia");
       } else {
         const front =
           list.find((t) => t.side === "Front Side" || t.id === "sample_tanzania_nida_front") ||
@@ -83,7 +131,7 @@ export const MergeCardModal: React.FC = () => {
           list[0];
         setFrontTemplateId(front.id);
         setBackTemplateId(back.id);
-        setLayoutName("National ID 2-in-1");
+        setLayoutName("National ID");
       }
     }
 
@@ -117,10 +165,26 @@ export const MergeCardModal: React.FC = () => {
     store.currentTemplate?.cardType === "Driving License" ||
     store.currentTemplate?.id?.includes("driving_license") ||
     !!store.lastDrivingLicenseFormData;
+  const isNHIF =
+    store.activeServiceId === "nhif" ||
+    store.currentTemplate?.cardType === "NHIF Card" ||
+    store.currentTemplate?.cardType === "NHIF Membership Card" ||
+    store.currentTemplate?.serviceId === "nhif" ||
+    !!store.lastNhifFormData;
+  const isNRC =
+    store.activeServiceId === "nrc_zambia" ||
+    store.currentTemplate?.cardType === "National Registration Card (NRC)" ||
+    store.currentTemplate?.cardType === "NRC Zambia" ||
+    store.currentTemplate?.serviceId === "nrc_zambia" ||
+    !!store.lastNrcFormData;
 
-  const submittedFormData = isDL
-    ? store.lastDrivingLicenseFormData || {}
-    : store.lastNidaFormData || {};
+  const submittedFormData = isNHIF
+    ? store.lastNhifFormData || {}
+    : isNRC
+      ? store.lastNrcFormData || {}
+      : isDL
+        ? store.lastDrivingLicenseFormData || {}
+        : store.lastNidaFormData || {};
 
   const frontTemplate =
     store.frontPopulatedTemplate && store.frontPopulatedTemplate.id === frontTemplateId
@@ -142,10 +206,26 @@ export const MergeCardModal: React.FC = () => {
         storeState.currentTemplate?.cardType === "Driving License" ||
         storeState.currentTemplate?.id?.includes("driving_license") ||
         !!storeState.lastDrivingLicenseFormData;
+      const isNhifCard =
+        storeState.activeServiceId === "nhif" ||
+        storeState.currentTemplate?.cardType === "NHIF Card" ||
+        storeState.currentTemplate?.cardType === "NHIF Membership Card" ||
+        storeState.currentTemplate?.serviceId === "nhif" ||
+        !!storeState.lastNhifFormData;
+      const isNrcCard =
+        storeState.activeServiceId === "nrc_zambia" ||
+        storeState.currentTemplate?.cardType === "National Registration Card (NRC)" ||
+        storeState.currentTemplate?.cardType === "NRC Zambia" ||
+        storeState.currentTemplate?.serviceId === "nrc_zambia" ||
+        !!storeState.lastNrcFormData;
 
-      const formData = isDrivingLicence
-        ? storeState.lastDrivingLicenseFormData || {}
-        : storeState.lastNidaFormData || {};
+      const formData = isNhifCard
+        ? storeState.lastNhifFormData || {}
+        : isNrcCard
+          ? storeState.lastNrcFormData || {}
+          : isDrivingLicence
+            ? storeState.lastDrivingLicenseFormData || {}
+            : storeState.lastNidaFormData || {};
 
       if (frontTemplate) {
         try {
@@ -183,10 +263,26 @@ export const MergeCardModal: React.FC = () => {
       storeState.currentTemplate?.cardType === "Driving License" ||
       storeState.currentTemplate?.id?.includes("driving_license") ||
       !!storeState.lastDrivingLicenseFormData;
+    const isNhifCard =
+      storeState.activeServiceId === "nhif" ||
+      storeState.currentTemplate?.cardType === "NHIF Card" ||
+      storeState.currentTemplate?.cardType === "NHIF Membership Card" ||
+      storeState.currentTemplate?.serviceId === "nhif" ||
+      !!storeState.lastNhifFormData;
+    const isNrcCard =
+      storeState.activeServiceId === "nrc_zambia" ||
+      storeState.currentTemplate?.cardType === "National Registration Card (NRC)" ||
+      storeState.currentTemplate?.cardType === "NRC Zambia" ||
+      storeState.currentTemplate?.serviceId === "nrc_zambia" ||
+      !!storeState.lastNrcFormData;
 
-    const formData = isDrivingLicence
-      ? storeState.lastDrivingLicenseFormData || {}
-      : storeState.lastNidaFormData || {};
+    const formData = isNhifCard
+      ? storeState.lastNhifFormData || {}
+      : isNrcCard
+        ? storeState.lastNrcFormData || {}
+        : isDrivingLicence
+          ? storeState.lastDrivingLicenseFormData || {}
+          : storeState.lastNidaFormData || {};
 
     setIsExporting(true);
     try {

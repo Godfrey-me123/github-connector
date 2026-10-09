@@ -49,6 +49,7 @@ export const CardPreviewScreen: React.FC = () => {
     lastNidaFormData,
     lastDrivingLicenseFormData,
     lastNhifFormData,
+    lastNrcFormData,
     setPopulatedCardPair,
     authRole,
     activeServiceId,
@@ -60,7 +61,9 @@ export const CardPreviewScreen: React.FC = () => {
       ? "driving_license"
       : activeServiceId === "nhif"
         ? "nhif"
-        : "nida";
+        : activeServiceId === "nrc_zambia"
+          ? "nrc_zambia"
+          : "nida";
 
   // Output selection: Single Card vs Front + Back (Merge 2-in-1) with lastEditingContext caching
   const [outputMode, setOutputMode] = useState<"single" | "merge">(() => {
@@ -152,8 +155,20 @@ export const CardPreviewScreen: React.FC = () => {
     (currentTemplate.cardType as string) === "NHIF Card" ||
     currentTemplate.cardType === "NHIF Membership Card" ||
     currentTemplate.serviceId === "nhif";
+  const isNRC =
+    activeServiceId === "nrc_zambia" ||
+    (currentTemplate.cardType as string) === "NRC Card" ||
+    (currentTemplate.cardType as string) === "National Registration Card (NRC)" ||
+    currentTemplate.cardType === "NRC Zambia" ||
+    currentTemplate.serviceId === "nrc_zambia";
   const activeFormData =
-    (isDL ? lastDrivingLicenseFormData : isNHIF ? lastNhifFormData : lastNidaFormData) || {};
+    (isDL
+      ? lastDrivingLicenseFormData
+      : isNHIF
+        ? lastNhifFormData
+        : isNRC
+          ? lastNrcFormData
+          : lastNidaFormData) || {};
 
   // Ensure current template in store is synchronized when side changes
   const handleSideSwitch = (side: "front" | "back") => {
@@ -165,12 +180,18 @@ export const CardPreviewScreen: React.FC = () => {
     } else if (
       side === "back" &&
       !backPopulatedTemplate &&
-      (lastDrivingLicenseFormData || lastNidaFormData || lastNhifFormData)
+      (lastDrivingLicenseFormData || lastNidaFormData || lastNhifFormData || lastNrcFormData)
     ) {
       const { getUniversalBackTemplate } = useTemplateStore.getState();
       const resolvedBack = getUniversalBackTemplate(activeServiceId);
       const activeData = (
-        isDL ? lastDrivingLicenseFormData : isNHIF ? lastNhifFormData : lastNidaFormData
+        isDL
+          ? lastDrivingLicenseFormData
+          : isNHIF
+            ? lastNhifFormData
+            : isNRC
+              ? lastNrcFormData
+              : lastNidaFormData
       ) as any;
       if (resolvedBack && activeData) {
         const result = applyTemplateMapping(resolvedBack, activeData);
@@ -213,6 +234,7 @@ export const CardPreviewScreen: React.FC = () => {
       lastNidaFormData: lastNidaFormData,
       lastDrivingLicenseFormData: lastDrivingLicenseFormData,
       lastNhifFormData: lastNhifFormData,
+      lastNrcFormData: lastNrcFormData,
       timestamp: Date.now(),
     };
 
@@ -403,13 +425,21 @@ export const CardPreviewScreen: React.FC = () => {
   const nhifStatus = lastNhifFormData?.cardStatus || lastNhifFormData?.card_status || "Active";
   const nhifDob = lastNhifFormData?.dob || "";
 
+  const nrcName =
+    lastNrcFormData?.fullName || lastNrcFormData?.full_name || lastNrcFormData?.name || "";
+  const nrcNumber =
+    lastNrcFormData?.nrcNumber || lastNrcFormData?.nrc_number || lastNrcFormData?.nrcNo || "";
+  const nrcDob = lastNrcFormData?.dateOfBirth || lastNrcFormData?.dob || "";
+  const nrcDistrict = lastNrcFormData?.district || lastNrcFormData?.village || "";
+
   const hasBackCounterpart = Boolean(
     backPopulatedTemplate ||
     SAMPLE_TEMPLATES.some(
       (t) =>
         t.id === "sample_tanzania_nida_back" ||
         t.id === "sample_driving_license_back" ||
-        t.id === "sample_nhif_back",
+        t.id === "sample_nhif_back" ||
+        t.id === "sample_nrc_zambia_back",
     ),
   );
 
@@ -432,10 +462,12 @@ export const CardPreviewScreen: React.FC = () => {
             <div className="min-w-0">
               <h1 className="text-xs sm:text-sm font-bold text-white tracking-wide truncate">
                 {isDL
-                  ? "DRIVING LICENCE PREVIEW"
+                  ? "DRIVING LICENCE"
                   : isNHIF
-                    ? "NHIF CARD PREVIEW"
-                    : "NIDA CARD PREVIEW"}
+                    ? "NHIF PREVIEW"
+                    : isNRC
+                      ? "NRC PREVIEW"
+                      : "NIDA PREVIEW"}
               </h1>
             </div>
           </div>
@@ -810,36 +842,38 @@ export const CardPreviewScreen: React.FC = () => {
           </HorizontalActionRow>
         </div>
 
-        {/* Identity Summary Card (Compact specifications for Driving Licence, NHIF & NIDA) */}
-        {(nidaNumber || dlLicenceNo || nhifCardNo) && (
+        {/* Identity Summary Card (Compact specifications for Driving Licence, NHIF, NRC & NIDA) */}
+        {(nidaNumber || dlLicenceNo || nhifCardNo || nrcNumber) && (
           <div className="w-full mt-6 p-4 rounded-2xl bg-[#0F1115]/70 border border-[#4C5055]/40 text-xs text-slate-300">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <span className="text-[10px] uppercase text-[#A0A4A8] font-bold block">
-                  {isDL ? "Driver Name" : isNHIF ? "Member Name" : "Cardholder"}
+                  {isDL ? "Driver Name" : isNHIF ? "Member Name" : isNRC ? "Holder Name" : "Cardholder"}
                 </span>
                 <span className="font-semibold text-white truncate block">
-                  {isDL ? dlName : isNHIF ? nhifMemberName || "NHIF Member" : holderName}
+                  {isDL ? dlName : isNHIF ? nhifMemberName || "NHIF Member" : isNRC ? nrcName || "NRC Citizen" : holderName}
                 </span>
               </div>
               <div>
                 <span className="text-[10px] uppercase text-[#A0A4A8] font-bold block">
-                  {isDL ? "Licence Number" : isNHIF ? "Card Number" : "NIDA Number"}
+                  {isDL ? "Licence Number" : isNHIF ? "Card Number" : isNRC ? "NRC Number" : "NIDA Number"}
                 </span>
                 <span className="font-mono font-semibold text-[#47A5FF] block">
-                  {isDL ? dlLicenceNo : isNHIF ? nhifCardNo : nidaNumber}
+                  {isDL ? dlLicenceNo : isNHIF ? nhifCardNo : isNRC ? nrcNumber : nidaNumber}
                 </span>
               </div>
               <div>
                 <span className="text-[10px] uppercase text-[#A0A4A8] font-bold block">
-                  {isDL ? "Categories / PIN" : isNHIF ? "Status / Details" : "Gender / Sex"}
+                  {isDL ? "Categories / PIN" : isNHIF ? "Status / Details" : isNRC ? "District / DOB" : "Gender / Sex"}
                 </span>
                 <span className="font-semibold text-white block">
                   {isDL
                     ? `${dlCategories || "None"}${dlPin ? ` (PIN: ${dlPin})` : ""}`
                     : isNHIF
                       ? `${nhifStatus}${nhifDob ? ` • DOB: ${nhifDob}` : ""}`
-                      : gender}
+                      : isNRC
+                        ? `${nrcDistrict || "Zambia"}${nrcDob ? ` • DOB: ${nrcDob}` : ""}`
+                        : gender}
                 </span>
               </div>
             </div>

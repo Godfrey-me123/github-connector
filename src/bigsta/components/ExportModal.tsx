@@ -75,11 +75,21 @@ export const ExportModal: React.FC = () => {
         templateId.includes("nhif") ||
         store.activeServiceId === "nhif";
 
+      const isNrc =
+        serviceId === "nrc_zambia" ||
+        templateName.includes("nrc") ||
+        templateId.includes("nrc") ||
+        currentTemplate.cardType === "National Registration Card (NRC)" ||
+        currentTemplate.cardType === "NRC Zambia" ||
+        store.activeServiceId === "nrc_zambia";
+
       let formData = {};
       if (isNhif) {
         formData = store.lastNhifFormData || {};
       } else if (isDrivingLicense) {
         formData = store.lastDrivingLicenseFormData || {};
+      } else if (isNrc) {
+        formData = store.lastNrcFormData || {};
       } else {
         // Fallback to NIDA for general cards, but prefer NIDA data only if it looks like a NIDA card
         formData = store.lastNidaFormData || {};
@@ -408,12 +418,22 @@ export const ExportModal: React.FC = () => {
                     (currentTemplate.id || "").toLowerCase().includes("nhif") ||
                     store.activeServiceId === "nhif";
 
+                  const isNrc =
+                    (currentTemplate.serviceId || "").toLowerCase() === "nrc_zambia" ||
+                    (currentTemplate.templateName || "").toLowerCase().includes("nrc") ||
+                    (currentTemplate.id || "").toLowerCase().includes("nrc") ||
+                    currentTemplate.cardType === "National Registration Card (NRC)" ||
+                    currentTemplate.cardType === "NRC Zambia" ||
+                    store.activeServiceId === "nrc_zambia";
+
                   const formData =
                     (isNhif
                       ? store.lastNhifFormData
                       : isDrivingLicense
                         ? store.lastDrivingLicenseFormData
-                        : store.lastNidaFormData) || {};
+                        : isNrc
+                          ? store.lastNrcFormData
+                          : store.lastNidaFormData) || {};
 
                   try {
                     await downloadPDF(currentTemplate, formData, undefined, cropPayload);
@@ -464,12 +484,22 @@ export const ExportModal: React.FC = () => {
                     (currentTemplate.id || "").toLowerCase().includes("nhif") ||
                     store.activeServiceId === "nhif";
 
+                  const isNrc =
+                    (currentTemplate.serviceId || "").toLowerCase() === "nrc_zambia" ||
+                    (currentTemplate.templateName || "").toLowerCase().includes("nrc") ||
+                    (currentTemplate.id || "").toLowerCase().includes("nrc") ||
+                    currentTemplate.cardType === "National Registration Card (NRC)" ||
+                    currentTemplate.cardType === "NRC Zambia" ||
+                    store.activeServiceId === "nrc_zambia";
+
                   const formData =
                     (isNhif
                       ? store.lastNhifFormData
                       : isDrivingLicense
                         ? store.lastDrivingLicenseFormData
-                        : store.lastNidaFormData) || {};
+                        : isNrc
+                          ? store.lastNrcFormData
+                          : store.lastNidaFormData) || {};
 
                   try {
                     await downloadPNG(currentTemplate, formData, undefined, cropPayload);
@@ -520,12 +550,22 @@ export const ExportModal: React.FC = () => {
                     (currentTemplate.id || "").toLowerCase().includes("nhif") ||
                     store.activeServiceId === "nhif";
 
+                  const isNrc =
+                    (currentTemplate.serviceId || "").toLowerCase() === "nrc_zambia" ||
+                    (currentTemplate.templateName || "").toLowerCase().includes("nrc") ||
+                    (currentTemplate.id || "").toLowerCase().includes("nrc") ||
+                    currentTemplate.cardType === "National Registration Card (NRC)" ||
+                    currentTemplate.cardType === "NRC Zambia" ||
+                    store.activeServiceId === "nrc_zambia";
+
                   const formData =
                     (isNhif
                       ? store.lastNhifFormData
                       : isDrivingLicense
                         ? store.lastDrivingLicenseFormData
-                        : store.lastNidaFormData) || {};
+                        : isNrc
+                          ? store.lastNrcFormData
+                          : store.lastNidaFormData) || {};
 
                   try {
                     await downloadJPG(currentTemplate, formData, undefined, cropPayload);

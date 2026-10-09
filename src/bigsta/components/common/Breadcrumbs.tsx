@@ -24,6 +24,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({
     business_license: "Business License",
     heslb: "HESLB",
     nhif: "NHIF Health Card",
+    nrc_zambia: "NRC card-zambia",
     ajira: "Ajira Portal",
   };
 
