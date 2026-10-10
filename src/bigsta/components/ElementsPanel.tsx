@@ -16,6 +16,7 @@ import {
   Calendar,
   List,
   Layers,
+  PenTool,
 } from "lucide-react";
 import { useTemplateStore } from "../store/useTemplateStore";
 import { Layer, ShapeType, BarcodeType } from "../types";
