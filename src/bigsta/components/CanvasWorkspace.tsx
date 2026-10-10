@@ -1303,9 +1303,11 @@ export const CanvasWorkspace: React.FC = () => {
                           {(displayText || "").split("").map((char, index) => {
                             const effect = (layer as any).typewriterEffect;
                             const intensity = effect?.intensity || 0;
-                            const charOffsetX = (Math.random() - 0.5) * intensity + (index * (effect?.spacing || 2));
-                            const charOffsetY = (Math.random() - 0.5) * intensity;
-                            const rotation = (Math.random() - 0.5) * intensity * 0.1;
+                            const isAffected = effect?.affectedCharacters === 0 || index < effect.affectedCharacters;
+                            
+                            const charOffsetX = isAffected ? (Math.random() - 0.5) * intensity + (index * (effect?.spacing || 0)) + (effect?.horizontalOffset || 0) : (index * (effect?.spacing || 0));
+                            const charOffsetY = isAffected ? (Math.random() - 0.5) * intensity + (effect?.verticalOffset || 0) : (effect?.verticalOffset || 0);
+                            const charRotation = isAffected ? (Math.random() - 0.5) * (effect?.rotation || 0) : 0;
 
                             return (
                               <KonvaText
@@ -1313,7 +1315,7 @@ export const CanvasWorkspace: React.FC = () => {
                                 text={char}
                                 x={charOffsetX}
                                 y={charOffsetY}
-                                rotation={rotation}
+                                rotation={charRotation}
                                 fontFamily={layer.fontFamily || "Helvetica"}
                                 fontSize={fontSizePx}
                                 fontStyle={computedStyle}

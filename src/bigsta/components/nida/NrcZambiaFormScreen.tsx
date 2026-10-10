@@ -18,16 +18,23 @@ import { WorkflowStep, SubmissionStepId } from "./submissionWorkflow";
 
 export interface NrcZambiaFormData {
   nrcNumber: string;
+  cardNumber: string; // Add
+  registrationNumber: string; // Add
   fullName: string;
   dateOfBirth: string;
   placeOfBirth: string;
   district: string;
   village: string;
   chief: string;
+  registrationDate: string; // Add
+  specialMarks: string; // Add
+  dateOfRenunciation: string; // Add
   dateOfIssue: string;
   gender: string;
   photoUrl?: string | null;
   signatureUrl?: string | null;
+  thumbPrintUrl?: string | null; // Add
+  officerSignatureUrl?: string | null; // Add
   termsAccepted: boolean;
 }
 
@@ -77,16 +84,23 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
     }
     return {
       nrcNumber: "",
+      cardNumber: "",
+      registrationNumber: "",
       fullName: "",
       dateOfBirth: "",
       placeOfBirth: "",
       district: "Lusaka",
       village: "",
       chief: "",
+      registrationDate: "",
+      specialMarks: "",
+      dateOfRenunciation: "",
       dateOfIssue: "",
       gender: "Male",
       photoUrl: null,
       signatureUrl: null,
+      thumbPrintUrl: null,
+      officerSignatureUrl: null,
       termsAccepted: false,
     };
   });
@@ -362,6 +376,15 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
         photo: formData.photoUrl,
         signatureUrl: formData.signatureUrl,
         signature: formData.signatureUrl,
+        thumbPrintUrl: formData.thumbPrintUrl,
+        thumbPrint: formData.thumbPrintUrl,
+        officerSignatureUrl: formData.officerSignatureUrl,
+        officerSignature: formData.officerSignatureUrl,
+        cardNumber: formData.cardNumber.trim(),
+        registrationNumber: formData.registrationNumber.trim(),
+        registrationDate: formData.registrationDate.trim(),
+        specialMarks: formData.specialMarks.trim(),
+        dateOfRenunciation: formData.dateOfRenunciation.trim(),
       };
 
       const frontRes = applyTemplateMapping(frontTemplate, mappedFormData as any);
@@ -498,6 +521,20 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
               />
 
               <FloatingInput
+                label="Card Number"
+                value={formData.cardNumber}
+                onChange={(e) => handleChange("cardNumber", e)}
+                onBlur={() => handleBlur("cardNumber")}
+              />
+              
+              <FloatingInput
+                label="Registration Number"
+                value={formData.registrationNumber}
+                onChange={(e) => handleChange("registrationNumber", e)}
+                onBlur={() => handleBlur("registrationNumber")}
+              />
+
+              <FloatingInput
                 label="Full Name"
                 value={formData.fullName}
                 onChange={(e) => handleChange("fullName", e)}
@@ -579,6 +616,25 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
                 onBlur={() => handleBlur("chief")}
                 helperText="Traditional Chief"
               />
+
+              <FloatingDatePicker
+                label="Registration Date"
+                value={formData.registrationDate}
+                onChange={(e) => handleChange("registrationDate", e)}
+              />
+
+              <FloatingInput
+                label="Special Marks"
+                value={formData.specialMarks}
+                onChange={(e) => handleChange("specialMarks", e)}
+                onBlur={() => handleBlur("specialMarks")}
+              />
+              
+              <FloatingDatePicker
+                label="Date of Renunciation"
+                value={formData.dateOfRenunciation}
+                onChange={(e) => handleChange("dateOfRenunciation", e)}
+              />
             </div>
           </div>
 
@@ -600,9 +656,6 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
                   value={formData.photoUrl}
                   onChange={(photo) => handleChange("photoUrl", photo)}
                 />
-                {touched.photoUrl && errors.photoUrl && (
-                  <p className="text-xs text-rose-500 font-medium mt-1">{errors.photoUrl}</p>
-                )}
               </div>
 
               <div>
@@ -613,9 +666,26 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
                   value={formData.signatureUrl}
                   onChange={(sig) => handleChange("signatureUrl", sig)}
                 />
-                {touched.signatureUrl && errors.signatureUrl && (
-                  <p className="text-xs text-rose-500 font-medium mt-1">{errors.signatureUrl}</p>
-                )}
+              </div>
+              
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#101010] mb-2">
+                  Right Thumb Print
+                </label>
+                <SignaturePad
+                  value={formData.thumbPrintUrl}
+                  onChange={(sig) => handleChange("thumbPrintUrl", sig)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#101010] mb-2">
+                  Registration Officer Signature
+                </label>
+                <SignaturePad
+                  value={formData.officerSignatureUrl}
+                  onChange={(sig) => handleChange("officerSignatureUrl", sig)}
+                />
               </div>
             </div>
           </div>
