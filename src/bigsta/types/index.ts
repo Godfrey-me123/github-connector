@@ -145,11 +145,25 @@ export interface TextLayer extends BaseLayer {
   dateFormat?: string; // (dd/MM/yyyy, MMM dd, yyyy, etc.)
   licenseCategoriesSeparator?: "spaceSeparated" | "commaSeparated" | "slashSeparated";
 
+  // Typewriter Effect
+  typewriterEffect?: TypewriterEffect;
+
   // Compatibility category properties
   categoryCode?: string;
   category_code?: string;
   field_type?: string;
   display_format?: string;
+}
+
+export interface TypewriterEffect {
+  enabled: boolean;
+  seed: number;
+  intensity: number; // 0-1
+  horizontalOffset: number; // mm
+  verticalOffset: number; // mm
+  rotation: number; // degrees
+  spacing: number; // mm
+  affectedCharacters: number; // count
 }
 
 export interface ImageLayer extends BaseLayer {

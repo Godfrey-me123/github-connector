@@ -158,6 +158,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
     cardSettings: true,
     alignTools: true,
     multiLayers: true,
+    typewriterEffect: false,
   });
 
   const toggleSection = (sec: string) => {
@@ -1077,6 +1078,49 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                 onChange={(e) => updateLayer(selectedLayer.id, { text: e.target.value })}
                 className="w-full px-2.5 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded-lg text-[#000000] font-mono text-xs focus:outline-none focus:border-[#000000]"
               />
+            </div>
+
+            {/* Date Format for Date Fields */}
+            {((selectedLayer as any).fieldName?.toLowerCase().includes("date") ||
+              (selectedLayer as any).bindingKey?.toLowerCase().includes("date")) && (
+              <div className="pt-2 border-t border-[#E7E9EB] mt-2">
+                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Date Format</label>
+                <select
+                  value={(selectedLayer as any).dateFormat || "dd.MM.yy"}
+                  onChange={(e) => updateLayer(selectedLayer.id, { dateFormat: e.target.value })}
+                  className="w-full px-2 py-1.5 bg-[#E7E9EB] border border-[#dadcdc] rounded text-xs text-[#000000] font-semibold focus:outline-none focus:border-[#000000]"
+                >
+                  <option value="dd.MM.yy">dd.MM.yy</option>
+                  <option value="dd.MM.yyyy">dd.MM.yyyy</option>
+                  <option value="dd/MM/yy">dd/MM/yy</option>
+                  <option value="dd/MM/yyyy">dd/MM/yyyy</option>
+                  <option value="dd-MM-yy">dd-MM-yy</option>
+                  <option value="dd-MM-yyyy">dd-MM-yyyy</option>
+                  <option value="yyyy-MM-dd">yyyy-MM-dd</option>
+                </select>
+              </div>
+            )}
+
+            {/* Typewriter Effect Section */}
+            <div className="pt-2 border-t border-[#E7E9EB] mt-2">
+              <label className="flex items-center justify-between cursor-pointer">
+                <span className="text-[#000000] font-semibold text-[11px]">Typewriter Effect</span>
+                <input
+                  type="checkbox"
+                  checked={(selectedLayer as any).typewriterEffect?.enabled || false}
+                  onChange={(e) => {
+                    updateLayer(selectedLayer.id, {
+                      typewriterEffect: {
+                        ...(selectedLayer as any).typewriterEffect,
+                        enabled: e.target.checked,
+                        seed: (selectedLayer as any).typewriterEffect?.seed || Math.random(),
+                        intensity: (selectedLayer as any).typewriterEffect?.intensity || 0.5,
+                      },
+                    });
+                  }}
+                  className="w-4 h-4 rounded border-[#dadcdc] text-blue-600 focus:ring-blue-500"
+                />
+              </label>
             </div>
 
             {/* Driving License Properties */}
