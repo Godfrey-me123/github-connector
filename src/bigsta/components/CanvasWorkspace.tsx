@@ -1332,7 +1332,7 @@ export const CanvasWorkspace: React.FC = () => {
 
                             return (
                               <KonvaText
-                                key={index}
+                                key={`${layer.id}-${index}`}
                                 text={char}
                                 x={charOffsetX}
                                 y={charOffsetY}
@@ -1342,6 +1342,7 @@ export const CanvasWorkspace: React.FC = () => {
                                 fontStyle={computedStyle}
                                 fill={layer.color || "#000000"}
                                 align={layer.align || "left"}
+                                opacity={(layer.opacity ?? 1) * (layer.textOpacity ?? 1)}
                               />
                             );
                           })}
