@@ -1293,37 +1293,69 @@ export const CanvasWorkspace: React.FC = () => {
                     }
 
                     return (
-                      <KonvaText
-                        {...commonProps}
-                        key={layer.id}
-                        width={wPx}
-                        text={displayText}
-                        fontFamily={layer.fontFamily || "Helvetica"}
-                        fontSize={fontSizePx}
-                        fontStyle={computedStyle}
-                        textDecoration={layer.textDecoration === "underline" ? "underline" : ""}
-                        fill={layer.color || "#000000"}
-                        align={layer.align || "left"}
-                        letterSpacing={layer.letterSpacing ? layer.letterSpacing * pxPerMm : 0}
-                        lineHeight={layer.lineHeight || 1.1}
-                        scaleX={finalScaleX}
-                        scaleY={layer.verticalScale ?? 1}
-                        opacity={(layer.opacity ?? 1) * (layer.textOpacity ?? 1)}
-                        stroke={finalStroke}
-                        strokeWidth={finalStrokeWidth}
-                        shadowColor={layer.shadowColor || "#000000"}
-                        shadowBlur={layer.shadowEnabled ? (layer.shadowBlur ?? 1.5) * pxPerMm : 0}
-                        shadowOffset={
-                          layer.shadowEnabled
-                            ? {
-                                x: (layer.shadowOffsetX ?? 0.5) * pxPerMm,
-                                y: (layer.shadowOffsetY ?? 0.5) * pxPerMm,
-                              }
-                            : { x: 0, y: 0 }
-                        }
-                        shadowOpacity={layer.shadowEnabled ? (layer.shadowOpacity ?? 50) / 100 : 0}
-                        shadowEnabled={layer.shadowEnabled ?? false}
-                      />
+                      (layer as any).typewriterEffect?.enabled ? (
+                        <Group 
+                          key={layer.id}
+                          x={commonProps.x} 
+                          y={commonProps.y} 
+                          rotation={commonProps.rotation}
+                        >
+                          {(displayText || "").split("").map((char, index) => {
+                            const effect = (layer as any).typewriterEffect;
+                            const intensity = effect?.intensity || 0;
+                            const charOffsetX = (Math.random() - 0.5) * intensity + (index * (effect?.spacing || 2));
+                            const charOffsetY = (Math.random() - 0.5) * intensity;
+                            const rotation = (Math.random() - 0.5) * intensity * 0.1;
+
+                            return (
+                              <KonvaText
+                                key={index}
+                                text={char}
+                                x={charOffsetX}
+                                y={charOffsetY}
+                                rotation={rotation}
+                                fontFamily={layer.fontFamily || "Helvetica"}
+                                fontSize={fontSizePx}
+                                fontStyle={computedStyle}
+                                fill={layer.color || "#000000"}
+                                align={layer.align || "left"}
+                              />
+                            );
+                          })}
+                        </Group>
+                      ) : (
+                        <KonvaText
+                          {...commonProps}
+                          key={layer.id}
+                          width={wPx}
+                          text={displayText}
+                          fontFamily={layer.fontFamily || "Helvetica"}
+                          fontSize={fontSizePx}
+                          fontStyle={computedStyle}
+                          textDecoration={layer.textDecoration === "underline" ? "underline" : ""}
+                          fill={layer.color || "#000000"}
+                          align={layer.align || "left"}
+                          letterSpacing={layer.letterSpacing ? layer.letterSpacing * pxPerMm : 0}
+                          lineHeight={layer.lineHeight || 1.1}
+                          scaleX={finalScaleX}
+                          scaleY={layer.verticalScale ?? 1}
+                          opacity={(layer.opacity ?? 1) * (layer.textOpacity ?? 1)}
+                          stroke={finalStroke}
+                          strokeWidth={finalStrokeWidth}
+                          shadowColor={layer.shadowColor || "#000000"}
+                          shadowBlur={layer.shadowEnabled ? (layer.shadowBlur ?? 1.5) * pxPerMm : 0}
+                          shadowOffset={
+                            layer.shadowEnabled
+                              ? {
+                                  x: (layer.shadowOffsetX ?? 0.5) * pxPerMm,
+                                  y: (layer.shadowOffsetY ?? 0.5) * pxPerMm,
+                                }
+                              : { x: 0, y: 0 }
+                          }
+                          shadowOpacity={layer.shadowEnabled ? (layer.shadowOpacity ?? 50) / 100 : 0}
+                          shadowEnabled={layer.shadowEnabled ?? false}
+                        />
+                      )
                     );
                   }
 

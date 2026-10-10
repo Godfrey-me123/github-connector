@@ -1103,24 +1103,60 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
 
             {/* Typewriter Effect Section */}
             <div className="pt-2 border-t border-[#E7E9EB] mt-2">
-              <label className="flex items-center justify-between cursor-pointer">
-                <span className="text-[#000000] font-semibold text-[11px]">Typewriter Effect</span>
-                <input
-                  type="checkbox"
-                  checked={(selectedLayer as any).typewriterEffect?.enabled || false}
-                  onChange={(e) => {
-                    updateLayer(selectedLayer.id, {
-                      typewriterEffect: {
-                        ...(selectedLayer as any).typewriterEffect,
-                        enabled: e.target.checked,
-                        seed: (selectedLayer as any).typewriterEffect?.seed || Math.random(),
-                        intensity: (selectedLayer as any).typewriterEffect?.intensity || 0.5,
-                      },
-                    });
-                  }}
-                  className="w-4 h-4 rounded border-[#dadcdc] text-blue-600 focus:ring-blue-500"
-                />
-              </label>
+              <CollapsibleSection
+                id="typewriterEffect"
+                title="Typewriter Effect"
+                icon={<PenTool className="w-3.5 h-3.5 text-[#000000]" />}
+                isOpen={openSections.typewriterEffect}
+                onToggle={() => toggleSection("typewriterEffect")}
+              >
+                <div className="space-y-3 text-xs">
+                  <label className="flex items-center justify-between cursor-pointer">
+                    <span className="text-[#000000] font-semibold text-[11px]">Enable Effect</span>
+                    <input
+                      type="checkbox"
+                      checked={(selectedLayer as any).typewriterEffect?.enabled || false}
+                      onChange={(e) => {
+                        updateLayer(selectedLayer.id, {
+                          typewriterEffect: {
+                            ...(selectedLayer as any).typewriterEffect,
+                            enabled: e.target.checked,
+                            seed: (selectedLayer as any).typewriterEffect?.seed || Math.random(),
+                            intensity: (selectedLayer as any).typewriterEffect?.intensity || 0.5,
+                            horizontalOffset: (selectedLayer as any).typewriterEffect?.horizontalOffset || 0,
+                            verticalOffset: (selectedLayer as any).typewriterEffect?.verticalOffset || 0,
+                            rotation: (selectedLayer as any).typewriterEffect?.rotation || 0,
+                            spacing: (selectedLayer as any).typewriterEffect?.spacing || 0,
+                            affectedCharacters: (selectedLayer as any).typewriterEffect?.affectedCharacters || 0,
+                          },
+                        });
+                      }}
+                      className="w-4 h-4 rounded border-[#dadcdc] text-blue-600 focus:ring-blue-500"
+                    />
+                  </label>
+                  
+                  { (selectedLayer as any).typewriterEffect?.enabled && (
+                    <>
+                      <div>
+                        <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Intensity</label>
+                        <input type="range" min="0" max="1" step="0.1" value={(selectedLayer as any).typewriterEffect?.intensity || 0.5} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...(selectedLayer as any).typewriterEffect, intensity: parseFloat(e.target.value) } })} className="w-full" />
+                      </div>
+                      <div>
+                        <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Horizontal Offset (mm)</label>
+                        <input type="number" step="0.1" value={(selectedLayer as any).typewriterEffect?.horizontalOffset || 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...(selectedLayer as any).typewriterEffect, horizontalOffset: parseFloat(e.target.value) } })} className="w-full px-2 py-1 bg-[#E7E9EB] border rounded" />
+                      </div>
+                      <div>
+                        <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Vertical Offset (mm)</label>
+                        <input type="number" step="0.1" value={(selectedLayer as any).typewriterEffect?.verticalOffset || 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...(selectedLayer as any).typewriterEffect, verticalOffset: parseFloat(e.target.value) } })} className="w-full px-2 py-1 bg-[#E7E9EB] border rounded" />
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => updateLayer(selectedLayer.id, { typewriterEffect: { ...(selectedLayer as any).typewriterEffect, seed: Math.random() } })} className="flex-1 py-1 bg-gray-200 rounded text-[10px]">Regenerate</button>
+                        <button onClick={() => updateLayer(selectedLayer.id, { typewriterEffect: { enabled: true, seed: Math.random(), intensity: 0.5, horizontalOffset: 0, verticalOffset: 0, rotation: 0, spacing: 0, affectedCharacters: 0 } })} className="flex-1 py-1 bg-gray-200 rounded text-[10px]">Reset</button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </CollapsibleSection>
             </div>
 
             {/* Driving License Properties */}
