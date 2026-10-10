@@ -69,16 +69,23 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
     if (lastNrcFormData && typeof lastNrcFormData === "object") {
       return {
         nrcNumber: typeof lastNrcFormData.nrcNumber === "string" ? lastNrcFormData.nrcNumber : "",
+        cardNumber: typeof lastNrcFormData.cardNumber === "string" ? lastNrcFormData.cardNumber : "",
+        registrationNumber: typeof lastNrcFormData.registrationNumber === "string" ? lastNrcFormData.registrationNumber : "",
         fullName: typeof lastNrcFormData.fullName === "string" ? lastNrcFormData.fullName : "",
         dateOfBirth: typeof lastNrcFormData.dateOfBirth === "string" ? formatToDdMmYyyy(lastNrcFormData.dateOfBirth) : "",
         placeOfBirth: typeof lastNrcFormData.placeOfBirth === "string" ? lastNrcFormData.placeOfBirth : "",
         district: typeof lastNrcFormData.district === "string" ? lastNrcFormData.district : "Lusaka",
         village: typeof lastNrcFormData.village === "string" ? lastNrcFormData.village : "",
         chief: typeof lastNrcFormData.chief === "string" ? lastNrcFormData.chief : "",
+        registrationDate: typeof lastNrcFormData.registrationDate === "string" ? lastNrcFormData.registrationDate : "",
+        specialMarks: typeof lastNrcFormData.specialMarks === "string" ? lastNrcFormData.specialMarks : "",
+        dateOfRenunciation: typeof lastNrcFormData.dateOfRenunciation === "string" ? lastNrcFormData.dateOfRenunciation : "",
         dateOfIssue: typeof lastNrcFormData.dateOfIssue === "string" ? formatToDdMmYyyy(lastNrcFormData.dateOfIssue) : "",
         gender: typeof lastNrcFormData.gender === "string" && lastNrcFormData.gender ? lastNrcFormData.gender : "Male",
         photoUrl: lastNrcFormData.photoUrl || null,
         signatureUrl: lastNrcFormData.signatureUrl || null,
+        thumbPrintUrl: lastNrcFormData.thumbPrintUrl || null,
+        officerSignatureUrl: lastNrcFormData.officerSignatureUrl || null,
         termsAccepted: !!lastNrcFormData.termsAccepted,
       };
     }
@@ -352,10 +359,10 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
       const formattedChief = toTitleCase(formData.chief.trim() || "-");
 
       const mappedFormData = {
-        nrcNumber: formData.nrcNumber.trim(),
-        nrc_number: formData.nrcNumber.trim(),
-        nrcNo: formData.nrcNumber.trim(),
-        cardNumber: formData.nrcNumber.trim(),
+        nrcNumber: (formData.nrcNumber || "").trim(),
+        nrc_number: (formData.nrcNumber || "").trim(),
+        nrcNo: (formData.nrcNumber || "").trim(),
+        cardNumber: (formData.nrcNumber || "").trim(),
         fullName: formattedName,
         full_name: formattedName,
         name: formattedName,
@@ -369,7 +376,7 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
         issue_date: formattedIssue,
         placeOfBirth: formattedPlace,
         place_of_birth: formattedPlace,
-        district: formData.district,
+        district: formData.district || "",
         village: formattedVillage,
         chief: formattedChief,
         photoUrl: formData.photoUrl,
@@ -380,11 +387,11 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
         thumbPrint: formData.thumbPrintUrl,
         officerSignatureUrl: formData.officerSignatureUrl,
         officerSignature: formData.officerSignatureUrl,
-        cardNumber: formData.cardNumber.trim(),
-        registrationNumber: formData.registrationNumber.trim(),
-        registrationDate: formData.registrationDate.trim(),
-        specialMarks: formData.specialMarks.trim(),
-        dateOfRenunciation: formData.dateOfRenunciation.trim(),
+        cardNumber: (formData.cardNumber || "").trim(),
+        registrationNumber: (formData.registrationNumber || "").trim(),
+        registrationDate: (formData.registrationDate || "").trim(),
+        specialMarks: (formData.specialMarks || "").trim(),
+        dateOfRenunciation: (formData.dateOfRenunciation || "").trim(),
       };
 
       const frontRes = applyTemplateMapping(frontTemplate, mappedFormData as any);

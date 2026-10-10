@@ -163,7 +163,10 @@ export interface TypewriterEffect {
   verticalOffset: number; // mm
   rotation: number; // degrees
   spacing: number; // mm
-  affectedCharacters: number; // count
+  selectedIndex: number; // Index of the character currently being adjusted
+  manualX: number; // mm offset for selected char
+  manualY: number; // mm offset for selected char
+  manualRotation: number; // degrees for selected char
 }
 
 export interface ImageLayer extends BaseLayer {

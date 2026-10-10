@@ -2527,7 +2527,7 @@ export function getTemplateValidationIssues(template: CardTemplate): ValidationI
 
       while ((match = variableRegex.exec(text)) !== null) {
         const fullToken = match[0];
-        const rawVar = match[1].trim();
+        const rawVar = match[1] ? match[1].trim() : "";
 
         if (!RECOGNIZED_TOKENS.has(rawVar.toLowerCase())) {
           const suggestion = getClosestSupportedToken(rawVar);

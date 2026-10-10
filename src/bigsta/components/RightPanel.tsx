@@ -1138,36 +1138,73 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                   
                   { (selectedLayer as any).typewriterEffect?.enabled && (
                     <>
-                      <div>
-                        <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Intensity</label>
-                        <input type="range" min="0" max="2" step="0.1" value={(selectedLayer as any).typewriterEffect?.intensity || 0.5} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...(selectedLayer as any).typewriterEffect, intensity: parseFloat(e.target.value) } })} className="w-full" />
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="block text-[#000000] font-semibold mb-1 text-[11px]">H-Offset</label>
-                          <input type="number" step="0.1" value={(selectedLayer as any).typewriterEffect?.horizontalOffset || 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...(selectedLayer as any).typewriterEffect, horizontalOffset: parseFloat(e.target.value) } })} className="w-full px-2 py-1 bg-[#E7E9EB] border rounded" />
-                        </div>
-                        <div>
-                          <label className="block text-[#000000] font-semibold mb-1 text-[11px]">V-Offset</label>
-                          <input type="number" step="0.1" value={(selectedLayer as any).typewriterEffect?.verticalOffset || 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...(selectedLayer as any).typewriterEffect, verticalOffset: parseFloat(e.target.value) } })} className="w-full px-2 py-1 bg-[#E7E9EB] border rounded" />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Rotation Range</label>
-                        <input type="range" min="-10" max="10" step="1" value={(selectedLayer as any).typewriterEffect?.rotation || 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...(selectedLayer as any).typewriterEffect, rotation: parseFloat(e.target.value) } })} className="w-full" />
-                      </div>
-                      <div>
-                        <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Spacing</label>
-                        <input type="range" min="-2" max="2" step="0.1" value={(selectedLayer as any).typewriterEffect?.spacing || 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...(selectedLayer as any).typewriterEffect, spacing: parseFloat(e.target.value) } })} className="w-full" />
-                      </div>
-                      <div>
-                        <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Affected Chars</label>
-                        <input type="number" min="0" value={(selectedLayer as any).typewriterEffect?.affectedCharacters || 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...(selectedLayer as any).typewriterEffect, affectedCharacters: parseInt(e.target.value) } })} className="w-full px-2 py-1 bg-[#E7E9EB] border rounded" />
-                      </div>
-                      <div className="flex gap-2 pt-2">
-                        <button onClick={() => updateLayer(selectedLayer.id, { typewriterEffect: { ...(selectedLayer as any).typewriterEffect, seed: Math.random() } })} className="flex-1 py-1 bg-gray-200 rounded text-[10px] font-semibold">Regenerate</button>
-                        <button onClick={() => updateLayer(selectedLayer.id, { typewriterEffect: { enabled: true, seed: Math.random(), intensity: 0, horizontalOffset: 0, verticalOffset: 0, rotation: 0, spacing: 0, affectedCharacters: 0 } })} className="flex-1 py-1 bg-gray-200 rounded text-[10px] font-semibold">Reset</button>
-                      </div>
+                      {(() => {
+                        const effect = (selectedLayer as any).typewriterEffect || {
+                            intensity: 0.5,
+                            horizontalOffset: 0,
+                            verticalOffset: 0,
+                            rotation: 0,
+                            spacing: 0,
+                            affectedCharacters: 0,
+                            selectedIndex: 0,
+                            manualX: 0,
+                            manualY: 0,
+                            manualRotation: 0,
+                        };
+                        return (
+                          <>
+                            <div>
+                              <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Intensity</label>
+                              <input type="range" min="0" max="2" step="0.1" value={effect.intensity ?? 0.5} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, intensity: parseFloat(e.target.value) || 0 } })} className="w-full" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">H-Offset</label>
+                                <input type="number" step="0.1" value={effect.horizontalOffset ?? 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, horizontalOffset: parseFloat(e.target.value) || 0 } })} className="w-full px-2 py-1 bg-[#E7E9EB] border rounded" />
+                              </div>
+                              <div>
+                                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">V-Offset</label>
+                                <input type="number" step="0.1" value={effect.verticalOffset ?? 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, verticalOffset: parseFloat(e.target.value) || 0 } })} className="w-full px-2 py-1 bg-[#E7E9EB] border rounded" />
+                              </div>
+                            </div>
+                            <div>
+                              <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Rotation Range</label>
+                              <input type="range" min="-10" max="10" step="1" value={effect.rotation ?? 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, rotation: parseFloat(e.target.value) || 0 } })} className="w-full" />
+                            </div>
+                            <div>
+                              <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Spacing</label>
+                              <input type="range" min="-2" max="2" step="0.1" value={effect.spacing ?? 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, spacing: parseFloat(e.target.value) || 0 } })} className="w-full" />
+                            </div>
+                            <div>
+                              <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Affected Chars</label>
+                              <input type="number" min="0" value={effect.affectedCharacters ?? 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, affectedCharacters: parseInt(e.target.value) || 0 } })} className="w-full px-2 py-1 bg-[#E7E9EB] border rounded" />
+                            </div>
+                            <div>
+                              <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Select Character Index</label>
+                              <input type="number" min="0" max={Math.max(0, (selectedLayer as any).text?.length - 1 || 0)} value={effect.selectedIndex ?? 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, selectedIndex: parseInt(e.target.value) || 0 } })} className="w-full px-2 py-1 bg-[#E7E9EB] border rounded" />
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
+                              <div>
+                                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Char X</label>
+                                <input type="number" step="0.1" value={effect.manualX ?? 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, manualX: parseFloat(e.target.value) || 0 } })} className="w-full px-2 py-1 bg-[#E7E9EB] border rounded" />
+                              </div>
+                              <div>
+                                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Char Y</label>
+                                <input type="number" step="0.1" value={effect.manualY ?? 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, manualY: parseFloat(e.target.value) || 0 } })} className="w-full px-2 py-1 bg-[#E7E9EB] border rounded" />
+                              </div>
+                              <div>
+                                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Char Rot</label>
+                                <input type="number" step="1" value={effect.manualRotation ?? 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, manualRotation: parseFloat(e.target.value) || 0 } })} className="w-full px-2 py-1 bg-[#E7E9EB] border rounded" />
+                              </div>
+                            </div>
+                            <div className="flex gap-2 pt-2 flex-wrap">
+                              <button onClick={() => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, seed: Math.random() } })} className="flex-1 py-1 bg-gray-200 rounded text-[10px] font-semibold">Regenerate</button>
+                              <button onClick={() => updateLayer(selectedLayer.id, { typewriterEffect: { enabled: true, seed: Math.random(), intensity: 0.5, horizontalOffset: 0, verticalOffset: 0, rotation: 0, spacing: 0, affectedCharacters: 0, selectedIndex: 0, manualX: 0, manualY: 0, manualRotation: 0 } })} className="flex-1 py-1 bg-gray-200 rounded text-[10px] font-semibold">Reset</button>
+                              <button onClick={() => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect } })} className="flex-1 py-1 bg-blue-600 text-white rounded text-[10px] font-semibold">Apply</button>
+                            </div>
+                          </>
+                        );
+                      })()}
                     </>
                   )}
                 </div>

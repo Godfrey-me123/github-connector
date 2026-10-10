@@ -1301,13 +1301,34 @@ export const CanvasWorkspace: React.FC = () => {
                           rotation={commonProps.rotation}
                         >
                           {(displayText || "").split("").map((char, index) => {
-                            const effect = (layer as any).typewriterEffect;
-                            const intensity = effect?.intensity || 0;
-                            const isAffected = effect?.affectedCharacters === 0 || index < effect.affectedCharacters;
+                            const effect = (layer as any).typewriterEffect || {
+                                enabled: false,
+                                seed: 0,
+                                intensity: 0,
+                                horizontalOffset: 0,
+                                verticalOffset: 0,
+                                rotation: 0,
+                                spacing: 0,
+                                affectedCharacters: 0,
+                                selectedIndex: 0,
+                                manualX: 0,
+                                manualY: 0,
+                                manualRotation: 0,
+                            };
                             
-                            const charOffsetX = isAffected ? (Math.random() - 0.5) * intensity + (index * (effect?.spacing || 0)) + (effect?.horizontalOffset || 0) : (index * (effect?.spacing || 0));
-                            const charOffsetY = isAffected ? (Math.random() - 0.5) * intensity + (effect?.verticalOffset || 0) : (effect?.verticalOffset || 0);
-                            const charRotation = isAffected ? (Math.random() - 0.5) * (effect?.rotation || 0) : 0;
+                            const intensity = effect.intensity ?? 0;
+                            const isAffected = effect.affectedCharacters === 0 || index < effect.affectedCharacters;
+                            
+                            // Stable seeded random
+                            const randX = (Math.sin(effect.seed * 1000 + index * 10) * 0.5);
+                            const randY = (Math.cos(effect.seed * 2000 + index * 10) * 0.5);
+                            const randRot = (Math.sin(effect.seed * 3000 + index * 10) * 10);
+
+                            const isSelected = effect.selectedIndex === index;
+
+                            const charOffsetX = isAffected ? (randX * intensity) + (index * (effect.spacing ?? 0) * pxPerMm) + (effect.horizontalOffset ?? 0) * pxPerMm + (isSelected ? (effect.manualX ?? 0) * pxPerMm : 0) : (index * (effect.spacing ?? 0) * pxPerMm);
+                            const charOffsetY = isAffected ? (randY * intensity) + (effect.verticalOffset ?? 0) * pxPerMm + (isSelected ? (effect.manualY ?? 0) * pxPerMm : 0) : (effect.verticalOffset ?? 0) * pxPerMm;
+                            const charRotation = isAffected ? (randRot * intensity * 0.1) + (isSelected ? (effect.manualRotation ?? 0) : 0) : 0;
 
                             return (
                               <KonvaText
