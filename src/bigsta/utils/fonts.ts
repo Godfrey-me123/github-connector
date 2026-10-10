@@ -1,5 +1,9 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 export const FONT_LIBRARY = [
+  "Manual Typewriter",
+  "Courier Prime",
+  "Special Elite",
+  "Olympia Congress",
   "Cooper Black",
   "Archivo Black",
   "Arial Black",
@@ -33,6 +37,11 @@ export const ALL_FONT_WEIGHTS: FontWeightOption[] = [
 
 // Available weights mapping per font family based on standard font files and web availability
 export const FONT_WEIGHTS_BY_FAMILY: Record<string, number[]> = {
+  "Manual Typewriter": [400, 700],
+  "Manual Typewriter Regular": [400],
+  "Courier Prime": [400, 700],
+  "Special Elite": [400],
+  "Olympia Congress": [400],
   "Cooper Black": [400],
   "Cooper Black Regular": [400],
   "Archivo Black": [400],
@@ -122,7 +131,7 @@ export function setStoredWeightScope(scope: FontScope): void {
 }
 
 /**
- * Actively forces Cooper Black and primary design fonts to load on Web and inside APK WebViews.
+ * Actively forces Manual Typewriter, typewriter families, and Cooper Black to load on Web and inside APK WebViews.
  * Uses FontFace API, document.fonts.load, and a DOM layout primer to ensure glyph rasterization
  * is completed before canvas operations or UI rendering.
  */
@@ -133,6 +142,46 @@ export async function forceLoadAppFonts(): Promise<void> {
   if (typeof FontFace !== "undefined" && document.fonts) {
     try {
       const facesToLoad = [
+        new FontFace("Manual Typewriter", "url(/fonts/ManualTypewriter-Regular.ttf)", {
+          weight: "400",
+          style: "normal",
+          display: "swap",
+        }),
+        new FontFace("Manual Typewriter", "url(/fonts/ManualTypewriter-Bold.ttf)", {
+          weight: "700",
+          style: "normal",
+          display: "swap",
+        }),
+        new FontFace("Manual Typewriter Regular", "url(/fonts/ManualTypewriter-Regular.ttf)", {
+          weight: "400",
+          style: "normal",
+          display: "swap",
+        }),
+        new FontFace("Courier Prime", "url(/fonts/CourierPrime-Regular.ttf)", {
+          weight: "400",
+          style: "normal",
+          display: "swap",
+        }),
+        new FontFace("Courier Prime", "url(/fonts/CourierPrime-Bold.ttf)", {
+          weight: "700",
+          style: "normal",
+          display: "swap",
+        }),
+        new FontFace("Courier Prime", "url(/fonts/CourierPrime-Italic.ttf)", {
+          weight: "400",
+          style: "italic",
+          display: "swap",
+        }),
+        new FontFace("Special Elite", "url(/fonts/SpecialElite-Regular.ttf)", {
+          weight: "400",
+          style: "normal",
+          display: "swap",
+        }),
+        new FontFace("Olympia Congress", "url(/fonts/OlympiaCongress.ttf)", {
+          weight: "400",
+          style: "normal",
+          display: "swap",
+        }),
         new FontFace("Cooper Black", "url(/fonts/CooperBlack.ttf)", {
           weight: "400",
           style: "normal",
@@ -163,6 +212,14 @@ export async function forceLoadAppFonts(): Promise<void> {
     // 2. Trigger document.fonts.load explicitly
     try {
       await Promise.allSettled([
+        document.fonts.load('400 16px "Manual Typewriter"'),
+        document.fonts.load('700 16px "Manual Typewriter"'),
+        document.fonts.load('400 16px "Manual Typewriter Regular"'),
+        document.fonts.load('400 16px "Courier Prime"'),
+        document.fonts.load('700 16px "Courier Prime"'),
+        document.fonts.load('italic 400 16px "Courier Prime"'),
+        document.fonts.load('400 16px "Special Elite"'),
+        document.fonts.load('400 16px "Olympia Congress"'),
         document.fonts.load('400 16px "Cooper Black"'),
         document.fonts.load('400 16px "Cooper Black Regular"'),
         document.fonts.load('italic 400 16px "Cooper Black"'),
@@ -179,6 +236,13 @@ export async function forceLoadAppFonts(): Promise<void> {
       primer.style.cssText =
         "position:absolute;left:-9999px;top:-9999px;opacity:0;pointer-events:none;z-index:-1;width:1px;height:1px;overflow:hidden;";
       primer.innerHTML = `
+        <span style="font-family:'Manual Typewriter', monospace; font-weight:400;">Manual Typewriter Regular</span>
+        <span style="font-family:'Manual Typewriter', monospace; font-weight:700;">Manual Typewriter Bold</span>
+        <span style="font-family:'Manual Typewriter Regular', monospace; font-weight:400;">Manual Typewriter Regular</span>
+        <span style="font-family:'Courier Prime', monospace; font-weight:400;">Courier Prime Regular</span>
+        <span style="font-family:'Courier Prime', monospace; font-weight:700;">Courier Prime Bold</span>
+        <span style="font-family:'Special Elite', cursive, monospace; font-weight:400;">Special Elite Primer</span>
+        <span style="font-family:'Olympia Congress', monospace; font-weight:400;">Olympia Congress Primer</span>
         <span style="font-family:'Cooper Black', serif; font-weight:400;">Cooper Black Primer</span>
         <span style="font-family:'Cooper Black Regular', serif; font-weight:400;">Cooper Black Regular Primer</span>
         <span style="font-family:'Cooper Black', serif; font-weight:400; font-style:italic;">Cooper Black Italic Primer</span>

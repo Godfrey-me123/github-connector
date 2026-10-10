@@ -176,6 +176,111 @@
   --accent-highlight: #f97316;
 }
 
+/* Manual Typewriter & Typewriter Families - Web & APK Offline Optimized */
+@font-face {
+  font-family: "Manual Typewriter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local("Manual Typewriter"),
+    local("Manual Typewriter Regular"),
+    local("ManualTypewriter"),
+    url("/fonts/ManualTypewriter-Regular.ttf") format("truetype"),
+    url("/fonts/CourierPrime-Regular.ttf") format("truetype"),
+    url("/fonts/manual-typewriter.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Manual Typewriter";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src:
+    local("Manual Typewriter Bold"),
+    local("ManualTypewriter-Bold"),
+    url("/fonts/ManualTypewriter-Bold.ttf") format("truetype"),
+    url("/fonts/CourierPrime-Bold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Manual Typewriter Regular";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local("Manual Typewriter"),
+    local("Manual Typewriter Regular"),
+    url("/fonts/ManualTypewriter-Regular.ttf") format("truetype"),
+    url("/fonts/CourierPrime-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Courier Prime";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local("Courier Prime"),
+    local("CourierPrime-Regular"),
+    url("/fonts/CourierPrime-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Courier Prime";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src:
+    local("Courier Prime Bold"),
+    local("CourierPrime-Bold"),
+    url("/fonts/CourierPrime-Bold.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Courier Prime";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local("Courier Prime Italic"),
+    local("CourierPrime-Italic"),
+    url("/fonts/CourierPrime-Italic.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Courier Prime";
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src:
+    local("Courier Prime Bold Italic"),
+    local("CourierPrime-BoldItalic"),
+    url("/fonts/CourierPrime-BoldItalic.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Special Elite";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local("Special Elite"),
+    local("SpecialElite-Regular"),
+    url("/fonts/SpecialElite-Regular.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Olympia Congress";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local("Olympia Congress"),
+    local("OlympiaCongress"),
+    url("/fonts/OlympiaCongress.ttf") format("truetype");
+}
+
 /* Cooper Black Font Family - Web & APK Offline Optimized */
 @font-face {
   font-family: "Cooper Black";

@@ -17,7 +17,7 @@ import {
   formatLicenceDate,
   toTitleCase,
 } from "./dateValidation";
-import { FONT_WEIGHTS_BY_FAMILY } from "./fonts";
+import { FONT_WEIGHTS_BY_FAMILY, forceLoadAppFonts } from "./fonts";
 import { useTemplateStore } from "../store/useTemplateStore";
 import { SAMPLE_TEMPLATES } from "./sampleTemplates";
 
@@ -121,6 +121,7 @@ export async function renderTemplateToCanvas(
   // Force fonts to be fully loaded and rasterized before drawing on canvas
   if (typeof document !== "undefined" && document.fonts) {
     try {
+      await forceLoadAppFonts();
       await document.fonts.ready;
     } catch {}
   }
