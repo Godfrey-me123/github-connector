@@ -118,6 +118,13 @@ export async function renderTemplateToCanvas(
   canvas.width = widthPx;
   canvas.height = heightPx;
 
+  // Force fonts to be fully loaded and rasterized before drawing on canvas
+  if (typeof document !== "undefined" && document.fonts) {
+    try {
+      await document.fonts.ready;
+    } catch {}
+  }
+
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Could not get 2D context");
 

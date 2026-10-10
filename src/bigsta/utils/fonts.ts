@@ -1,5 +1,6 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 export const FONT_LIBRARY = [
+  "Cooper Black",
   "Archivo Black",
   "Arial Black",
   "Arial",
@@ -32,6 +33,8 @@ export const ALL_FONT_WEIGHTS: FontWeightOption[] = [
 
 // Available weights mapping per font family based on standard font files and web availability
 export const FONT_WEIGHTS_BY_FAMILY: Record<string, number[]> = {
+  "Cooper Black": [400],
+  "Cooper Black Regular": [400],
   "Archivo Black": [400],
   Arial: [400, 700],
   "Arial Black": [900],
@@ -117,3 +120,78 @@ export function setStoredWeightScope(scope: FontScope): void {
     // Ignore localStorage errors
   }
 }
+
+/**
+ * Actively forces Cooper Black and primary design fonts to load on Web and inside APK WebViews.
+ * Uses FontFace API, document.fonts.load, and a DOM layout primer to ensure glyph rasterization
+ * is completed before canvas operations or UI rendering.
+ */
+export async function forceLoadAppFonts(): Promise<void> {
+  if (typeof window === "undefined" || typeof document === "undefined") return;
+
+  // 1. Programmatically register and load FontFace objects for local files
+  if (typeof FontFace !== "undefined" && document.fonts) {
+    try {
+      const facesToLoad = [
+        new FontFace("Cooper Black", "url(/fonts/CooperBlack.ttf)", {
+          weight: "400",
+          style: "normal",
+          display: "swap",
+        }),
+        new FontFace("Cooper Black Regular", "url(/fonts/CooperBlack.ttf)", {
+          weight: "400",
+          style: "normal",
+          display: "swap",
+        }),
+        new FontFace("Cooper Black", "url(/fonts/CooperBlackItalic.ttf)", {
+          weight: "400",
+          style: "italic",
+          display: "swap",
+        }),
+      ];
+
+      const loaded = await Promise.allSettled(facesToLoad.map((f) => f.load()));
+      loaded.forEach((res) => {
+        if (res.status === "fulfilled" && res.value) {
+          try {
+            document.fonts.add(res.value);
+          } catch {}
+        }
+      });
+    } catch {}
+
+    // 2. Trigger document.fonts.load explicitly
+    try {
+      await Promise.allSettled([
+        document.fonts.load('400 16px "Cooper Black"'),
+        document.fonts.load('400 16px "Cooper Black Regular"'),
+        document.fonts.load('italic 400 16px "Cooper Black"'),
+      ]);
+    } catch {}
+  }
+
+  // 3. Inject an offscreen DOM primer to force Android WebView / APK layout engine to rasterize
+  try {
+    if (!document.getElementById("bigsta-font-primer")) {
+      const primer = document.createElement("div");
+      primer.id = "bigsta-font-primer";
+      primer.setAttribute("aria-hidden", "true");
+      primer.style.cssText =
+        "position:absolute;left:-9999px;top:-9999px;opacity:0;pointer-events:none;z-index:-1;width:1px;height:1px;overflow:hidden;";
+      primer.innerHTML = `
+        <span style="font-family:'Cooper Black', serif; font-weight:400;">Cooper Black Primer</span>
+        <span style="font-family:'Cooper Black Regular', serif; font-weight:400;">Cooper Black Regular Primer</span>
+        <span style="font-family:'Cooper Black', serif; font-weight:400; font-style:italic;">Cooper Black Italic Primer</span>
+      `;
+      document.body?.appendChild(primer);
+    }
+  } catch {}
+
+  // 4. Ensure document.fonts.ready has resolved
+  if (typeof document !== "undefined" && document.fonts) {
+    try {
+      await document.fonts.ready;
+    } catch {}
+  }
+}
+

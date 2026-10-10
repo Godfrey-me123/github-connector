@@ -39,6 +39,8 @@ import { UnsavedChangesModal } from "./components/common/UnsavedChangesModal";
 import { StartupDisclaimerModal } from "./components/common/StartupDisclaimerModal";
 import { SuccessActivationModal } from "./components/common/SuccessActivationModal";
 
+import { forceLoadAppFonts } from "./utils/fonts";
+
 export default function App() {
   const {
     activeScreen,
@@ -53,6 +55,7 @@ export default function App() {
   } = useTemplateStore();
 
   useEffect(() => {
+    forceLoadAppFonts();
     fetchPasskeysFromSupabase();
     loadSavedTemplates();
     loadTokenPackages();

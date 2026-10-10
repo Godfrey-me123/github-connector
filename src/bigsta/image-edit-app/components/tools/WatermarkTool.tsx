@@ -212,6 +212,7 @@ export const WatermarkTool: React.FC<WatermarkToolProps> = ({ initialFile, onBac
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-2 py-2 text-xs text-white"
                     >
                       <option value="sans-serif">Sans-Serif</option>
+                      <option value="Cooper Black">Cooper Black</option>
                       <option value="serif">Serif</option>
                       <option value="monospace">Monospace</option>
                       <option value="Impact">Impact</option>

@@ -176,6 +176,45 @@
   --accent-highlight: #f97316;
 }
 
+/* Cooper Black Font Family - Web & APK Offline Optimized */
+@font-face {
+  font-family: "Cooper Black";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local("Cooper Black"),
+    local("CooperBlack"),
+    local("Cooper Black Regular"),
+    url("/fonts/CooperBlack.ttf") format("truetype"),
+    url("/fonts/cooper-black.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Cooper Black";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local("Cooper Black Italic"),
+    local("CooperBlackItalic"),
+    url("/fonts/CooperBlackItalic.ttf") format("truetype"),
+    url("/fonts/cooper-black-italic.ttf") format("truetype");
+}
+
+@font-face {
+  font-family: "Cooper Black Regular";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local("Cooper Black"),
+    local("CooperBlack"),
+    local("Cooper Black Regular"),
+    url("/fonts/CooperBlack.ttf") format("truetype"),
+    url("/fonts/cooper-black.ttf") format("truetype");
+}
+
 *,
 *::before,
 *::after {
