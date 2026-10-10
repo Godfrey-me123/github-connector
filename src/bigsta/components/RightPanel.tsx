@@ -1151,51 +1151,31 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                             manualY: 0,
                             manualRotation: 0,
                         };
+                        const Stepper = ({ label, value, min, max, step, onChange }: { label: string, value: number, min?: number, max?: number, step: number, onChange: (val: number) => void }) => (
+                          <div className="mb-2">
+                            <label className="block text-[#000000] font-semibold mb-1 text-[11px]">{label}</label>
+                            <div className="flex items-center gap-1 border border-[#dadcdc] rounded-lg bg-white p-0.5 shadow-sm">
+                              <button type="button" onClick={() => onChange(Math.max(min ?? -Infinity, value - step))} className="p-1 hover:bg-[#E7E9EB] rounded text-[#000000] min-w-[26px] min-h-[26px] flex items-center justify-center">-</button>
+                              <input type="number" step={step} value={value} onChange={(e) => onChange(parseFloat(e.target.value) || 0)} className="w-full bg-transparent text-center text-[11px] font-mono font-bold text-[#000000] focus:outline-none" />
+                              <button type="button" onClick={() => onChange(Math.min(max ?? Infinity, value + step))} className="p-1 hover:bg-[#E7E9EB] rounded text-[#000000] min-w-[26px] min-h-[26px] flex items-center justify-center">+</button>
+                            </div>
+                          </div>
+                        );
                         return (
                           <>
-                            <div>
-                              <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Intensity</label>
-                              <input type="range" min="0" max="2" step="0.1" value={effect.intensity ?? 0.5} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, intensity: parseFloat(e.target.value) || 0 } })} className="w-full" />
-                            </div>
+                            <Stepper label="Intensity" value={effect.intensity ?? 0.5} min={0} max={2} step={0.1} onChange={(val) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, intensity: val } })} />
                             <div className="grid grid-cols-2 gap-2">
-                              <div>
-                                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">H-Offset</label>
-                                <input type="number" step="0.1" value={effect.horizontalOffset ?? 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, horizontalOffset: parseFloat(e.target.value) || 0 } })} className="w-full px-2 py-1 bg-[#E7E9EB] border rounded" />
-                              </div>
-                              <div>
-                                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">V-Offset</label>
-                                <input type="number" step="0.1" value={effect.verticalOffset ?? 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, verticalOffset: parseFloat(e.target.value) || 0 } })} className="w-full px-2 py-1 bg-[#E7E9EB] border rounded" />
-                              </div>
+                              <Stepper label="H-Offset" value={effect.horizontalOffset ?? 0} step={0.1} onChange={(val) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, horizontalOffset: val } })} />
+                              <Stepper label="V-Offset" value={effect.verticalOffset ?? 0} step={0.1} onChange={(val) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, verticalOffset: val } })} />
                             </div>
-                            <div>
-                              <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Rotation Range</label>
-                              <input type="range" min="-10" max="10" step="1" value={effect.rotation ?? 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, rotation: parseFloat(e.target.value) || 0 } })} className="w-full" />
-                            </div>
-                            <div>
-                              <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Spacing</label>
-                              <input type="range" min="-2" max="2" step="0.1" value={effect.spacing ?? 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, spacing: parseFloat(e.target.value) || 0 } })} className="w-full" />
-                            </div>
-                            <div>
-                              <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Affected Chars</label>
-                              <input type="number" min="0" value={effect.affectedCharacters ?? 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, affectedCharacters: parseInt(e.target.value) || 0 } })} className="w-full px-2 py-1 bg-[#E7E9EB] border rounded" />
-                            </div>
-                            <div>
-                              <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Select Character Index</label>
-                              <input type="number" min="0" max={Math.max(0, (selectedLayer as any).text?.length - 1 || 0)} value={effect.selectedIndex ?? 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, selectedIndex: parseInt(e.target.value) || 0 } })} className="w-full px-2 py-1 bg-[#E7E9EB] border rounded" />
-                            </div>
-                            <div className="grid grid-cols-3 gap-2">
-                              <div>
-                                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Char X</label>
-                                <input type="number" step="0.1" value={effect.manualX ?? 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, manualX: parseFloat(e.target.value) || 0 } })} className="w-full px-2 py-1 bg-[#E7E9EB] border rounded" />
-                              </div>
-                              <div>
-                                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Char Y</label>
-                                <input type="number" step="0.1" value={effect.manualY ?? 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, manualY: parseFloat(e.target.value) || 0 } })} className="w-full px-2 py-1 bg-[#E7E9EB] border rounded" />
-                              </div>
-                              <div>
-                                <label className="block text-[#000000] font-semibold mb-1 text-[11px]">Char Rot</label>
-                                <input type="number" step="1" value={effect.manualRotation ?? 0} onChange={(e) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, manualRotation: parseFloat(e.target.value) || 0 } })} className="w-full px-2 py-1 bg-[#E7E9EB] border rounded" />
-                              </div>
+                            <Stepper label="Rotation Range" value={effect.rotation ?? 0} min={-45} max={45} step={1} onChange={(val) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, rotation: val } })} />
+                            <Stepper label="Spacing" value={effect.spacing ?? 0} step={0.1} onChange={(val) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, spacing: val } })} />
+                            <Stepper label="Affected Chars" value={effect.affectedCharacters ?? 0} min={0} step={1} onChange={(val) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, affectedCharacters: Math.floor(val) } })} />
+                            <Stepper label="Select Character Index" value={effect.selectedIndex ?? 0} min={0} max={Math.max(0, (selectedLayer as any).text?.length - 1 || 0)} step={1} onChange={(val) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, selectedIndex: Math.floor(val) } })} />
+                            <div className="grid grid-cols-3 gap-1">
+                              <Stepper label="Char X" value={effect.manualX ?? 0} step={0.1} onChange={(val) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, manualX: val } })} />
+                              <Stepper label="Char Y" value={effect.manualY ?? 0} step={0.1} onChange={(val) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, manualY: val } })} />
+                              <Stepper label="Char Rot" value={effect.manualRotation ?? 0} step={1} onChange={(val) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, manualRotation: val } })} />
                             </div>
                             <div className="flex gap-2 pt-2 flex-wrap">
                               <button onClick={() => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, seed: Math.random() } })} className="flex-1 py-1 bg-gray-200 rounded text-[10px] font-semibold">Regenerate</button>
