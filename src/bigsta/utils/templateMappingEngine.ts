@@ -47,7 +47,18 @@ export type SupportedBinding =
   | "NHIF_DATE_OF_BIRTH"
   | "NHIF_CARD_STATUS"
   | "NHIF_PASSPORT_PHOTO"
-  | "NHIF_QR";
+  | "NHIF_QR"
+  | "REGISTRATION_NUMBER"
+  | "OFFICER_SIGNATURE"
+  | "THUMBPRINT"
+  | "PARENTS_PLACE_OF_BIRTH"
+  | "PLACE_OF_BIRTH"
+  | "VILLAGE"
+  | "DISTRICT"
+  | "CHIEF"
+  | "REGISTRATION_DATE"
+  | "SPECIAL_MARKS"
+  | "DATE_OF_RENUNCIATION";
 
 export const ALL_SUPPORTED_BINDINGS: SupportedBinding[] = [
   "FIRST_NAME",
@@ -77,6 +88,17 @@ export const ALL_SUPPORTED_BINDINGS: SupportedBinding[] = [
   "NHIF_CARD_STATUS",
   "NHIF_PASSPORT_PHOTO",
   "NHIF_QR",
+  "REGISTRATION_NUMBER",
+  "OFFICER_SIGNATURE",
+  "THUMBPRINT",
+  "PARENTS_PLACE_OF_BIRTH",
+  "PLACE_OF_BIRTH",
+  "VILLAGE",
+  "DISTRICT",
+  "CHIEF",
+  "REGISTRATION_DATE",
+  "SPECIAL_MARKS",
+  "DATE_OF_RENUNCIATION",
 ];
 
 export interface FieldMappingDetail {
@@ -170,6 +192,17 @@ export function ensureTemplateFieldIds(template: CardTemplate): CardTemplate {
     NHIF_CARD_STATUS: "nhif_status",
     NHIF_PASSPORT_PHOTO: "nhif_passport_photo",
     NHIF_QR: "nhif_qr",
+    REGISTRATION_NUMBER: "registrationNumber",
+    OFFICER_SIGNATURE: "officerSignature",
+    THUMBPRINT: "thumbPrint",
+    PARENTS_PLACE_OF_BIRTH: "parentsPlaceOfBirth",
+    PLACE_OF_BIRTH: "placeOfBirth",
+    VILLAGE: "village",
+    DISTRICT: "district",
+    CHIEF: "chief",
+    REGISTRATION_DATE: "registrationDate",
+    SPECIAL_MARKS: "specialMarks",
+    DATE_OF_RENUNCIATION: "dateOfRenunciation",
   };
 
   const sanitizedLayers = template.layers.map((layer) => {
@@ -204,39 +237,8 @@ export function getLayerBinding(layer: Layer, _allLayers: Layer[] = []): Support
   // 1. Explicit Layer bindingKey Check
   if (layer.bindingKey) {
     const b = layer.bindingKey.toUpperCase() as any;
-    if (
-      [
-        "FIRST_NAME",
-        "MIDDLE_NAME",
-        "LAST_NAME",
-        "DOB",
-        "GENDER",
-        "NIDA_NUMBER",
-        "PHOTO",
-        "SIGNATURE",
-        "FIRST_MIDDLE_NAME",
-        "CATEGORIES_FIELD9",
-        "DRIVING_LICENCE_CATEGORIES",
-        "CLASSES_TABLE",
-        "ISSUE_DATE",
-        "EXPIRY_DATE",
-        "ISSUING_AUTHORITY",
-        "REGION",
-        "PIN_NUMBER",
-        "LICENCE_NUMBER",
-        "CARD_NO",
-        "CARD_NUMBER",
-        "FULL_NAME",
-        "CARD_STATUS",
-        "NHIF_CARD_NUMBER",
-        "NHIF_FULL_NAME",
-        "NHIF_GENDER",
-        "NHIF_DATE_OF_BIRTH",
-        "NHIF_CARD_STATUS",
-        "NHIF_PASSPORT_PHOTO",
-        "NHIF_QR",
-      ].includes(b)
-    ) {
+    if (b === "CARD_NUMBER") return "CARD_NO";
+    if (ALL_SUPPORTED_BINDINGS.includes(b as SupportedBinding)) {
       return b as SupportedBinding;
     }
   }
@@ -246,7 +248,18 @@ export function getLayerBinding(layer: Layer, _allLayers: Layer[] = []): Support
     const textLayer = layer as TextLayer;
     const text = (textLayer.text || "").trim();
 
-    if (/\{\{(?:nhif_card_number|card_no|card_number|cardno|cardnumber)\}\}/i.test(text))
+    if (/\{\{(?:registration_number|registration_no|reg_number|reg_no)\}\}/i.test(text))
+      return "REGISTRATION_NUMBER";
+    if (/\{\{(?:parents_place_of_birth|father_mother_place_of_birth|parents_origin)\}\}/i.test(text))
+      return "PARENTS_PLACE_OF_BIRTH";
+    if (/\{\{(?:place_of_birth|pob)\}\}/i.test(text)) return "PLACE_OF_BIRTH";
+    if (/\{\{(?:village)\}\}/i.test(text)) return "VILLAGE";
+    if (/\{\{(?:district)\}\}/i.test(text)) return "DISTRICT";
+    if (/\{\{(?:chief)\}\}/i.test(text)) return "CHIEF";
+    if (/\{\{(?:registration_date|reg_date)\}\}/i.test(text)) return "REGISTRATION_DATE";
+    if (/\{\{(?:special_marks|marks)\}\}/i.test(text)) return "SPECIAL_MARKS";
+    if (/\{\{(?:date_of_renunciation|renunciation_date)\}\}/i.test(text)) return "DATE_OF_RENUNCIATION";
+    if (/\{\{(?:nhif_card_number|card_no|card_number|cardno|cardnumber|nrc_number|nrc_no)\}\}/i.test(text))
       return "CARD_NO";
     if (/\{\{(?:nhif_full_name|full_name|fullname|member_name)\}\}/i.test(text)) return "FULL_NAME";
     if (/\{\{(?:nhif_status|card_status|membership_status)\}\}/i.test(text)) return "CARD_STATUS";
@@ -364,6 +377,19 @@ export function getLayerBinding(layer: Layer, _allLayers: Layer[] = []): Support
     if (/issuing_authority|authority/i.test(explicitField)) return "ISSUING_AUTHORITY";
     if (/region|residence/i.test(explicitField)) return "REGION";
     if (/pin_?number|pin/i.test(explicitField)) return "PIN_NUMBER";
+    if (/registration_number|reg_number|reg_no|registration_no/i.test(explicitField))
+      return "REGISTRATION_NUMBER";
+    if (/parents_place_of_birth|father_mother_place_of_birth|parents_origin/i.test(explicitField))
+      return "PARENTS_PLACE_OF_BIRTH";
+    if (/place_of_birth|pob/i.test(explicitField)) return "PLACE_OF_BIRTH";
+    if (/village/i.test(explicitField)) return "VILLAGE";
+    if (/district/i.test(explicitField)) return "DISTRICT";
+    if (/chief/i.test(explicitField)) return "CHIEF";
+    if (/registration_date|reg_date/i.test(explicitField)) return "REGISTRATION_DATE";
+    if (/special_marks|special_mark|marks/i.test(explicitField)) return "SPECIAL_MARKS";
+    if (/date_of_renunciation|renunciation/i.test(explicitField)) return "DATE_OF_RENUNCIATION";
+    if (/officer_signature|officer_sig|officer/i.test(explicitField)) return "OFFICER_SIGNATURE";
+    if (/thumb_print|thumbprint|thumb/i.test(explicitField)) return "THUMBPRINT";
   }
 
   // 4. Static Labels Protection (only blocks if no explicit key/token matches above)
@@ -423,8 +449,15 @@ export function getLayerBinding(layer: Layer, _allLayers: Layer[] = []): Support
     }
   }
 
-  // 6. Image or Placeholder Photo/Signature layers by ID / Name
+  // 6. Image or Placeholder Photo/Signature layers by ID / Name / PlaceholderKey
   if (layer.type === "image" || layer.type === "placeholder") {
+    const pKey = ((layer as any).placeholderKey || "").toLowerCase();
+    const idLower = layer.id.toLowerCase();
+    const nameLower = layer.name.toLowerCase();
+    if (pKey.includes("officer") || idLower.includes("officer") || nameLower.includes("officer"))
+      return "OFFICER_SIGNATURE";
+    if (pKey.includes("thumb") || idLower.includes("thumb") || nameLower.includes("thumb"))
+      return "THUMBPRINT";
     if (/photo/i.test(layer.id) || /photo/i.test(layer.name)) return "PHOTO";
     if (/sig/i.test(layer.id) || /signature/i.test(layer.name)) return "SIGNATURE";
   }
@@ -834,6 +867,53 @@ export function replaceAllTokens(layer: Layer, formData: any): Layer {
     categoriesBack,
   );
 
+  const regNo = String(
+    (formData as any).registrationNumber ||
+      (formData as any).registration_number ||
+      (formData as any).reg_number ||
+      formData.nrcNumber ||
+      "",
+  ).trim();
+  const nrcNum = String(
+    formData.nrcNumber ||
+      (formData as any).nrc_number ||
+      (formData as any).cardNumber ||
+      (formData as any).card_number ||
+      "",
+  ).trim();
+  const pob = String(
+    (formData as any).placeOfBirth || (formData as any).place_of_birth || "",
+  ).trim();
+  const parentsPob = String(
+    (formData as any).parentsPlaceOfBirth ||
+      (formData as any).parents_place_of_birth ||
+      (formData as any).father_mother_place_of_birth ||
+      "",
+  ).trim();
+  const village = String((formData as any).village || "").trim();
+  const district = String((formData as any).district || "").trim();
+  const chief = String((formData as any).chief || "").trim();
+  const regDate = String(
+    (formData as any).registrationDate || (formData as any).registration_date || "",
+  ).trim();
+  const specialMarks = String(
+    (formData as any).specialMarks || (formData as any).special_marks || "",
+  ).trim();
+  const renunciationDate = String(
+    (formData as any).dateOfRenunciation || (formData as any).date_of_renunciation || "",
+  ).trim();
+
+  text = text.replace(/\{\{(?:registration_number|registration_no|reg_number|reg_no)\}\}/gi, regNo);
+  text = text.replace(/\{\{(?:nrc_number|nrc_no|nrc)\}\}/gi, nrcNum);
+  text = text.replace(/\{\{(?:place_of_birth|pob)\}\}/gi, pob);
+  text = text.replace(/\{\{(?:parents_place_of_birth|father_mother_place_of_birth|parents_origin)\}\}/gi, parentsPob);
+  text = text.replace(/\{\{village\}\}/gi, village);
+  text = text.replace(/\{\{district\}\}/gi, district);
+  text = text.replace(/\{\{chief\}\}/gi, chief);
+  text = text.replace(/\{\{(?:registration_date|reg_date)\}\}/gi, regDate);
+  text = text.replace(/\{\{(?:special_marks|marks)\}\}/gi, specialMarks);
+  text = text.replace(/\{\{(?:date_of_renunciation|renunciation_date)\}\}/gi, renunciationDate);
+
   return { ...layer, text } as any;
 }
 
@@ -877,6 +957,46 @@ export function injectValueIntoLayer(
       } as ImageLayer;
     }
     return layer; // NEVER replace text fields with signature!
+  }
+
+  if (binding === "OFFICER_SIGNATURE") {
+    if (layer.type === "placeholder" || layer.type === "image") {
+      const officerUrl =
+        (formData as any).officerSignatureUrl ||
+        (formData as any).officerSignature ||
+        (formData as any).officer_signature;
+      if (!officerUrl) {
+        return { ...layer, hidden: true };
+      }
+      return {
+        ...layer,
+        type: "image",
+        src: officerUrl,
+        hidden: false,
+        aspectRatioLocked: true,
+      } as ImageLayer;
+    }
+    return layer;
+  }
+
+  if (binding === "THUMBPRINT") {
+    if (layer.type === "placeholder" || layer.type === "image") {
+      const thumbUrl =
+        (formData as any).thumbPrintUrl ||
+        (formData as any).thumbPrint ||
+        (formData as any).thumb_print;
+      if (!thumbUrl) {
+        return { ...layer, hidden: true };
+      }
+      return {
+        ...layer,
+        type: "image",
+        src: thumbUrl,
+        hidden: false,
+        aspectRatioLocked: true,
+      } as ImageLayer;
+    }
+    return layer;
   }
 
   if (layer.type === "text") {
@@ -1289,6 +1409,127 @@ export function injectValueIntoLayer(
             /\{\{\s*(?:nhif_date_of_birth|nhif_dob|dob|date_of_birth)\s*\}\}/gi,
             val,
           );
+        } else {
+          text = val;
+        }
+        break;
+      }
+      case "REGISTRATION_NUMBER": {
+        const val = String(
+          (formData as any).registrationNumber ||
+            (formData as any).registration_number ||
+            (formData as any).reg_number ||
+            formData.nrcNumber ||
+            "",
+        ).trim();
+        if (text.includes("{{")) {
+          text = text.replace(
+            /\{\{(?:registration_number|registration_no|reg_number|reg_no)\}\}/gi,
+            val,
+          );
+          if (text.startsWith("{{") && text.endsWith("}}")) text = val;
+        } else {
+          text = val;
+        }
+        break;
+      }
+      case "PARENTS_PLACE_OF_BIRTH": {
+        const val = String(
+          (formData as any).parentsPlaceOfBirth ||
+            (formData as any).parents_place_of_birth ||
+            (formData as any).father_mother_place_of_birth ||
+            "",
+        ).trim();
+        if (text.includes("{{")) {
+          text = text.replace(
+            /\{\{(?:parents_place_of_birth|father_mother_place_of_birth|parents_origin)\}\}/gi,
+            val,
+          );
+          if (text.startsWith("{{") && text.endsWith("}}")) text = val;
+        } else {
+          text = val;
+        }
+        break;
+      }
+      case "PLACE_OF_BIRTH": {
+        const val = String(
+          (formData as any).placeOfBirth ||
+            (formData as any).place_of_birth ||
+            (formData as any).pob ||
+            "",
+        ).trim();
+        if (text.includes("{{")) {
+          text = text.replace(/\{\{(?:place_of_birth|pob)\}\}/gi, val);
+          if (text.startsWith("{{") && text.endsWith("}}")) text = val;
+        } else {
+          text = val;
+        }
+        break;
+      }
+      case "VILLAGE": {
+        const val = String((formData as any).village || "").trim();
+        if (text.includes("{{")) {
+          text = text.replace(/\{\{village\}\}/gi, val);
+          if (text.startsWith("{{") && text.endsWith("}}")) text = val;
+        } else {
+          text = val;
+        }
+        break;
+      }
+      case "DISTRICT": {
+        const val = String((formData as any).district || "").trim();
+        if (text.includes("{{")) {
+          text = text.replace(/\{\{district\}\}/gi, val);
+          if (text.startsWith("{{") && text.endsWith("}}")) text = val;
+        } else {
+          text = val;
+        }
+        break;
+      }
+      case "CHIEF": {
+        const val = String((formData as any).chief || "").trim();
+        if (text.includes("{{")) {
+          text = text.replace(/\{\{chief\}\}/gi, val);
+          if (text.startsWith("{{") && text.endsWith("}}")) text = val;
+        } else {
+          text = val;
+        }
+        break;
+      }
+      case "REGISTRATION_DATE": {
+        const val = String(
+          (formData as any).registrationDate ||
+            (formData as any).registration_date ||
+            (formData as any).reg_date ||
+            "",
+        ).trim();
+        if (text.includes("{{")) {
+          text = text.replace(/\{\{(?:registration_date|reg_date)\}\}/gi, val);
+          if (text.startsWith("{{") && text.endsWith("}}")) text = val;
+        } else {
+          text = val;
+        }
+        break;
+      }
+      case "SPECIAL_MARKS": {
+        const val = String(
+          (formData as any).specialMarks || (formData as any).special_marks || "",
+        ).trim();
+        if (text.includes("{{")) {
+          text = text.replace(/\{\{(?:special_marks|marks)\}\}/gi, val);
+          if (text.startsWith("{{") && text.endsWith("}}")) text = val;
+        } else {
+          text = val;
+        }
+        break;
+      }
+      case "DATE_OF_RENUNCIATION": {
+        const val = String(
+          (formData as any).dateOfRenunciation || (formData as any).date_of_renunciation || "",
+        ).trim();
+        if (text.includes("{{")) {
+          text = text.replace(/\{\{(?:date_of_renunciation|renunciation_date)\}\}/gi, val);
+          if (text.startsWith("{{") && text.endsWith("}}")) text = val;
         } else {
           text = val;
         }
@@ -2450,6 +2691,38 @@ const RECOGNIZED_TOKENS = new Set([
   "nin",
   "id_no",
   "namba_nida",
+  "registration_number",
+  "registration_no",
+  "reg_number",
+  "reg_no",
+  "card_number",
+  "card_no",
+  "cardno",
+  "cardnumber",
+  "nrc_number",
+  "nrc_no",
+  "nrc",
+  "full_name",
+  "fullname",
+  "name",
+  "place_of_birth",
+  "pob",
+  "parents_place_of_birth",
+  "father_mother_place_of_birth",
+  "parents_origin",
+  "village",
+  "district",
+  "chief",
+  "registration_date",
+  "reg_date",
+  "special_marks",
+  "marks",
+  "date_of_renunciation",
+  "renunciation_date",
+  "officer_signature",
+  "officersignature",
+  "thumb_print",
+  "thumbprint",
 ]);
 
 function getEditDistance(a: string, b: string): number {

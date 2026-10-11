@@ -40,6 +40,7 @@ import { FONT_WEIGHTS_BY_FAMILY } from "../utils/fonts";
 import { formatLicenceDate } from "../utils/dateValidation";
 import { Layer, SmartGuide } from "../types";
 import { TopRuler, LeftRuler } from "./Rulers";
+import { calculateTypewriterLayout } from "../utils/typewriterEffect";
 
 export const CanvasWorkspace: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -1292,60 +1293,46 @@ export const CanvasWorkspace: React.FC = () => {
                       finalStrokeWidth = fontSizePx * 0.04;
                     }
 
+                    const twLayout = (layer as any).typewriterEffect?.enabled
+                      ? calculateTypewriterLayout(displayText, layer as any, pxPerMm, finalScaleX, layer.verticalScale ?? 1)
+                      : null;
+
                     return (
-                      (layer as any).typewriterEffect?.enabled ? (
+                      twLayout && !twLayout.isFallback && twLayout.chars.length > 0 ? (
                         <Group 
                           key={layer.id}
                           x={commonProps.x} 
                           y={commonProps.y} 
                           rotation={commonProps.rotation}
+                          opacity={commonProps.opacity}
+                          draggable={commonProps.draggable}
+                          onClick={commonProps.onClick}
+                          onTap={commonProps.onTap}
+                          onDragStart={commonProps.onDragStart}
+                          onDragMove={commonProps.onDragMove}
+                          onDragEnd={commonProps.onDragEnd}
+                          onTransformEnd={commonProps.onTransformEnd}
                         >
-                          {(displayText || "").split("").map((char, index) => {
-                            const effect = (layer as any).typewriterEffect || {
-                                enabled: false,
-                                seed: 0,
-                                intensity: 0,
-                                horizontalOffset: 0,
-                                verticalOffset: 0,
-                                rotation: 0,
-                                spacing: 0,
-                                affectedCharacters: 0,
-                                selectedIndex: 0,
-                                manualX: 0,
-                                manualY: 0,
-                                manualRotation: 0,
-                            };
-                            
-                            const intensity = effect.intensity ?? 0;
-                            const isAffected = effect.affectedCharacters === 0 || index < effect.affectedCharacters;
-                            
-                            // Stable seeded random
-                            const randX = (Math.sin(effect.seed * 1000 + index * 10) * 0.5);
-                            const randY = (Math.cos(effect.seed * 2000 + index * 10) * 0.5);
-                            const randRot = (Math.sin(effect.seed * 3000 + index * 10) * 10);
-
-                            const isSelected = effect.selectedIndex === index;
-
-                            const charOffsetX = isAffected ? (randX * intensity) + (index * (effect.spacing ?? 0) * pxPerMm) + (effect.horizontalOffset ?? 0) * pxPerMm + (isSelected ? (effect.manualX ?? 0) * pxPerMm : 0) : (index * (effect.spacing ?? 0) * pxPerMm);
-                            const charOffsetY = isAffected ? (randY * intensity) + (effect.verticalOffset ?? 0) * pxPerMm + (isSelected ? (effect.manualY ?? 0) * pxPerMm : 0) : (effect.verticalOffset ?? 0) * pxPerMm;
-                            const charRotation = isAffected ? (randRot * intensity * 0.1) + (isSelected ? (effect.manualRotation ?? 0) : 0) : 0;
-
-                            return (
-                              <KonvaText
-                                key={`${layer.id}-${index}`}
-                                text={char}
-                                x={charOffsetX}
-                                y={charOffsetY}
-                                rotation={charRotation}
-                                fontFamily={layer.fontFamily || "Helvetica"}
-                                fontSize={fontSizePx}
-                                fontStyle={computedStyle}
-                                fill={layer.color || "#000000"}
-                                align={layer.align || "left"}
-                                opacity={(layer.opacity ?? 1) * (layer.textOpacity ?? 1)}
-                              />
-                            );
-                          })}
+                          {twLayout.chars.map((ch) => (
+                            <KonvaText
+                              key={`${layer.id}-${ch.lineIndex}-${ch.charIndex}`}
+                              text={ch.char}
+                              x={ch.x}
+                              y={ch.y}
+                              rotation={ch.rotation}
+                              fontFamily={layer.fontFamily || "Helvetica"}
+                              fontSize={fontSizePx}
+                              fontStyle={computedStyle}
+                              fill={layer.color || "#000000"}
+                              stroke={finalStroke}
+                              strokeWidth={finalStrokeWidth}
+                              opacity={(layer.opacity ?? 1) * ((layer as any).textOpacity ?? 1)}
+                              shadowColor={layer.shadowColor || "#000000"}
+                              shadowBlur={layer.shadowEnabled ? (layer.shadowBlur ?? 1.5) * pxPerMm : 0}
+                              shadowOffsetX={layer.shadowEnabled ? (layer.shadowOffsetX ?? 0.5) * pxPerMm : 0}
+                              shadowOffsetY={layer.shadowEnabled ? (layer.shadowOffsetY ?? 0.5) * pxPerMm : 0}
+                            />
+                          ))}
                         </Group>
                       ) : (
                         <KonvaText

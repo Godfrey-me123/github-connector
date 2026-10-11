@@ -46,6 +46,8 @@ import {
   Tag,
   List,
   PenTool,
+  RefreshCw,
+  RotateCcw,
 } from "lucide-react";
 import { useTemplateStore } from "../store/useTemplateStore";
 import { convertFromMm, convertToMm } from "../utils/units";
@@ -128,6 +130,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
     isSaving,
     activeServiceId,
     updateAllLicenceCategoryStyle,
+    pushHistoryState,
   } = useTemplateStore();
 
   const [isSavedNotice, setIsSavedNotice] = useState(false);
@@ -1112,81 +1115,405 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                 onToggle={() => toggleSection("typewriterEffect")}
               >
                 <div className="space-y-3 text-xs">
-                  <label className="flex items-center justify-between cursor-pointer">
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-[#E7E9EB]/60 border border-[#dadcdc]">
                     <span className="text-[#000000] font-semibold text-[11px]">Enable Effect</span>
                     <input
                       type="checkbox"
                       checked={(selectedLayer as any).typewriterEffect?.enabled || false}
                       onChange={(e) => {
-                        updateLayer(selectedLayer.id, {
-                          typewriterEffect: {
-                            ...(selectedLayer as any).typewriterEffect,
-                            enabled: e.target.checked,
-                            seed: Math.random(),
-                            intensity: (selectedLayer as any).typewriterEffect?.intensity || 0.5,
-                            horizontalOffset: (selectedLayer as any).typewriterEffect?.horizontalOffset || 0,
-                            verticalOffset: (selectedLayer as any).typewriterEffect?.verticalOffset || 0,
-                            rotation: (selectedLayer as any).typewriterEffect?.rotation || 0,
-                            spacing: (selectedLayer as any).typewriterEffect?.spacing || 0,
-                            affectedCharacters: (selectedLayer as any).typewriterEffect?.affectedCharacters || 0,
-                          },
-                        });
-                      }}
-                      className="w-4 h-4 rounded border-[#dadcdc] text-blue-600 focus:ring-blue-500"
-                    />
-                  </label>
-                  
-                  { (selectedLayer as any).typewriterEffect?.enabled && (
-                    <>
-                      {(() => {
-                        const effect = (selectedLayer as any).typewriterEffect || {
-                            intensity: 0.5,
-                            horizontalOffset: 0,
-                            verticalOffset: 0,
-                            rotation: 0,
-                            spacing: 0,
-                            affectedCharacters: 0,
-                            selectedIndex: 0,
-                            manualX: 0,
-                            manualY: 0,
-                            manualRotation: 0,
+                        const isChecked = e.target.checked;
+                        const prev = (selectedLayer as any).typewriterEffect;
+                        const nextEffect = {
+                          ...prev,
+                          enabled: isChecked,
+                          seed: prev?.seed || Math.floor(Math.random() * 100000) + 1,
+                          intensity: prev?.intensity ?? 0.5,
+                          horizontalOffset: prev?.horizontalOffset ?? 0,
+                          verticalOffset: prev?.verticalOffset ?? 0,
+                          rotation: prev?.rotation ?? 0,
+                          spacing: prev?.spacing ?? 0,
+                          affectedCharacters: prev?.affectedCharacters ?? 0,
+                          selectedLine: prev?.selectedLine ?? 0,
+                          selectedIndex: prev?.selectedIndex ?? 0,
+                          manualX: prev?.manualX ?? 0,
+                          manualY: prev?.manualY ?? 0,
+                          manualRotation: prev?.manualRotation ?? 0,
                         };
-                        const Stepper = ({ label, value, min, max, step, onChange }: { label: string, value: number, min?: number, max?: number, step: number, onChange: (val: number) => void }) => (
-                          <div className="mb-2">
-                            <label className="block text-[#000000] font-semibold mb-1 text-[11px]">{label}</label>
-                            <div className="flex items-center gap-1 border border-[#dadcdc] rounded-lg bg-white p-0.5 shadow-sm">
-                              <button type="button" onClick={() => onChange(Math.max(min ?? -Infinity, value - step))} className="p-1 hover:bg-[#E7E9EB] rounded text-[#000000] min-w-[26px] min-h-[26px] flex items-center justify-center">-</button>
-                              <input type="number" step={step} value={value} onChange={(e) => onChange(parseFloat(e.target.value) || 0)} className="w-full bg-transparent text-center text-[11px] font-mono font-bold text-[#000000] focus:outline-none" />
-                              <button type="button" onClick={() => onChange(Math.min(max ?? Infinity, value + step))} className="p-1 hover:bg-[#E7E9EB] rounded text-[#000000] min-w-[26px] min-h-[26px] flex items-center justify-center">+</button>
+                        updateLayer(selectedLayer.id, { typewriterEffect: nextEffect });
+                        if (isChecked && !openSections.typewriterEffect) {
+                          toggleSection("typewriterEffect");
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-[#dadcdc] text-[#000000] focus:ring-[#000000] cursor-pointer"
+                    />
+                  </div>
+                  
+                  {(selectedLayer as any).typewriterEffect?.enabled && (() => {
+                    const effect = (selectedLayer as any).typewriterEffect || {
+                      enabled: true,
+                      seed: 12345,
+                      intensity: 0.5,
+                      horizontalOffset: 0,
+                      verticalOffset: 0,
+                      rotation: 0,
+                      spacing: 0,
+                      affectedCharacters: 0,
+                      selectedLine: 0,
+                      selectedIndex: 0,
+                      manualX: 0,
+                      manualY: 0,
+                      manualRotation: 0,
+                    };
+
+                    const updateEffect = (partial: any) => {
+                      updateLayer(selectedLayer.id, {
+                        typewriterEffect: { ...effect, ...partial },
+                      });
+                    };
+
+                    const rawText = (selectedLayer as any).text || "";
+                    const lines = rawText.split("\n");
+                    const currentLineIdx = Math.min(lines.length - 1, Math.max(0, effect.selectedLine ?? 0));
+                    const currentLineText = lines[currentLineIdx] || "";
+                    const charCount = currentLineText.length;
+                    const safeCharIdx = Math.min(Math.max(0, charCount - 1), Math.max(0, effect.selectedIndex ?? 0));
+                    const selectedChar = currentLineText[safeCharIdx] ?? "";
+
+                    const StepperInput = ({
+                      label,
+                      value,
+                      min,
+                      max,
+                      step = 0.1,
+                      unit = "",
+                      onChange,
+                    }: {
+                      label: string;
+                      value: number;
+                      min?: number;
+                      max?: number;
+                      step?: number;
+                      unit?: string;
+                      onChange: (val: number) => void;
+                    }) => {
+                      const isAtMin = min !== undefined && value <= min;
+                      const isAtMax = max !== undefined && value >= max;
+                      return (
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[11px] font-semibold text-[#000000]">{label}</label>
+                            <span className="text-[10px] font-mono font-bold text-[#000000] bg-white px-1.5 py-0.5 rounded border border-[#dadcdc]">
+                              {Number(value.toFixed(2))}{unit}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 border border-[#dadcdc] rounded-lg bg-white p-0.5 shadow-xs">
+                            <button
+                              type="button"
+                              disabled={isAtMin}
+                              onClick={() => {
+                                const next = parseFloat((value - step).toFixed(2));
+                                onChange(min !== undefined ? Math.max(min, next) : next);
+                              }}
+                              className="p-1 hover:bg-[#E7E9EB] disabled:opacity-30 rounded text-[#000000] min-w-[26px] min-h-[26px] flex items-center justify-center cursor-pointer transition-colors"
+                              title={`Decrease ${label}`}
+                            >
+                              <Minus className="w-3 h-3 text-[#000000]" />
+                            </button>
+                            <input
+                              type="number"
+                              step={step}
+                              min={min}
+                              max={max}
+                              value={value}
+                              onChange={(e) => {
+                                const parsed = parseFloat(e.target.value);
+                                if (!isNaN(parsed)) {
+                                  let clamped = parsed;
+                                  if (min !== undefined) clamped = Math.max(min, clamped);
+                                  if (max !== undefined) clamped = Math.min(max, clamped);
+                                  onChange(parseFloat(clamped.toFixed(2)));
+                                } else {
+                                  onChange(0);
+                                }
+                              }}
+                              className="w-full bg-transparent text-center text-[11px] font-mono font-bold text-[#000000] focus:outline-none"
+                            />
+                            <button
+                              type="button"
+                              disabled={isAtMax}
+                              onClick={() => {
+                                const next = parseFloat((value + step).toFixed(2));
+                                onChange(max !== undefined ? Math.min(max, next) : next);
+                              }}
+                              className="p-1 hover:bg-[#E7E9EB] disabled:opacity-30 rounded text-[#000000] min-w-[26px] min-h-[26px] flex items-center justify-center cursor-pointer transition-colors"
+                              title={`Increase ${label}`}
+                            >
+                              <Plus className="w-3 h-3 text-[#000000]" />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    };
+
+                    return (
+                      <div className="space-y-3 pt-1">
+                        {/* Intensity Slider + Stepper */}
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-semibold text-[#000000]">Intensity</span>
+                            <span className="text-[10px] font-mono font-bold text-[#000000] bg-white px-1.5 py-0.5 rounded border border-[#dadcdc]">
+                              {Math.round((effect.intensity ?? 0.5) * 100)}%
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="range"
+                              min="0"
+                              max="2"
+                              step="0.05"
+                              value={effect.intensity ?? 0.5}
+                              onChange={(e) => updateEffect({ intensity: parseFloat(e.target.value) || 0 })}
+                              className="flex-1 h-5 accent-[#000000] cursor-pointer"
+                            />
+                            <div className="flex items-center gap-0.5 border border-[#dadcdc] rounded-lg bg-white p-0.5 shadow-xs">
+                              <button
+                                type="button"
+                                disabled={(effect.intensity ?? 0.5) <= 0}
+                                onClick={() => updateEffect({ intensity: Math.max(0, parseFloat(((effect.intensity ?? 0.5) - 0.1).toFixed(2))) })}
+                                className="p-1 hover:bg-[#E7E9EB] disabled:opacity-30 rounded text-[#000000] cursor-pointer"
+                              >
+                                <Minus className="w-3 h-3 text-[#000000]" />
+                              </button>
+                              <input
+                                type="number"
+                                step="0.1"
+                                min="0"
+                                max="2"
+                                value={effect.intensity ?? 0.5}
+                                onChange={(e) => updateEffect({ intensity: Math.min(2, Math.max(0, parseFloat(e.target.value) || 0)) })}
+                                className="w-10 bg-transparent text-center text-[11px] font-mono font-bold text-[#000000] focus:outline-none"
+                              />
+                              <button
+                                type="button"
+                                disabled={(effect.intensity ?? 0.5) >= 2}
+                                onClick={() => updateEffect({ intensity: Math.min(2, parseFloat(((effect.intensity ?? 0.5) + 0.1).toFixed(2))) })}
+                                className="p-1 hover:bg-[#E7E9EB] disabled:opacity-30 rounded text-[#000000] cursor-pointer"
+                              >
+                                <Plus className="w-3 h-3 text-[#000000]" />
+                              </button>
                             </div>
                           </div>
-                        );
-                        return (
-                          <>
-                            <Stepper label="Intensity" value={effect.intensity ?? 0.5} min={0} max={2} step={0.1} onChange={(val) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, intensity: val } })} />
-                            <div className="grid grid-cols-2 gap-2">
-                              <Stepper label="H-Offset" value={effect.horizontalOffset ?? 0} step={0.1} onChange={(val) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, horizontalOffset: val } })} />
-                              <Stepper label="V-Offset" value={effect.verticalOffset ?? 0} step={0.1} onChange={(val) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, verticalOffset: val } })} />
+                        </div>
+
+                        {/* H-Offset & V-Offset */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <StepperInput
+                            label="H-Offset"
+                            value={effect.horizontalOffset ?? 0}
+                            min={-10}
+                            max={10}
+                            step={0.1}
+                            unit="mm"
+                            onChange={(val) => updateEffect({ horizontalOffset: val })}
+                          />
+                          <StepperInput
+                            label="V-Offset"
+                            value={effect.verticalOffset ?? 0}
+                            min={-10}
+                            max={10}
+                            step={0.1}
+                            unit="mm"
+                            onChange={(val) => updateEffect({ verticalOffset: val })}
+                          />
+                        </div>
+
+                        {/* Rotation & Spacing */}
+                        <div className="grid grid-cols-2 gap-2">
+                          <StepperInput
+                            label="Rotation Range"
+                            value={effect.rotation ?? 0}
+                            min={-45}
+                            max={45}
+                            step={1}
+                            unit="°"
+                            onChange={(val) => updateEffect({ rotation: val })}
+                          />
+                          <StepperInput
+                            label="Spacing"
+                            value={effect.spacing ?? 0}
+                            min={-5}
+                            max={10}
+                            step={0.1}
+                            unit="mm"
+                            onChange={(val) => updateEffect({ spacing: val })}
+                          />
+                        </div>
+
+                        {/* Affected Characters */}
+                        <StepperInput
+                          label="Affected Chars"
+                          value={effect.affectedCharacters ?? 0}
+                          min={0}
+                          max={Math.max(2, charCount)}
+                          step={1}
+                          unit={effect.affectedCharacters === 0 ? " (All)" : ""}
+                          onChange={(val) => updateEffect({ affectedCharacters: Math.floor(val) })}
+                        />
+
+                        {/* Multiline Selector if lines > 1 */}
+                        {lines.length > 1 && (
+                          <div className="space-y-1">
+                            <label className="text-[11px] font-semibold text-[#000000]">Select Line</label>
+                            <div className="flex gap-1 overflow-x-auto pb-1">
+                              {lines.map((_, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => updateEffect({ selectedLine: idx })}
+                                  className={`px-2.5 py-1 text-[11px] font-semibold rounded-md border cursor-pointer ${
+                                    currentLineIdx === idx
+                                      ? "bg-[#000000] text-white border-[#000000]"
+                                      : "bg-white text-[#000000] border-[#dadcdc] hover:bg-[#E7E9EB]"
+                                  }`}
+                                >
+                                  Line {idx + 1}
+                                </button>
+                              ))}
                             </div>
-                            <Stepper label="Rotation Range" value={effect.rotation ?? 0} min={-45} max={45} step={1} onChange={(val) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, rotation: val } })} />
-                            <Stepper label="Spacing" value={effect.spacing ?? 0} step={0.1} onChange={(val) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, spacing: val } })} />
-                            <Stepper label="Affected Chars" value={effect.affectedCharacters ?? 0} min={0} step={1} onChange={(val) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, affectedCharacters: Math.floor(val) } })} />
-                            <Stepper label="Select Character Index" value={effect.selectedIndex ?? 0} min={0} max={Math.max(0, (selectedLayer as any).text?.length - 1 || 0)} step={1} onChange={(val) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, selectedIndex: Math.floor(val) } })} />
-                            <div className="grid grid-cols-3 gap-1">
-                              <Stepper label="Char X" value={effect.manualX ?? 0} step={0.1} onChange={(val) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, manualX: val } })} />
-                              <Stepper label="Char Y" value={effect.manualY ?? 0} step={0.1} onChange={(val) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, manualY: val } })} />
-                              <Stepper label="Char Rot" value={effect.manualRotation ?? 0} step={1} onChange={(val) => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, manualRotation: val } })} />
-                            </div>
-                            <div className="flex gap-2 pt-2 flex-wrap">
-                              <button onClick={() => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect, seed: Math.random() } })} className="flex-1 py-1 bg-gray-200 rounded text-[10px] font-semibold">Regenerate</button>
-                              <button onClick={() => updateLayer(selectedLayer.id, { typewriterEffect: { enabled: true, seed: Math.random(), intensity: 0.5, horizontalOffset: 0, verticalOffset: 0, rotation: 0, spacing: 0, affectedCharacters: 0, selectedIndex: 0, manualX: 0, manualY: 0, manualRotation: 0 } })} className="flex-1 py-1 bg-gray-200 rounded text-[10px] font-semibold">Reset</button>
-                              <button onClick={() => updateLayer(selectedLayer.id, { typewriterEffect: { ...effect } })} className="flex-1 py-1 bg-blue-600 text-white rounded text-[10px] font-semibold">Apply</button>
-                            </div>
-                          </>
-                        );
-                      })()}
-                    </>
-                  )}
+                          </div>
+                        )}
+
+                        {/* Individual Character Selector */}
+                        <div className="p-2.5 rounded-xl bg-[#E7E9EB]/60 border border-[#dadcdc] space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-bold text-[#000000]">Selected Character</span>
+                            <span className="text-[11px] font-mono font-bold text-[#000000] bg-white px-2 py-0.5 rounded border border-[#dadcdc]">
+                              {selectedChar ? `"${selectedChar}"` : "(space)"} · Index {safeCharIdx}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1 border border-[#dadcdc] rounded-lg bg-white p-0.5 shadow-xs">
+                            <button
+                              type="button"
+                              disabled={safeCharIdx <= 0}
+                              onClick={() => updateEffect({ selectedIndex: Math.max(0, safeCharIdx - 1) })}
+                              className="p-1 hover:bg-[#E7E9EB] disabled:opacity-30 rounded text-[#000000] min-w-[28px] min-h-[28px] flex items-center justify-center cursor-pointer"
+                              title="Previous Character"
+                            >
+                              <Minus className="w-3 h-3 text-[#000000]" />
+                            </button>
+                            <input
+                              type="number"
+                              min={0}
+                              max={Math.max(0, charCount - 1)}
+                              value={safeCharIdx}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value, 10);
+                                if (!isNaN(val)) {
+                                  updateEffect({ selectedIndex: Math.min(Math.max(0, charCount - 1), Math.max(0, val)) });
+                                }
+                              }}
+                              className="w-full bg-transparent text-center text-[11px] font-mono font-bold text-[#000000] focus:outline-none"
+                            />
+                            <button
+                              type="button"
+                              disabled={safeCharIdx >= Math.max(0, charCount - 1)}
+                              onClick={() => updateEffect({ selectedIndex: Math.min(Math.max(0, charCount - 1), safeCharIdx + 1) })}
+                              className="p-1 hover:bg-[#E7E9EB] disabled:opacity-30 rounded text-[#000000] min-w-[28px] min-h-[28px] flex items-center justify-center cursor-pointer"
+                              title="Next Character"
+                            >
+                              <Plus className="w-3 h-3 text-[#000000]" />
+                            </button>
+                          </div>
+
+                          {/* Manual Character Adjustments (X, Y, Rot) */}
+                          <div className="grid grid-cols-3 gap-1.5 pt-1">
+                            <StepperInput
+                              label="Char X"
+                              value={effect.manualX ?? 0}
+                              min={-10}
+                              max={10}
+                              step={0.1}
+                              unit="mm"
+                              onChange={(val) => updateEffect({ manualX: val })}
+                            />
+                            <StepperInput
+                              label="Char Y"
+                              value={effect.manualY ?? 0}
+                              min={-10}
+                              max={10}
+                              step={0.1}
+                              unit="mm"
+                              onChange={(val) => updateEffect({ manualY: val })}
+                            />
+                            <StepperInput
+                              label="Char Rot"
+                              value={effect.manualRotation ?? 0}
+                              min={-45}
+                              max={45}
+                              step={1}
+                              unit="°"
+                              onChange={(val) => updateEffect({ manualRotation: val })}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Action Buttons: Regenerate, Reset, Apply */}
+                        <div className="flex gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => updateEffect({ seed: Math.floor(Math.random() * 100000) + 1 })}
+                            className="flex-1 py-1.5 px-2 bg-white hover:bg-[#E7E9EB] border border-[#dadcdc] rounded-lg text-[11px] font-semibold text-[#000000] flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+                            title="Regenerate random variation"
+                          >
+                            <RefreshCw className="w-3 h-3 text-[#000000]" />
+                            <span>Regenerate</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateLayer(selectedLayer.id, {
+                                typewriterEffect: {
+                                  enabled: true,
+                                  seed: 12345,
+                                  intensity: 0.5,
+                                  horizontalOffset: 0,
+                                  verticalOffset: 0,
+                                  rotation: 0,
+                                  spacing: 0,
+                                  affectedCharacters: 0,
+                                  selectedLine: 0,
+                                  selectedIndex: 0,
+                                  manualX: 0,
+                                  manualY: 0,
+                                  manualRotation: 0,
+                                },
+                              })
+                            }
+                            className="flex-1 py-1.5 px-2 bg-white hover:bg-[#E7E9EB] border border-[#dadcdc] rounded-lg text-[11px] font-semibold text-[#000000] flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+                            title="Reset to default settings"
+                          >
+                            <RotateCcw className="w-3 h-3 text-[#000000]" />
+                            <span>Reset</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateLayer(selectedLayer.id, { typewriterEffect: { ...effect } });
+                              if (currentTemplate) {
+                                pushHistoryState(currentTemplate);
+                              }
+                            }}
+                            className="flex-1 py-1.5 px-2 bg-[#000000] hover:bg-[#252525] border border-[#000000] text-white rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+                            title="Apply and save typewriter settings"
+                          >
+                            <Check className="w-3 h-3 text-white" />
+                            <span>Apply</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </CollapsibleSection>
             </div>

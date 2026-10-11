@@ -23,6 +23,7 @@ export interface NrcZambiaFormData {
   fullName: string;
   dateOfBirth: string;
   placeOfBirth: string;
+  parentsPlaceOfBirth: string; // Father's/Mother's Place of Birth
   district: string;
   village: string;
   chief: string;
@@ -74,6 +75,7 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
         fullName: typeof lastNrcFormData.fullName === "string" ? lastNrcFormData.fullName : "",
         dateOfBirth: typeof lastNrcFormData.dateOfBirth === "string" ? formatToDdMmYyyy(lastNrcFormData.dateOfBirth) : "",
         placeOfBirth: typeof lastNrcFormData.placeOfBirth === "string" ? lastNrcFormData.placeOfBirth : "",
+        parentsPlaceOfBirth: typeof lastNrcFormData.parentsPlaceOfBirth === "string" ? lastNrcFormData.parentsPlaceOfBirth : "",
         district: typeof lastNrcFormData.district === "string" ? lastNrcFormData.district : "Lusaka",
         village: typeof lastNrcFormData.village === "string" ? lastNrcFormData.village : "",
         chief: typeof lastNrcFormData.chief === "string" ? lastNrcFormData.chief : "",
@@ -96,6 +98,7 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
       fullName: "",
       dateOfBirth: "",
       placeOfBirth: "",
+      parentsPlaceOfBirth: "",
       district: "Lusaka",
       village: "",
       chief: "",
@@ -350,19 +353,29 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
       updateStep("step8_populate", "in_progress");
       await delay(300);
 
-      const formattedName = toTitleCase(formData.fullName.trim());
-      const formattedDob = formatToDdMmYyyy(formData.dateOfBirth);
-      const formattedIssue = formatToDdMmYyyy(formData.dateOfIssue);
-      const formattedGender = formData.gender.trim().toLowerCase().startsWith("m") ? "MALE" : "FEMALE";
-      const formattedPlace = toTitleCase(formData.placeOfBirth.trim() || formData.district);
-      const formattedVillage = toTitleCase(formData.village.trim() || "-");
-      const formattedChief = toTitleCase(formData.chief.trim() || "-");
+      const formattedName = toTitleCase((formData.fullName || "").trim());
+      const formattedDob = formatToDdMmYyyy(formData.dateOfBirth || "");
+      const formattedIssue = formatToDdMmYyyy(formData.dateOfIssue || "");
+      const formattedGender = (formData.gender || "").trim().toLowerCase().startsWith("m") ? "MALE" : "FEMALE";
+      const formattedPlace = toTitleCase((formData.placeOfBirth || "").trim() || formData.district || "");
+      const formattedParentsPlace = toTitleCase((formData.parentsPlaceOfBirth || "").trim() || "-");
+      const formattedVillage = toTitleCase((formData.village || "").trim() || "-");
+      const formattedChief = toTitleCase((formData.chief || "").trim() || "-");
+
+      const regNo = (formData.registrationNumber || formData.nrcNumber || "").trim();
+      const cardNo = (formData.cardNumber || formData.nrcNumber || "").trim();
+      const nrcNo = (formData.nrcNumber || formData.cardNumber || formData.registrationNumber || "").trim();
 
       const mappedFormData = {
-        nrcNumber: (formData.nrcNumber || "").trim(),
-        nrc_number: (formData.nrcNumber || "").trim(),
-        nrcNo: (formData.nrcNumber || "").trim(),
-        cardNumber: (formData.nrcNumber || "").trim(),
+        nrcNumber: nrcNo,
+        nrc_number: nrcNo,
+        nrcNo: nrcNo,
+        cardNumber: cardNo,
+        card_number: cardNo,
+        card_no: cardNo,
+        registrationNumber: regNo,
+        registration_number: regNo,
+        reg_number: regNo,
         fullName: formattedName,
         full_name: formattedName,
         name: formattedName,
@@ -376,22 +389,30 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
         issue_date: formattedIssue,
         placeOfBirth: formattedPlace,
         place_of_birth: formattedPlace,
-        district: formData.district || "",
+        pob: formattedPlace,
+        parentsPlaceOfBirth: formattedParentsPlace,
+        parents_place_of_birth: formattedParentsPlace,
+        father_mother_place_of_birth: formattedParentsPlace,
+        district: (formData.district || "").trim(),
         village: formattedVillage,
         chief: formattedChief,
-        photoUrl: formData.photoUrl,
-        photo: formData.photoUrl,
-        signatureUrl: formData.signatureUrl,
-        signature: formData.signatureUrl,
-        thumbPrintUrl: formData.thumbPrintUrl,
-        thumbPrint: formData.thumbPrintUrl,
-        officerSignatureUrl: formData.officerSignatureUrl,
-        officerSignature: formData.officerSignatureUrl,
-        cardNumber: (formData.cardNumber || "").trim(),
-        registrationNumber: (formData.registrationNumber || "").trim(),
         registrationDate: (formData.registrationDate || "").trim(),
+        registration_date: (formData.registrationDate || "").trim(),
+        reg_date: (formData.registrationDate || "").trim(),
         specialMarks: (formData.specialMarks || "").trim(),
+        special_marks: (formData.specialMarks || "").trim(),
         dateOfRenunciation: (formData.dateOfRenunciation || "").trim(),
+        date_of_renunciation: (formData.dateOfRenunciation || "").trim(),
+        photoUrl: formData.photoUrl || null,
+        photo: formData.photoUrl || null,
+        signatureUrl: formData.signatureUrl || null,
+        signature: formData.signatureUrl || null,
+        officerSignatureUrl: formData.officerSignatureUrl || null,
+        officerSignature: formData.officerSignatureUrl || null,
+        officer_signature: formData.officerSignatureUrl || null,
+        thumbPrintUrl: formData.thumbPrintUrl || null,
+        thumbPrint: formData.thumbPrintUrl || null,
+        thumb_print: formData.thumbPrintUrl || null,
       };
 
       const frontRes = applyTemplateMapping(frontTemplate, mappedFormData as any);
@@ -407,7 +428,7 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
       // Save submission record
       const submissionRecord = {
         id: `nrc_${Date.now()}`,
-        nidaNumber: formData.nrcNumber.trim(),
+        nidaNumber: nrcNo,
         firstName: formattedName,
         secondName: "",
         thirdName: "",
@@ -581,12 +602,12 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
             </div>
           </div>
 
-          {/* Section 2: Origin & Registration */}
+          {/* Section 2: Registration Origin */}
           <div className="bg-[#FFFFFF] border border-[#C8C2BE] rounded-2xl p-5 shadow-xs space-y-4">
             <div className="flex items-center gap-2 border-b border-[#E7E2DE] pb-3">
               <Shield className="w-4 h-4 text-[#101010]" />
               <h2 className="text-xs font-bold uppercase tracking-wider text-[#101010]">
-                2. Origin & Place of Registration
+                Registration Origin
               </h2>
             </div>
 
@@ -599,15 +620,23 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
                 helperText="Town or Health Center"
               />
 
+              <FloatingInput
+                label="Father's/Mother's Place of Birth"
+                value={formData.parentsPlaceOfBirth}
+                onChange={(e) => handleChange("parentsPlaceOfBirth", e)}
+                onBlur={() => handleBlur("parentsPlaceOfBirth")}
+                helperText="Parents place of origin"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FloatingSelect
                 label="District"
                 value={formData.district}
                 onChange={(e) => handleChange("district", e)}
                 options={ZAMBIA_DISTRICTS.map((d) => ({ value: d, label: d }))}
               />
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FloatingInput
                 label="Village"
                 value={formData.village}
@@ -615,7 +644,9 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
                 onBlur={() => handleBlur("village")}
                 helperText="Village of origin"
               />
+            </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FloatingInput
                 label="Chief"
                 value={formData.chief}
@@ -645,12 +676,12 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
             </div>
           </div>
 
-          {/* Section 3: Biometrics */}
+          {/* Section 3: Biometrics Specimen */}
           <div className="bg-[#FFFFFF] border border-[#C8C2BE] rounded-2xl p-5 shadow-xs space-y-6">
             <div className="flex items-center gap-2 border-b border-[#E7E2DE] pb-3">
               <User className="w-4 h-4 text-[#101010]" />
               <h2 className="text-xs font-bold uppercase tracking-wider text-[#101010]">
-                3. Biometrics & Specimen Signature
+                Biometrics Specimen
               </h2>
             </div>
 

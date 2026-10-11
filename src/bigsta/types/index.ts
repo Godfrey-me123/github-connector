@@ -163,6 +163,8 @@ export interface TypewriterEffect {
   verticalOffset: number; // mm
   rotation: number; // degrees
   spacing: number; // mm
+  affectedCharacters?: number; // count of characters to apply effect to (0 = all)
+  selectedLine?: number; // 0-indexed line for multiline text
   selectedIndex: number; // Index of the character currently being adjusted
   manualX: number; // mm offset for selected char
   manualY: number; // mm offset for selected char
