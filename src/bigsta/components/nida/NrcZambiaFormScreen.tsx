@@ -13,7 +13,7 @@ import { AppFooter } from "../common/AppFooter";
 import { UniversalBackButton } from "../common/UniversalBackButton";
 import { useTemplateStore } from "../../store/useTemplateStore";
 import { applyTemplateMapping } from "../../utils/templateMappingEngine";
-import { formatToDdMmYyyy, toTitleCase } from "../../utils/dateValidation";
+import { formatToDdMmYyyy, formatToDdMmYy, toTitleCase } from "../../utils/dateValidation";
 import { WorkflowStep, SubmissionStepId } from "./submissionWorkflow";
 
 export interface NrcZambiaFormData {
@@ -34,7 +34,6 @@ export interface NrcZambiaFormData {
   gender: string;
   photoUrl?: string | null;
   signatureUrl?: string | null;
-  thumbPrintUrl?: string | null; // Add
   officerSignatureUrl?: string | null; // Add
   termsAccepted: boolean;
 }
@@ -73,20 +72,19 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
         cardNumber: typeof lastNrcFormData.cardNumber === "string" ? lastNrcFormData.cardNumber : "",
         registrationNumber: typeof lastNrcFormData.registrationNumber === "string" ? lastNrcFormData.registrationNumber : "",
         fullName: typeof lastNrcFormData.fullName === "string" ? lastNrcFormData.fullName : "",
-        dateOfBirth: typeof lastNrcFormData.dateOfBirth === "string" ? formatToDdMmYyyy(lastNrcFormData.dateOfBirth) : "",
+        dateOfBirth: typeof lastNrcFormData.dateOfBirth === "string" ? formatToDdMmYy(lastNrcFormData.dateOfBirth) : "",
         placeOfBirth: typeof lastNrcFormData.placeOfBirth === "string" ? lastNrcFormData.placeOfBirth : "",
         parentsPlaceOfBirth: typeof lastNrcFormData.parentsPlaceOfBirth === "string" ? lastNrcFormData.parentsPlaceOfBirth : "",
         district: typeof lastNrcFormData.district === "string" ? lastNrcFormData.district : "Lusaka",
         village: typeof lastNrcFormData.village === "string" ? lastNrcFormData.village : "",
         chief: typeof lastNrcFormData.chief === "string" ? lastNrcFormData.chief : "",
-        registrationDate: typeof lastNrcFormData.registrationDate === "string" ? lastNrcFormData.registrationDate : "",
+        registrationDate: typeof lastNrcFormData.registrationDate === "string" ? formatToDdMmYy(lastNrcFormData.registrationDate) : "",
         specialMarks: typeof lastNrcFormData.specialMarks === "string" ? lastNrcFormData.specialMarks : "",
-        dateOfRenunciation: typeof lastNrcFormData.dateOfRenunciation === "string" ? lastNrcFormData.dateOfRenunciation : "",
-        dateOfIssue: typeof lastNrcFormData.dateOfIssue === "string" ? formatToDdMmYyyy(lastNrcFormData.dateOfIssue) : "",
-        gender: typeof lastNrcFormData.gender === "string" && lastNrcFormData.gender ? lastNrcFormData.gender : "Male",
+        dateOfRenunciation: typeof lastNrcFormData.dateOfRenunciation === "string" ? formatToDdMmYy(lastNrcFormData.dateOfRenunciation) : "",
+        dateOfIssue: typeof lastNrcFormData.dateOfIssue === "string" ? formatToDdMmYy(lastNrcFormData.dateOfIssue) : "",
+        gender: typeof lastNrcFormData.gender === "string" && lastNrcFormData.gender ? (lastNrcFormData.gender.toUpperCase().startsWith("F") ? "Female" : "Male") : "Male",
         photoUrl: lastNrcFormData.photoUrl || null,
         signatureUrl: lastNrcFormData.signatureUrl || null,
-        thumbPrintUrl: lastNrcFormData.thumbPrintUrl || null,
         officerSignatureUrl: lastNrcFormData.officerSignatureUrl || null,
         termsAccepted: !!lastNrcFormData.termsAccepted,
       };
@@ -109,7 +107,6 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
       gender: "Male",
       photoUrl: null,
       signatureUrl: null,
-      thumbPrintUrl: null,
       officerSignatureUrl: null,
       termsAccepted: false,
     };
@@ -354,9 +351,11 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
       await delay(300);
 
       const formattedName = toTitleCase((formData.fullName || "").trim());
-      const formattedDob = formatToDdMmYyyy(formData.dateOfBirth || "");
-      const formattedIssue = formatToDdMmYyyy(formData.dateOfIssue || "");
-      const formattedGender = (formData.gender || "").trim().toLowerCase().startsWith("m") ? "MALE" : "FEMALE";
+      const formattedDob = formatToDdMmYy(formData.dateOfBirth || "");
+      const formattedIssue = formatToDdMmYy(formData.dateOfIssue || "");
+      const formattedRegDate = formatToDdMmYy(formData.registrationDate || "");
+      const formattedRenunciation = formatToDdMmYy(formData.dateOfRenunciation || "");
+      const formattedGender = (formData.gender || "").trim().toLowerCase().startsWith("f") ? "F" : "M";
       const formattedPlace = toTitleCase((formData.placeOfBirth || "").trim() || formData.district || "");
       const formattedParentsPlace = toTitleCase((formData.parentsPlaceOfBirth || "").trim() || "-");
       const formattedVillage = toTitleCase((formData.village || "").trim() || "-");
@@ -367,6 +366,7 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
       const nrcNo = (formData.nrcNumber || formData.cardNumber || formData.registrationNumber || "").trim();
 
       const mappedFormData = {
+        isNrcZambia: true,
         nrcNumber: nrcNo,
         nrc_number: nrcNo,
         nrcNo: nrcNo,
@@ -396,13 +396,13 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
         district: (formData.district || "").trim(),
         village: formattedVillage,
         chief: formattedChief,
-        registrationDate: (formData.registrationDate || "").trim(),
-        registration_date: (formData.registrationDate || "").trim(),
-        reg_date: (formData.registrationDate || "").trim(),
+        registrationDate: formattedRegDate,
+        registration_date: formattedRegDate,
+        reg_date: formattedRegDate,
         specialMarks: (formData.specialMarks || "").trim(),
         special_marks: (formData.specialMarks || "").trim(),
-        dateOfRenunciation: (formData.dateOfRenunciation || "").trim(),
-        date_of_renunciation: (formData.dateOfRenunciation || "").trim(),
+        dateOfRenunciation: formattedRenunciation,
+        date_of_renunciation: formattedRenunciation,
         photoUrl: formData.photoUrl || null,
         photo: formData.photoUrl || null,
         signatureUrl: formData.signatureUrl || null,
@@ -410,9 +410,6 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
         officerSignatureUrl: formData.officerSignatureUrl || null,
         officerSignature: formData.officerSignatureUrl || null,
         officer_signature: formData.officerSignatureUrl || null,
-        thumbPrintUrl: formData.thumbPrintUrl || null,
-        thumbPrint: formData.thumbPrintUrl || null,
-        thumb_print: formData.thumbPrintUrl || null,
       };
 
       const frontRes = applyTemplateMapping(frontTemplate, mappedFormData as any);
@@ -591,6 +588,7 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
                 value={formData.dateOfBirth}
                 onChange={(e) => handleChange("dateOfBirth", e)}
                 error={touched.dateOfBirth ? errors.dateOfBirth : undefined}
+                helperText="DD.MM.YY (e.g. 20.10.26)"
               />
 
               <FloatingDatePicker
@@ -598,6 +596,7 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
                 value={formData.dateOfIssue}
                 onChange={(e) => handleChange("dateOfIssue", e)}
                 error={touched.dateOfIssue ? errors.dateOfIssue : undefined}
+                helperText="DD.MM.YY (e.g. 20.10.26)"
               />
             </div>
           </div>
@@ -659,6 +658,7 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
                 label="Registration Date"
                 value={formData.registrationDate}
                 onChange={(e) => handleChange("registrationDate", e)}
+                helperText="DD.MM.YY (e.g. 20.10.26)"
               />
 
               <FloatingInput
@@ -672,6 +672,7 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
                 label="Date of Renunciation"
                 value={formData.dateOfRenunciation}
                 onChange={(e) => handleChange("dateOfRenunciation", e)}
+                helperText="DD.MM.YY (optional)"
               />
             </div>
           </div>
@@ -685,7 +686,7 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
               </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-[#101010] mb-2">
                   Passport Photograph
@@ -703,16 +704,6 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
                 <SignaturePad
                   value={formData.signatureUrl}
                   onChange={(sig) => handleChange("signatureUrl", sig)}
-                />
-              </div>
-              
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#101010] mb-2">
-                  Right Thumb Print
-                </label>
-                <SignaturePad
-                  value={formData.thumbPrintUrl}
-                  onChange={(sig) => handleChange("thumbPrintUrl", sig)}
                 />
               </div>
 

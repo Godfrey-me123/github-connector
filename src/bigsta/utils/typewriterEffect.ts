@@ -179,10 +179,23 @@ export function calculateTypewriterLayout(
       const jitterYPx = isAffected ? (ry * intensity * fontSizePx * 0.12) + baseVOffsetPx : 0;
       const jitterRot = isAffected ? (rr * intensity * (baseRotRange || 6)) : 0;
 
-      // Manual adjustments for the selected character
-      const extraXPx = isSelected ? manualXPx : 0;
-      const extraYPx = isSelected ? manualYPx : 0;
-      const extraRot = isSelected ? manualRot : 0;
+      // Manual adjustments: check saved characterOverrides or active live adjustments if selected
+      const charKey = `${lineIdx}_${charIdx}`;
+      const savedOverride = effect.characterOverrides?.[charKey];
+
+      let extraXPx = 0;
+      let extraYPx = 0;
+      let extraRot = 0;
+
+      if (isSelected) {
+        extraXPx = manualXPx;
+        extraYPx = manualYPx;
+        extraRot = manualRot;
+      } else if (savedOverride) {
+        extraXPx = (savedOverride.manualX ?? 0) * pxPerMm;
+        extraYPx = (savedOverride.manualY ?? 0) * pxPerMm;
+        extraRot = savedOverride.manualRotation ?? 0;
+      }
 
       const finalX = cursorX + jitterXPx + extraXPx;
       const finalY = lineBaseY + jitterYPx + extraYPx;

@@ -12,6 +12,7 @@ import { NidaFormData } from "../components/nida/NidaFormScreen";
 import {
   normalizeDateInput,
   formatToDdMmYyyy,
+  formatToDdMmYy,
   formatToMmmDdYyyy,
   formatLicenceDate,
   toTitleCase,
@@ -627,7 +628,13 @@ export function getFormValueForBinding(
   binding: SupportedBinding,
   formData: Partial<NidaFormData>,
 ): string {
-  const isDL = !!(
+  const isNrc = Boolean(
+    (formData as any).isNrcZambia ||
+    (formData as any).serviceId === "nrc_zambia" ||
+    (formData as any).registrationNumber !== undefined,
+  );
+
+  const isDL = !isNrc && !!(
     (formData as any).classes ||
     (formData as any).categories ||
     (formData as any).licenceNumber ||
@@ -648,17 +655,19 @@ export function getFormValueForBinding(
     case "LAST_NAME":
       return formData.lastName?.trim() || "";
     case "DOB": {
-      const isNhif = !!(
+      const isNhif = !isNrc && !!(
         (formData as any).cardNumber ||
         (formData as any).card_no ||
         (formData as any).cardNo
       );
       const rawDob = (formData.dob || (formData as any).dateOfBirth || "").trim();
+      if (isNrc) return rawDob ? formatToDdMmYy(rawDob) : "";
       if (isNhif) return rawDob ? formatToMmmDdYyyy(rawDob) : "";
       return rawDob ? (isDL ? formatToDdMmYyyy(rawDob) : normalizeDateInput(rawDob)) : "";
     }
     case "ISSUE_DATE": {
       const rawIssue = ((formData as any).dateOfIssue || (formData as any).issueDate || "").trim();
+      if (isNrc) return rawIssue ? formatToDdMmYy(rawIssue) : "";
       return rawIssue ? (isDL ? formatToDdMmYyyy(rawIssue) : normalizeDateInput(rawIssue)) : "";
     }
     case "EXPIRY_DATE": {
@@ -670,12 +679,15 @@ export function getFormValueForBinding(
       return rawExpiry ? (isDL ? formatToDdMmYyyy(rawExpiry) : normalizeDateInput(rawExpiry)) : "";
     }
     case "GENDER": {
+      const g = (formData.gender || (formData as any).sex || "").trim();
+      if (isNrc) {
+        return g.toUpperCase().startsWith("F") ? "F" : "M";
+      }
       const isNhif = !!(
         (formData as any).cardNumber ||
         (formData as any).card_no ||
         (formData as any).cardNo
       );
-      const g = (formData.gender || "").trim();
       if (isNhif) {
         if (g.toLowerCase().startsWith("m")) return "Male";
         if (g.toLowerCase().startsWith("f")) return "Female";
@@ -727,6 +739,50 @@ export function getFormValueForBinding(
       return toTitleCase(
         ((formData as any).cardStatus || (formData as any).card_status || "Active").trim(),
       );
+    case "REGISTRATION_NUMBER":
+      return String(
+        (formData as any).registrationNumber ||
+          (formData as any).registration_number ||
+          (formData as any).reg_number ||
+          formData.nrcNumber ||
+          "",
+      ).trim();
+    case "REGISTRATION_DATE": {
+      const raw = String(
+        (formData as any).registrationDate ||
+          (formData as any).registration_date ||
+          (formData as any).reg_date ||
+          "",
+      ).trim();
+      return raw ? formatToDdMmYy(raw) : "";
+    }
+    case "DATE_OF_RENUNCIATION": {
+      const raw = String(
+        (formData as any).dateOfRenunciation || (formData as any).date_of_renunciation || "",
+      ).trim();
+      return raw ? formatToDdMmYy(raw) : "";
+    }
+    case "OFFICER_SIGNATURE":
+      return (formData as any).officerSignatureUrl || (formData as any).officerSignature || "";
+    case "PARENTS_PLACE_OF_BIRTH":
+      return String(
+        (formData as any).parentsPlaceOfBirth ||
+          (formData as any).parents_place_of_birth ||
+          (formData as any).father_mother_place_of_birth ||
+          "",
+      ).trim();
+    case "PLACE_OF_BIRTH":
+      return String(
+        (formData as any).placeOfBirth || (formData as any).place_of_birth || (formData as any).pob || "",
+      ).trim();
+    case "VILLAGE":
+      return String((formData as any).village || "").trim();
+    case "DISTRICT":
+      return String((formData as any).district || "").trim();
+    case "CHIEF":
+      return String((formData as any).chief || "").trim();
+    case "SPECIAL_MARKS":
+      return String((formData as any).specialMarks || (formData as any).special_marks || "").trim();
     case "PHOTO":
       return formData.photoUrl || "";
     case "SIGNATURE":
@@ -774,7 +830,15 @@ export function replaceAllTokens(layer: Layer, formData: any): Layer {
   let text = (layer as any).text || "";
   if (!text.includes("{{")) return layer;
 
-  const isDL = !!(
+  const isNrc = Boolean(
+    formData.isNrcZambia ||
+    formData.serviceId === "nrc_zambia" ||
+    formData.registrationNumber !== undefined ||
+    (typeof layer.id === "string" && layer.id.startsWith("nrc_")) ||
+    (layer as any).bindingKey === "REGISTRATION_NUMBER",
+  );
+
+  const isDL = !isNrc && !!(
     formData.classes ||
     formData.categories ||
     formData.licenceNumber ||
@@ -786,11 +850,26 @@ export function replaceAllTokens(layer: Layer, formData: any): Layer {
   const mVal = (formData.middleName || "").trim();
   const lVal = (formData.lastName || formData.surname || "").trim();
   const rawDob = (formData.dob || formData.dateOfBirth || "").trim();
-  const dob = rawDob ? (isDL ? formatToDdMmYyyy(rawDob) : normalizeDateInput(rawDob)) : "";
-  const gender = (formData.gender || "").trim().toUpperCase().startsWith("M") ? "M" : "F";
+  const dob = rawDob
+    ? isNrc
+      ? formatToDdMmYy(rawDob)
+      : isDL
+        ? formatToDdMmYyyy(rawDob)
+        : normalizeDateInput(rawDob)
+    : "";
+  const rawGender = (formData.gender || formData.sex || "").trim();
+  const gender = isNrc
+    ? rawGender.toUpperCase().startsWith("F") ? "F" : "M"
+    : rawGender.toUpperCase().startsWith("M") ? "M" : "F";
   const nida = (formData.nidaNumber || formData.licenceNumber || "").trim();
   const rawIssue = (formData.issueDate || formData.dateOfIssue || "").trim();
-  const issue = rawIssue ? (isDL ? formatToDdMmYyyy(rawIssue) : normalizeDateInput(rawIssue)) : "";
+  const issue = rawIssue
+    ? isNrc
+      ? formatToDdMmYy(rawIssue)
+      : isDL
+        ? formatToDdMmYyyy(rawIssue)
+        : normalizeDateInput(rawIssue)
+    : "";
   const rawExpiry = (formData.expiryDate || formData.dateOfExpiry || "").trim();
   const expiry = rawExpiry
     ? isDL
@@ -811,7 +890,7 @@ export function replaceAllTokens(layer: Layer, formData: any): Layer {
     expiry,
   );
 
-  const isNhif = !!(formData.cardNumber || formData.card_no || formData.cardNo);
+  const isNhif = !isNrc && !!(formData.cardNumber || formData.card_no || formData.cardNo);
   const cardNo = (formData.cardNumber || formData.card_no || formData.cardNo || "").trim();
   const fullName = toTitleCase((formData.fullName || formData.full_name || "").trim());
   const cardStatus = toTitleCase((formData.cardStatus || formData.card_status || "Active").trim());
@@ -893,15 +972,17 @@ export function replaceAllTokens(layer: Layer, formData: any): Layer {
   const village = String((formData as any).village || "").trim();
   const district = String((formData as any).district || "").trim();
   const chief = String((formData as any).chief || "").trim();
-  const regDate = String(
+  const regDateRaw = String(
     (formData as any).registrationDate || (formData as any).registration_date || "",
   ).trim();
+  const regDate = regDateRaw ? (isNrc ? formatToDdMmYy(regDateRaw) : regDateRaw) : "";
   const specialMarks = String(
     (formData as any).specialMarks || (formData as any).special_marks || "",
   ).trim();
-  const renunciationDate = String(
+  const renunciationDateRaw = String(
     (formData as any).dateOfRenunciation || (formData as any).date_of_renunciation || "",
   ).trim();
+  const renunciationDate = renunciationDateRaw ? (isNrc ? formatToDdMmYy(renunciationDateRaw) : renunciationDateRaw) : "";
 
   text = text.replace(/\{\{(?:registration_number|registration_no|reg_number|reg_no)\}\}/gi, regNo);
   text = text.replace(/\{\{(?:nrc_number|nrc_no|nrc)\}\}/gi, nrcNum);
@@ -980,6 +1061,19 @@ export function injectValueIntoLayer(
   }
 
   if (binding === "THUMBPRINT") {
+    const isNrc = Boolean(
+      (formData as any).isNrcZambia ||
+      (formData as any).serviceId === "nrc_zambia" ||
+      (formData as any).registrationNumber !== undefined ||
+      allLayers.some(
+        (l) =>
+          (typeof l.id === "string" && l.id.startsWith("nrc_")) ||
+          (l as any).bindingKey === "REGISTRATION_NUMBER",
+      ),
+    );
+    if (isNrc) {
+      return { ...layer, hidden: true };
+    }
     if (layer.type === "placeholder" || layer.type === "image") {
       const thumbUrl =
         (formData as any).thumbPrintUrl ||
@@ -1111,12 +1205,22 @@ export function injectValueIntoLayer(
         break;
       }
       case "DOB": {
-        const isNhif = !!(
+        const isNrc = Boolean(
+          (formData as any).isNrcZambia ||
+          (formData as any).serviceId === "nrc_zambia" ||
+          (formData as any).registrationNumber !== undefined ||
+          allLayers.some(
+            (l) =>
+              (typeof l.id === "string" && l.id.startsWith("nrc_")) ||
+              (l as any).bindingKey === "REGISTRATION_NUMBER",
+          ),
+        );
+        const isNhif = !isNrc && !!(
           (formData as any).cardNumber ||
           (formData as any).card_no ||
           (formData as any).cardNo
         );
-        const isDrivingLicence = !!(
+        const isDrivingLicence = !isNrc && !!(
           (formData as any).classes ||
           (formData as any).categories ||
           (formData as any).licenceNumber ||
@@ -1127,19 +1231,22 @@ export function injectValueIntoLayer(
         );
         const rawDob = (formData.dob || (formData as any).dateOfBirth || "").trim();
         const val = rawDob
-          ? isNhif
-            ? formatToMmmDdYyyy(rawDob)
-            : isDrivingLicence
-              ? formatToDdMmYyyy(rawDob)
-              : normalizeDateInput(rawDob)
+          ? isNrc
+            ? formatToDdMmYy(rawDob)
+            : isNhif
+              ? formatToMmmDdYyyy(rawDob)
+              : isDrivingLicence
+                ? formatToDdMmYyyy(rawDob)
+                : normalizeDateInput(rawDob)
           : "";
         if (text.includes("{{")) {
           text = text.replace(/\{\{(?:dob|date_of_birth|birth_date|birthdate)\}\}/gi, val);
+          if (text.startsWith("{{") && text.endsWith("}}")) text = val;
         } else if (/^(?:tarehe\s+ya\s+kuzaliwa|date\s+of\s+birth|dob)\s*[:：\-]?\s*/i.test(text)) {
           text = val
             ? text.replace(
                 /^(?:tarehe\s+ya\s+kuzaliwa|date\s+of\s+birth|dob)\s*[:：\-]?\s*.*/i,
-                `TAREHE YA KUZALIWA: ${val}`,
+                isNrc ? `DATE OF BIRTH: ${val}` : `TAREHE YA KUZALIWA: ${val}`,
               )
             : "";
         } else {
@@ -1148,26 +1255,41 @@ export function injectValueIntoLayer(
         break;
       }
       case "GENDER": {
-        const isNhif = !!(
+        const isNrc = Boolean(
+          (formData as any).isNrcZambia ||
+          (formData as any).serviceId === "nrc_zambia" ||
+          (formData as any).registrationNumber !== undefined ||
+          allLayers.some(
+            (l) =>
+              (typeof l.id === "string" && l.id.startsWith("nrc_")) ||
+              (l as any).bindingKey === "REGISTRATION_NUMBER",
+          ),
+        );
+        const isNhif = !isNrc && !!(
           (formData as any).cardNumber ||
           (formData as any).card_no ||
           (formData as any).cardNo
         );
-        const rawGender = (formData.gender || "").trim();
+        const rawGender = (formData.gender || (formData as any).sex || "").trim();
+        const nrcGender = rawGender.toUpperCase().startsWith("F") ? "F" : "M";
         const nhifGender = rawGender.toLowerCase().startsWith("m")
           ? "Male"
           : rawGender.toLowerCase().startsWith("f")
             ? "Female"
             : "Male";
-        const val = rawGender ? (isNhif ? nhifGender : targetGender) : "";
+        const val = rawGender ? (isNrc ? nrcGender : isNhif ? nhifGender : targetGender) : "";
         if (text.includes("{{")) {
           text = text.replace(
             /\{\{(?:gender|sex|jinsia|jinsi|gender_val|sex_val|jinsi_val)\}\}/gi,
             val,
           );
+          if (text.startsWith("{{") && text.endsWith("}}")) text = val;
         } else if (/^(?:jinsi|jinsia|sex|gender)\s*[:：\-]?\s*/i.test(text)) {
           text = val
-            ? text.replace(/^(?:jinsi|jinsia|sex|gender)\s*[:：\-]?\s*.*/i, `JINSI : ${val}`)
+            ? text.replace(
+                /^(?:jinsi|jinsia|sex|gender)\s*[:：\-]?\s*.*/i,
+                isNrc ? `SEX: ${val}` : `JINSI : ${val}`,
+              )
             : "";
         } else {
           text = val;
@@ -1245,7 +1367,17 @@ export function injectValueIntoLayer(
         break;
       }
       case "ISSUE_DATE": {
-        const isDrivingLicence = !!(
+        const isNrc = Boolean(
+          (formData as any).isNrcZambia ||
+          (formData as any).serviceId === "nrc_zambia" ||
+          (formData as any).registrationNumber !== undefined ||
+          allLayers.some(
+            (l) =>
+              (typeof l.id === "string" && l.id.startsWith("nrc_")) ||
+              (l as any).bindingKey === "REGISTRATION_NUMBER",
+          ),
+        );
+        const isDrivingLicence = !isNrc && !!(
           (formData as any).classes ||
           (formData as any).categories ||
           (formData as any).licenceNumber ||
@@ -1258,9 +1390,11 @@ export function injectValueIntoLayer(
           ""
         ).trim();
         const val = rawIssue
-          ? isDrivingLicence
-            ? formatToDdMmYyyy(rawIssue)
-            : normalizeDateInput(rawIssue)
+          ? isNrc
+            ? formatToDdMmYy(rawIssue)
+            : isDrivingLicence
+              ? formatToDdMmYyyy(rawIssue)
+              : normalizeDateInput(rawIssue)
           : "";
         if (text.includes("{{")) {
           text = text.replace(
@@ -1497,12 +1631,13 @@ export function injectValueIntoLayer(
         break;
       }
       case "REGISTRATION_DATE": {
-        const val = String(
+        const raw = String(
           (formData as any).registrationDate ||
             (formData as any).registration_date ||
             (formData as any).reg_date ||
             "",
         ).trim();
+        const val = raw ? formatToDdMmYy(raw) : "";
         if (text.includes("{{")) {
           text = text.replace(/\{\{(?:registration_date|reg_date)\}\}/gi, val);
           if (text.startsWith("{{") && text.endsWith("}}")) text = val;
@@ -1524,9 +1659,10 @@ export function injectValueIntoLayer(
         break;
       }
       case "DATE_OF_RENUNCIATION": {
-        const val = String(
+        const raw = String(
           (formData as any).dateOfRenunciation || (formData as any).date_of_renunciation || "",
         ).trim();
+        const val = raw ? formatToDdMmYy(raw) : "";
         if (text.includes("{{")) {
           text = text.replace(/\{\{(?:date_of_renunciation|renunciation_date)\}\}/gi, val);
           if (text.startsWith("{{") && text.endsWith("}}")) text = val;

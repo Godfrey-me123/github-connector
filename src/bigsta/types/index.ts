@@ -155,6 +155,12 @@ export interface TextLayer extends BaseLayer {
   display_format?: string;
 }
 
+export interface TypewriterCharAdjustment {
+  manualX: number; // mm
+  manualY: number; // mm
+  manualRotation: number; // degrees
+}
+
 export interface TypewriterEffect {
   enabled: boolean;
   seed: number;
@@ -169,6 +175,7 @@ export interface TypewriterEffect {
   manualX: number; // mm offset for selected char
   manualY: number; // mm offset for selected char
   manualRotation: number; // degrees for selected char
+  characterOverrides?: Record<string, TypewriterCharAdjustment>; // Saved overrides per character "line_char"
 }
 
 export interface ImageLayer extends BaseLayer {

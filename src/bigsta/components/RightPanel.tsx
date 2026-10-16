@@ -1138,6 +1138,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                           manualX: prev?.manualX ?? 0,
                           manualY: prev?.manualY ?? 0,
                           manualRotation: prev?.manualRotation ?? 0,
+                          characterOverrides: prev?.characterOverrides ?? {},
                         };
                         updateLayer(selectedLayer.id, { typewriterEffect: nextEffect });
                         if (isChecked && !openSections.typewriterEffect) {
@@ -1163,6 +1164,7 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                       manualX: 0,
                       manualY: 0,
                       manualRotation: 0,
+                      characterOverrides: {},
                     };
 
                     const updateEffect = (partial: any) => {
@@ -1369,7 +1371,17 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                                 <button
                                   key={idx}
                                   type="button"
-                                  onClick={() => updateEffect({ selectedLine: idx })}
+                                  onClick={() => {
+                                    const targetKey = `${idx}_0`;
+                                    const saved = effect.characterOverrides?.[targetKey];
+                                    updateEffect({
+                                      selectedLine: idx,
+                                      selectedIndex: 0,
+                                      manualX: saved ? saved.manualX : 0,
+                                      manualY: saved ? saved.manualY : 0,
+                                      manualRotation: saved ? saved.manualRotation : 0,
+                                    });
+                                  }}
                                   className={`px-2.5 py-1 text-[11px] font-semibold rounded-md border cursor-pointer ${
                                     currentLineIdx === idx
                                       ? "bg-[#000000] text-white border-[#000000]"
@@ -1384,133 +1396,204 @@ export const RightPanel: React.FC<RightPanelProps> = ({ isMobileDrawer = false }
                         )}
 
                         {/* Individual Character Selector */}
-                        <div className="p-2.5 rounded-xl bg-[#E7E9EB]/60 border border-[#dadcdc] space-y-2.5">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-bold text-[#000000]">Selected Character</span>
-                            <span className="text-[11px] font-mono font-bold text-[#000000] bg-white px-2 py-0.5 rounded border border-[#dadcdc]">
-                              {selectedChar ? `"${selectedChar}"` : "(space)"} · Index {safeCharIdx}
-                            </span>
-                          </div>
+                        {(() => {
+                          const currentCharKey = `${currentLineIdx}_${safeCharIdx}`;
+                          const isCurrentSaved = !!effect.characterOverrides?.[currentCharKey];
 
-                          <div className="flex items-center gap-1 border border-[#dadcdc] rounded-lg bg-white p-0.5 shadow-xs">
-                            <button
-                              type="button"
-                              disabled={safeCharIdx <= 0}
-                              onClick={() => updateEffect({ selectedIndex: Math.max(0, safeCharIdx - 1) })}
-                              className="p-1 hover:bg-[#E7E9EB] disabled:opacity-30 rounded text-[#000000] min-w-[28px] min-h-[28px] flex items-center justify-center cursor-pointer"
-                              title="Previous Character"
-                            >
-                              <Minus className="w-3 h-3 text-[#000000]" />
-                            </button>
-                            <input
-                              type="number"
-                              min={0}
-                              max={Math.max(0, charCount - 1)}
-                              value={safeCharIdx}
-                              onChange={(e) => {
-                                const val = parseInt(e.target.value, 10);
-                                if (!isNaN(val)) {
-                                  updateEffect({ selectedIndex: Math.min(Math.max(0, charCount - 1), Math.max(0, val)) });
-                                }
-                              }}
-                              className="w-full bg-transparent text-center text-[11px] font-mono font-bold text-[#000000] focus:outline-none"
-                            />
-                            <button
-                              type="button"
-                              disabled={safeCharIdx >= Math.max(0, charCount - 1)}
-                              onClick={() => updateEffect({ selectedIndex: Math.min(Math.max(0, charCount - 1), safeCharIdx + 1) })}
-                              className="p-1 hover:bg-[#E7E9EB] disabled:opacity-30 rounded text-[#000000] min-w-[28px] min-h-[28px] flex items-center justify-center cursor-pointer"
-                              title="Next Character"
-                            >
-                              <Plus className="w-3 h-3 text-[#000000]" />
-                            </button>
-                          </div>
+                          const selectChar = (idx: number) => {
+                            const targetIdx = Math.min(Math.max(0, charCount - 1), Math.max(0, idx));
+                            const targetKey = `${currentLineIdx}_${targetIdx}`;
+                            const saved = effect.characterOverrides?.[targetKey];
+                            updateEffect({
+                              selectedIndex: targetIdx,
+                              manualX: saved ? saved.manualX : 0,
+                              manualY: saved ? saved.manualY : 0,
+                              manualRotation: saved ? saved.manualRotation : 0,
+                            });
+                          };
 
-                          {/* Manual Character Adjustments (X, Y, Rot) */}
-                          <div className="grid grid-cols-3 gap-1.5 pt-1">
-                            <StepperInput
-                              label="Char X"
-                              value={effect.manualX ?? 0}
-                              min={-10}
-                              max={10}
-                              step={0.1}
-                              unit="mm"
-                              onChange={(val) => updateEffect({ manualX: val })}
-                            />
-                            <StepperInput
-                              label="Char Y"
-                              value={effect.manualY ?? 0}
-                              min={-10}
-                              max={10}
-                              step={0.1}
-                              unit="mm"
-                              onChange={(val) => updateEffect({ manualY: val })}
-                            />
-                            <StepperInput
-                              label="Char Rot"
-                              value={effect.manualRotation ?? 0}
-                              min={-45}
-                              max={45}
-                              step={1}
-                              unit="°"
-                              onChange={(val) => updateEffect({ manualRotation: val })}
-                            />
-                          </div>
-                        </div>
+                          const handleApplyLetter = () => {
+                            // 1. Save current letter in its setup state
+                            const updatedOverrides = {
+                              ...(effect.characterOverrides || {}),
+                              [currentCharKey]: {
+                                manualX: effect.manualX ?? 0,
+                                manualY: effect.manualY ?? 0,
+                                manualRotation: effect.manualRotation ?? 0,
+                              },
+                            };
 
-                        {/* Action Buttons: Regenerate, Reset, Apply */}
-                        <div className="flex gap-2 pt-1">
-                          <button
-                            type="button"
-                            onClick={() => updateEffect({ seed: Math.floor(Math.random() * 100000) + 1 })}
-                            className="flex-1 py-1.5 px-2 bg-white hover:bg-[#E7E9EB] border border-[#dadcdc] rounded-lg text-[11px] font-semibold text-[#000000] flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-colors"
-                            title="Regenerate random variation"
-                          >
-                            <RefreshCw className="w-3 h-3 text-[#000000]" />
-                            <span>Regenerate</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              updateLayer(selectedLayer.id, {
-                                typewriterEffect: {
-                                  enabled: true,
-                                  seed: 12345,
-                                  intensity: 0.5,
-                                  horizontalOffset: 0,
-                                  verticalOffset: 0,
-                                  rotation: 0,
-                                  spacing: 0,
-                                  affectedCharacters: 0,
-                                  selectedLine: 0,
-                                  selectedIndex: 0,
-                                  manualX: 0,
-                                  manualY: 0,
-                                  manualRotation: 0,
-                                },
-                              })
-                            }
-                            className="flex-1 py-1.5 px-2 bg-white hover:bg-[#E7E9EB] border border-[#dadcdc] rounded-lg text-[11px] font-semibold text-[#000000] flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-colors"
-                            title="Reset to default settings"
-                          >
-                            <RotateCcw className="w-3 h-3 text-[#000000]" />
-                            <span>Reset</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              updateLayer(selectedLayer.id, { typewriterEffect: { ...effect } });
-                              if (currentTemplate) {
-                                pushHistoryState(currentTemplate);
-                              }
-                            }}
-                            className="flex-1 py-1.5 px-2 bg-[#000000] hover:bg-[#252525] border border-[#000000] text-white rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-colors"
-                            title="Apply and save typewriter settings"
-                          >
-                            <Check className="w-3 h-3 text-white" />
-                            <span>Apply</span>
-                          </button>
-                        </div>
+                            // 2. Advance to next letter if available, or stay on current letter
+                            const hasNext = safeCharIdx < charCount - 1;
+                            const nextIdx = hasNext ? safeCharIdx + 1 : safeCharIdx;
+                            const nextCharKey = `${currentLineIdx}_${nextIdx}`;
+                            const nextSaved = updatedOverrides[nextCharKey];
+
+                            // 3. Reset typewriter setting inputs for other letters, while keeping all others intact
+                            const nextEffect = {
+                              ...effect,
+                              characterOverrides: updatedOverrides,
+                              selectedIndex: nextIdx,
+                              manualX: nextSaved ? nextSaved.manualX : 0,
+                              manualY: nextSaved ? nextSaved.manualY : 0,
+                              manualRotation: nextSaved ? nextSaved.manualRotation : 0,
+                            };
+
+                            updateLayer(selectedLayer.id, { typewriterEffect: nextEffect });
+                          };
+
+                          const handleClearCurrentLetter = () => {
+                            const updatedOverrides = { ...(effect.characterOverrides || {}) };
+                            delete updatedOverrides[currentCharKey];
+                            updateEffect({
+                              characterOverrides: updatedOverrides,
+                              manualX: 0,
+                              manualY: 0,
+                              manualRotation: 0,
+                            });
+                          };
+
+                          return (
+                            <>
+                              <div className="p-2.5 rounded-xl bg-[#E7E9EB]/60 border border-[#dadcdc] space-y-2.5">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[11px] font-bold text-[#000000]">Selected Character</span>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[11px] font-mono font-bold text-[#000000] bg-white px-2 py-0.5 rounded border border-[#dadcdc]">
+                                      {selectedChar ? `"${selectedChar}"` : "(space)"} · Index {safeCharIdx}
+                                      {isCurrentSaved ? " (Saved)" : ""}
+                                    </span>
+                                    {isCurrentSaved && (
+                                      <button
+                                        type="button"
+                                        onClick={handleClearCurrentLetter}
+                                        className="text-[10px] text-[#000000]/70 hover:text-[#000000] bg-white hover:bg-[#E7E9EB] px-1.5 py-0.5 rounded border border-[#dadcdc] cursor-pointer transition-colors"
+                                        title="Reset this letter to 0"
+                                      >
+                                        Clear
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-1 border border-[#dadcdc] rounded-lg bg-white p-0.5 shadow-xs">
+                                  <button
+                                    type="button"
+                                    disabled={safeCharIdx <= 0}
+                                    onClick={() => selectChar(safeCharIdx - 1)}
+                                    className="p-1 hover:bg-[#E7E9EB] disabled:opacity-30 rounded text-[#000000] min-w-[28px] min-h-[28px] flex items-center justify-center cursor-pointer"
+                                    title="Previous Character"
+                                  >
+                                    <Minus className="w-3 h-3 text-[#000000]" />
+                                  </button>
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    max={Math.max(0, charCount - 1)}
+                                    value={safeCharIdx}
+                                    onChange={(e) => {
+                                      const val = parseInt(e.target.value, 10);
+                                      if (!isNaN(val)) {
+                                        selectChar(val);
+                                      }
+                                    }}
+                                    className="w-full bg-transparent text-center text-[11px] font-mono font-bold text-[#000000] focus:outline-none"
+                                  />
+                                  <button
+                                    type="button"
+                                    disabled={safeCharIdx >= Math.max(0, charCount - 1)}
+                                    onClick={() => selectChar(safeCharIdx + 1)}
+                                    className="p-1 hover:bg-[#E7E9EB] disabled:opacity-30 rounded text-[#000000] min-w-[28px] min-h-[28px] flex items-center justify-center cursor-pointer"
+                                    title="Next Character"
+                                  >
+                                    <Plus className="w-3 h-3 text-[#000000]" />
+                                  </button>
+                                </div>
+
+                                {/* Manual Character Adjustments (X, Y, Rot) */}
+                                <div className="grid grid-cols-3 gap-1.5 pt-1">
+                                  <StepperInput
+                                    label="Char X"
+                                    value={effect.manualX ?? 0}
+                                    min={-10}
+                                    max={10}
+                                    step={0.1}
+                                    unit="mm"
+                                    onChange={(val) => updateEffect({ manualX: val })}
+                                  />
+                                  <StepperInput
+                                    label="Char Y"
+                                    value={effect.manualY ?? 0}
+                                    min={-10}
+                                    max={10}
+                                    step={0.1}
+                                    unit="mm"
+                                    onChange={(val) => updateEffect({ manualY: val })}
+                                  />
+                                  <StepperInput
+                                    label="Char Rot"
+                                    value={effect.manualRotation ?? 0}
+                                    min={-45}
+                                    max={45}
+                                    step={1}
+                                    unit="°"
+                                    onChange={(val) => updateEffect({ manualRotation: val })}
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Action Buttons: Regenerate, Reset, Apply */}
+                              <div className="flex gap-2 pt-1">
+                                <button
+                                  type="button"
+                                  onClick={() => updateEffect({ seed: Math.floor(Math.random() * 100000) + 1 })}
+                                  className="flex-1 py-1.5 px-2 bg-white hover:bg-[#E7E9EB] border border-[#dadcdc] rounded-lg text-[11px] font-semibold text-[#000000] flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+                                  title="Regenerate random variation"
+                                >
+                                  <RefreshCw className="w-3 h-3 text-[#000000]" />
+                                  <span>Regenerate</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    updateLayer(selectedLayer.id, {
+                                      typewriterEffect: {
+                                        enabled: true,
+                                        seed: 12345,
+                                        intensity: 0.5,
+                                        horizontalOffset: 0,
+                                        verticalOffset: 0,
+                                        rotation: 0,
+                                        spacing: 0,
+                                        affectedCharacters: 0,
+                                        selectedLine: 0,
+                                        selectedIndex: 0,
+                                        manualX: 0,
+                                        manualY: 0,
+                                        manualRotation: 0,
+                                        characterOverrides: {},
+                                      },
+                                    })
+                                  }
+                                  className="flex-1 py-1.5 px-2 bg-white hover:bg-[#E7E9EB] border border-[#dadcdc] rounded-lg text-[11px] font-semibold text-[#000000] flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+                                  title="Reset all settings to default"
+                                >
+                                  <RotateCcw className="w-3 h-3 text-[#000000]" />
+                                  <span>Reset</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleApplyLetter}
+                                  className="flex-1 py-1.5 px-2 bg-[#000000] hover:bg-[#252525] border border-[#000000] text-white rounded-lg text-[11px] font-bold flex items-center justify-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+                                  title="Apply and save current letter, reset settings for next letter"
+                                >
+                                  <Check className="w-3 h-3 text-white" />
+                                  <span>Apply</span>
+                                </button>
+                              </div>
+                            </>
+                          );
+                        })()}
                       </div>
                     );
                   })()}
