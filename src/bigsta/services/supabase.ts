@@ -1444,23 +1444,29 @@ export async function deleteTokenPackageSupabase(id: string): Promise<boolean> {
 }
 
 // Helper: Fetch all weekly offers from Supabase
-export async function fetchAllWeeklyOffersSupabase(): Promise<any[]> {
+export async function fetchAllWeeklyOffersSupabase(retries = 3): Promise<any[]> {
   if (!supabase) return [];
-  try {
-    const { data, error } = await supabase
-      .from("weekly_offers")
-      .select("*")
-      .order("created_at", { ascending: false });
+  for (let i = 0; i < retries; i++) {
+    try {
+      const { data, error } = await supabase
+        .from("weekly_offers")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Supabase fetch weekly offers error:", error.message);
-      return [];
+      if (error) {
+        console.error(`Supabase fetch weekly offers error (attempt ${i + 1}):`, error.message);
+        if (i === retries - 1) return [];
+        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // exponential backoff
+        continue;
+      }
+      return data || [];
+    } catch (e) {
+      console.error(`Failed to fetch weekly offers from Supabase (attempt ${i + 1}):`, e);
+      if (i === retries - 1) return [];
+      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // exponential backoff
     }
-    return data || [];
-  } catch (e) {
-    console.error("Failed to fetch weekly offers from Supabase:", e);
-    return [];
   }
+  return [];
 }
 
 // Helper: Fetch active weekly offers from Supabase
