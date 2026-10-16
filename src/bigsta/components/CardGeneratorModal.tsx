@@ -133,8 +133,8 @@ export const CardGeneratorModal: React.FC = () => {
         });
     } else {
       Promise.all([
-        renderTemplateToCanvas(resolvedFrontTemplate, submittedData, 200),
-        renderTemplateToCanvas(resolvedBackTemplate, submittedData, 200),
+        renderTemplateToCanvas(resolvedFrontTemplate, submittedData, 96),
+        renderTemplateToCanvas(resolvedBackTemplate, submittedData, 96),
       ])
         .then(([frontCanvas, backCanvas]) => {
           if (isMounted) {

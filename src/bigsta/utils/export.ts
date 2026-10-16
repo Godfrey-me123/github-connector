@@ -1061,16 +1061,12 @@ export async function download2In1PDF(
     const frontCanvas = await renderTemplateToCanvas(frontTemplate, cardData, 300);
     const frontImg = frontCanvas.toDataURL("image/jpeg", 0.95);
     pdf.addImage(frontImg, "JPEG", xOffset, 20, w, h);
-    pdf.setFontSize(10);
-    pdf.text("FRONT SIDE", xOffset, 15);
   }
 
   if (backTemplate) {
     const backCanvas = await renderTemplateToCanvas(backTemplate, cardData, 300);
     const backImg = backCanvas.toDataURL("image/jpeg", 0.95);
     pdf.addImage(backImg, "JPEG", xOffset, 30 + h, w, h);
-    pdf.setFontSize(10);
-    pdf.text("BACK SIDE", xOffset, 25 + h);
   }
 
   const pdfOutput = pdf.output("datauristring");
