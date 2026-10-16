@@ -20,7 +20,6 @@ import {
 import { FONT_WEIGHTS_BY_FAMILY, forceLoadAppFonts } from "./fonts";
 import { useTemplateStore } from "../store/useTemplateStore";
 import { SAMPLE_TEMPLATES } from "./sampleTemplates";
-import { calculateTypewriterLayout } from "./typewriterEffect";
 
 export interface CropRegion {
   x: number; // in mm
@@ -638,100 +637,60 @@ export async function renderTemplateToCanvas(
         ctx.shadowOffsetY = 0;
       }
 
-      // Check for Typewriter Effect
-      const twLayout = (layer as any).typewriterEffect?.enabled
-        ? calculateTypewriterLayout(textVal, layer as any, pxPerMm, finalScaleX, finalScaleY)
-        : null;
+      // Handle multiline text
+      const lines = textVal.split("\n");
+      const lineGap = fontSizePx * (layer.lineHeight || 1.1);
 
-      if (twLayout && !twLayout.isFallback && twLayout.chars.length > 0) {
-        ctx.textAlign = "left";
-        ctx.textBaseline = "top";
-        twLayout.chars.forEach((ch) => {
-          ctx.save();
-          // Translate to character position
-          ctx.translate(x + ch.x, y + ch.y);
-          if (ch.rotation) {
-            ctx.rotate((ch.rotation * Math.PI) / 180);
-          }
-          ctx.fillText(ch.char, 0, 0);
+      lines.forEach((line, idx) => {
+        const lineY = y + idx * lineGap;
+        ctx.save();
 
-          let drawStroke = false;
-          let strokeColor = "#000000";
-          let strokeWidth = 0;
+        // Translate to the specific line's baseline coordinate, then apply scale!
+        ctx.translate(textX, lineY);
+        ctx.scale(finalScaleX, finalScaleY);
 
-          if ((layer as any).strokeEnabled && (layer as any).strokeWidth) {
-            drawStroke = true;
-            strokeColor = (layer as any).strokeColor || "#000000";
-            strokeWidth = mmToPx((layer as any).strokeWidth, renderDpi);
-          } else if (isBoldSimulationActive) {
-            drawStroke = true;
-            strokeColor = layer.color || "#000000";
-            strokeWidth = fontSizePx * 0.04;
-          }
+        // Draw fill text
+        ctx.fillText(line, 0, 0);
 
-          if (drawStroke && strokeWidth > 0) {
-            ctx.strokeStyle = strokeColor;
-            ctx.lineWidth = strokeWidth;
-            ctx.strokeText(ch.char, 0, 0);
-          }
-          ctx.restore();
-        });
-      } else {
-        // Handle standard multiline text
-        const lines = textVal.split("\n");
-        const lineGap = fontSizePx * (layer.lineHeight || 1.1);
+        // Draw outline if enabled (or if simulated bold is active)
+        let drawStroke = false;
+        let strokeColor = "#000000";
+        let strokeWidth = 0;
 
-        lines.forEach((line, idx) => {
-          const lineY = y + idx * lineGap;
-          ctx.save();
+        if ((layer as any).strokeEnabled && (layer as any).strokeWidth) {
+          drawStroke = true;
+          strokeColor = (layer as any).strokeColor || "#000000";
+          strokeWidth = mmToPx((layer as any).strokeWidth, renderDpi);
+        } else if (isBoldSimulationActive) {
+          drawStroke = true;
+          strokeColor = layer.color || "#000000";
+          strokeWidth = fontSizePx * 0.04;
+        }
 
-          // Translate to the specific line's baseline coordinate, then apply scale!
-          ctx.translate(textX, lineY);
-          ctx.scale(finalScaleX, finalScaleY);
+        if (drawStroke && strokeWidth > 0) {
+          ctx.strokeStyle = strokeColor;
+          ctx.lineWidth = strokeWidth;
+          ctx.strokeText(line, 0, 0);
+        }
 
-          // Draw fill text
-          ctx.fillText(line, 0, 0);
+        // Draw underline inside the translated & scaled matrix for mathematical perfection
+        if (layer.textDecoration === "underline") {
+          const metrics = ctx.measureText(line);
+          ctx.beginPath();
+          ctx.strokeStyle = layer.color || "#000000";
+          ctx.lineWidth = Math.max(1, fontSizePx / 15);
 
-          // Draw outline if enabled (or if simulated bold is active)
-          let drawStroke = false;
-          let strokeColor = "#000000";
-          let strokeWidth = 0;
+          let uStartX = 0;
+          if (layer.align === "center") uStartX = -metrics.width / 2;
+          else if (layer.align === "right") uStartX = -metrics.width;
 
-          if ((layer as any).strokeEnabled && (layer as any).strokeWidth) {
-            drawStroke = true;
-            strokeColor = (layer as any).strokeColor || "#000000";
-            strokeWidth = mmToPx((layer as any).strokeWidth, renderDpi);
-          } else if (isBoldSimulationActive) {
-            drawStroke = true;
-            strokeColor = layer.color || "#000000";
-            strokeWidth = fontSizePx * 0.04;
-          }
+          ctx.moveTo(uStartX, fontSizePx + 2);
+          ctx.lineTo(uStartX + metrics.width, fontSizePx + 2);
+          ctx.stroke();
+        }
 
-          if (drawStroke && strokeWidth > 0) {
-            ctx.strokeStyle = strokeColor;
-            ctx.lineWidth = strokeWidth;
-            ctx.strokeText(line, 0, 0);
-          }
-
-          // Draw underline inside the translated & scaled matrix for mathematical perfection
-          if (layer.textDecoration === "underline") {
-            const metrics = ctx.measureText(line);
-            ctx.beginPath();
-            ctx.strokeStyle = layer.color || "#000000";
-            ctx.lineWidth = Math.max(1, fontSizePx / 15);
-
-            let uStartX = 0;
-            if (layer.align === "center") uStartX = -metrics.width / 2;
-            else if (layer.align === "right") uStartX = -metrics.width;
-
-            ctx.moveTo(uStartX, fontSizePx + 2);
-            ctx.lineTo(uStartX + metrics.width, fontSizePx + 2);
-            ctx.stroke();
-          }
-
-          ctx.restore();
-        });
-      }
+        ctx.restore();
+      });
 
       // Clear layout-specific text metrics parameters to avoid bleeding into other canvas layers
       (ctx as any).letterSpacing = "0px";
