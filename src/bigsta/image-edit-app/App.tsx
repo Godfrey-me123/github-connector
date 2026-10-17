@@ -15,6 +15,7 @@ import { OcrTool } from "./components/tools/OcrTool";
 import { EnhanceTool } from "./components/tools/EnhanceTool";
 import { RenameTool } from "./components/tools/RenameTool";
 import { PassportTool } from "./components/tools/PassportTool";
+import { MergePdfTool } from "./components/tools/MergePdfTool";
 import { AccountModal } from "./components/AccountModal";
 import { ShieldCheck, Lock } from "lucide-react";
 import { saveActiveImageStorage, loadActiveImageStorage } from "../services/activeImageStorage";
@@ -147,6 +148,10 @@ export default function App() {
 
         {activeTool === "crop" && (
           <CropTool initialFile={activeFile} onBack={() => handleSelectTool("home")} />
+        )}
+
+        {activeTool === "merge-pdf" && (
+          <MergePdfTool onBack={() => handleSelectTool("home")} />
         )}
 
         {activeTool === "rotate" && (

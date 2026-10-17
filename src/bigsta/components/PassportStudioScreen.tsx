@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState } from "react";
 import { PassportTool } from "./tools/PassportTool";
-import { MergePdfTool } from "./tools/MergePdfTool";
+import { MergePdfTool } from "../image-edit-app/components/tools/MergePdfTool";
 import { useTemplateStore } from "../store/useTemplateStore";
 import { UniversalBackButton } from "./common/UniversalBackButton";
 
@@ -54,7 +54,7 @@ export const PassportStudioScreen: React.FC = () => {
         {activeTab === "passport" ? (
           <PassportTool onBack={() => setActiveScreen("home")} />
         ) : (
-          <MergePdfTool />
+          <MergePdfTool onBack={() => setActiveScreen("home")} />
         )}
       </div>
     </div>

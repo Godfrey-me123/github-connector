@@ -49,6 +49,7 @@ export const ToolGrid: React.FC<ToolGridProps> = ({ onSelectTool, onQuickUpload 
     { id: "ocr", title: "OCR", icon: <FileText className="w-5 h-5 text-indigo-600" /> },
     { id: "enhance", title: "Enhance", icon: <Zap className="w-5 h-5 text-yellow-600" /> },
     { id: "rename", title: "Rename", icon: <FileEdit className="w-5 h-5 text-orange-600" /> },
+    { id: "merge-pdf", title: "Merge PDF", icon: <FileText className="w-5 h-5 text-blue-500" /> },
   ];
 
   return (

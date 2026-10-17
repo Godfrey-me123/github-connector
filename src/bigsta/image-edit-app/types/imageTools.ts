@@ -9,7 +9,8 @@ export type ToolId =
   | "ocr"
   | "enhance"
   | "rename"
-  | "passport";
+  | "passport"
+  | "merge-pdf";
 
 export interface ImageItem {
   id: string;
