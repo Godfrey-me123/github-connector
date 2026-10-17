@@ -31,14 +31,12 @@ export async function regenerateWebhookSecret(): Promise<string> {
   const secret = "BIGsta_SEC_" + crypto.randomUUID().replace(/-/g, "");
   try {
     const db = await admin();
-    const { error } = await db
-      .from("system_settings")
-      .upsert({
-        id: SECRET_KEY,
-        config_key: SECRET_KEY,
-        config_value: { secret },
-        updated_at: new Date().toISOString(),
-      });
+    const { error } = await db.from("system_settings").upsert({
+      id: SECRET_KEY,
+      config_key: SECRET_KEY,
+      config_value: { secret },
+      updated_at: new Date().toISOString(),
+    });
     if (error) console.warn("[Webhook Secret] Could not persist secret:", error.message);
   } catch (e) {
     console.warn("[Webhook Secret] Could not reach database to persist secret:", e);
@@ -49,14 +47,12 @@ export async function regenerateWebhookSecret(): Promise<string> {
 export async function saveWebhookSettings(value: Record<string, unknown>) {
   try {
     const db = await admin();
-    const { error } = await db
-      .from("system_settings")
-      .upsert({
-        id: "webhook_settings",
-        config_key: "webhook_settings",
-        config_value: value as never,
-        updated_at: new Date().toISOString(),
-      });
+    const { error } = await db.from("system_settings").upsert({
+      id: "webhook_settings",
+      config_key: "webhook_settings",
+      config_value: value as never,
+      updated_at: new Date().toISOString(),
+    });
     if (error) console.warn("[Webhook Settings] Could not persist settings:", error.message);
   } catch (e) {
     console.warn("[Webhook Settings] Could not reach database to save settings:", e);

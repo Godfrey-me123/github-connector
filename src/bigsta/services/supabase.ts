@@ -1456,14 +1456,14 @@ export async function fetchAllWeeklyOffersSupabase(retries = 3): Promise<any[]> 
       if (error) {
         console.error(`Supabase fetch weekly offers error (attempt ${i + 1}):`, error.message);
         if (i === retries - 1) return [];
-        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // exponential backoff
+        await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1))); // exponential backoff
         continue;
       }
       return data || [];
     } catch (e) {
       console.error(`Failed to fetch weekly offers from Supabase (attempt ${i + 1}):`, e);
       if (i === retries - 1) return [];
-      await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1))); // exponential backoff
+      await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1))); // exponential backoff
     }
   }
   return [];

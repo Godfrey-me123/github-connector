@@ -868,20 +868,29 @@ export async function renderTemplateToCanvas(
                 tCtx.drawImage(img, 0, 0);
                 const imageData = tCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
                 const data = imageData.data;
-                const { strength = 0.5, distance = 0.2, top, bottom, left, right } = stickerLayer.edgeFade!;
+                const {
+                  strength = 0.5,
+                  distance = 0.2,
+                  top,
+                  bottom,
+                  left,
+                  right,
+                } = stickerLayer.edgeFade!;
                 const distPxX = Math.floor(tempCanvas.width * distance);
                 const distPxY = Math.floor(tempCanvas.height * distance);
 
                 for (let i = 0; i < data.length; i += 4) {
                   const px = (i / 4) % tempCanvas.width;
-                  const py = Math.floor((i / 4) / tempCanvas.width);
-                  
+                  const py = Math.floor(i / 4 / tempCanvas.width);
+
                   let alpha = 1;
                   if (top && py < distPxY) alpha = Math.min(alpha, py / distPxY);
-                  if (bottom && py > tempCanvas.height - distPxY) alpha = Math.min(alpha, (tempCanvas.height - py) / distPxY);
+                  if (bottom && py > tempCanvas.height - distPxY)
+                    alpha = Math.min(alpha, (tempCanvas.height - py) / distPxY);
                   if (left && px < distPxX) alpha = Math.min(alpha, px / distPxX);
-                  if (right && px > tempCanvas.width - distPxX) alpha = Math.min(alpha, (tempCanvas.width - px) / distPxX);
-                  
+                  if (right && px > tempCanvas.width - distPxX)
+                    alpha = Math.min(alpha, (tempCanvas.width - px) / distPxX);
+
                   data[i + 3] = data[i + 3] * (1 - strength * (1 - alpha));
                 }
                 tCtx.putImageData(imageData, 0, 0);

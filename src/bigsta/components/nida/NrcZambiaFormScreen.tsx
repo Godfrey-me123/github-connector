@@ -44,12 +44,31 @@ export interface NrcZambiaFormScreenProps {
 }
 
 const ZAMBIA_DISTRICTS = [
-  "Lusaka", "Ndola", "Kitwe", "Livingstone", "Kabwe", "Chingola",
-  "Mufulira", "Luanshya", "Kasama", "Chipata", "Solwezi", "Mongu",
-  "Choma", "Mansa", "Kafue", "Mazabuka", "Monze", "Mpika", "Samfya"
+  "Lusaka",
+  "Ndola",
+  "Kitwe",
+  "Livingstone",
+  "Kabwe",
+  "Chingola",
+  "Mufulira",
+  "Luanshya",
+  "Kasama",
+  "Chipata",
+  "Solwezi",
+  "Mongu",
+  "Choma",
+  "Mansa",
+  "Kafue",
+  "Mazabuka",
+  "Monze",
+  "Mpika",
+  "Samfya",
 ];
 
-export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCancel, onSuccess }) => {
+export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({
+  onCancel,
+  onSuccess,
+}) => {
   const {
     setActiveScreen,
     setNidaSuccessNotification,
@@ -69,20 +88,47 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
     if (lastNrcFormData && typeof lastNrcFormData === "object") {
       return {
         nrcNumber: typeof lastNrcFormData.nrcNumber === "string" ? lastNrcFormData.nrcNumber : "",
-        cardNumber: typeof lastNrcFormData.cardNumber === "string" ? lastNrcFormData.cardNumber : "",
-        registrationNumber: typeof lastNrcFormData.registrationNumber === "string" ? lastNrcFormData.registrationNumber : "",
+        cardNumber:
+          typeof lastNrcFormData.cardNumber === "string" ? lastNrcFormData.cardNumber : "",
+        registrationNumber:
+          typeof lastNrcFormData.registrationNumber === "string"
+            ? lastNrcFormData.registrationNumber
+            : "",
         fullName: typeof lastNrcFormData.fullName === "string" ? lastNrcFormData.fullName : "",
-        dateOfBirth: typeof lastNrcFormData.dateOfBirth === "string" ? formatToDdMmYy(lastNrcFormData.dateOfBirth) : "",
-        placeOfBirth: typeof lastNrcFormData.placeOfBirth === "string" ? lastNrcFormData.placeOfBirth : "",
-        parentsPlaceOfBirth: typeof lastNrcFormData.parentsPlaceOfBirth === "string" ? lastNrcFormData.parentsPlaceOfBirth : "",
-        district: typeof lastNrcFormData.district === "string" ? lastNrcFormData.district : "Lusaka",
+        dateOfBirth:
+          typeof lastNrcFormData.dateOfBirth === "string"
+            ? formatToDdMmYy(lastNrcFormData.dateOfBirth)
+            : "",
+        placeOfBirth:
+          typeof lastNrcFormData.placeOfBirth === "string" ? lastNrcFormData.placeOfBirth : "",
+        parentsPlaceOfBirth:
+          typeof lastNrcFormData.parentsPlaceOfBirth === "string"
+            ? lastNrcFormData.parentsPlaceOfBirth
+            : "",
+        district:
+          typeof lastNrcFormData.district === "string" ? lastNrcFormData.district : "Lusaka",
         village: typeof lastNrcFormData.village === "string" ? lastNrcFormData.village : "",
         chief: typeof lastNrcFormData.chief === "string" ? lastNrcFormData.chief : "",
-        registrationDate: typeof lastNrcFormData.registrationDate === "string" ? formatToDdMmYy(lastNrcFormData.registrationDate) : "",
-        specialMarks: typeof lastNrcFormData.specialMarks === "string" ? lastNrcFormData.specialMarks : "",
-        dateOfRenunciation: typeof lastNrcFormData.dateOfRenunciation === "string" ? formatToDdMmYy(lastNrcFormData.dateOfRenunciation) : "",
-        dateOfIssue: typeof lastNrcFormData.dateOfIssue === "string" ? formatToDdMmYy(lastNrcFormData.dateOfIssue) : "",
-        gender: typeof lastNrcFormData.gender === "string" && lastNrcFormData.gender ? (lastNrcFormData.gender.toUpperCase().startsWith("F") ? "Female" : "Male") : "Male",
+        registrationDate:
+          typeof lastNrcFormData.registrationDate === "string"
+            ? formatToDdMmYy(lastNrcFormData.registrationDate)
+            : "",
+        specialMarks:
+          typeof lastNrcFormData.specialMarks === "string" ? lastNrcFormData.specialMarks : "",
+        dateOfRenunciation:
+          typeof lastNrcFormData.dateOfRenunciation === "string"
+            ? formatToDdMmYy(lastNrcFormData.dateOfRenunciation)
+            : "",
+        dateOfIssue:
+          typeof lastNrcFormData.dateOfIssue === "string"
+            ? formatToDdMmYy(lastNrcFormData.dateOfIssue)
+            : "",
+        gender:
+          typeof lastNrcFormData.gender === "string" && lastNrcFormData.gender
+            ? lastNrcFormData.gender.toUpperCase().startsWith("F")
+              ? "Female"
+              : "Male"
+            : "Male",
         photoUrl: lastNrcFormData.photoUrl || null,
         signatureUrl: lastNrcFormData.signatureUrl || null,
         officerSignatureUrl: lastNrcFormData.officerSignatureUrl || null,
@@ -187,10 +233,12 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
         if (value.trim().length < 3) return "Full Name is too short";
         return "";
       case "dateOfBirth":
-        if (!value || typeof value !== "string" || !value.trim()) return "Date of Birth is required";
+        if (!value || typeof value !== "string" || !value.trim())
+          return "Date of Birth is required";
         return "";
       case "dateOfIssue":
-        if (!value || typeof value !== "string" || !value.trim()) return "Date of Issue is required";
+        if (!value || typeof value !== "string" || !value.trim())
+          return "Date of Issue is required";
         return "";
       case "district":
         if (!value) return "District is required";
@@ -355,15 +403,24 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
       const formattedIssue = formatToDdMmYy(formData.dateOfIssue || "");
       const formattedRegDate = formatToDdMmYy(formData.registrationDate || "");
       const formattedRenunciation = formatToDdMmYy(formData.dateOfRenunciation || "");
-      const formattedGender = (formData.gender || "").trim().toLowerCase().startsWith("f") ? "F" : "M";
-      const formattedPlace = toTitleCase((formData.placeOfBirth || "").trim() || formData.district || "");
+      const formattedGender = (formData.gender || "").trim().toLowerCase().startsWith("f")
+        ? "F"
+        : "M";
+      const formattedPlace = toTitleCase(
+        (formData.placeOfBirth || "").trim() || formData.district || "",
+      );
       const formattedParentsPlace = toTitleCase((formData.parentsPlaceOfBirth || "").trim() || "-");
       const formattedVillage = toTitleCase((formData.village || "").trim() || "-");
       const formattedChief = toTitleCase((formData.chief || "").trim() || "-");
 
       const regNo = (formData.registrationNumber || formData.nrcNumber || "").trim();
       const cardNo = (formData.cardNumber || formData.nrcNumber || "").trim();
-      const nrcNo = (formData.nrcNumber || formData.cardNumber || formData.registrationNumber || "").trim();
+      const nrcNo = (
+        formData.nrcNumber ||
+        formData.cardNumber ||
+        formData.registrationNumber ||
+        ""
+      ).trim();
 
       const mappedFormData = {
         isNrcZambia: true,
@@ -521,7 +578,8 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
             <AlertCircle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
             <div className="text-xs text-amber-900 leading-relaxed">
               <span className="font-bold block text-sm">SAMPLE NOTICE</span>
-              All outputs produced are design mockups clearly designated as <strong>SAMPLE — NOT A VALID ID</strong> for testing and layout purposes.
+              All outputs produced are design mockups clearly designated as{" "}
+              <strong>SAMPLE — NOT A VALID ID</strong> for testing and layout purposes.
             </div>
           </div>
 
@@ -551,7 +609,7 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
                 onChange={(e) => handleChange("cardNumber", e)}
                 onBlur={() => handleBlur("cardNumber")}
               />
-              
+
               <FloatingInput
                 label="Registration Number"
                 value={formData.registrationNumber}
@@ -667,7 +725,7 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({ onCanc
                 onChange={(e) => handleChange("specialMarks", e)}
                 onBlur={() => handleBlur("specialMarks")}
               />
-              
+
               <FloatingDatePicker
                 label="Date of Renunciation"
                 value={formData.dateOfRenunciation}

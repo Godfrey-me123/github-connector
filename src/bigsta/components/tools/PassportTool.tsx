@@ -67,6 +67,7 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
   );
   const [selectedSpec, setSelectedSpec] = useState<PassportDocumentSpec>(PASSPORT_SPECS[0]);
   const [file, setFile] = useState<File | null>(initialFile || null);
+  const [originalFile, setOriginalFile] = useState<File | null>(initialFile || null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [fileSizeKb, setFileSizeKb] = useState<number>(63.92);
 
@@ -114,7 +115,13 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
   };
 
   useEffect(() => {
-    if (step === "edit" && canvasRef.current && !fabricCanvas.current) {
+    if (step === "edit" && canvasRef.current) {
+      // Dispose old canvas if it exists
+      if (fabricCanvas.current) {
+        fabricCanvas.current.dispose();
+        fabricCanvas.current = null;
+      }
+
       const cWidth = 260;
       const cHeight = Math.round(cWidth * (selectedSpec.heightMm / selectedSpec.widthMm));
 
@@ -138,6 +145,14 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
         }
       }
     }
+
+    // Cleanup on unmount or when step changes away from edit
+    return () => {
+      if (step !== "edit" && fabricCanvas.current) {
+        fabricCanvas.current.dispose();
+        fabricCanvas.current = null;
+      }
+    };
   }, [step, file, previewUrl, selectedSpec]);
 
   useEffect(() => {
@@ -149,6 +164,7 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
 
   const handleFileSelect = (selectedFile: File) => {
     setFile(selectedFile);
+    setOriginalFile(selectedFile);
     setFileSizeKb(Math.round((selectedFile.size / 1024) * 100) / 100);
     const url = URL.createObjectURL(selectedFile);
     setPreviewUrl(url);
@@ -156,11 +172,12 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
   };
 
   const handleRemoveBackground = async () => {
-    if (!file) return;
+    const source = originalFile || file;
+    if (!source) return;
     setIsProcessing(true);
     try {
       const formData = new FormData();
-      formData.append("image", file);
+      formData.append("image", source);
       const res = await fetch("/api/remove-bg", { method: "POST", body: formData });
       if (!res.ok) throw new Error("Background removal failed");
       const blob = await res.blob();
@@ -181,7 +198,7 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
           .catch((err) => console.warn("Fabric image load error:", err));
       }
     } catch (err: any) {
-      alert(err.message || "Error processing background removal");
+      toast.error(err.message || "Error processing background removal");
     } finally {
       setIsProcessing(false);
     }
@@ -235,6 +252,15 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
                   </option>
                 ))}
               </select>
+              <div className="p-3 bg-slate-50 rounded-lg text-xs text-slate-600 space-y-1 mt-2">
+                <p className="font-semibold text-slate-800">Requirements:</p>
+                <p>{selectedSpec.description || "No specific requirements provided."}</p>
+                <ul className="list-disc list-inside mt-1">
+                  {selectedSpec.tips?.map((tip, i) => (
+                    <li key={i}>{tip}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
 
             <label className="bg-white border-2 border-dashed border-blue-400 rounded-3xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-blue-50/50 transition-colors shadow-xs">
@@ -248,6 +274,17 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
                 accept="image/*"
                 className="sr-only"
                 onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
+              />
+            </label>
+            <label className="bg-white border border-slate-200 rounded-3xl p-4 flex items-center justify-center gap-2 cursor-pointer hover:bg-slate-50 transition-colors shadow-xs">
+              <Camera className="w-5 h-5 text-slate-600" />
+              <span className="text-xs font-bold text-slate-600">Take Photo (Camera)</span>
+              <input
+                type="file"
+                capture="user"
+                accept="image/*"
+                onChange={(e) => e.target.files && handleFileSelect(e.target.files[0])}
+                className="hidden"
               />
             </label>
           </div>
@@ -273,6 +310,16 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
           </div>
 
           <div className="flex-1 flex flex-col items-center justify-center p-4 relative overflow-y-auto">
+            <div className="bg-amber-50 p-3 rounded-xl border border-amber-200 text-xs text-amber-900 mb-4 w-full max-w-xs">
+              <p className="font-bold mb-1">Manual Compliance Check:</p>
+              <ul className="list-disc list-inside space-y-0.5">
+                <li>Head straight and centered.</li>
+                <li>Neutral expression, mouth closed.</li>
+                <li>Eyes visible and not obstructed.</li>
+                <li>Even lighting, no strong shadows.</li>
+                <li>Plain light background recommended.</li>
+              </ul>
+            </div>
             <div className="bg-white p-3 rounded-2xl shadow-md border border-slate-200 relative flex items-center justify-center">
               <canvas ref={canvasRef} className="rounded object-contain" />
               <button

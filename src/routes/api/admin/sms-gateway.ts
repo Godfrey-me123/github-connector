@@ -19,7 +19,10 @@ async function handle(request: Request) {
       },
     });
   } catch (e: any) {
-    return Response.json({ ok: false, error: e?.message || "Status check failed" }, { status: 500 });
+    return Response.json(
+      { ok: false, error: e?.message || "Status check failed" },
+      { status: 500 },
+    );
   }
 }
 

@@ -848,15 +848,33 @@ export const CardPreviewScreen: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <span className="text-[10px] uppercase text-[#A0A4A8] font-bold block">
-                  {isDL ? "Driver Name" : isNHIF ? "Member Name" : isNRC ? "Holder Name" : "Cardholder"}
+                  {isDL
+                    ? "Driver Name"
+                    : isNHIF
+                      ? "Member Name"
+                      : isNRC
+                        ? "Holder Name"
+                        : "Cardholder"}
                 </span>
                 <span className="font-semibold text-white truncate block">
-                  {isDL ? dlName : isNHIF ? nhifMemberName || "NHIF Member" : isNRC ? nrcName || "NRC Citizen" : holderName}
+                  {isDL
+                    ? dlName
+                    : isNHIF
+                      ? nhifMemberName || "NHIF Member"
+                      : isNRC
+                        ? nrcName || "NRC Citizen"
+                        : holderName}
                 </span>
               </div>
               <div>
                 <span className="text-[10px] uppercase text-[#A0A4A8] font-bold block">
-                  {isDL ? "Licence Number" : isNHIF ? "Card Number" : isNRC ? "NRC Number" : "NIDA Number"}
+                  {isDL
+                    ? "Licence Number"
+                    : isNHIF
+                      ? "Card Number"
+                      : isNRC
+                        ? "NRC Number"
+                        : "NIDA Number"}
                 </span>
                 <span className="font-mono font-semibold text-[#47A5FF] block">
                   {isDL ? dlLicenceNo : isNHIF ? nhifCardNo : isNRC ? nrcNumber : nidaNumber}
@@ -864,7 +882,13 @@ export const CardPreviewScreen: React.FC = () => {
               </div>
               <div>
                 <span className="text-[10px] uppercase text-[#A0A4A8] font-bold block">
-                  {isDL ? "Categories / PIN" : isNHIF ? "Status / Details" : isNRC ? "District / DOB" : "Gender / Sex"}
+                  {isDL
+                    ? "Categories / PIN"
+                    : isNHIF
+                      ? "Status / Details"
+                      : isNRC
+                        ? "District / DOB"
+                        : "Gender / Sex"}
                 </span>
                 <span className="font-semibold text-white block">
                   {isDL

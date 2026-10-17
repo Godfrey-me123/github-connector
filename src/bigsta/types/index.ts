@@ -31,7 +31,15 @@ export type CardType =
 export type CardSide = "Front Side" | "Back Side" | "Full Card" | "Single Side";
 
 export type LayerType =
-  "text" | "image" | "placeholder" | "shape" | "barcode" | "qrcode" | "group" | "licence_category" | "sticker";
+  | "text"
+  | "image"
+  | "placeholder"
+  | "shape"
+  | "barcode"
+  | "qrcode"
+  | "group"
+  | "licence_category"
+  | "sticker";
 
 export interface StickerLayer extends BaseLayer {
   type: "sticker";

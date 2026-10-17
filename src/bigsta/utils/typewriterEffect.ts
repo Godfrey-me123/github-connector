@@ -46,7 +46,7 @@ export function measureCharWidth(
   char: string,
   fontFamily: string,
   fontSizePx: number,
-  fontStyle: string = "normal"
+  fontStyle: string = "normal",
 ): number {
   if (!char) return 0;
 
@@ -76,7 +76,12 @@ export function measureCharWidth(
  * Deterministic pseudo-random number generator for stable typewriter rendering
  * Returns a value in [-1, 1] based on seed and character position.
  */
-function getDeterministicRandom(seed: number, index: number, lineIndex: number, component: number): number {
+function getDeterministicRandom(
+  seed: number,
+  index: number,
+  lineIndex: number,
+  component: number,
+): number {
   const s = (seed || 12345) * 13.37;
   const i = (index + 1) * 31.17;
   const l = (lineIndex + 1) * 97.43;
@@ -98,7 +103,7 @@ export function calculateTypewriterLayout(
   layer: Partial<TextLayer> & { typewriterEffect?: TypewriterEffect },
   pxPerMm: number,
   scaleX: number = 1,
-  scaleY: number = 1
+  scaleY: number = 1,
 ): TypewriterLayoutResult {
   const fallbackResult: TypewriterLayoutResult = {
     chars: [],
@@ -120,7 +125,8 @@ export function calculateTypewriterLayout(
   const fontFamily = layer.fontFamily || "Helvetica";
   const fontStyle = layer.fontStyle || "normal";
   const spacingPx = (effect.spacing ?? 0) * pxPerMm;
-  const intensity = typeof effect.intensity === "number" ? Math.max(0, Math.min(2, effect.intensity)) : 0.5;
+  const intensity =
+    typeof effect.intensity === "number" ? Math.max(0, Math.min(2, effect.intensity)) : 0.5;
   const baseHOffsetPx = (effect.horizontalOffset ?? 0) * pxPerMm;
   const baseVOffsetPx = (effect.verticalOffset ?? 0) * pxPerMm;
   const baseRotRange = typeof effect.rotation === "number" ? effect.rotation : 0;
@@ -141,13 +147,12 @@ export function calculateTypewriterLayout(
 
   lines.forEach((lineText, lineIdx) => {
     const chars = lineText.split("");
-    const charWidths: number[] = chars.map((ch) =>
-      measureCharWidth(ch, fontFamily, fontSizePx, fontStyle) * scaleX
+    const charWidths: number[] = chars.map(
+      (ch) => measureCharWidth(ch, fontFamily, fontSizePx, fontStyle) * scaleX,
     );
 
     const totalLineWidth =
-      charWidths.reduce((sum, w) => sum + w, 0) +
-      Math.max(0, chars.length - 1) * spacingPx;
+      charWidths.reduce((sum, w) => sum + w, 0) + Math.max(0, chars.length - 1) * spacingPx;
 
     if (totalLineWidth > maxLineWidth) {
       maxLineWidth = totalLineWidth;
@@ -167,7 +172,8 @@ export function calculateTypewriterLayout(
     chars.forEach((char, charIdx) => {
       const charWidth = charWidths[charIdx];
       const isAffected = affectedCount === 0 || charIdx < affectedCount;
-      const isSelected = charIdx === selectedIndex && (selectedLine === lineIdx || lines.length === 1);
+      const isSelected =
+        charIdx === selectedIndex && (selectedLine === lineIdx || lines.length === 1);
 
       // Deterministic pseudo-random variation scaled by intensity and character size
       const rx = getDeterministicRandom(seed, charIdx, lineIdx, 1);
@@ -175,9 +181,9 @@ export function calculateTypewriterLayout(
       const rr = getDeterministicRandom(seed, charIdx, lineIdx, 3);
 
       // Subtle typewriter mechanical jitter
-      const jitterXPx = isAffected ? (rx * intensity * fontSizePx * 0.12) + baseHOffsetPx : 0;
-      const jitterYPx = isAffected ? (ry * intensity * fontSizePx * 0.12) + baseVOffsetPx : 0;
-      const jitterRot = isAffected ? (rr * intensity * (baseRotRange || 6)) : 0;
+      const jitterXPx = isAffected ? rx * intensity * fontSizePx * 0.12 + baseHOffsetPx : 0;
+      const jitterYPx = isAffected ? ry * intensity * fontSizePx * 0.12 + baseVOffsetPx : 0;
+      const jitterRot = isAffected ? rr * intensity * (baseRotRange || 6) : 0;
 
       // Manual adjustments: check saved characterOverrides or active live adjustments if selected
       const charKey = `${lineIdx}_${charIdx}`;

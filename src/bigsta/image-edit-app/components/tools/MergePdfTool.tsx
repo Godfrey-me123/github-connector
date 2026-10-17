@@ -38,10 +38,10 @@ export const MergePdfTool: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const handleDragOver = (e: React.DragEvent, targetFile: PdfFile) => {
     e.preventDefault();
     if (!draggedFile || draggedFile.id === targetFile.id) return;
-    
+
     const currentIndex = files.indexOf(draggedFile);
     const targetIndex = files.indexOf(targetFile);
-    
+
     const newFiles = [...files];
     newFiles.splice(currentIndex, 1);
     newFiles.splice(targetIndex, 0, draggedFile);
@@ -80,22 +80,34 @@ export const MergePdfTool: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-6">
       <div className="flex items-center gap-4">
-        <button onClick={onBack} className="p-2 hover:bg-slate-100 rounded-full"><ArrowLeft /></button>
+        <button onClick={onBack} className="p-2 hover:bg-slate-100 rounded-full">
+          <ArrowLeft />
+        </button>
         <h2 className="text-xl font-bold">Merge PDF Files</h2>
       </div>
 
-      <div className="flex justify-center border-2 border-dashed border-slate-300 rounded-xl p-8 hover:bg-slate-50 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+      <div
+        className="flex justify-center border-2 border-dashed border-slate-300 rounded-xl p-8 hover:bg-slate-50 cursor-pointer"
+        onClick={() => fileInputRef.current?.click()}
+      >
         <div className="text-center">
           <FileUp className="w-10 h-10 mx-auto text-slate-400 mb-2" />
           <p className="text-sm font-semibold">Click to select PDF files</p>
         </div>
-        <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="application/pdf" multiple className="hidden" />
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          accept="application/pdf"
+          multiple
+          className="hidden"
+        />
       </div>
 
       <div className="space-y-2">
         {files.map((file) => (
-          <div 
-            key={file.id} 
+          <div
+            key={file.id}
             className="flex items-center justify-between p-3 rounded-lg bg-slate-50 border border-slate-200 cursor-move"
             draggable
             onDragStart={(e) => handleDragStart(e, file)}
@@ -106,7 +118,12 @@ export const MergePdfTool: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               <FileText className="w-5 h-5 text-slate-500" />
               <span className="text-sm text-slate-700">{file.name}</span>
             </div>
-            <button onClick={() => removeFile(file.id)} className="text-slate-400 hover:text-red-500"><X className="w-4 h-4" /></button>
+            <button
+              onClick={() => removeFile(file.id)}
+              className="text-slate-400 hover:text-red-500"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         ))}
       </div>
@@ -117,7 +134,11 @@ export const MergePdfTool: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           disabled={isMerging}
           className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition-colors"
         >
-          {isMerging ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+          {isMerging ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Download className="w-4 h-4" />
+          )}
           {isMerging ? "Merging..." : "Merge and Download"}
         </button>
       )}

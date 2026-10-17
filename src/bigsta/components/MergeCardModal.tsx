@@ -88,9 +88,7 @@ export const MergeCardModal: React.FC = () => {
       } else if (isNHIF) {
         const nhifFront =
           list.find(
-            (t) =>
-              t.id === "sample_nhif_front" ||
-              t.templateName.toLowerCase().includes("nhif"),
+            (t) => t.id === "sample_nhif_front" || t.templateName.toLowerCase().includes("nhif"),
           ) || list[0];
         const nhifBack =
           list.find(
@@ -107,8 +105,7 @@ export const MergeCardModal: React.FC = () => {
         const nrcFront =
           list.find(
             (t) =>
-              t.id === "sample_nrc_zambia_front" ||
-              t.templateName.toLowerCase().includes("nrc"),
+              t.id === "sample_nrc_zambia_front" || t.templateName.toLowerCase().includes("nrc"),
           ) || list[0];
         const nrcBack =
           list.find(

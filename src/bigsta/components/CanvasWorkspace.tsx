@@ -1294,79 +1294,89 @@ export const CanvasWorkspace: React.FC = () => {
                     }
 
                     const twLayout = (layer as any).typewriterEffect?.enabled
-                      ? calculateTypewriterLayout(displayText, layer as any, pxPerMm, finalScaleX, layer.verticalScale ?? 1)
+                      ? calculateTypewriterLayout(
+                          displayText,
+                          layer as any,
+                          pxPerMm,
+                          finalScaleX,
+                          layer.verticalScale ?? 1,
+                        )
                       : null;
 
-                    return (
-                      twLayout && !twLayout.isFallback && twLayout.chars.length > 0 ? (
-                        <Group 
-                          key={layer.id}
-                          x={commonProps.x} 
-                          y={commonProps.y} 
-                          rotation={commonProps.rotation}
-                          opacity={commonProps.opacity}
-                          draggable={commonProps.draggable}
-                          onClick={commonProps.onClick}
-                          onTap={commonProps.onTap}
-                          onDragStart={commonProps.onDragStart}
-                          onDragMove={commonProps.onDragMove}
-                          onDragEnd={commonProps.onDragEnd}
-                          onTransformEnd={commonProps.onTransformEnd}
-                        >
-                          {twLayout.chars.map((ch) => (
-                            <KonvaText
-                              key={`${layer.id}-${ch.lineIndex}-${ch.charIndex}`}
-                              text={ch.char}
-                              x={ch.x}
-                              y={ch.y}
-                              rotation={ch.rotation}
-                              fontFamily={layer.fontFamily || "Helvetica"}
-                              fontSize={fontSizePx}
-                              fontStyle={computedStyle}
-                              fill={layer.color || "#000000"}
-                              stroke={finalStroke}
-                              strokeWidth={finalStrokeWidth}
-                              opacity={(layer.opacity ?? 1) * ((layer as any).textOpacity ?? 1)}
-                              shadowColor={layer.shadowColor || "#000000"}
-                              shadowBlur={layer.shadowEnabled ? (layer.shadowBlur ?? 1.5) * pxPerMm : 0}
-                              shadowOffsetX={layer.shadowEnabled ? (layer.shadowOffsetX ?? 0.5) * pxPerMm : 0}
-                              shadowOffsetY={layer.shadowEnabled ? (layer.shadowOffsetY ?? 0.5) * pxPerMm : 0}
-                            />
-                          ))}
-                        </Group>
-                      ) : (
-                        <KonvaText
-                          {...commonProps}
-                          key={layer.id}
-                          width={wPx}
-                          text={displayText}
-                          fontFamily={layer.fontFamily || "Helvetica"}
-                          fontSize={fontSizePx}
-                          fontStyle={computedStyle}
-                          textDecoration={layer.textDecoration === "underline" ? "underline" : ""}
-                          fill={layer.color || "#000000"}
-                          align={layer.align || "left"}
-                          letterSpacing={layer.letterSpacing ? layer.letterSpacing * pxPerMm : 0}
-                          lineHeight={layer.lineHeight || 1.1}
-                          scaleX={finalScaleX}
-                          scaleY={layer.verticalScale ?? 1}
-                          opacity={(layer.opacity ?? 1) * (layer.textOpacity ?? 1)}
-                          stroke={finalStroke}
-                          strokeWidth={finalStrokeWidth}
-                          shadowColor={layer.shadowColor || "#000000"}
-                          shadowBlur={layer.shadowEnabled ? (layer.shadowBlur ?? 1.5) * pxPerMm : 0}
-                          shadowOffset={
-                            layer.shadowEnabled
-                              ? {
-                                  x: (layer.shadowOffsetX ?? 0.5) * pxPerMm,
-                                  y: (layer.shadowOffsetY ?? 0.5) * pxPerMm,
-                                }
-                              : { x: 0, y: 0 }
-                          }
-                          shadowOpacity={layer.shadowEnabled ? (layer.shadowOpacity ?? 50) / 100 : 0}
-                          shadowEnabled={layer.shadowEnabled ?? false}
-                        />
-                      )
+                    return twLayout && !twLayout.isFallback && twLayout.chars.length > 0 ? (
+                      <Group
+                        key={layer.id}
+                        x={commonProps.x}
+                        y={commonProps.y}
+                        rotation={commonProps.rotation}
+                        opacity={commonProps.opacity}
+                        draggable={commonProps.draggable}
+                        onClick={commonProps.onClick}
+                        onTap={commonProps.onTap}
+                        onDragStart={commonProps.onDragStart}
+                        onDragMove={commonProps.onDragMove}
+                        onDragEnd={commonProps.onDragEnd}
+                        onTransformEnd={commonProps.onTransformEnd}
+                      >
+                        {twLayout.chars.map((ch) => (
+                          <KonvaText
+                            key={`${layer.id}-${ch.lineIndex}-${ch.charIndex}`}
+                            text={ch.char}
+                            x={ch.x}
+                            y={ch.y}
+                            rotation={ch.rotation}
+                            fontFamily={layer.fontFamily || "Helvetica"}
+                            fontSize={fontSizePx}
+                            fontStyle={computedStyle}
+                            fill={layer.color || "#000000"}
+                            stroke={finalStroke}
+                            strokeWidth={finalStrokeWidth}
+                            opacity={(layer.opacity ?? 1) * ((layer as any).textOpacity ?? 1)}
+                            shadowColor={layer.shadowColor || "#000000"}
+                            shadowBlur={
+                              layer.shadowEnabled ? (layer.shadowBlur ?? 1.5) * pxPerMm : 0
+                            }
+                            shadowOffsetX={
+                              layer.shadowEnabled ? (layer.shadowOffsetX ?? 0.5) * pxPerMm : 0
+                            }
+                            shadowOffsetY={
+                              layer.shadowEnabled ? (layer.shadowOffsetY ?? 0.5) * pxPerMm : 0
+                            }
+                          />
+                        ))}
+                      </Group>
+                    ) : (
+                      <KonvaText
+                        {...commonProps}
+                        key={layer.id}
+                        width={wPx}
+                        text={displayText}
+                        fontFamily={layer.fontFamily || "Helvetica"}
+                        fontSize={fontSizePx}
+                        fontStyle={computedStyle}
+                        textDecoration={layer.textDecoration === "underline" ? "underline" : ""}
+                        fill={layer.color || "#000000"}
+                        align={layer.align || "left"}
+                        letterSpacing={layer.letterSpacing ? layer.letterSpacing * pxPerMm : 0}
+                        lineHeight={layer.lineHeight || 1.1}
+                        scaleX={finalScaleX}
+                        scaleY={layer.verticalScale ?? 1}
+                        opacity={(layer.opacity ?? 1) * (layer.textOpacity ?? 1)}
+                        stroke={finalStroke}
+                        strokeWidth={finalStrokeWidth}
+                        shadowColor={layer.shadowColor || "#000000"}
+                        shadowBlur={layer.shadowEnabled ? (layer.shadowBlur ?? 1.5) * pxPerMm : 0}
+                        shadowOffset={
+                          layer.shadowEnabled
+                            ? {
+                                x: (layer.shadowOffsetX ?? 0.5) * pxPerMm,
+                                y: (layer.shadowOffsetY ?? 0.5) * pxPerMm,
+                              }
+                            : { x: 0, y: 0 }
+                        }
+                        shadowOpacity={layer.shadowEnabled ? (layer.shadowOpacity ?? 50) / 100 : 0}
+                        shadowEnabled={layer.shadowEnabled ?? false}
+                      />
                     );
                   }
 
@@ -1379,25 +1389,87 @@ export const CanvasWorkspace: React.FC = () => {
                     const imgObj = loadedImages[layer.id];
                     const isSticker = layer.type === "sticker";
                     const stickerLayer = isSticker ? (layer as any) : null;
-                    
+
                     return (
                       <Group {...commonProps} key={layer.id}>
                         {imgObj ? (
                           <>
                             <KonvaImage image={imgObj} width={wPx} height={hPx} />
                             {isSticker && stickerLayer?.edgeFade?.enabled && (
-                              <Group width={wPx} height={hPx} globalCompositeOperation="destination-out">
+                              <Group
+                                width={wPx}
+                                height={hPx}
+                                globalCompositeOperation="destination-out"
+                              >
                                 {stickerLayer.edgeFade.top && (
-                                  <Rect width={wPx} height={hPx * stickerLayer.edgeFade.distance} fillLinearGradientStartPoint={{x: 0, y: hPx * stickerLayer.edgeFade.distance}} fillLinearGradientEndPoint={{x: 0, y: 0}} fillLinearGradientColorStops={[0, `rgba(0,0,0,0)`, 1, `rgba(0,0,0,${stickerLayer.edgeFade.strength})`]} />
+                                  <Rect
+                                    width={wPx}
+                                    height={hPx * stickerLayer.edgeFade.distance}
+                                    fillLinearGradientStartPoint={{
+                                      x: 0,
+                                      y: hPx * stickerLayer.edgeFade.distance,
+                                    }}
+                                    fillLinearGradientEndPoint={{ x: 0, y: 0 }}
+                                    fillLinearGradientColorStops={[
+                                      0,
+                                      `rgba(0,0,0,0)`,
+                                      1,
+                                      `rgba(0,0,0,${stickerLayer.edgeFade.strength})`,
+                                    ]}
+                                  />
                                 )}
                                 {stickerLayer.edgeFade.bottom && (
-                                  <Rect y={hPx * (1 - stickerLayer.edgeFade.distance)} width={wPx} height={hPx * stickerLayer.edgeFade.distance} fillLinearGradientStartPoint={{x: 0, y: hPx * (1 - stickerLayer.edgeFade.distance)}} fillLinearGradientEndPoint={{x: 0, y: hPx}} fillLinearGradientColorStops={[0, `rgba(0,0,0,0)`, 1, `rgba(0,0,0,${stickerLayer.edgeFade.strength})`]} />
+                                  <Rect
+                                    y={hPx * (1 - stickerLayer.edgeFade.distance)}
+                                    width={wPx}
+                                    height={hPx * stickerLayer.edgeFade.distance}
+                                    fillLinearGradientStartPoint={{
+                                      x: 0,
+                                      y: hPx * (1 - stickerLayer.edgeFade.distance),
+                                    }}
+                                    fillLinearGradientEndPoint={{ x: 0, y: hPx }}
+                                    fillLinearGradientColorStops={[
+                                      0,
+                                      `rgba(0,0,0,0)`,
+                                      1,
+                                      `rgba(0,0,0,${stickerLayer.edgeFade.strength})`,
+                                    ]}
+                                  />
                                 )}
                                 {stickerLayer.edgeFade.left && (
-                                  <Rect width={wPx * stickerLayer.edgeFade.distance} height={hPx} fillLinearGradientStartPoint={{x: wPx * stickerLayer.edgeFade.distance, y: 0}} fillLinearGradientEndPoint={{x: 0, y: 0}} fillLinearGradientColorStops={[0, `rgba(0,0,0,0)`, 1, `rgba(0,0,0,${stickerLayer.edgeFade.strength})`]} />
+                                  <Rect
+                                    width={wPx * stickerLayer.edgeFade.distance}
+                                    height={hPx}
+                                    fillLinearGradientStartPoint={{
+                                      x: wPx * stickerLayer.edgeFade.distance,
+                                      y: 0,
+                                    }}
+                                    fillLinearGradientEndPoint={{ x: 0, y: 0 }}
+                                    fillLinearGradientColorStops={[
+                                      0,
+                                      `rgba(0,0,0,0)`,
+                                      1,
+                                      `rgba(0,0,0,${stickerLayer.edgeFade.strength})`,
+                                    ]}
+                                  />
                                 )}
                                 {stickerLayer.edgeFade.right && (
-                                  <Rect x={wPx * (1 - stickerLayer.edgeFade.distance)} width={wPx * stickerLayer.edgeFade.distance} height={hPx} fillLinearGradientStartPoint={{x: wPx * (1 - stickerLayer.edgeFade.distance), y: 0}} fillLinearGradientEndPoint={{x: wPx, y: 0}} fillLinearGradientColorStops={[0, `rgba(0,0,0,0)`, 1, `rgba(0,0,0,${stickerLayer.edgeFade.strength})`]} />
+                                  <Rect
+                                    x={wPx * (1 - stickerLayer.edgeFade.distance)}
+                                    width={wPx * stickerLayer.edgeFade.distance}
+                                    height={hPx}
+                                    fillLinearGradientStartPoint={{
+                                      x: wPx * (1 - stickerLayer.edgeFade.distance),
+                                      y: 0,
+                                    }}
+                                    fillLinearGradientEndPoint={{ x: wPx, y: 0 }}
+                                    fillLinearGradientColorStops={[
+                                      0,
+                                      `rgba(0,0,0,0)`,
+                                      1,
+                                      `rgba(0,0,0,${stickerLayer.edgeFade.strength})`,
+                                    ]}
+                                  />
                                 )}
                               </Group>
                             )}

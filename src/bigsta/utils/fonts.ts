@@ -258,4 +258,3 @@ export async function forceLoadAppFonts(): Promise<void> {
     } catch {}
   }
 }
-

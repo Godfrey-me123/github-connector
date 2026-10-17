@@ -8,6 +8,8 @@ export interface PassportDocumentSpec {
   minResolution: { width: number; height: number };
   maxFileSizeKb: number;
   allowedFormats: ("jpg" | "png")[];
+  description?: string;
+  tips?: string[];
 }
 
 export const PASSPORT_SPECS: PassportDocumentSpec[] = [
@@ -21,6 +23,8 @@ export const PASSPORT_SPECS: PassportDocumentSpec[] = [
     minResolution: { width: 413, height: 531 },
     maxFileSizeKb: 200,
     allowedFormats: ["jpg"],
+    description: "Official passport photo for Tanzania.",
+    tips: ["Head straight and centered", "Neutral expression", "Even lighting without shadows"],
   },
   {
     country: "United Kingdom",

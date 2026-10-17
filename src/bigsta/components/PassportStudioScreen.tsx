@@ -24,13 +24,13 @@ export const PassportStudioScreen: React.FC = () => {
               </p>
             </div>
           </div>
-          
+
           <div className="flex bg-slate-100 dark:bg-[#14171A] p-1 rounded-lg">
             <button
               onClick={() => setActiveTab("passport")}
               className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${
-                activeTab === "passport" 
-                  ? "bg-white dark:bg-[#1E2328] shadow-sm text-slate-900 dark:text-white" 
+                activeTab === "passport"
+                  ? "bg-white dark:bg-[#1E2328] shadow-sm text-slate-900 dark:text-white"
                   : "text-slate-500 hover:text-slate-700"
               }`}
             >
@@ -39,8 +39,8 @@ export const PassportStudioScreen: React.FC = () => {
             <button
               onClick={() => setActiveTab("pdf")}
               className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${
-                activeTab === "pdf" 
-                  ? "bg-white dark:bg-[#1E2328] shadow-sm text-slate-900 dark:text-white" 
+                activeTab === "pdf"
+                  ? "bg-white dark:bg-[#1E2328] shadow-sm text-slate-900 dark:text-white"
                   : "text-slate-500 hover:text-slate-700"
               }`}
             >

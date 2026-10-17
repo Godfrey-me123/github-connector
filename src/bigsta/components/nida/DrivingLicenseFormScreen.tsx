@@ -944,7 +944,9 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
               <input
                 type="checkbox"
                 checked={formData.includeStickers}
-                onChange={(e) => setFormData((prev) => ({ ...prev, includeStickers: e.target.checked }))}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, includeStickers: e.target.checked }))
+                }
                 className="w-5 h-5 rounded border-2 border-[#C8C2BE] text-[#101010] focus:ring-[#101010] cursor-pointer"
               />
               <span className="text-xs font-bold text-[#101010] group-hover:underline">

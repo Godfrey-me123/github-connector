@@ -693,9 +693,7 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({ onElementAdded }) 
                 <span className="truncate">Chief</span>
               </button>
               <button
-                onClick={() =>
-                  handleAddPlaceholder("photo", "NRC Applicant Photo", "photo")
-                }
+                onClick={() => handleAddPlaceholder("photo", "NRC Applicant Photo", "photo")}
                 className="p-2 rounded-lg bg-[#CEE9B9] hover:bg-[#bddeaa] border border-[#a3d489] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
               >
                 <ImageIcon className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
@@ -720,66 +718,68 @@ export const ElementsPanel: React.FC<ElementsPanelProps> = ({ onElementAdded }) 
             </>
           )}
 
-          {activeServiceId !== "driving_license" && activeServiceId !== "nhif" && activeServiceId !== "nrc_zambia" && (
-            <>
-              <button
-                onClick={() => handleAddText("{{first_name}}")}
-                className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
-              >
-                <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
-                <span className="truncate">First Name</span>
-              </button>
-              <button
-                onClick={() => handleAddText("{{middle_name}}")}
-                className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
-              >
-                <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
-                <span className="truncate">Middle Name</span>
-              </button>
-              <button
-                onClick={() => handleAddText("{{first_middle_name}}")}
-                className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer col-span-2"
-              >
-                <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
-                <span className="truncate">First Name + Middle Name (Full Name)</span>
-              </button>
-              <button
-                onClick={() => handleAddText("{{last_name}}")}
-                className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
-              >
-                <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
-                <span className="truncate">Last Name</span>
-              </button>
-              <button
-                onClick={() => handleAddText("{{id_number}}")}
-                className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
-              >
-                <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
-                <span className="truncate">ID / Reference No</span>
-              </button>
-              <button
-                onClick={() => handleAddText("{{dob}}")}
-                className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
-              >
-                <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
-                <span className="truncate">Date of Birth</span>
-              </button>
-              <button
-                onClick={() => handleAddText("{{gender}}")}
-                className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
-              >
-                <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
-                <span className="truncate">Gender / Sex</span>
-              </button>
-              <button
-                onClick={() => handleAddText("{{card_expiry}}")}
-                className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
-              >
-                <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
-                <span className="truncate">Expiry Date</span>
-              </button>
-            </>
-          )}
+          {activeServiceId !== "driving_license" &&
+            activeServiceId !== "nhif" &&
+            activeServiceId !== "nrc_zambia" && (
+              <>
+                <button
+                  onClick={() => handleAddText("{{first_name}}")}
+                  className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
+                >
+                  <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
+                  <span className="truncate">First Name</span>
+                </button>
+                <button
+                  onClick={() => handleAddText("{{middle_name}}")}
+                  className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
+                >
+                  <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
+                  <span className="truncate">Middle Name</span>
+                </button>
+                <button
+                  onClick={() => handleAddText("{{first_middle_name}}")}
+                  className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer col-span-2"
+                >
+                  <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
+                  <span className="truncate">First Name + Middle Name (Full Name)</span>
+                </button>
+                <button
+                  onClick={() => handleAddText("{{last_name}}")}
+                  className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
+                >
+                  <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
+                  <span className="truncate">Last Name</span>
+                </button>
+                <button
+                  onClick={() => handleAddText("{{id_number}}")}
+                  className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
+                >
+                  <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
+                  <span className="truncate">ID / Reference No</span>
+                </button>
+                <button
+                  onClick={() => handleAddText("{{dob}}")}
+                  className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
+                >
+                  <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
+                  <span className="truncate">Date of Birth</span>
+                </button>
+                <button
+                  onClick={() => handleAddText("{{gender}}")}
+                  className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
+                >
+                  <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
+                  <span className="truncate">Gender / Sex</span>
+                </button>
+                <button
+                  onClick={() => handleAddText("{{card_expiry}}")}
+                  className="p-2 rounded-lg bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-xs font-semibold text-[#000000] flex items-center gap-1.5 transition-colors min-h-[40px] cursor-pointer"
+                >
+                  <Brackets className="w-3.5 h-3.5 text-[#000000] flex-shrink-0" />
+                  <span className="truncate">Expiry Date</span>
+                </button>
+              </>
+            )}
         </div>
       </div>
 

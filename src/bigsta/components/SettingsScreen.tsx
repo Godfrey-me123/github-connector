@@ -99,10 +99,23 @@ export const SettingsScreen: React.FC = () => {
         let name = prof?.name || cur.name || fromDesc?.[1] || "";
         let phone = prof?.phone || cur.phone || fromDesc?.[2] || "";
         const m = /[:(]/.test(name) ? split(name) : null;
-        if (m) { name = m[1]; phone = phone || m[2]; }
-        name = name.replace(/^[^:]*:\s*/, "").replace(/\s*\[.*\]$/, "").trim();
-        const loaded = { name, phone, email: prof?.email || cur.email || "", region: prof?.region || cur.region || "" };
-        try { localStorage.setItem("bigsta_user_profile", JSON.stringify(loaded)); } catch {}
+        if (m) {
+          name = m[1];
+          phone = phone || m[2];
+        }
+        name = name
+          .replace(/^[^:]*:\s*/, "")
+          .replace(/\s*\[.*\]$/, "")
+          .trim();
+        const loaded = {
+          name,
+          phone,
+          email: prof?.email || cur.email || "",
+          region: prof?.region || cur.region || "",
+        };
+        try {
+          localStorage.setItem("bigsta_user_profile", JSON.stringify(loaded));
+        } catch {}
         useTemplateStore.setState({ userProfile: loaded });
       } catch {}
     })();
@@ -532,24 +545,37 @@ export const SettingsScreen: React.FC = () => {
                       <button
                         type="button"
                         onClick={async () => {
-                          const fmt = (r: string, c: string) => [r, c].filter(Boolean).join(', ');
+                          const fmt = (r: string, c: string) => [r, c].filter(Boolean).join(", ");
                           const ipFallback = async () => {
                             try {
-                              const j = await (await fetch('https://ipapi.co/json/')).json();
+                              const j = await (await fetch("https://ipapi.co/json/")).json();
                               const v = fmt(j.region || j.city, j.country_name);
                               if (v) setProfileForm((p: any) => ({ ...p, region: v }));
-                              else alert('Could not detect location.');
-                            } catch { alert('Could not detect location.'); }
+                              else alert("Could not detect location.");
+                            } catch {
+                              alert("Could not detect location.");
+                            }
                           };
                           if (!navigator.geolocation) return ipFallback();
-                          navigator.geolocation.getCurrentPosition(async (pos) => {
-                            try {
-                              const { latitude, longitude } = pos.coords;
-                              const j = await (await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`)).json();
-                              const v = fmt(j.principalSubdivision || j.city, j.countryName);
-                              if (v) setProfileForm((p: any) => ({ ...p, region: v })); else ipFallback();
-                            } catch { ipFallback(); }
-                          }, () => ipFallback(), { timeout: 10000 });
+                          navigator.geolocation.getCurrentPosition(
+                            async (pos) => {
+                              try {
+                                const { latitude, longitude } = pos.coords;
+                                const j = await (
+                                  await fetch(
+                                    `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`,
+                                  )
+                                ).json();
+                                const v = fmt(j.principalSubdivision || j.city, j.countryName);
+                                if (v) setProfileForm((p: any) => ({ ...p, region: v }));
+                                else ipFallback();
+                              } catch {
+                                ipFallback();
+                              }
+                            },
+                            () => ipFallback(),
+                            { timeout: 10000 },
+                          );
                         }}
                         className="px-3 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white text-xs font-bold whitespace-nowrap"
                       >

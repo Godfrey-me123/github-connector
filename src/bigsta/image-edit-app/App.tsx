@@ -150,9 +150,7 @@ export default function App() {
           <CropTool initialFile={activeFile} onBack={() => handleSelectTool("home")} />
         )}
 
-        {activeTool === "merge-pdf" && (
-          <MergePdfTool onBack={() => handleSelectTool("home")} />
-        )}
+        {activeTool === "merge-pdf" && <MergePdfTool onBack={() => handleSelectTool("home")} />}
 
         {activeTool === "rotate" && (
           <RotateTool initialFile={activeFile} onBack={() => handleSelectTool("home")} />

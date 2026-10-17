@@ -251,7 +251,9 @@ export function getLayerBinding(layer: Layer, _allLayers: Layer[] = []): Support
 
     if (/\{\{(?:registration_number|registration_no|reg_number|reg_no)\}\}/i.test(text))
       return "REGISTRATION_NUMBER";
-    if (/\{\{(?:parents_place_of_birth|father_mother_place_of_birth|parents_origin)\}\}/i.test(text))
+    if (
+      /\{\{(?:parents_place_of_birth|father_mother_place_of_birth|parents_origin)\}\}/i.test(text)
+    )
       return "PARENTS_PLACE_OF_BIRTH";
     if (/\{\{(?:place_of_birth|pob)\}\}/i.test(text)) return "PLACE_OF_BIRTH";
     if (/\{\{(?:village)\}\}/i.test(text)) return "VILLAGE";
@@ -259,8 +261,13 @@ export function getLayerBinding(layer: Layer, _allLayers: Layer[] = []): Support
     if (/\{\{(?:chief)\}\}/i.test(text)) return "CHIEF";
     if (/\{\{(?:registration_date|reg_date)\}\}/i.test(text)) return "REGISTRATION_DATE";
     if (/\{\{(?:special_marks|marks)\}\}/i.test(text)) return "SPECIAL_MARKS";
-    if (/\{\{(?:date_of_renunciation|renunciation_date)\}\}/i.test(text)) return "DATE_OF_RENUNCIATION";
-    if (/\{\{(?:nhif_card_number|card_no|card_number|cardno|cardnumber|nrc_number|nrc_no)\}\}/i.test(text))
+    if (/\{\{(?:date_of_renunciation|renunciation_date)\}\}/i.test(text))
+      return "DATE_OF_RENUNCIATION";
+    if (
+      /\{\{(?:nhif_card_number|card_no|card_number|cardno|cardnumber|nrc_number|nrc_no)\}\}/i.test(
+        text,
+      )
+    )
       return "CARD_NO";
     if (/\{\{(?:nhif_full_name|full_name|fullname|member_name)\}\}/i.test(text)) return "FULL_NAME";
     if (/\{\{(?:nhif_status|card_status|membership_status)\}\}/i.test(text)) return "CARD_STATUS";
@@ -634,13 +641,15 @@ export function getFormValueForBinding(
     (formData as any).registrationNumber !== undefined,
   );
 
-  const isDL = !isNrc && !!(
-    (formData as any).classes ||
-    (formData as any).categories ||
-    (formData as any).licenceNumber ||
-    (formData as any).issuingAuthority ||
-    (formData as any).pinNumber
-  );
+  const isDL =
+    !isNrc &&
+    !!(
+      (formData as any).classes ||
+      (formData as any).categories ||
+      (formData as any).licenceNumber ||
+      (formData as any).issuingAuthority ||
+      (formData as any).pinNumber
+    );
 
   switch (binding) {
     case "FIRST_MIDDLE_NAME": {
@@ -655,11 +664,9 @@ export function getFormValueForBinding(
     case "LAST_NAME":
       return formData.lastName?.trim() || "";
     case "DOB": {
-      const isNhif = !isNrc && !!(
-        (formData as any).cardNumber ||
-        (formData as any).card_no ||
-        (formData as any).cardNo
-      );
+      const isNhif =
+        !isNrc &&
+        !!((formData as any).cardNumber || (formData as any).card_no || (formData as any).cardNo);
       const rawDob = (formData.dob || (formData as any).dateOfBirth || "").trim();
       if (isNrc) return rawDob ? formatToDdMmYy(rawDob) : "";
       if (isNhif) return rawDob ? formatToMmmDdYyyy(rawDob) : "";
@@ -773,7 +780,10 @@ export function getFormValueForBinding(
       ).trim();
     case "PLACE_OF_BIRTH":
       return String(
-        (formData as any).placeOfBirth || (formData as any).place_of_birth || (formData as any).pob || "",
+        (formData as any).placeOfBirth ||
+          (formData as any).place_of_birth ||
+          (formData as any).pob ||
+          "",
       ).trim();
     case "VILLAGE":
       return String((formData as any).village || "").trim();
@@ -838,13 +848,15 @@ export function replaceAllTokens(layer: Layer, formData: any): Layer {
     (layer as any).bindingKey === "REGISTRATION_NUMBER",
   );
 
-  const isDL = !isNrc && !!(
-    formData.classes ||
-    formData.categories ||
-    formData.licenceNumber ||
-    formData.issuingAuthority ||
-    formData.pinNumber
-  );
+  const isDL =
+    !isNrc &&
+    !!(
+      formData.classes ||
+      formData.categories ||
+      formData.licenceNumber ||
+      formData.issuingAuthority ||
+      formData.pinNumber
+    );
 
   const fVal = (formData.firstName || "").trim();
   const mVal = (formData.middleName || "").trim();
@@ -859,8 +871,12 @@ export function replaceAllTokens(layer: Layer, formData: any): Layer {
     : "";
   const rawGender = (formData.gender || formData.sex || "").trim();
   const gender = isNrc
-    ? rawGender.toUpperCase().startsWith("F") ? "F" : "M"
-    : rawGender.toUpperCase().startsWith("M") ? "M" : "F";
+    ? rawGender.toUpperCase().startsWith("F")
+      ? "F"
+      : "M"
+    : rawGender.toUpperCase().startsWith("M")
+      ? "M"
+      : "F";
   const nida = (formData.nidaNumber || formData.licenceNumber || "").trim();
   const rawIssue = (formData.issueDate || formData.dateOfIssue || "").trim();
   const issue = rawIssue
@@ -982,12 +998,19 @@ export function replaceAllTokens(layer: Layer, formData: any): Layer {
   const renunciationDateRaw = String(
     (formData as any).dateOfRenunciation || (formData as any).date_of_renunciation || "",
   ).trim();
-  const renunciationDate = renunciationDateRaw ? (isNrc ? formatToDdMmYy(renunciationDateRaw) : renunciationDateRaw) : "";
+  const renunciationDate = renunciationDateRaw
+    ? isNrc
+      ? formatToDdMmYy(renunciationDateRaw)
+      : renunciationDateRaw
+    : "";
 
   text = text.replace(/\{\{(?:registration_number|registration_no|reg_number|reg_no)\}\}/gi, regNo);
   text = text.replace(/\{\{(?:nrc_number|nrc_no|nrc)\}\}/gi, nrcNum);
   text = text.replace(/\{\{(?:place_of_birth|pob)\}\}/gi, pob);
-  text = text.replace(/\{\{(?:parents_place_of_birth|father_mother_place_of_birth|parents_origin)\}\}/gi, parentsPob);
+  text = text.replace(
+    /\{\{(?:parents_place_of_birth|father_mother_place_of_birth|parents_origin)\}\}/gi,
+    parentsPob,
+  );
   text = text.replace(/\{\{village\}\}/gi, village);
   text = text.replace(/\{\{district\}\}/gi, district);
   text = text.replace(/\{\{chief\}\}/gi, chief);
@@ -1215,20 +1238,20 @@ export function injectValueIntoLayer(
               (l as any).bindingKey === "REGISTRATION_NUMBER",
           ),
         );
-        const isNhif = !isNrc && !!(
-          (formData as any).cardNumber ||
-          (formData as any).card_no ||
-          (formData as any).cardNo
-        );
-        const isDrivingLicence = !isNrc && !!(
-          (formData as any).classes ||
-          (formData as any).categories ||
-          (formData as any).licenceNumber ||
-          (formData as any).issuingAuthority ||
-          (formData as any).pinNumber ||
-          (textLayer as any).licenseCategoryGroup !== undefined ||
-          (textLayer as any).licenseCategoriesSeparator !== undefined
-        );
+        const isNhif =
+          !isNrc &&
+          !!((formData as any).cardNumber || (formData as any).card_no || (formData as any).cardNo);
+        const isDrivingLicence =
+          !isNrc &&
+          !!(
+            (formData as any).classes ||
+            (formData as any).categories ||
+            (formData as any).licenceNumber ||
+            (formData as any).issuingAuthority ||
+            (formData as any).pinNumber ||
+            (textLayer as any).licenseCategoryGroup !== undefined ||
+            (textLayer as any).licenseCategoriesSeparator !== undefined
+          );
         const rawDob = (formData.dob || (formData as any).dateOfBirth || "").trim();
         const val = rawDob
           ? isNrc
@@ -1265,11 +1288,9 @@ export function injectValueIntoLayer(
               (l as any).bindingKey === "REGISTRATION_NUMBER",
           ),
         );
-        const isNhif = !isNrc && !!(
-          (formData as any).cardNumber ||
-          (formData as any).card_no ||
-          (formData as any).cardNo
-        );
+        const isNhif =
+          !isNrc &&
+          !!((formData as any).cardNumber || (formData as any).card_no || (formData as any).cardNo);
         const rawGender = (formData.gender || (formData as any).sex || "").trim();
         const nrcGender = rawGender.toUpperCase().startsWith("F") ? "F" : "M";
         const nhifGender = rawGender.toLowerCase().startsWith("m")
@@ -1377,13 +1398,15 @@ export function injectValueIntoLayer(
               (l as any).bindingKey === "REGISTRATION_NUMBER",
           ),
         );
-        const isDrivingLicence = !isNrc && !!(
-          (formData as any).classes ||
-          (formData as any).categories ||
-          (formData as any).licenceNumber ||
-          (formData as any).issuingAuthority ||
-          (formData as any).pinNumber
-        );
+        const isDrivingLicence =
+          !isNrc &&
+          !!(
+            (formData as any).classes ||
+            (formData as any).categories ||
+            (formData as any).licenceNumber ||
+            (formData as any).issuingAuthority ||
+            (formData as any).pinNumber
+          );
         const rawIssue = (
           (formData as any).dateOfIssue ||
           (formData as any).issueDate ||

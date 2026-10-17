@@ -302,7 +302,11 @@ export async function checkSmsTable(): Promise<SmsTableHealth> {
         error.code === "PGRST205" ||
         error.code === "42P01" ||
         /could not find the table|does not exist/i.test(error.message);
-      return { ok: false, error: `${error.code || "ERR"}: ${error.message}`, missingTable: missing };
+      return {
+        ok: false,
+        error: `${error.code || "ERR"}: ${error.message}`,
+        missingTable: missing,
+      };
     }
     return { ok: true, error: "", missingTable: false };
   } catch (err: any) {

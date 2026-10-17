@@ -83,7 +83,10 @@ export const HomeScreen: React.FC = () => {
         iconColor: "text-amber-400",
       },
       nhif: { iconBg: "bg-rose-500/15 border-rose-500/30", iconColor: "text-rose-400" },
-      nrc_zambia: { iconBg: "bg-emerald-600/15 border-emerald-600/30", iconColor: "text-emerald-500" },
+      nrc_zambia: {
+        iconBg: "bg-emerald-600/15 border-emerald-600/30",
+        iconColor: "text-emerald-500",
+      },
       custom_studio: { iconBg: "bg-blue-600/20 border-blue-500/40", iconColor: "text-blue-400" },
       birth_certificate: {
         iconBg: "bg-emerald-500/15 border-emerald-500/30",
