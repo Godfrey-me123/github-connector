@@ -407,45 +407,57 @@ export const ServiceMenuDrawer: React.FC<ServiceMenuDrawerProps> = ({
                   )}
                 </div>
 
-                {/* Document Services */}
-                <div>
-                  <button
-                    onClick={() => toggleSub("document")}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                  >
-                    <span className="flex items-center gap-2">
-                      <FileText className="w-3.5 h-3.5 text-emerald-500" />
-                      Document Services
-                    </span>
-                    {openSub === "document" ? (
-                      <ChevronDown className="w-3 h-3" />
-                    ) : (
-                      <ChevronRight className="w-3 h-3" />
+                  {/* Document Services */}
+                  <div>
+                    <button
+                      onClick={() => toggleSub("document")}
+                      className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                    >
+                      <span className="flex items-center gap-2">
+                        <FileText className="w-3.5 h-3.5 text-emerald-500" />
+                        Document Services
+                      </span>
+                      {openSub === "document" ? (
+                        <ChevronDown className="w-3 h-3" />
+                      ) : (
+                        <ChevronRight className="w-3 h-3" />
+                      )}
+                    </button>
+                    {openSub === "document" && (
+                      <div className="ml-4 pl-2 border-l border-slate-200 my-1 space-y-1">
+                        {[
+                          "Birth Certificate Services",
+                          "Passport Services",
+                          "TIN Services",
+                          "Business License Services",
+                        ].map((svc) => (
+                          <button
+                            key={svc}
+                            onClick={() => {
+                              setManualRequestService(svc);
+                              setActiveScreen("nida_request");
+                              onClose();
+                            }}
+                            className="w-full text-left px-2.5 py-1.5 rounded-md text-[11px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
+                          >
+                            {svc}
+                          </button>
+                        ))}
+                      </div>
                     )}
+                  </div>
+
+                  {/* PDF Reader & Print */}
+                  <button
+                    onClick={() => {
+                      setActiveScreen("pdf_viewer");
+                      onClose();
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-blue-500" />
+                    PDF Reader & Print
                   </button>
-                  {openSub === "document" && (
-                    <div className="ml-4 pl-2 border-l border-slate-200 my-1 space-y-1">
-                      {[
-                        "Birth Certificate Services",
-                        "Passport Services",
-                        "TIN Services",
-                        "Business License Services",
-                      ].map((svc) => (
-                        <button
-                          key={svc}
-                          onClick={() => {
-                            setManualRequestService(svc);
-                            setActiveScreen("nida_request");
-                            onClose();
-                          }}
-                          className="w-full text-left px-2.5 py-1.5 rounded-md text-[11px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
-                        >
-                          {svc}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
 
                 {/* Education & Employment */}
                 <div>

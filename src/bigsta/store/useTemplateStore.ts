@@ -497,7 +497,8 @@ interface TemplateState {
     | "nrc_zambia"
     | "admin-payments"
     | "billing"
-    | "settings";
+    | "settings"
+    | "pdf_viewer";
   currentTemplate: CardTemplate;
   frontPopulatedTemplate: CardTemplate | null;
   backPopulatedTemplate: CardTemplate | null;

@@ -33,6 +33,7 @@ import { DownloadsScreen } from "./components/DownloadsScreen";
 import { TokenBillingScreen } from "./components/billing/TokenBillingScreen";
 import { SettingsScreen } from "./components/SettingsScreen";
 import { PassportStudioScreen } from "./components/PassportStudioScreen";
+import { PDFViewerScreen } from "./components/PDFViewerScreen";
 import { ImageEditStudioScreen } from "./components/ImageEditStudioScreen";
 import { PaymentDashboard } from "./components/admin/PaymentDashboard";
 import { UnsavedChangesModal } from "./components/common/UnsavedChangesModal";
@@ -436,6 +437,10 @@ export default function App() {
         <CardGeneratorModal />
       </div>
     );
+  }
+
+  if (activeScreen === "pdf_viewer") {
+    return <PDFViewerScreen />;
   }
 
   if (activeScreen === "nrc_zambia") {
