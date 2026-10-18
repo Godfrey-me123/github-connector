@@ -27,6 +27,7 @@ import {
   Settings,
   AlertCircle,
   RefreshCw,
+  FileText,
 } from "lucide-react";
 import { useTemplateStore } from "../store/useTemplateStore";
 import { ServiceMenuDrawer } from "./navigation/ServiceMenuDrawer";
@@ -193,6 +194,29 @@ export const HomeScreen: React.FC = () => {
           "Biometric Photo Upload",
           "Digital Signature Pad",
           "Barcode Sync",
+        ],
+        isPinned: true,
+      },
+      {
+        id: "pdf_viewer",
+        name: "PDF Reader & Print",
+        authority: "BIGsta Tools",
+        description: "View, search, and print your PDF documents locally.",
+        category: "document",
+        icon: FileText,
+        iconBg: "bg-blue-500/15 border-blue-500/30",
+        iconColor: "text-blue-400",
+        status: "active",
+        badgeText: "Free",
+        action: () => {
+          setActiveScreen("pdf_viewer");
+        },
+        primaryActionLabel: "Open PDF Reader",
+        features: [
+          "Local PDF Viewing",
+          "Text Search",
+          "Multi-Page Navigation",
+          "Native Print Support",
         ],
         isPinned: true,
       },
