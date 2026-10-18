@@ -34,6 +34,7 @@ import { TokenBillingScreen } from "./components/billing/TokenBillingScreen";
 import { SettingsScreen } from "./components/SettingsScreen";
 import { PassportStudioScreen } from "./components/PassportStudioScreen";
 import { PDFViewerScreen } from "./components/PDFViewerScreen";
+import { PdfLibraryScreen } from "./components/PdfLibraryScreen";
 import { ImageEditStudioScreen } from "./components/ImageEditStudioScreen";
 import { PaymentDashboard } from "./components/admin/PaymentDashboard";
 import { UnsavedChangesModal } from "./components/common/UnsavedChangesModal";
@@ -441,6 +442,10 @@ export default function App() {
 
   if (activeScreen === "pdf_viewer") {
     return <PDFViewerScreen />;
+  }
+
+  if (activeScreen === "pdf_library") {
+    return <PdfLibraryScreen />;
   }
 
   if (activeScreen === "nrc_zambia") {

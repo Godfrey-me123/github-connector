@@ -458,6 +458,16 @@ export const ServiceMenuDrawer: React.FC<ServiceMenuDrawerProps> = ({
                     <FileText className="w-3.5 h-3.5 text-blue-500" />
                     PDF Reader & Print
                   </button>
+                  <button
+                    onClick={() => {
+                      setActiveScreen("pdf_library");
+                      onClose();
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                  >
+                    <FileText className="w-3.5 h-3.5 text-blue-500" />
+                    PDF Library
+                  </button>
 
                 {/* Education & Employment */}
                 <div>

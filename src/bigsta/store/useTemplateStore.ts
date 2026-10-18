@@ -498,7 +498,8 @@ interface TemplateState {
     | "admin-payments"
     | "billing"
     | "settings"
-    | "pdf_viewer";
+    | "pdf_viewer"
+    | "pdf_library";
   currentTemplate: CardTemplate;
   frontPopulatedTemplate: CardTemplate | null;
   backPopulatedTemplate: CardTemplate | null;
