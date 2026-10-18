@@ -78,6 +78,11 @@ export const PDFViewerScreen: React.FC = () => {
   const [rearrangeMode, setRearrangeMode] = useState<"rearrange" | "remove">("rearrange");
   const [customSaveName, setCustomSaveName] = useState<string>("");
 
+  // Inline quick actions
+  const [inlineRemovePage, setInlineRemovePage] = useState<string>("");
+  const [inlineMoveFrom, setInlineMoveFrom] = useState<string>("");
+  const [inlineMoveTo, setInlineMoveTo] = useState<string>("");
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -365,10 +370,17 @@ export const PDFViewerScreen: React.FC = () => {
     }
   };
 
-  // Instant in-place removal of the currently viewed page
-  const handleRemoveCurrentPage = async () => {
+  // Remove a specific page by number or current page
+  const handleRemovePage = async (pageToRemove?: number) => {
     if (!rawPdfBytes) {
       toast.error("No document loaded.");
+      return;
+    }
+
+    const target = pageToRemove || (inlineRemovePage ? parseInt(inlineRemovePage, 10) : pageNumber);
+
+    if (isNaN(target) || target < 1 || target > numPages) {
+      toast.error(`Invalid page number: enter a number between 1 and ${numPages}.`);
       return;
     }
 
@@ -378,16 +390,16 @@ export const PDFViewerScreen: React.FC = () => {
     }
 
     const confirmDelete = window.confirm(
-      `Are you sure you want to delete Page ${pageNumber} of ${numPages} from this document?`
+      `Are you sure you want to delete Page ${target} of ${numPages} from this document?`
     );
     if (!confirmDelete) return;
 
     setIsLoading(true);
-    setLoadingMsg(`Removing Page ${pageNumber}...`);
+    setLoadingMsg(`Removing Page ${target}...`);
 
     try {
       const sourceDoc = await PDFDocument.load(rawPdfBytes, { ignoreEncryption: true });
-      sourceDoc.removePage(pageNumber - 1);
+      sourceDoc.removePage(target - 1);
 
       const newBytes = await sourceDoc.save();
       const newBlob = new Blob([newBytes], { type: "application/pdf" });
@@ -403,6 +415,7 @@ export const PDFViewerScreen: React.FC = () => {
       setPdfUrl(URL.createObjectURL(newBlob));
       setNumPages(newDoc.numPages);
       setPageNumber((p) => Math.min(p, newDoc.numPages));
+      setInlineRemovePage("");
 
       // Save updated document to IndexedDB
       const updatedRecord: DownloadRecord = {
@@ -428,10 +441,97 @@ export const PDFViewerScreen: React.FC = () => {
       await saveDownloadRecordDB(updatedRecord);
       refreshRecentPdfs();
 
-      toast.success(`Page ${pageNumber} removed successfully!`);
+      toast.success(`Page ${target} removed successfully!`);
     } catch (err: any) {
       console.error("Remove page error:", err);
       toast.error("Failed to remove page from document.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Quick move page from one index to another position
+  const handleQuickMovePage = async (fromPageNum?: number, toPositionNum?: number) => {
+    if (!rawPdfBytes) {
+      toast.error("No document loaded.");
+      return;
+    }
+
+    const fromNum = fromPageNum || parseInt(inlineMoveFrom, 10);
+    const toNum = toPositionNum || parseInt(inlineMoveTo, 10);
+
+    if (isNaN(fromNum) || fromNum < 1 || fromNum > numPages) {
+      toast.error(`Invalid "From" page: enter a number between 1 and ${numPages}.`);
+      return;
+    }
+
+    if (isNaN(toNum) || toNum < 1 || toNum > numPages) {
+      toast.error(`Invalid "To" position: enter a number between 1 and ${numPages}.`);
+      return;
+    }
+
+    if (fromNum === toNum) {
+      toast.info("Page is already at that position.");
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingMsg(`Moving Page ${fromNum} to position ${toNum}...`);
+
+    try {
+      const sourceDoc = await PDFDocument.load(rawPdfBytes, { ignoreEncryption: true });
+      const newDoc = await PDFDocument.create();
+
+      const pageIndices = Array.from({ length: numPages }, (_, i) => i);
+      const [moved] = pageIndices.splice(fromNum - 1, 1);
+      pageIndices.splice(toNum - 1, 0, moved);
+
+      const copiedPages = await newDoc.copyPages(sourceDoc, pageIndices);
+      copiedPages.forEach((p) => newDoc.addPage(p));
+
+      const newBytes = await newDoc.save();
+      const newBlob = new Blob([newBytes], { type: "application/pdf" });
+
+      const newPdf = await pdfjsLib.getDocument({
+        data: newBytes,
+        cMapUrl: "https://unpkg.com/pdfjs-dist@6.4.299/cmaps/",
+        cMapPacked: true,
+      }).promise;
+
+      setRawPdfBytes(newBytes);
+      setPdfDoc(newPdf);
+      setPdfUrl(URL.createObjectURL(newBlob));
+      setPageNumber(toNum);
+      setInlineMoveFrom("");
+      setInlineMoveTo("");
+
+      const updatedRecord: DownloadRecord = {
+        id: `pdf_mod_${Date.now()}`,
+        fileName: currentFileTitle,
+        service: "Modified PDF",
+        format: "PDF",
+        date: new Date().toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        timestamp: Date.now(),
+        dataUrl: URL.createObjectURL(newBlob),
+        blobData: newBlob,
+        status: "COMPLETED",
+        sizeBytes: newBlob.size,
+        pageCount: newPdf.numPages,
+        lastModified: Date.now(),
+      };
+
+      await saveDownloadRecordDB(updatedRecord);
+      refreshRecentPdfs();
+
+      toast.success(`Moved Page ${fromNum} to position ${toNum}!`);
+    } catch (err: any) {
+      console.error("Move page error:", err);
+      toast.error("Failed to move page.");
     } finally {
       setIsLoading(false);
     }
@@ -594,7 +694,7 @@ export const PDFViewerScreen: React.FC = () => {
                       Merge PDFs
                     </h3>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
-                      Combine 2+ documents into 1
+                      + Add files &amp; combine into one
                     </p>
                   </div>
                 </button>
@@ -616,7 +716,7 @@ export const PDFViewerScreen: React.FC = () => {
                       Rearrange Pages
                     </h3>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
-                      Change sequence of pages
+                      Drag to move, arrows, or insert page #
                     </p>
                   </div>
                 </button>
@@ -638,7 +738,7 @@ export const PDFViewerScreen: React.FC = () => {
                       Remove Page(s)
                     </h3>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
-                      Delete unwanted pages
+                      Insert page # or tap to remove
                     </p>
                   </div>
                 </button>
@@ -912,39 +1012,90 @@ export const PDFViewerScreen: React.FC = () => {
 
           {/* SECONDARY QUICK ACTIONS BAR - ALWAYS VISIBLE ABOVE CANVAS WHEN FILE OPEN */}
           <div className="bg-slate-50 dark:bg-[#1E293B]/80 border-b border-slate-200/80 dark:border-slate-800 px-3 py-1.5 text-xs z-20 overflow-x-auto scrollbar-none">
-            <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 min-w-max">
-              <div className="flex items-center gap-1.5">
-                {/* 1. Remove Page Button */}
-                <button
-                  onClick={handleRemoveCurrentPage}
-                  className="px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-slate-200 dark:border-slate-700 hover:border-rose-300 rounded-lg font-bold flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
-                  title={`Remove current page (${pageNumber})`}
-                >
-                  <Scissors className="w-3.5 h-3.5" />
-                  <span>Remove Page {pageNumber}</span>
-                </button>
+            <div className="max-w-6xl mx-auto flex items-center justify-between gap-3 min-w-max">
+              <div className="flex items-center gap-2">
+                {/* 1. Remove Page with Page Number input */}
+                <div className="flex items-center gap-1 bg-white dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs">
+                  <Scissors className="w-3.5 h-3.5 text-rose-500" />
+                  <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Remove Page:</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={numPages}
+                    value={inlineRemovePage}
+                    onChange={(e) => setInlineRemovePage(e.target.value)}
+                    placeholder={String(pageNumber)}
+                    className="w-12 text-center py-0.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded text-xs font-bold"
+                  />
+                  <button
+                    onClick={() => handleRemovePage()}
+                    className="px-2 py-0.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-xs font-bold cursor-pointer transition-colors"
+                    title="Remove specified page number"
+                  >
+                    Remove
+                  </button>
+                  <button
+                    onClick={() => {
+                      setRearrangeMode("remove");
+                      setShowRearrangeModal(true);
+                    }}
+                    className="text-[10px] text-rose-600 dark:text-rose-400 font-bold hover:underline px-1 cursor-pointer"
+                    title="Select multiple pages to remove"
+                  >
+                    View All
+                  </button>
+                </div>
 
-                {/* 2. Rearrange Pages Button */}
-                <button
-                  onClick={() => {
-                    setRearrangeMode("rearrange");
-                    setShowRearrangeModal(true);
-                  }}
-                  className="px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-purple-50 dark:hover:bg-purple-950/40 text-purple-600 dark:text-purple-400 border border-slate-200 dark:border-slate-700 hover:border-purple-300 rounded-lg font-bold flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
-                  title="Reorder or delete pages in this document"
-                >
-                  <Move className="w-3.5 h-3.5" />
-                  <span>Rearrange Pages</span>
-                </button>
+                {/* 2. Move Page with From and To Page Number inputs */}
+                <div className="flex items-center gap-1 bg-white dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs">
+                  <Move className="w-3.5 h-3.5 text-purple-500" />
+                  <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">Move:</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={numPages}
+                    value={inlineMoveFrom}
+                    onChange={(e) => setInlineMoveFrom(e.target.value)}
+                    placeholder={String(pageNumber)}
+                    className="w-12 text-center py-0.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded text-xs font-bold"
+                  />
+                  <span className="text-[10px] font-bold text-slate-400">to</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={numPages}
+                    value={inlineMoveTo}
+                    onChange={(e) => setInlineMoveTo(e.target.value)}
+                    placeholder="Pos"
+                    className="w-12 text-center py-0.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded text-xs font-bold"
+                  />
+                  <button
+                    onClick={() => handleQuickMovePage()}
+                    className="px-2 py-0.5 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs font-bold cursor-pointer transition-colors"
+                    title="Move page to position"
+                  >
+                    Move
+                  </button>
+                  <button
+                    onClick={() => {
+                      setRearrangeMode("rearrange");
+                      setShowRearrangeModal(true);
+                    }}
+                    className="text-[10px] text-purple-600 dark:text-purple-400 font-bold hover:underline px-1 cursor-pointer"
+                    title="Drag and drop reorder pages"
+                  >
+                    Drag & Reorder
+                  </button>
+                </div>
 
                 {/* 3. Merge More PDFs Button */}
                 <button
                   onClick={() => setShowMergeModal(true)}
-                  className="px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 rounded-lg font-bold flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
-                  title="Merge another document into this PDF"
+                  className="px-2.5 py-1.5 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 rounded-lg font-bold flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+                  title="Add files and merge into this PDF"
                 >
-                  <Layers className="w-3.5 h-3.5" />
-                  <span>Merge with Another PDF</span>
+                  <Layers className="w-3.5 h-3.5 text-blue-500" />
+                  <span>+ Add & Merge Files</span>
                 </button>
               </div>
 
@@ -952,7 +1103,7 @@ export const PDFViewerScreen: React.FC = () => {
                 {/* 4. Switch / Open New PDF */}
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-lg font-bold flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                  className="px-2.5 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-lg font-bold flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
                 >
                   <FileUp className="w-3.5 h-3.5 text-blue-500" />
                   <span>Open Another File</span>

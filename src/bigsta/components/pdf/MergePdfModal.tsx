@@ -10,6 +10,8 @@ import {
   ArrowDown,
   Layers,
   CheckCircle2,
+  Plus,
+  GripVertical,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -38,6 +40,7 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
   const [files, setFiles] = useState<SelectedPdf[]>([]);
   const [isMerging, setIsMerging] = useState(false);
   const [outputFileName, setOutputFileName] = useState("merged_document.pdf");
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -103,6 +106,16 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
       const temp = copy[index + 1];
       copy[index + 1] = copy[index];
       copy[index] = temp;
+      return copy;
+    });
+  };
+
+  const moveItem = (fromIndex: number, toIndex: number) => {
+    if (toIndex < 0 || toIndex >= files.length || fromIndex === toIndex) return;
+    setFiles((prev) => {
+      const copy = [...prev];
+      const [moved] = copy.splice(fromIndex, 1);
+      copy.splice(toIndex, 0, moved);
       return copy;
     });
   };
@@ -194,7 +207,7 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -211,42 +224,53 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
             className="hidden"
           />
 
-          {/* Add file dropzone */}
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="w-full py-4 px-4 border-2 border-dashed border-blue-400 dark:border-blue-500/60 hover:border-blue-600 rounded-2xl bg-blue-50/50 dark:bg-blue-950/20 text-center flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-colors"
-          >
-            <FileUp className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
-              {files.length > 0 ? "+ Add More PDFs to Merge" : "Select or Drop PDFs to Merge"}
-            </span>
-            <span className="text-[10px] text-slate-400">
-              Select any PDF from your device
-            </span>
-          </button>
+          {/* Add file button / dropzone */}
+          <div className="flex items-center justify-between gap-2">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex-1 py-3 px-4 border-2 border-dashed border-blue-400 dark:border-blue-500/60 hover:border-blue-600 rounded-2xl bg-blue-50/50 dark:bg-blue-950/20 text-center flex items-center justify-center gap-2 cursor-pointer transition-colors shadow-2xs"
+            >
+              <Plus className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+                + Add PDF Files to Merge
+              </span>
+            </button>
+          </div>
 
           {/* File list */}
           {files.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
                 <span>Merge Sequence ({files.length} files)</span>
-                <span className="text-[10px] text-slate-400">Use arrows to adjust order</span>
+                <span className="text-[10px] text-slate-400">Drag or use arrows to adjust order</span>
               </div>
 
               <div className="space-y-1.5">
                 {files.map((item, index) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-xl gap-2"
+                    draggable
+                    onDragStart={() => setDraggedIndex(index)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => {
+                      if (draggedIndex !== null && draggedIndex !== index) {
+                        moveItem(draggedIndex, index);
+                      }
+                      setDraggedIndex(null);
+                    }}
+                    className={`flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-xl gap-2 transition-all cursor-grab active:cursor-grabbing ${
+                      draggedIndex === index ? "opacity-30 scale-98" : ""
+                    }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
+                      <GripVertical className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600 shrink-0" />
                       <span className="text-[10px] font-black w-4 text-center text-slate-400">
                         {index + 1}
                       </span>
                       <FileText className="w-4 h-4 text-blue-500 shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate max-w-[180px] sm:max-w-xs">
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate max-w-[170px] sm:max-w-xs">
                           {item.name}
                         </p>
                         <p className="text-[10px] text-slate-400">{formatSize(item.size)}</p>
@@ -255,7 +279,10 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
 
                     <div className="flex items-center gap-1 shrink-0">
                       <button
-                        onClick={() => moveUp(index)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          moveUp(index);
+                        }}
                         disabled={index === 0}
                         className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20 cursor-pointer"
                         title="Move Up"
@@ -263,7 +290,10 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
                         <ArrowUp className="w-3.5 h-3.5" />
                       </button>
                       <button
-                        onClick={() => moveDown(index)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          moveDown(index);
+                        }}
                         disabled={index === files.length - 1}
                         className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20 cursor-pointer"
                         title="Move Down"
@@ -271,7 +301,10 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
                         <ArrowDown className="w-3.5 h-3.5" />
                       </button>
                       <button
-                        onClick={() => removeFile(item.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeFile(item.id);
+                        }}
                         className="p-1 text-slate-400 hover:text-red-500 cursor-pointer"
                         title="Remove"
                       >
@@ -311,12 +344,12 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
           <button
             onClick={handleMerge}
             disabled={isMerging || files.length < 2}
-            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
           >
             {isMerging ? (
               <>
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Merging...</span>
+                <span>Merging Files...</span>
               </>
             ) : (
               <>

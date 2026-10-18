@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { PDFDocument } from "pdf-lib";
+import * as pdfjsLib from "pdfjs-dist";
 import {
   X,
   FileText,
@@ -12,6 +13,8 @@ import {
   CheckCircle2,
   RefreshCw,
   Scissors,
+  GripVertical,
+  ArrowRightLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -40,30 +43,62 @@ export const RearrangePagesModal: React.FC<RearrangePagesModalProps> = ({
   onSaved,
 }) => {
   const [pages, setPages] = useState<PageItem[]>([]);
+  const [thumbnails, setThumbnails] = useState<Record<number, string>>({});
   const [selectedForRemoval, setSelectedForRemoval] = useState<Set<number>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [rawPdfBytes, setRawPdfBytes] = useState<ArrayBuffer | null>(null);
   const [activeFileName, setActiveFileName] = useState<string>(fileName);
   const [mode, setMode] = useState<"rearrange" | "remove">(initialMode);
+
+  // Inputs for direct page manipulation by number
+  const [removePageInput, setRemovePageInput] = useState<string>("");
+  const [moveFromPageInput, setMoveFromPageInput] = useState<string>("");
+  const [moveToPageInput, setMoveToPageInput] = useState<string>("");
+
+  // Drag-and-drop state
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setMode(initialMode);
   }, [initialMode]);
 
-  useEffect(() => {
-    if (!isOpen) return;
+  // Load thumbnails using pdfjs
+  const generateThumbnails = useCallback(async (bytes: ArrayBuffer, totalPages: number) => {
+    try {
+      const doc = await pdfjsLib.getDocument({
+        data: bytes.slice(0),
+        cMapUrl: "https://unpkg.com/pdfjs-dist@6.4.299/cmaps/",
+        cMapPacked: true,
+      }).promise;
 
-    if (pdfBytes || pdfUrl) {
-      loadFromBytesOrUrl(pdfBytes, pdfUrl, fileName);
-    } else {
-      setRawPdfBytes(null);
-      setPages([]);
+      const thumbs: Record<number, string> = {};
+      const limit = Math.min(totalPages, 60);
+
+      for (let i = 1; i <= limit; i++) {
+        try {
+          const page = await doc.getPage(i);
+          const viewport = page.getViewport({ scale: 0.28 });
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.floor(viewport.width);
+          canvas.height = Math.floor(viewport.height);
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            await page.render({ canvasContext: ctx, viewport }).promise;
+            thumbs[i - 1] = canvas.toDataURL("image/jpeg", 0.7);
+          }
+        } catch (e) {}
+      }
+      setThumbnails(thumbs);
+    } catch (err) {
+      console.warn("Could not generate page thumbnails:", err);
     }
-  }, [isOpen, pdfUrl, pdfBytes, fileName]);
+  }, []);
 
-  const loadFromBytesOrUrl = async (bytes?: ArrayBuffer | null, url?: string | null, name?: string) => {
+  const loadFromBytesOrUrl = useCallback(async (bytes?: ArrayBuffer | null, url?: string | null, name?: string) => {
     setIsLoading(true);
     try {
       let b = bytes;
@@ -86,13 +121,28 @@ export const RearrangePagesModal: React.FC<RearrangePagesModalProps> = ({
       }));
       setPages(initialPages);
       setSelectedForRemoval(new Set());
+
+      // Generate visual page thumbnails
+      generateThumbnails(b, count);
     } catch (err: any) {
       console.error("Failed to load PDF pages for rearrangement:", err);
       toast.error("Could not load PDF pages for reordering.");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [generateThumbnails]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    if (pdfBytes || pdfUrl) {
+      loadFromBytesOrUrl(pdfBytes, pdfUrl, fileName);
+    } else {
+      setRawPdfBytes(null);
+      setPages([]);
+      setThumbnails({});
+    }
+  }, [isOpen, pdfUrl, pdfBytes, fileName, loadFromBytesOrUrl]);
 
   const handleFilePicked = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -112,8 +162,9 @@ export const RearrangePagesModal: React.FC<RearrangePagesModalProps> = ({
 
   if (!isOpen) return null;
 
+  // Move page with arrows or drag-and-drop
   const movePage = (fromIndex: number, toIndex: number) => {
-    if (toIndex < 0 || toIndex >= pages.length) return;
+    if (toIndex < 0 || toIndex >= pages.length || fromIndex === toIndex) return;
     setPages((prev) => {
       const copy = [...prev];
       const [moved] = copy.splice(fromIndex, 1);
@@ -122,6 +173,60 @@ export const RearrangePagesModal: React.FC<RearrangePagesModalProps> = ({
     });
   };
 
+  // Move page by entering page numbers explicitly
+  const handleMoveByNumber = () => {
+    const fromNum = parseInt(moveFromPageInput.trim(), 10);
+    const toNum = parseInt(moveToPageInput.trim(), 10);
+
+    if (isNaN(fromNum) || fromNum < 1 || fromNum > pages.length) {
+      toast.error(`Invalid "From" page: enter a number between 1 and ${pages.length}.`);
+      return;
+    }
+
+    if (isNaN(toNum) || toNum < 1 || toNum > pages.length) {
+      toast.error(`Invalid "To" position: enter a number between 1 and ${pages.length}.`);
+      return;
+    }
+
+    if (fromNum === toNum) {
+      toast.info("Page is already at that position.");
+      return;
+    }
+
+    movePage(fromNum - 1, toNum - 1);
+    toast.success(`Moved Page ${fromNum} to position ${toNum}!`);
+    setMoveFromPageInput("");
+    setMoveToPageInput("");
+  };
+
+  // Remove page by entering page number explicitly
+  const handleRemoveByNumber = () => {
+    const pageNum = parseInt(removePageInput.trim(), 10);
+    if (isNaN(pageNum) || pageNum < 1 || pageNum > pages.length) {
+      toast.error(`Invalid page number: enter a number between 1 and ${pages.length}.`);
+      return;
+    }
+
+    if (pages.length <= 1) {
+      toast.error("Document must contain at least one page.");
+      return;
+    }
+
+    const targetIndex = pageNum - 1;
+    const removedPage = pages[targetIndex];
+
+    setPages((prev) => prev.filter((_, i) => i !== targetIndex));
+    setSelectedForRemoval((prev) => {
+      const next = new Set(prev);
+      next.delete(removedPage.originalIndex);
+      return next;
+    });
+
+    toast.success(`Removed Page ${pageNum} from document.`);
+    setRemovePageInput("");
+  };
+
+  // Toggle select page for removal
   const toggleSelectForRemoval = (originalIndex: number) => {
     setSelectedForRemoval((prev) => {
       const next = new Set(prev);
@@ -143,8 +248,14 @@ export const RearrangePagesModal: React.FC<RearrangePagesModalProps> = ({
       toast.error("Document must contain at least one page.");
       return;
     }
+    const pageItem = pages[index];
     setPages((prev) => prev.filter((_, i) => i !== index));
-    toast.success("Page removed from list.");
+    setSelectedForRemoval((prev) => {
+      const next = new Set(prev);
+      next.delete(pageItem.originalIndex);
+      return next;
+    });
+    toast.success(`Page ${index + 1} removed.`);
   };
 
   const resetOrder = async () => {
@@ -159,19 +270,21 @@ export const RearrangePagesModal: React.FC<RearrangePagesModalProps> = ({
         }))
       );
       setSelectedForRemoval(new Set());
+      toast.info("Reset to original sequence.");
     } catch (e) {}
   };
 
+  // Save changes
   const handleSave = async () => {
     if (!rawPdfBytes) {
       toast.error("No PDF loaded.");
       return;
     }
 
-    // In remove mode, filter out selected pages
-    const remainingPages = mode === "remove"
-      ? pages.filter((p) => !selectedForRemoval.has(p.originalIndex))
-      : pages;
+    const remainingPages =
+      mode === "remove"
+        ? pages.filter((p) => !selectedForRemoval.has(p.originalIndex))
+        : pages;
 
     if (remainingPages.length === 0) {
       toast.error("At least one page must remain in the document.");
@@ -221,8 +334,8 @@ export const RearrangePagesModal: React.FC<RearrangePagesModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-white dark:bg-[#1E293B] rounded-3xl w-full max-w-xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[92vh] overflow-hidden animate-in fade-in zoom-in duration-200">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-white dark:bg-[#1E293B] rounded-3xl w-full max-w-3xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[94vh] overflow-hidden animate-in fade-in zoom-in duration-200">
         <input
           type="file"
           ref={fileInputRef}
@@ -231,52 +344,51 @@ export const RearrangePagesModal: React.FC<RearrangePagesModalProps> = ({
           className="hidden"
         />
 
-        {/* Header */}
-        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        {/* Modal Top Header */}
+        <div className="p-3.5 sm:p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2.5 min-w-0">
             <div
-              className={`w-8 h-8 rounded-xl flex items-center justify-center ${
+              className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                 mode === "remove"
                   ? "bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400"
                   : "bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400"
               }`}
             >
               {mode === "remove" ? (
-                <Scissors className="w-4 h-4" />
+                <Scissors className="w-5 h-5" />
               ) : (
-                <Move className="w-4 h-4" />
+                <Move className="w-5 h-5" />
               )}
             </div>
-            <div>
-              <h2 className="text-sm font-bold text-slate-900 dark:text-white">
-                {mode === "remove" ? "Remove Pages from PDF" : "Rearrange / Reorder Pages"}
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white truncate">
+                {mode === "remove" ? "Remove Pages from PDF" : "Rearrange Pages in PDF"}
               </h2>
-              <p className="text-[10px] text-slate-500 truncate max-w-[200px] sm:max-w-xs">
+              <p className="text-[11px] text-slate-500 truncate max-w-[200px] sm:max-w-md">
                 {activeFileName}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
-            {/* Toggle Mode button */}
+          <div className="flex items-center gap-1.5 shrink-0">
             {rawPdfBytes && (
               <button
                 onClick={() => setMode(mode === "rearrange" ? "remove" : "rearrange")}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer ${
                   mode === "remove"
                     ? "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300"
                     : "bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300"
                 }`}
               >
-                {mode === "remove" ? "Switch to Reorder" : "Switch to Remove"}
+                {mode === "remove" ? "Switch to Rearrange" : "Switch to Remove"}
               </button>
             )}
 
             {rawPdfBytes && (
               <button
                 onClick={resetOrder}
-                className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                title="Reset to Original"
+                className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                title="Reset to Original Order"
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
@@ -284,31 +396,112 @@ export const RearrangePagesModal: React.FC<RearrangePagesModalProps> = ({
 
             <button
               onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {/* If no PDF is loaded yet: display file selector */}
+        {/* Action Bar: Insert Page Numbers to Move or Remove */}
+        {rawPdfBytes && !isLoading && (
+          <div className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/60 p-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+            {mode === "remove" ? (
+              /* Remove by entering page number */
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <span className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1">
+                  <Scissors className="w-3.5 h-3.5 text-rose-500" />
+                  Remove by Page #:
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    min={1}
+                    max={pages.length}
+                    value={removePageInput}
+                    onChange={(e) => setRemovePageInput(e.target.value)}
+                    placeholder={`1 - ${pages.length}`}
+                    className="w-24 px-2.5 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-bold text-center focus:ring-2 focus:ring-rose-500 focus:outline-hidden"
+                  />
+                  <button
+                    onClick={handleRemoveByNumber}
+                    className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg font-bold flex items-center gap-1 shadow-xs cursor-pointer transition-colors"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Remove Page</span>
+                  </button>
+                </div>
+                <span className="text-[11px] text-slate-400 hidden md:inline">
+                  (Or tap any page below to toggle delete)
+                </span>
+              </div>
+            ) : (
+              /* Rearrange by entering page number to move */
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                <span className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1">
+                  <ArrowRightLeft className="w-3.5 h-3.5 text-purple-500" />
+                  Move Page #:
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <input
+                    type="number"
+                    min={1}
+                    max={pages.length}
+                    value={moveFromPageInput}
+                    onChange={(e) => setMoveFromPageInput(e.target.value)}
+                    placeholder="Page #"
+                    className="w-20 px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-bold text-center focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                  />
+                  <span className="text-slate-400 font-bold">to</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={pages.length}
+                    value={moveToPageInput}
+                    onChange={(e) => setMoveToPageInput(e.target.value)}
+                    placeholder="Position #"
+                    className="w-22 px-2 py-1.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-xs font-bold text-center focus:ring-2 focus:ring-purple-500 focus:outline-hidden"
+                  />
+                  <button
+                    onClick={handleMoveByNumber}
+                    className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-bold flex items-center gap-1 shadow-xs cursor-pointer transition-colors"
+                  >
+                    <Move className="w-3.5 h-3.5" />
+                    <span>Move</span>
+                  </button>
+                </div>
+                <span className="text-[11px] text-slate-400 hidden md:inline">
+                  (Or drag cards or use arrows below)
+                </span>
+              </div>
+            )}
+
+            <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+              Total {pages.length} Pages
+            </div>
+          </div>
+        )}
+
+        {/* Modal Scrollable Page Grid */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-100/50 dark:bg-slate-900/50">
+          {/* File Picker Fallback if no PDF was provided */}
           {!rawPdfBytes && !isLoading && (
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="py-12 px-6 border-2 border-dashed border-purple-300 dark:border-purple-700 hover:border-purple-500 rounded-2xl bg-purple-50/40 dark:bg-purple-950/20 text-center flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors"
+              className="py-14 px-6 border-2 border-dashed border-purple-300 dark:border-purple-700 hover:border-purple-500 rounded-3xl bg-white dark:bg-slate-800 text-center flex flex-col items-center justify-center gap-2.5 cursor-pointer transition-all shadow-sm"
             >
-              <FileUp className="w-10 h-10 text-purple-600 dark:text-purple-400" />
-              <p className="text-xs font-bold text-slate-800 dark:text-white">
+              <div className="w-14 h-14 rounded-2xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                <FileUp className="w-7 h-7" />
+              </div>
+              <p className="text-sm font-black text-slate-800 dark:text-white">
                 Select a PDF to {mode === "remove" ? "Remove Pages" : "Rearrange"}
               </p>
-              <p className="text-[10px] text-slate-500">
-                Choose any PDF from your device to modify
+              <p className="text-xs text-slate-500 max-w-sm">
+                Choose any PDF from your device to visually reorder pages or delete unwanted pages.
               </p>
               <button
                 type="button"
-                className="mt-2 px-4 py-1.5 bg-purple-600 text-white rounded-xl text-xs font-bold shadow-xs pointer-events-none"
+                className="mt-2 px-5 py-2 bg-purple-600 text-white rounded-xl text-xs font-bold shadow-sm pointer-events-none"
               >
                 Browse PDF File
               </button>
@@ -316,53 +509,61 @@ export const RearrangePagesModal: React.FC<RearrangePagesModalProps> = ({
           )}
 
           {isLoading && (
-            <div className="py-12 text-center text-xs text-slate-400">
-              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-purple-500" />
-              Loading document pages...
+            <div className="py-16 text-center text-xs text-slate-400 space-y-3">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto text-purple-500" />
+              <p className="font-bold text-slate-600 dark:text-slate-300">
+                Rendering visual page thumbnails...
+              </p>
             </div>
           )}
 
           {rawPdfBytes && !isLoading && (
-            <>
-              {mode === "remove" ? (
-                <div className="p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 rounded-xl text-xs text-rose-700 dark:text-rose-300">
-                  <p className="font-bold flex items-center gap-1.5">
-                    <Trash2 className="w-3.5 h-3.5 shrink-0" />
-                    Tap pages to select them for removal:
-                  </p>
-                  <p className="text-[11px] text-rose-600 dark:text-rose-400 mt-0.5">
-                    Selected pages will be permanently deleted when you click &quot;Remove Selected Pages&quot;.
-                  </p>
-                </div>
-              ) : (
-                <div className="p-2.5 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-900/50 rounded-xl text-xs text-purple-700 dark:text-purple-300">
-                  <p className="font-bold flex items-center gap-1.5">
-                    <Move className="w-3.5 h-3.5 shrink-0" />
-                    Use Left / Right arrows to reorder pages:
-                  </p>
-                </div>
-              )}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5">
+              {pages.map((item, index) => {
+                const isMarkedForDelete = selectedForRemoval.has(item.originalIndex);
+                const thumbUrl = thumbnails[item.originalIndex];
+                const isBeingDragged = draggedIndex === index;
+                const isDragOver = dragOverIndex === index;
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                {pages.map((item, index) => {
-                  const isMarkedForDelete = selectedForRemoval.has(item.originalIndex);
-
-                  return (
-                    <div
-                      key={`${item.originalIndex}_${index}`}
-                      onClick={() => {
-                        if (mode === "remove") {
-                          toggleSelectForRemoval(item.originalIndex);
-                        }
-                      }}
-                      className={`relative rounded-2xl p-3 flex flex-col items-center justify-between gap-2 shadow-2xs transition-all ${
-                        isMarkedForDelete
-                          ? "bg-rose-50 dark:bg-rose-950/70 border-2 border-rose-500 opacity-70 scale-95"
-                          : "bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 hover:border-purple-400"
-                      } ${mode === "remove" ? "cursor-pointer" : ""}`}
-                    >
-                      {/* Top indicator & delete button */}
-                      <div className="w-full flex items-center justify-between text-[11px] font-bold text-slate-400">
+                return (
+                  <div
+                    key={`${item.originalIndex}_${index}`}
+                    draggable={mode === "rearrange"}
+                    onDragStart={() => setDraggedIndex(index)}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      if (dragOverIndex !== index) setDragOverIndex(index);
+                    }}
+                    onDragEnd={() => {
+                      setDraggedIndex(null);
+                      setDragOverIndex(null);
+                    }}
+                    onDrop={() => {
+                      if (draggedIndex !== null && draggedIndex !== index) {
+                        movePage(draggedIndex, index);
+                      }
+                      setDraggedIndex(null);
+                      setDragOverIndex(null);
+                    }}
+                    onClick={() => {
+                      if (mode === "remove") {
+                        toggleSelectForRemoval(item.originalIndex);
+                      }
+                    }}
+                    className={`relative rounded-2xl p-2.5 flex flex-col items-center justify-between gap-2 shadow-2xs transition-all select-none ${
+                      isBeingDragged ? "opacity-30 scale-95" : ""
+                    } ${isDragOver ? "border-2 border-purple-600 ring-2 ring-purple-300" : ""} ${
+                      isMarkedForDelete
+                        ? "bg-rose-50 dark:bg-rose-950/80 border-2 border-rose-500 opacity-75"
+                        : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-purple-400"
+                    } ${mode === "remove" ? "cursor-pointer" : "cursor-grab active:cursor-grabbing"}`}
+                  >
+                    {/* Top Row: Page number badge & delete icon */}
+                    <div className="w-full flex items-center justify-between text-xs font-bold">
+                      <div className="flex items-center gap-1">
+                        {mode === "rearrange" && (
+                          <GripVertical className="w-3.5 h-3.5 text-slate-300 dark:text-slate-600" />
+                        )}
                         <span
                           className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${
                             isMarkedForDelete
@@ -372,108 +573,111 @@ export const RearrangePagesModal: React.FC<RearrangePagesModalProps> = ({
                         >
                           {index + 1}
                         </span>
+                      </div>
 
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (mode === "remove") {
+                            toggleSelectForRemoval(item.originalIndex);
+                          } else {
+                            removePageImmediately(index);
+                          }
+                        }}
+                        className={`p-1 rounded-md transition-colors ${
+                          isMarkedForDelete
+                            ? "text-rose-600 bg-rose-100 dark:bg-rose-900"
+                            : "text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-700"
+                        }`}
+                        title="Delete Page"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Actual Visual Page Thumbnail */}
+                    <div className="w-full aspect-[1/1.3] bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden flex items-center justify-center relative shadow-inner">
+                      {thumbUrl ? (
+                        <img
+                          src={thumbUrl}
+                          alt={`Page ${index + 1}`}
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center text-slate-400 p-2 text-center">
+                          <FileText className="w-8 h-8 mb-1 text-slate-300" />
+                          <span className="text-[10px] font-bold">Page {index + 1}</span>
+                        </div>
+                      )}
+
+                      {/* Overlaid delete banner in remove mode */}
+                      {isMarkedForDelete && (
+                        <div className="absolute inset-0 bg-rose-500/25 flex items-center justify-center backdrop-blur-[0.5px]">
+                          <span className="bg-rose-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md">
+                            Will Delete
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Reorder Arrows in rearrange mode */}
+                    {mode === "rearrange" && (
+                      <div className="flex items-center gap-1 w-full justify-between pt-1 border-t border-slate-100 dark:border-slate-700/60">
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (mode === "remove") {
-                              toggleSelectForRemoval(item.originalIndex);
-                            } else {
-                              removePageImmediately(index);
-                            }
+                            movePage(index, index - 1);
                           }}
-                          className={`p-1 rounded transition-colors ${
-                            isMarkedForDelete
-                              ? "text-rose-600 bg-rose-100 dark:bg-rose-900"
-                              : "text-slate-400 hover:text-red-500"
-                          }`}
-                          title="Remove Page"
+                          disabled={index === 0}
+                          className="p-1 text-slate-500 hover:text-purple-600 dark:text-slate-400 disabled:opacity-20 cursor-pointer"
+                          title="Move Left"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          <ArrowLeft className="w-3.5 h-3.5" />
+                        </button>
+                        <span className="text-[10px] font-bold text-slate-400">
+                          Pos {index + 1}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            movePage(index, index + 1);
+                          }}
+                          disabled={index === pages.length - 1}
+                          className="p-1 text-slate-500 hover:text-purple-600 dark:text-slate-400 disabled:opacity-20 cursor-pointer"
+                          title="Move Right"
+                        >
+                          <ArrowRight className="w-3.5 h-3.5" />
                         </button>
                       </div>
+                    )}
 
-                      {/* Page Mock Preview */}
-                      <div
-                        className={`w-14 h-18 rounded-md shadow-inner flex flex-col items-center justify-center p-1 text-center transition-colors ${
-                          isMarkedForDelete
-                            ? "bg-rose-100 dark:bg-rose-900/50 border border-rose-300"
-                            : "bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600"
+                    {/* Label in remove mode */}
+                    {mode === "remove" && (
+                      <span
+                        className={`text-[10px] font-bold pt-1 ${
+                          isMarkedForDelete ? "text-rose-600" : "text-slate-400"
                         }`}
                       >
-                        <FileText
-                          className={`w-6 h-6 mb-0.5 ${
-                            isMarkedForDelete ? "text-rose-500" : "text-purple-500"
-                          }`}
-                        />
-                        <span
-                          className={`text-[9px] font-bold ${
-                            isMarkedForDelete
-                              ? "text-rose-600 line-through"
-                              : "text-slate-600 dark:text-slate-300"
-                          }`}
-                        >
-                          {item.label}
-                        </span>
-                      </div>
-
-                      {/* Reorder arrows in rearrange mode */}
-                      {mode === "rearrange" && (
-                        <div className="flex items-center gap-1 w-full justify-center pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              movePage(index, index - 1);
-                            }}
-                            disabled={index === 0}
-                            className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20 cursor-pointer"
-                            title="Move Left"
-                          >
-                            <ArrowLeft className="w-3.5 h-3.5" />
-                          </button>
-                          <span className="text-[10px] text-slate-400">#{index + 1}</span>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              movePage(index, index + 1);
-                            }}
-                            disabled={index === pages.length - 1}
-                            className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20 cursor-pointer"
-                            title="Move Right"
-                          >
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Remove mode checkbox label */}
-                      {mode === "remove" && (
-                        <span
-                          className={`text-[10px] font-bold ${
-                            isMarkedForDelete ? "text-rose-600" : "text-slate-400"
-                          }`}
-                        >
-                          {isMarkedForDelete ? "Will Delete" : "Keep"}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </>
+                        {isMarkedForDelete ? "Tap to keep" : "Tap to delete"}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
 
-        {/* Footer */}
+        {/* Modal Bottom Footer */}
         {rawPdfBytes && (
-          <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/30">
-            <span className="text-xs text-slate-500 font-medium">
+          <div className="p-3.5 sm:p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-[#1E293B]">
+            <span className="text-xs text-slate-500 font-semibold">
               {mode === "remove"
                 ? `${selectedForRemoval.size} of ${pages.length} selected to remove`
-                : `Total ${pages.length} page${pages.length !== 1 ? "s" : ""}`}
+                : `${pages.length} pages total in sequence`}
             </span>
 
             <div className="flex items-center gap-2">
@@ -490,7 +694,7 @@ export const RearrangePagesModal: React.FC<RearrangePagesModalProps> = ({
                   pages.length === 0 ||
                   (mode === "remove" && selectedForRemoval.size === 0)
                 }
-                className={`px-5 py-2.5 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer ${
+                className={`px-5 py-2.5 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer ${
                   mode === "remove"
                     ? "bg-rose-600 hover:bg-rose-700"
                     : "bg-purple-600 hover:bg-purple-700"
@@ -498,12 +702,12 @@ export const RearrangePagesModal: React.FC<RearrangePagesModalProps> = ({
               >
                 {isSaving ? (
                   <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Saving...</span>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Saving Document...</span>
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <CheckCircle2 className="w-4 h-4" />
                     <span>
                       {mode === "remove"
                         ? `Remove (${selectedForRemoval.size}) & Save`
