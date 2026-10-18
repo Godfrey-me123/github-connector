@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+import { PDFDocument } from "pdf-lib";
 import {
   FileUp,
   ChevronLeft,
@@ -23,6 +24,8 @@ import {
   Info,
   Layers,
   Move,
+  Scissors,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTemplateStore } from "../store/useTemplateStore";
@@ -55,6 +58,9 @@ export const PDFViewerScreen: React.FC = () => {
   const [rotation, setRotation] = useState<number>(0);
   const [fitToWidth, setFitToWidth] = useState<boolean>(true);
 
+  // In-memory raw bytes for instant page manipulation (remove, merge, rearrange)
+  const [rawPdfBytes, setRawPdfBytes] = useState<ArrayBuffer | null>(null);
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [loadingMsg, setLoadingMsg] = useState<string>("Loading PDF...");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -65,10 +71,11 @@ export const PDFViewerScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [isLoadingRecents, setIsLoadingRecents] = useState<boolean>(true);
 
-  // Print & settings state
+  // Modals state
   const [showPrintModal, setShowPrintModal] = useState<boolean>(false);
   const [showMergeModal, setShowMergeModal] = useState<boolean>(false);
   const [showRearrangeModal, setShowRearrangeModal] = useState<boolean>(false);
+  const [rearrangeMode, setRearrangeMode] = useState<"rearrange" | "remove">("rearrange");
   const [customSaveName, setCustomSaveName] = useState<string>("");
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -85,7 +92,8 @@ export const PDFViewerScreen: React.FC = () => {
         (r) =>
           r.format === "PDF" ||
           (r.fileName && r.fileName.toLowerCase().endsWith(".pdf")) ||
-          r.service === "Imported PDF"
+          r.service === "Imported PDF" ||
+          r.service === "Modified PDF"
       );
       setRecentPdfs(pdfs);
     } catch (err) {
@@ -113,7 +121,6 @@ export const PDFViewerScreen: React.FC = () => {
     setCurrentFileTitle(record.fileName || "document.pdf");
     setCustomSaveName(record.fileName || "document.pdf");
 
-    // Timeout safety to prevent forever-loading screen
     const timeoutTimer = setTimeout(() => {
       setIsLoading((loading) => {
         if (loading) {
@@ -130,7 +137,6 @@ export const PDFViewerScreen: React.FC = () => {
         arrayBuffer = await record.blobData.arrayBuffer();
         setPdfUrl(URL.createObjectURL(record.blobData));
       } else if (record.dataUrl.startsWith("data:")) {
-        // Base64 data URL
         const base64Data = record.dataUrl.split(",")[1];
         const binaryStr = atob(base64Data);
         const len = binaryStr.length;
@@ -147,6 +153,8 @@ export const PDFViewerScreen: React.FC = () => {
         arrayBuffer = await blob.arrayBuffer();
         setPdfUrl(URL.createObjectURL(blob));
       }
+
+      setRawPdfBytes(arrayBuffer);
 
       const loadingTask = pdfjsLib.getDocument({
         data: arrayBuffer,
@@ -173,8 +181,10 @@ export const PDFViewerScreen: React.FC = () => {
   };
 
   // Open / Import a file chosen directly by user
-  const handleFilePicked = async (file: File) => {
+  const handleFilePicked = async (file: File | Blob, customName?: string) => {
     if (!file) return;
+
+    const actualName = customName || (file as File).name || "document.pdf";
 
     if (file.size > 100 * 1024 * 1024) {
       toast.error("File is too large (maximum limit is 100 MB).");
@@ -184,8 +194,8 @@ export const PDFViewerScreen: React.FC = () => {
     setIsLoading(true);
     setErrorMsg(null);
     setLoadingMsg("Processing PDF...");
-    setCurrentFileTitle(file.name);
-    setCustomSaveName(file.name);
+    setCurrentFileTitle(actualName);
+    setCustomSaveName(actualName);
 
     const timeoutTimer = setTimeout(() => {
       setIsLoading((loading) => {
@@ -200,6 +210,7 @@ export const PDFViewerScreen: React.FC = () => {
       const arrayBuffer = await file.arrayBuffer();
       const objectUrl = URL.createObjectURL(file);
       setPdfUrl(objectUrl);
+      setRawPdfBytes(arrayBuffer);
 
       const loadingTask = pdfjsLib.getDocument({
         data: arrayBuffer,
@@ -219,7 +230,7 @@ export const PDFViewerScreen: React.FC = () => {
       // Save directly to IndexedDB with native blobData for instant, offline recents access
       const newRecord: DownloadRecord = {
         id: `pdf_recent_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-        fileName: file.name,
+        fileName: actualName,
         service: "Imported PDF",
         format: "PDF",
         date: new Date().toLocaleDateString(undefined, {
@@ -234,7 +245,7 @@ export const PDFViewerScreen: React.FC = () => {
         status: "COMPLETED",
         sizeBytes: file.size,
         pageCount: doc.numPages,
-        lastModified: file.lastModified || Date.now(),
+        lastModified: Date.now(),
       };
 
       await saveDownloadRecordDB(newRecord);
@@ -255,7 +266,6 @@ export const PDFViewerScreen: React.FC = () => {
     if (file) {
       handleFilePicked(file);
     }
-    // Reset file input so selecting the same file again triggers change
     e.target.value = "";
   };
 
@@ -279,26 +289,23 @@ export const PDFViewerScreen: React.FC = () => {
         if (renderTaskRef.current) {
           try {
             renderTaskRef.current.cancel();
-          } catch (e) {
-            // Ignore cancel exceptions
-          }
+          } catch (e) {}
           renderTaskRef.current = null;
         }
 
         // Calculate fit-to-width scale if enabled
         let effectiveScale = scale;
         if (fitToWidth && containerRef.current) {
-          const containerWidth = containerRef.current.clientWidth - 32; // padding
+          const containerWidth = containerRef.current.clientWidth - 32;
           const unscaledViewport = page.getViewport({ scale: 1.0, rotation });
           if (containerWidth > 0 && unscaledViewport.width > 0) {
             const fitScale = containerWidth / unscaledViewport.width;
-            // Cap between reasonable limits
             effectiveScale = Math.min(Math.max(fitScale, 0.4), 3.0);
           }
         }
 
         const viewport = page.getViewport({ scale: effectiveScale, rotation });
-        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2); // Cap at 2 for performance on mobile
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
 
         canvas.width = Math.floor(viewport.width * pixelRatio);
         canvas.height = Math.floor(viewport.height * pixelRatio);
@@ -339,6 +346,7 @@ export const PDFViewerScreen: React.FC = () => {
   const handleCloseDocument = () => {
     setPdfDoc(null);
     setPdfUrl(null);
+    setRawPdfBytes(null);
     setErrorMsg(null);
     if (activePdf) {
       setActivePdf(null);
@@ -357,6 +365,78 @@ export const PDFViewerScreen: React.FC = () => {
     }
   };
 
+  // Instant in-place removal of the currently viewed page
+  const handleRemoveCurrentPage = async () => {
+    if (!rawPdfBytes) {
+      toast.error("No document loaded.");
+      return;
+    }
+
+    if (numPages <= 1) {
+      toast.error("Cannot remove page: document must contain at least one page.");
+      return;
+    }
+
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete Page ${pageNumber} of ${numPages} from this document?`
+    );
+    if (!confirmDelete) return;
+
+    setIsLoading(true);
+    setLoadingMsg(`Removing Page ${pageNumber}...`);
+
+    try {
+      const sourceDoc = await PDFDocument.load(rawPdfBytes, { ignoreEncryption: true });
+      sourceDoc.removePage(pageNumber - 1);
+
+      const newBytes = await sourceDoc.save();
+      const newBlob = new Blob([newBytes], { type: "application/pdf" });
+
+      const newDoc = await pdfjsLib.getDocument({
+        data: newBytes,
+        cMapUrl: "https://unpkg.com/pdfjs-dist@6.4.299/cmaps/",
+        cMapPacked: true,
+      }).promise;
+
+      setRawPdfBytes(newBytes);
+      setPdfDoc(newDoc);
+      setPdfUrl(URL.createObjectURL(newBlob));
+      setNumPages(newDoc.numPages);
+      setPageNumber((p) => Math.min(p, newDoc.numPages));
+
+      // Save updated document to IndexedDB
+      const updatedRecord: DownloadRecord = {
+        id: `pdf_mod_${Date.now()}`,
+        fileName: currentFileTitle,
+        service: "Modified PDF",
+        format: "PDF",
+        date: new Date().toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        timestamp: Date.now(),
+        dataUrl: URL.createObjectURL(newBlob),
+        blobData: newBlob,
+        status: "COMPLETED",
+        sizeBytes: newBlob.size,
+        pageCount: newDoc.numPages,
+        lastModified: Date.now(),
+      };
+
+      await saveDownloadRecordDB(updatedRecord);
+      refreshRecentPdfs();
+
+      toast.success(`Page ${pageNumber} removed successfully!`);
+    } catch (err: any) {
+      console.error("Remove page error:", err);
+      toast.error("Failed to remove page from document.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Handle native print
   const handleTriggerPrint = () => {
     if (!pdfUrl) {
@@ -364,22 +444,17 @@ export const PDFViewerScreen: React.FC = () => {
       return;
     }
 
-    // Modern browser print execution
     try {
       const printWindow = window.open(pdfUrl, "_blank");
       if (printWindow) {
         printWindow.focus();
-        // Give native viewer brief moment to mount on mobile/desktop
         setTimeout(() => {
           try {
             printWindow.print();
-          } catch (e) {
-            // Mobile browser handles internal PDF print button
-          }
+          } catch (e) {}
         }, 600);
         toast.success("Opening system print dialog...");
       } else {
-        // Fallback if popup blocker intervenes: trigger print directly
         window.print();
       }
     } catch (err) {
@@ -412,7 +487,6 @@ export const PDFViewerScreen: React.FC = () => {
     (p.fileName || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Format bytes helper
   const formatFileSize = (bytes?: number) => {
     if (!bytes || bytes <= 0) return "Unknown size";
     if (bytes < 1024) return `${bytes} B`;
@@ -433,7 +507,7 @@ export const PDFViewerScreen: React.FC = () => {
       />
 
       {/* =========================================================================
-          VIEW 1: NO PDF OPEN - CENTERED SIMPLIFIED OPEN & RECENT FILES SECTION
+          VIEW 1: NO PDF OPEN - PROMINENT TOOLS GRID, CENTERED IMPORT & RECENT FILES
       ========================================================================== */}
       {!pdfDoc && !isLoading && (
         <div className="flex-1 flex flex-col">
@@ -457,7 +531,7 @@ export const PDFViewerScreen: React.FC = () => {
           </div>
 
           {/* Centered Main Area */}
-          <div className="flex-1 max-w-3xl mx-auto w-full p-4 sm:p-6 space-y-6">
+          <div className="flex-1 max-w-4xl mx-auto w-full p-4 sm:p-6 space-y-6">
             {/* Error Banner if any */}
             {errorMsg && (
               <div className="p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/50 rounded-2xl flex items-start gap-3 text-red-700 dark:text-red-300 animate-in fade-in">
@@ -475,7 +549,103 @@ export const PDFViewerScreen: React.FC = () => {
               </div>
             )}
 
-            {/* 1. CENTERED SIMPLIFIED IMPORT CARD */}
+            {/* 1. PROMINENT PDF TOOLS ACTION GRID - VISIBLE BEFORE OPENING ANY FILE */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                  PDF Quick Tools
+                </h2>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                  Select a tool or tap to open
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {/* Tool 1: Open / View */}
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-4 bg-white dark:bg-[#1E293B] hover:bg-blue-50/60 dark:hover:bg-blue-950/30 border-2 border-slate-200 dark:border-slate-800 hover:border-blue-500 rounded-2xl text-left transition-all shadow-2xs hover:shadow-sm flex flex-col justify-between gap-3 group cursor-pointer"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <FileUp className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-black text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                      Open & View PDF
+                    </h3>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+                      Read, inspect, and native print
+                    </p>
+                  </div>
+                </button>
+
+                {/* Tool 2: Merge PDFs */}
+                <button
+                  type="button"
+                  onClick={() => setShowMergeModal(true)}
+                  className="p-4 bg-white dark:bg-[#1E293B] hover:bg-blue-50/60 dark:hover:bg-blue-950/30 border-2 border-slate-200 dark:border-slate-800 hover:border-blue-500 rounded-2xl text-left transition-all shadow-2xs hover:shadow-sm flex flex-col justify-between gap-3 group cursor-pointer"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <Layers className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-black text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                      Merge PDFs
+                    </h3>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+                      Combine 2+ documents into 1
+                    </p>
+                  </div>
+                </button>
+
+                {/* Tool 3: Rearrange Pages */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRearrangeMode("rearrange");
+                    setShowRearrangeModal(true);
+                  }}
+                  className="p-4 bg-white dark:bg-[#1E293B] hover:bg-purple-50/60 dark:hover:bg-purple-950/30 border-2 border-slate-200 dark:border-slate-800 hover:border-purple-500 rounded-2xl text-left transition-all shadow-2xs hover:shadow-sm flex flex-col justify-between gap-3 group cursor-pointer"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <Move className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-black text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400">
+                      Rearrange Pages
+                    </h3>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+                      Change sequence of pages
+                    </p>
+                  </div>
+                </button>
+
+                {/* Tool 4: Remove Page */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRearrangeMode("remove");
+                    setShowRearrangeModal(true);
+                  }}
+                  className="p-4 bg-white dark:bg-[#1E293B] hover:bg-rose-50/60 dark:hover:bg-rose-950/30 border-2 border-slate-200 dark:border-slate-800 hover:border-rose-500 rounded-2xl text-left transition-all shadow-2xs hover:shadow-sm flex flex-col justify-between gap-3 group cursor-pointer"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center group-hover:scale-105 transition-transform">
+                    <Scissors className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-black text-slate-900 dark:text-white group-hover:text-rose-600 dark:group-hover:text-rose-400">
+                      Remove Page(s)
+                    </h3>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+                      Delete unwanted pages
+                    </p>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* 2. CENTERED SIMPLIFIED IMPORT DROPZONE */}
             <div
               onClick={() => fileInputRef.current?.click()}
               className="group cursor-pointer bg-white dark:bg-[#1E293B] border-2 border-dashed border-blue-400 dark:border-blue-500/60 hover:border-blue-600 dark:hover:border-blue-400 rounded-3xl p-6 sm:p-10 text-center shadow-sm hover:shadow-md transition-all active:scale-[0.99] flex flex-col items-center justify-center space-y-3"
@@ -509,21 +679,10 @@ export const PDFViewerScreen: React.FC = () => {
                 >
                   Choose PDF File
                 </button>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowMergeModal(true);
-                  }}
-                  className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <Layers className="w-3.5 h-3.5 text-blue-500" />
-                  <span>Merge PDFs</span>
-                </button>
               </div>
             </div>
 
-            {/* 2. RECENT PDF FILES SECTION */}
+            {/* 3. RECENT PDF FILES SECTION */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -610,7 +769,7 @@ export const PDFViewerScreen: React.FC = () => {
                     No recent PDF files found
                   </p>
                   <p className="text-[11px] text-slate-400">
-                    Tap the button above to open and print your first document from your phone or PC.
+                    Use the buttons above to open, merge, or modify documents.
                   </p>
                 </div>
               )}
@@ -644,11 +803,11 @@ export const PDFViewerScreen: React.FC = () => {
       )}
 
       {/* =========================================================================
-          VIEW 3: PDF OPEN - FULL FEATURED RESPONSIVE VIEWER
+          VIEW 3: PDF OPEN - FULL FEATURED RESPONSIVE VIEWER WITH IN-VIEWER ACTIONS
       ========================================================================== */}
       {pdfDoc && !isLoading && (
         <div className="flex-1 flex flex-col h-screen overflow-hidden">
-          {/* Responsive Header Toolbar */}
+          {/* Main Top Header Toolbar */}
           <div className="bg-white dark:bg-[#1E293B] border-b border-slate-200 dark:border-slate-800 px-2 sm:px-4 py-2 sticky top-0 z-30 shadow-xs">
             <div className="max-w-6xl mx-auto flex items-center justify-between gap-2">
               {/* Left: Back / Close & Title */}
@@ -656,25 +815,25 @@ export const PDFViewerScreen: React.FC = () => {
                 <button
                   onClick={handleCloseDocument}
                   className="p-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                  title="Close & Choose Another File"
+                  title="Close & Return to Tools"
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
 
                 <div className="min-w-0">
                   <h1
-                    className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate max-w-[140px] sm:max-w-xs md:max-w-sm"
+                    className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate max-w-[120px] sm:max-w-xs md:max-w-sm"
                     title={currentFileTitle}
                   >
                     {currentFileTitle}
                   </h1>
-                  <span className="text-[10px] text-slate-400 hidden sm:inline-block">
+                  <span className="text-[10px] text-slate-400">
                     Page {pageNumber} of {numPages}
                   </span>
                 </div>
               </div>
 
-              {/* Middle: Quick Scale & Orientation Actions */}
+              {/* Middle: Scale & Rotation */}
               <div className="flex items-center gap-1 sm:gap-2">
                 <button
                   onClick={() => {
@@ -700,7 +859,7 @@ export const PDFViewerScreen: React.FC = () => {
                       setFitToWidth(false);
                       setScale((s) => Math.max(0.4, Number((s - 0.15).toFixed(2))));
                     }}
-                    className="p-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 rounded"
+                    className="p-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 rounded cursor-pointer"
                     title="Zoom Out"
                   >
                     <ZoomOut className="w-3.5 h-3.5" />
@@ -713,7 +872,7 @@ export const PDFViewerScreen: React.FC = () => {
                       setFitToWidth(false);
                       setScale((s) => Math.min(3.0, Number((s + 0.15).toFixed(2))));
                     }}
-                    className="p-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 rounded"
+                    className="p-1 text-slate-600 dark:text-slate-300 hover:text-slate-900 rounded cursor-pointer"
                     title="Zoom In"
                   >
                     <ZoomIn className="w-3.5 h-3.5" />
@@ -729,26 +888,8 @@ export const PDFViewerScreen: React.FC = () => {
                 </button>
               </div>
 
-              {/* Right: Open New, Print & Download buttons */}
+              {/* Right: Quick Action Buttons (Print & Save) */}
               <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="p-1.5 sm:px-2.5 sm:py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
-                  title="Open another PDF"
-                >
-                  <FileUp className="w-4 h-4 text-blue-500" />
-                  <span className="hidden lg:inline">Open File</span>
-                </button>
-
-                <button
-                  onClick={() => setShowRearrangeModal(true)}
-                  className="p-1.5 sm:px-2.5 sm:py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
-                  title="Rearrange / reorder pages"
-                >
-                  <Move className="w-3.5 h-3.5 text-purple-500" />
-                  <span className="hidden md:inline">Rearrange</span>
-                </button>
-
                 <button
                   onClick={() => setShowPrintModal(true)}
                   className="p-1.5 sm:px-3 sm:py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
@@ -764,6 +905,57 @@ export const PDFViewerScreen: React.FC = () => {
                   title="Save / Download"
                 >
                   <Download className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* SECONDARY QUICK ACTIONS BAR - ALWAYS VISIBLE ABOVE CANVAS WHEN FILE OPEN */}
+          <div className="bg-slate-50 dark:bg-[#1E293B]/80 border-b border-slate-200/80 dark:border-slate-800 px-3 py-1.5 text-xs z-20 overflow-x-auto scrollbar-none">
+            <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 min-w-max">
+              <div className="flex items-center gap-1.5">
+                {/* 1. Remove Page Button */}
+                <button
+                  onClick={handleRemoveCurrentPage}
+                  className="px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-slate-200 dark:border-slate-700 hover:border-rose-300 rounded-lg font-bold flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+                  title={`Remove current page (${pageNumber})`}
+                >
+                  <Scissors className="w-3.5 h-3.5" />
+                  <span>Remove Page {pageNumber}</span>
+                </button>
+
+                {/* 2. Rearrange Pages Button */}
+                <button
+                  onClick={() => {
+                    setRearrangeMode("rearrange");
+                    setShowRearrangeModal(true);
+                  }}
+                  className="px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-purple-50 dark:hover:bg-purple-950/40 text-purple-600 dark:text-purple-400 border border-slate-200 dark:border-slate-700 hover:border-purple-300 rounded-lg font-bold flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+                  title="Reorder or delete pages in this document"
+                >
+                  <Move className="w-3.5 h-3.5" />
+                  <span>Rearrange Pages</span>
+                </button>
+
+                {/* 3. Merge More PDFs Button */}
+                <button
+                  onClick={() => setShowMergeModal(true)}
+                  className="px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-slate-200 dark:border-slate-700 hover:border-indigo-300 rounded-lg font-bold flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+                  title="Merge another document into this PDF"
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>Merge with Another PDF</span>
+                </button>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-slate-500 text-[11px] font-semibold">
+                {/* 4. Switch / Open New PDF */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-2.5 py-1 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-lg font-bold flex items-center gap-1 cursor-pointer transition-colors shadow-2xs"
+                >
+                  <FileUp className="w-3.5 h-3.5 text-blue-500" />
+                  <span>Open Another File</span>
                 </button>
               </div>
             </div>
@@ -840,7 +1032,7 @@ export const PDFViewerScreen: React.FC = () => {
               </div>
               <button
                 onClick={() => setShowPrintModal(false)}
-                className="text-slate-400 hover:text-slate-600 p-1"
+                className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
               >
                 ✕
               </button>
@@ -853,7 +1045,7 @@ export const PDFViewerScreen: React.FC = () => {
                   Printer Settings & Quality
                 </p>
                 <p className="mt-1 text-[11px] leading-relaxed">
-                  Tapping <strong>Print Now</strong> will invoke your device's native print preview. You can choose any connected printer, paper size (A4, Letter), page range, orientation, and color options.
+                  Tapping <strong>Print Now</strong> will invoke your device&apos;s native print preview. You can choose any connected printer, paper size (A4, Letter), page range, orientation, and color options.
                 </p>
               </div>
 
@@ -890,24 +1082,38 @@ export const PDFViewerScreen: React.FC = () => {
         </div>
       )}
 
-      {/* Merge PDFs Modal */}
+      {/* =========================================================================
+          MERGE PDFS MODAL
+      ========================================================================== */}
       {showMergeModal && (
         <MergePdfModal
           isOpen={showMergeModal}
           onClose={() => setShowMergeModal(false)}
+          initialFile={
+            pdfDoc && rawPdfBytes
+              ? {
+                  name: currentFileTitle,
+                  bytes: rawPdfBytes,
+                }
+              : null
+          }
           onMerged={(blob, name) => {
             handleFilePicked(new File([blob], name, { type: "application/pdf" }));
           }}
         />
       )}
 
-      {/* Rearrange Pages Modal */}
+      {/* =========================================================================
+          REARRANGE / REMOVE PAGES MODAL
+      ========================================================================== */}
       {showRearrangeModal && (
         <RearrangePagesModal
           isOpen={showRearrangeModal}
           onClose={() => setShowRearrangeModal(false)}
           pdfUrl={pdfUrl}
+          pdfBytes={rawPdfBytes}
           fileName={currentFileTitle}
+          initialMode={rearrangeMode}
           onSaved={(blob, name) => {
             handleFilePicked(new File([blob], name, { type: "application/pdf" }));
           }}

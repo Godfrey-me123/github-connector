@@ -1,10 +1,9 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { PDFDocument } from "pdf-lib";
 import {
   X,
   FileText,
   FileUp,
-  Download,
   Loader2,
   Trash2,
   ArrowUp,
@@ -17,12 +16,15 @@ import { toast } from "sonner";
 export interface MergePdfModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialFile?: { name: string; bytes?: ArrayBuffer | null; blob?: Blob | null } | null;
   onMerged?: (mergedBlob: Blob, fileName: string) => void;
 }
 
 interface SelectedPdf {
   id: string;
-  file: File;
+  file?: File;
+  bytes?: ArrayBuffer;
+  blob?: Blob;
   name: string;
   size: number;
 }
@@ -30,6 +32,7 @@ interface SelectedPdf {
 export const MergePdfModal: React.FC<MergePdfModalProps> = ({
   isOpen,
   onClose,
+  initialFile,
   onMerged,
 }) => {
   const [files, setFiles] = useState<SelectedPdf[]>([]);
@@ -37,11 +40,38 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
   const [outputFileName, setOutputFileName] = useState("merged_document.pdf");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setFiles([]);
+      return;
+    }
+
+    if (initialFile) {
+      const sizeEstimate =
+        initialFile.blob?.size || initialFile.bytes?.byteLength || 1024 * 50;
+      setFiles([
+        {
+          id: `initial_${Date.now()}`,
+          name: initialFile.name,
+          bytes: initialFile.bytes || undefined,
+          blob: initialFile.blob || undefined,
+          size: sizeEstimate,
+        },
+      ]);
+      setOutputFileName(
+        initialFile.name.replace(/\.pdf$/i, "") + "_merged.pdf"
+      );
+    } else {
+      setFiles([]);
+      setOutputFileName("merged_document.pdf");
+    }
+  }, [isOpen, initialFile]);
+
   if (!isOpen) return null;
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
-    const incoming = Array.from(e.target.files).map((f) => ({
+    const incoming: SelectedPdf[] = Array.from(e.target.files).map((f) => ({
       id: `file_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       file: f,
       name: f.name,
@@ -88,7 +118,17 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
       const mergedPdf = await PDFDocument.create();
 
       for (const item of files) {
-        const bytes = await item.file.arrayBuffer();
+        let bytes: ArrayBuffer;
+        if (item.bytes) {
+          bytes = item.bytes;
+        } else if (item.blob) {
+          bytes = await item.blob.arrayBuffer();
+        } else if (item.file) {
+          bytes = await item.file.arrayBuffer();
+        } else {
+          continue;
+        }
+
         const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
         const copiedPages = await mergedPdf.copyPages(doc, doc.getPageIndices());
         copiedPages.forEach((page) => mergedPdf.addPage(page));
@@ -104,7 +144,6 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
       if (onMerged) {
         onMerged(mergedBlob, finalName);
       } else {
-        // Direct download fallback
         const url = URL.createObjectURL(mergedBlob);
         const link = document.createElement("a");
         link.href = url;
@@ -119,7 +158,10 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
       onClose();
     } catch (err: any) {
       console.error("PDF merge error:", err);
-      toast.error(err?.message || "Failed to merge PDF files. One or more files may be corrupt or encrypted.");
+      toast.error(
+        err?.message ||
+          "Failed to merge PDF files. One or more files may be corrupt or encrypted."
+      );
     } finally {
       setIsMerging(false);
     }
@@ -131,8 +173,8 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-[#1E293B] rounded-3xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-200">
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-white dark:bg-[#1E293B] rounded-3xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[92vh] overflow-hidden animate-in fade-in zoom-in duration-200">
         {/* Header */}
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -143,7 +185,11 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
               <h2 className="text-sm font-bold text-slate-900 dark:text-white">
                 Merge PDF Documents
               </h2>
-              <p className="text-[10px] text-slate-500">Combine multiple PDF files into one</p>
+              <p className="text-[10px] text-slate-500">
+                {initialFile
+                  ? `Merge additional files into ${initialFile.name}`
+                  : "Combine multiple PDF files into one"}
+              </p>
             </div>
           </div>
           <button
@@ -173,17 +219,19 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
           >
             <FileUp className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
-              Select or Drop PDFs to Merge
+              {files.length > 0 ? "+ Add More PDFs to Merge" : "Select or Drop PDFs to Merge"}
             </span>
-            <span className="text-[10px] text-slate-400">You can select multiple files at once</span>
+            <span className="text-[10px] text-slate-400">
+              Select any PDF from your device
+            </span>
           </button>
 
           {/* File list */}
           {files.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
-                <span>Selected Files ({files.length})</span>
-                <span className="text-[10px] text-slate-400">Drag or use arrows to reorder</span>
+                <span>Merge Sequence ({files.length} files)</span>
+                <span className="text-[10px] text-slate-400">Use arrows to adjust order</span>
               </div>
 
               <div className="space-y-1.5">
@@ -198,7 +246,7 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
                       </span>
                       <FileText className="w-4 h-4 text-blue-500 shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate max-w-[200px] sm:max-w-xs">
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate max-w-[180px] sm:max-w-xs">
                           {item.name}
                         </p>
                         <p className="text-[10px] text-slate-400">{formatSize(item.size)}</p>
@@ -209,7 +257,7 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
                       <button
                         onClick={() => moveUp(index)}
                         disabled={index === 0}
-                        className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20"
+                        className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20 cursor-pointer"
                         title="Move Up"
                       >
                         <ArrowUp className="w-3.5 h-3.5" />
@@ -217,14 +265,14 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
                       <button
                         onClick={() => moveDown(index)}
                         disabled={index === files.length - 1}
-                        className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20"
+                        className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20 cursor-pointer"
                         title="Move Down"
                       >
                         <ArrowDown className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => removeFile(item.id)}
-                        className="p-1 text-slate-400 hover:text-red-500"
+                        className="p-1 text-slate-400 hover:text-red-500 cursor-pointer"
                         title="Remove"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -273,7 +321,7 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
             ) : (
               <>
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Merge {files.length > 0 ? `(${files.length})` : ""}</span>
+                <span>Merge {files.length > 0 ? `(${files.length} Files)` : ""}</span>
               </>
             )}
           </button>
