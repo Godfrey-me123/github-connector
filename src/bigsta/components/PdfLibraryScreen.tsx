@@ -1,19 +1,35 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as pdfjsLib from "pdfjs-dist";
-import { Search, FileText, ArrowLeft } from "lucide-react";
+import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
+import { Search, FileText, ArrowLeft, Loader2, HardDrive } from "lucide-react";
+import { toast } from "sonner";
 import { useTemplateStore } from "../store/useTemplateStore";
 import { DownloadRecord, getAllDownloadRecordsDB, saveDownloadRecordDB } from "../utils/idb";
 
+if (typeof window !== "undefined") {
+  try {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+  } catch (err) {}
+}
+
 export const PdfLibraryScreen: React.FC = () => {
-  const { setActiveScreen } = useTemplateStore();
+  const { setActiveScreen, setActivePdf } = useTemplateStore();
   const [pdfs, setPdfs] = useState<DownloadRecord[]>([]);
   const [search, setSearch] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const loadPdfs = async () => {
       const records = await getAllDownloadRecordsDB();
-      setPdfs(records.filter((r) => r.format === "PDF"));
+      setPdfs(
+        records.filter(
+          (r) =>
+            r.format === "PDF" ||
+            (r.fileName && r.fileName.toLowerCase().endsWith(".pdf")) ||
+            r.service === "Imported PDF"
+        )
+      );
     };
     loadPdfs();
   }, []);
@@ -22,24 +38,49 @@ export const PdfLibraryScreen: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    
-    const record: DownloadRecord = {
-      id: `dl_${Date.now()}`,
-      fileName: file.name,
-      service: "Imported PDF",
-      format: "PDF",
-      date: new Date().toLocaleString(),
-      timestamp: Date.now(),
-      dataUrl: URL.createObjectURL(file),
-      status: "COMPLETED",
-      sizeBytes: file.size,
-      pageCount: pdf.numPages,
-      lastModified: file.lastModified,
-    };
-    await saveDownloadRecordDB(record);
-    setPdfs((prev) => [record, ...prev]);
+    if (file.size > 100 * 1024 * 1024) {
+      toast.error("File is too large (max 100 MB).");
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({
+        data: arrayBuffer,
+        cMapUrl: "https://unpkg.com/pdfjs-dist@6.4.299/cmaps/",
+        cMapPacked: true,
+      }).promise;
+
+      const record: DownloadRecord = {
+        id: `dl_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        fileName: file.name,
+        service: "Imported PDF",
+        format: "PDF",
+        date: new Date().toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        timestamp: Date.now(),
+        dataUrl: URL.createObjectURL(file),
+        blobData: file,
+        status: "COMPLETED",
+        sizeBytes: file.size,
+        pageCount: pdf.numPages,
+        lastModified: file.lastModified || Date.now(),
+      };
+      await saveDownloadRecordDB(record);
+      setPdfs((prev) => [record, ...prev]);
+      toast.success("PDF imported into library!");
+    } catch (err: any) {
+      console.error("PDF import error:", err);
+      toast.error("Failed to parse PDF metadata.");
+    } finally {
+      setIsImporting(false);
+      e.target.value = "";
+    }
   };
 
   const filteredPdfs = pdfs.filter((p) =>

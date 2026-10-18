@@ -503,6 +503,8 @@ interface TemplateState {
   currentTemplate: CardTemplate;
   frontPopulatedTemplate: CardTemplate | null;
   backPopulatedTemplate: CardTemplate | null;
+  activePdf: any | null;
+  setActivePdf: (pdf: any | null) => void;
   lastNidaFormData: any | null;
   lastDrivingLicenseFormData: any | null;
   lastNhifFormData: any | null;
@@ -1395,6 +1397,8 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
 
   return {
     activeScreen: "home",
+    activePdf: null,
+    setActivePdf: (pdf: any | null) => set({ activePdf: pdf }),
     currentTemplate: DEFAULT_TEMPLATE,
     frontPopulatedTemplate: null,
     backPopulatedTemplate: null,

@@ -13,6 +13,7 @@ export interface DownloadRecord {
   sizeBytes?: number;
   pageCount?: number;
   lastModified?: number;
+  blobData?: Blob;
   failureReason?: string;
   progressPercent?: number;
   queuePosition?: number;
