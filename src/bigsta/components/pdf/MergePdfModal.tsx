@@ -1,0 +1,284 @@
+import React, { useState, useRef } from "react";
+import { PDFDocument } from "pdf-lib";
+import {
+  X,
+  FileText,
+  FileUp,
+  Download,
+  Loader2,
+  Trash2,
+  ArrowUp,
+  ArrowDown,
+  Layers,
+  CheckCircle2,
+} from "lucide-react";
+import { toast } from "sonner";
+
+export interface MergePdfModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onMerged?: (mergedBlob: Blob, fileName: string) => void;
+}
+
+interface SelectedPdf {
+  id: string;
+  file: File;
+  name: string;
+  size: number;
+}
+
+export const MergePdfModal: React.FC<MergePdfModalProps> = ({
+  isOpen,
+  onClose,
+  onMerged,
+}) => {
+  const [files, setFiles] = useState<SelectedPdf[]>([]);
+  const [isMerging, setIsMerging] = useState(false);
+  const [outputFileName, setOutputFileName] = useState("merged_document.pdf");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  if (!isOpen) return null;
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return;
+    const incoming = Array.from(e.target.files).map((f) => ({
+      id: `file_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      file: f,
+      name: f.name,
+      size: f.size,
+    }));
+    setFiles((prev) => [...prev, ...incoming]);
+    e.target.value = "";
+  };
+
+  const removeFile = (id: string) => {
+    setFiles((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const moveUp = (index: number) => {
+    if (index <= 0) return;
+    setFiles((prev) => {
+      const copy = [...prev];
+      const temp = copy[index - 1];
+      copy[index - 1] = copy[index];
+      copy[index] = temp;
+      return copy;
+    });
+  };
+
+  const moveDown = (index: number) => {
+    if (index >= files.length - 1) return;
+    setFiles((prev) => {
+      const copy = [...prev];
+      const temp = copy[index + 1];
+      copy[index + 1] = copy[index];
+      copy[index] = temp;
+      return copy;
+    });
+  };
+
+  const handleMerge = async () => {
+    if (files.length < 2) {
+      toast.error("Please add at least 2 PDF files to merge.");
+      return;
+    }
+
+    setIsMerging(true);
+    try {
+      const mergedPdf = await PDFDocument.create();
+
+      for (const item of files) {
+        const bytes = await item.file.arrayBuffer();
+        const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+        const copiedPages = await mergedPdf.copyPages(doc, doc.getPageIndices());
+        copiedPages.forEach((page) => mergedPdf.addPage(page));
+      }
+
+      const mergedBytes = await mergedPdf.save();
+      const mergedBlob = new Blob([mergedBytes], { type: "application/pdf" });
+
+      const finalName = outputFileName.trim().toLowerCase().endsWith(".pdf")
+        ? outputFileName.trim()
+        : `${outputFileName.trim()}.pdf`;
+
+      if (onMerged) {
+        onMerged(mergedBlob, finalName);
+      } else {
+        // Direct download fallback
+        const url = URL.createObjectURL(mergedBlob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = finalName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+
+      toast.success("PDFs merged successfully!");
+      onClose();
+    } catch (err: any) {
+      console.error("PDF merge error:", err);
+      toast.error(err?.message || "Failed to merge PDF files. One or more files may be corrupt or encrypted.");
+    } finally {
+      setIsMerging(false);
+    }
+  };
+
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-[#1E293B] rounded-3xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-200">
+        {/* Header */}
+        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+              <Layers className="w-4 h-4" />
+            </div>
+            <div>
+              <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+                Merge PDF Documents
+              </h2>
+              <p className="text-[10px] text-slate-500">Combine multiple PDF files into one</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            accept="application/pdf"
+            multiple
+            className="hidden"
+          />
+
+          {/* Add file dropzone */}
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full py-4 px-4 border-2 border-dashed border-blue-400 dark:border-blue-500/60 hover:border-blue-600 rounded-2xl bg-blue-50/50 dark:bg-blue-950/20 text-center flex flex-col items-center justify-center gap-1.5 cursor-pointer transition-colors"
+          >
+            <FileUp className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+            <span className="text-xs font-bold text-blue-600 dark:text-blue-400">
+              Select or Drop PDFs to Merge
+            </span>
+            <span className="text-[10px] text-slate-400">You can select multiple files at once</span>
+          </button>
+
+          {/* File list */}
+          {files.length > 0 && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                <span>Selected Files ({files.length})</span>
+                <span className="text-[10px] text-slate-400">Drag or use arrows to reorder</span>
+              </div>
+
+              <div className="space-y-1.5">
+                {files.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-xl gap-2"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="text-[10px] font-black w-4 text-center text-slate-400">
+                        {index + 1}
+                      </span>
+                      <FileText className="w-4 h-4 text-blue-500 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate max-w-[200px] sm:max-w-xs">
+                          {item.name}
+                        </p>
+                        <p className="text-[10px] text-slate-400">{formatSize(item.size)}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => moveUp(index)}
+                        disabled={index === 0}
+                        className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20"
+                        title="Move Up"
+                      >
+                        <ArrowUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => moveDown(index)}
+                        disabled={index === files.length - 1}
+                        className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-20"
+                        title="Move Down"
+                      >
+                        <ArrowDown className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => removeFile(item.id)}
+                        className="p-1 text-slate-400 hover:text-red-500"
+                        title="Remove"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Output file name */}
+          {files.length > 0 && (
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                Merged File Name:
+              </label>
+              <input
+                type="text"
+                value={outputFileName}
+                onChange={(e) => setOutputFileName(e.target.value)}
+                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2 bg-slate-50/50 dark:bg-slate-800/30">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleMerge}
+            disabled={isMerging || files.length < 2}
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+          >
+            {isMerging ? (
+              <>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <span>Merging...</span>
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Merge {files.length > 0 ? `(${files.length})` : ""}</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

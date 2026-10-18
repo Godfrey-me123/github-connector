@@ -21,6 +21,8 @@ import {
   RefreshCw,
   FolderOpen,
   Info,
+  Layers,
+  Move,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTemplateStore } from "../store/useTemplateStore";
@@ -30,6 +32,8 @@ import {
   saveDownloadRecordDB,
   deleteDownloadRecordDB,
 } from "../utils/idb";
+import { MergePdfModal } from "./pdf/MergePdfModal";
+import { RearrangePagesModal } from "./pdf/RearrangePagesModal";
 
 // Initialize worker safely from local bundled asset for 100% offline support
 if (typeof window !== "undefined") {
@@ -63,6 +67,8 @@ export const PDFViewerScreen: React.FC = () => {
 
   // Print & settings state
   const [showPrintModal, setShowPrintModal] = useState<boolean>(false);
+  const [showMergeModal, setShowMergeModal] = useState<boolean>(false);
+  const [showRearrangeModal, setShowRearrangeModal] = useState<boolean>(false);
   const [customSaveName, setCustomSaveName] = useState<string>("");
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -496,12 +502,25 @@ export const PDFViewerScreen: React.FC = () => {
                 </span>
               </div>
 
-              <button
-                type="button"
-                className="mt-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition-all pointer-events-none"
-              >
-                Choose PDF File
-              </button>
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
+                <button
+                  type="button"
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition-all pointer-events-none"
+                >
+                  Choose PDF File
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowMergeModal(true);
+                  }}
+                  className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <Layers className="w-3.5 h-3.5 text-blue-500" />
+                  <span>Merge PDFs</span>
+                </button>
+              </div>
             </div>
 
             {/* 2. RECENT PDF FILES SECTION */}
@@ -722,6 +741,15 @@ export const PDFViewerScreen: React.FC = () => {
                 </button>
 
                 <button
+                  onClick={() => setShowRearrangeModal(true)}
+                  className="p-1.5 sm:px-2.5 sm:py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer transition-colors"
+                  title="Rearrange / reorder pages"
+                >
+                  <Move className="w-3.5 h-3.5 text-purple-500" />
+                  <span className="hidden md:inline">Rearrange</span>
+                </button>
+
+                <button
                   onClick={() => setShowPrintModal(true)}
                   className="p-1.5 sm:px-3 sm:py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-all active:scale-95"
                   title="Print Document"
@@ -860,6 +888,30 @@ export const PDFViewerScreen: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Merge PDFs Modal */}
+      {showMergeModal && (
+        <MergePdfModal
+          isOpen={showMergeModal}
+          onClose={() => setShowMergeModal(false)}
+          onMerged={(blob, name) => {
+            handleFilePicked(new File([blob], name, { type: "application/pdf" }));
+          }}
+        />
+      )}
+
+      {/* Rearrange Pages Modal */}
+      {showRearrangeModal && (
+        <RearrangePagesModal
+          isOpen={showRearrangeModal}
+          onClose={() => setShowRearrangeModal(false)}
+          pdfUrl={pdfUrl}
+          fileName={currentFileTitle}
+          onSaved={(blob, name) => {
+            handleFilePicked(new File([blob], name, { type: "application/pdf" }));
+          }}
+        />
       )}
     </div>
   );
