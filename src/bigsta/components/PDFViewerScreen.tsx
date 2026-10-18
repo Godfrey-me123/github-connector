@@ -11,7 +11,7 @@ import { useTemplateStore } from "../store/useTemplateStore";
 pdfjsLib.GlobalWorkerOptions.workerSrc = "/node_modules/pdfjs-dist/build/pdf.worker.mjs";
 
 export const PDFViewerScreen: React.FC = () => {
-  const { setActiveScreen } = useTemplateStore();
+  const { setActiveScreen, activePdf } = useTemplateStore();
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [numPages, setNumPages] = useState(0);
@@ -21,6 +21,23 @@ export const PDFViewerScreen: React.FC = () => {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    if (activePdf) {
+      const loadPdf = async () => {
+        setIsLoading(true);
+        const response = await fetch(activePdf.dataUrl);
+        const arrayBuffer = await response.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        setPdfDoc(pdf);
+        setPdfUrl(activePdf.dataUrl);
+        setNumPages(pdf.numPages);
+        setPageNumber(1);
+        setIsLoading(false);
+      };
+      loadPdf();
+    }
+  }, [activePdf]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

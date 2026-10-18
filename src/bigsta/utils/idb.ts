@@ -11,6 +11,8 @@ export interface DownloadRecord {
   dataUrl: string; // Base64 or Object URL / HTTPS download URL
   status: "QUEUED" | "GENERATING" | "READY" | "DOWNLOADING" | "COMPLETED" | "DOWNLOADED" | "FAILED";
   sizeBytes?: number;
+  pageCount?: number;
+  lastModified?: number;
   failureReason?: string;
   progressPercent?: number;
   queuePosition?: number;
@@ -64,7 +66,7 @@ interface IDBTemplateStudioDB extends DBSchema {
 }
 
 const DB_NAME = "IDTemplateStudioDB";
-const DB_VERSION = 5;
+const DB_VERSION = 6;
 
 let dbPromise: Promise<IDBPDatabase<IDBTemplateStudioDB>> | null = null;
 
