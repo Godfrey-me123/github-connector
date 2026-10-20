@@ -196,9 +196,14 @@ export async function saveDownloadRecordDB(record: DownloadRecord): Promise<void
 }
 
 export async function getAllDownloadRecordsDB(): Promise<DownloadRecord[]> {
-  const db = await getDB();
-  const records = await db.getAllFromIndex("downloads", "by-timestamp");
-  return records.reverse(); // Newest first
+  try {
+    const db = await getDB();
+    const records = await db.getAll("downloads");
+    return records.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+  } catch (err) {
+    console.error("Failed to read downloads from IndexedDB:", err);
+    return [];
+  }
 }
 
 export async function deleteDownloadRecordDB(id: string): Promise<void> {

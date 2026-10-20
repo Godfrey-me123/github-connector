@@ -120,7 +120,7 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
     });
   };
 
-  const handleMerge = async () => {
+  const handleMerge = async (triggerDownload = false) => {
     if (files.length < 2) {
       toast.error("Please add at least 2 PDF files to merge.");
       return;
@@ -142,21 +142,23 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
           continue;
         }
 
-        const doc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+        const doc = await PDFDocument.load(bytes.slice(0), { ignoreEncryption: true });
         const copiedPages = await mergedPdf.copyPages(doc, doc.getPageIndices());
         copiedPages.forEach((page) => mergedPdf.addPage(page));
       }
 
       const mergedBytes = await mergedPdf.save();
-      const mergedBlob = new Blob([mergedBytes], { type: "application/pdf" });
+      const cleanBuffer = mergedBytes.buffer.slice(
+        mergedBytes.byteOffset,
+        mergedBytes.byteOffset + mergedBytes.byteLength
+      );
+      const mergedBlob = new Blob([cleanBuffer], { type: "application/pdf" });
 
       const finalName = outputFileName.trim().toLowerCase().endsWith(".pdf")
         ? outputFileName.trim()
         : `${outputFileName.trim()}.pdf`;
 
-      if (onMerged) {
-        onMerged(mergedBlob, finalName);
-      } else {
+      if (triggerDownload) {
         const url = URL.createObjectURL(mergedBlob);
         const link = document.createElement("a");
         link.href = url;
@@ -165,6 +167,10 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
+      }
+
+      if (onMerged) {
+        onMerged(mergedBlob, finalName);
       }
 
       toast.success("PDFs merged successfully!");
@@ -334,29 +340,39 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-2 bg-slate-50/50 dark:bg-slate-800/30">
+        <div className="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-end gap-2 bg-slate-50/50 dark:bg-slate-800/30">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+            className="px-3.5 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
           >
             Cancel
           </button>
           <button
-            onClick={handleMerge}
+            onClick={() => handleMerge(false)}
             disabled={isMerging || files.length < 2}
-            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+            title="Merge documents and open directly in viewer"
           >
             {isMerging ? (
               <>
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                <span>Merging Files...</span>
+                <span>Merging...</span>
               </>
             ) : (
               <>
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Merge {files.length > 0 ? `(${files.length} Files)` : ""}</span>
+                <span>Merge &amp; Open</span>
               </>
             )}
+          </button>
+          <button
+            onClick={() => handleMerge(true)}
+            disabled={isMerging || files.length < 2}
+            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+            title="Merge documents and immediately download the combined PDF"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Merge &amp; Download</span>
           </button>
         </div>
       </div>

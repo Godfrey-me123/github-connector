@@ -1,10 +1,29 @@
 import React, { useState, useEffect, useRef } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
-import { Search, FileText, ArrowLeft, Loader2, HardDrive } from "lucide-react";
+import {
+  Search,
+  FileText,
+  ArrowLeft,
+  Loader2,
+  HardDrive,
+  FileCheck,
+  Download,
+  Trash2,
+  FileUp,
+  RefreshCw,
+  Eye,
+  AlertCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useTemplateStore } from "../store/useTemplateStore";
-import { DownloadRecord, getAllDownloadRecordsDB, saveDownloadRecordDB } from "../utils/idb";
+import {
+  DownloadRecord,
+  getAllDownloadRecordsDB,
+  saveDownloadRecordDB,
+  deleteDownloadRecordDB,
+} from "../utils/idb";
+import { DocxToPdfModal } from "./pdf/DocxToPdfModal";
 
 if (typeof window !== "undefined") {
   try {
@@ -17,20 +36,30 @@ export const PdfLibraryScreen: React.FC = () => {
   const [pdfs, setPdfs] = useState<DownloadRecord[]>([]);
   const [search, setSearch] = useState("");
   const [isImporting, setIsImporting] = useState(false);
+  const [showDocxModal, setShowDocxModal] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const loadPdfs = async () => {
+  const loadPdfs = async () => {
+    try {
       const records = await getAllDownloadRecordsDB();
       setPdfs(
         records.filter(
           (r) =>
             r.format === "PDF" ||
             (r.fileName && r.fileName.toLowerCase().endsWith(".pdf")) ||
-            r.service === "Imported PDF"
+            r.service === "Imported PDF" ||
+            r.service === "Modified PDF" ||
+            r.service === "DOCX to PDF"
         )
       );
-    };
+    } catch (err) {
+      console.error("Failed to load PDFs:", err);
+    }
+  };
+
+  useEffect(() => {
     loadPdfs();
   }, []);
 
@@ -47,7 +76,7 @@ export const PdfLibraryScreen: React.FC = () => {
     try {
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({
-        data: arrayBuffer,
+        data: arrayBuffer.slice(0),
         cMapUrl: "https://unpkg.com/pdfjs-dist@6.4.299/cmaps/",
         cMapPacked: true,
       }).promise;
@@ -83,60 +112,272 @@ export const PdfLibraryScreen: React.FC = () => {
     }
   };
 
+  const handleDelete = async (record: DownloadRecord) => {
+    try {
+      await deleteDownloadRecordDB(record.id);
+      setPdfs((prev) => prev.filter((p) => p.id !== record.id));
+      setDeletingId(null);
+      toast.success(`Removed "${record.fileName}" from library.`);
+    } catch (err) {
+      toast.error("Failed to delete record.");
+    }
+  };
+
+  const handleDownload = (record: DownloadRecord) => {
+    if (record.blobData) {
+      const url = URL.createObjectURL(record.blobData);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = record.fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success(`Downloaded: ${record.fileName}`);
+    } else if (record.dataUrl) {
+      const a = document.createElement("a");
+      a.href = record.dataUrl;
+      a.download = record.fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      toast.success(`Downloaded: ${record.fileName}`);
+    }
+  };
+
   const filteredPdfs = pdfs.filter((p) =>
-    p.fileName.toLowerCase().includes(search.toLowerCase())
+    (p.fileName || "").toLowerCase().includes(search.toLowerCase())
   );
 
+  const formatFileSize = (bytes?: number) => {
+    if (!bytes || bytes <= 0) return "Unknown size";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 p-4">
-      <div className="flex items-center gap-4 mb-6">
-        <button onClick={() => setActiveScreen("home")} className="p-2 hover:bg-slate-200 rounded-full"><ArrowLeft /></button>
-        <h1 className="text-xl font-bold">PDF Library</h1>
-        <button 
-          onClick={() => fileInputRef.current?.click()}
-          className="ml-auto bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold"
-        >
-          Import PDF
-        </button>
-        <input type="file" ref={fileInputRef} onChange={handleImport} accept="application/pdf" className="hidden" />
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0F172A] text-slate-800 dark:text-slate-100 p-4 sm:p-6 flex flex-col font-sans transition-colors duration-200">
+      <div className="max-w-5xl mx-auto w-full flex-1 flex flex-col">
+        {/* Top Header */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setActiveScreen("home")}
+              className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer text-slate-700 dark:text-slate-200"
+              title="Back to Home"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                PDF Library
+              </h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Manage, convert Word documents, and view your local PDFs
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Word to PDF button */}
+            <button
+              type="button"
+              onClick={() => setShowDocxModal(true)}
+              className="px-3.5 py-2 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-xl text-xs font-black flex items-center gap-1.5 cursor-pointer shadow-2xs transition-all active:scale-95"
+            >
+              <FileCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <span>Convert Word to PDF</span>
+            </button>
+
+            {/* Import PDF button */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isImporting}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-sm cursor-pointer transition-all active:scale-95 disabled:opacity-50"
+            >
+              {isImporting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Importing...</span>
+                </>
+              ) : (
+                <>
+                  <FileUp className="w-4 h-4" />
+                  <span>Import PDF</span>
+                </>
+              )}
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImport}
+              accept="application/pdf"
+              className="hidden"
+            />
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative mb-6">
+          <Search className="absolute left-3.5 top-3 text-slate-400 w-4 h-4" />
+          <input
+            type="text"
+            placeholder="Search documents by name..."
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1E293B] text-slate-800 dark:text-slate-100 text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        {/* PDF Items List */}
+        <div className="space-y-3 flex-1">
+          {filteredPdfs.length > 0 ? (
+            filteredPdfs.map((pdf) => (
+              <div
+                key={pdf.id}
+                className="w-full p-4 bg-white dark:bg-[#1E293B] rounded-2xl shadow-2xs hover:shadow-sm border border-slate-200 dark:border-slate-800 transition-all flex flex-wrap items-center justify-between gap-4"
+              >
+                {/* Item Details (clickable to open in reader) */}
+                <div
+                  onClick={() => {
+                    useTemplateStore.setState({ activePdf: pdf });
+                    setActiveScreen("pdf_viewer");
+                  }}
+                  className="flex items-center gap-3.5 flex-1 min-w-[200px] cursor-pointer group"
+                >
+                  <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <FileText className="w-6 h-6" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-bold text-xs sm:text-sm truncate text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                        {pdf.fileName}
+                      </p>
+                      {pdf.service === "Modified PDF" && (
+                        <span className="text-[9px] font-black px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 rounded shrink-0">
+                          Modified
+                        </span>
+                      )}
+                      {pdf.service === "DOCX to PDF" && (
+                        <span className="text-[9px] font-black px-1.5 py-0.5 bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 rounded shrink-0">
+                          Word Converted
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                      {pdf.pageCount && <span>{pdf.pageCount} pages •</span>}
+                      <span>{formatFileSize(pdf.sizeBytes)}</span>
+                      <span>• {pdf.lastModified ? new Date(pdf.lastModified).toLocaleDateString() : pdf.date}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      useTemplateStore.setState({ activePdf: pdf });
+                      setActiveScreen("pdf_viewer");
+                    }}
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>Open</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDownload(pdf)}
+                    className="p-2 text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-xl transition-colors cursor-pointer"
+                    title="Download a copy"
+                  >
+                    <Download className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDeletingId(pdf.id)}
+                    className="p-2 text-slate-400 hover:text-red-500 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
+                    title="Remove from library"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="bg-white dark:bg-[#1E293B] border border-dashed border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center space-y-3">
+              <FileText className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto" />
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                {search ? "No matching documents found" : "Your PDF Library is empty"}
+              </p>
+              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                Import any PDF document or convert a Word (.docx) file to view and read offline.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-3 text-slate-400" />
-        <input 
-          type="text" 
-          placeholder="Search PDFs..." 
-          className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-      <div className="space-y-3">
-        {filteredPdfs.map((pdf) => (
-          <button
-            key={pdf.id}
-            onClick={() => {
-              useTemplateStore.setState({ activePdf: pdf });
-              setActiveScreen("pdf_viewer");
-            }}
-            className="w-full p-4 bg-white rounded-xl shadow-sm border border-slate-200 text-left"
-          >
-            <div className="flex items-center gap-4">
-              <FileText className="text-blue-500 w-8 h-8" />
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm truncate">{pdf.fileName}</p>
-                <p className="text-xs text-slate-500">
-                  {pdf.pageCount} pages • {Math.round((pdf.sizeBytes || 0) / 1024)} KB
-                </p>
-                <p className="text-xs text-slate-400">
-                  {pdf.lastModified ? new Date(pdf.lastModified).toLocaleDateString() : pdf.date}
+      {/* Confirmation Dialog before deleting from library */}
+      {deletingId && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#1E293B] rounded-3xl w-full max-w-md p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4 animate-in fade-in zoom-in duration-150">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Remove from Library?
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  This will remove the document entry from your browser library. The original file on your computer will remain completely untouched.
                 </p>
               </div>
             </div>
-          </button>
-        ))}
-      </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeletingId(null)}
+                className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const target = pdfs.find((p) => p.id === deletingId);
+                  if (target) handleDelete(target);
+                }}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold cursor-pointer transition-colors"
+              >
+                Remove from Library
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Docx To Pdf Modal */}
+      {showDocxModal && (
+        <DocxToPdfModal
+          isOpen={showDocxModal}
+          onClose={() => setShowDocxModal(false)}
+          onOpenPdf={async (blob, name) => {
+            await loadPdfs();
+            const matchingRecord = pdfs.find((p) => p.fileName === name);
+            if (matchingRecord) {
+              useTemplateStore.setState({ activePdf: matchingRecord });
+            }
+            setActiveScreen("pdf_viewer");
+          }}
+        />
+      )}
     </div>
   );
 };

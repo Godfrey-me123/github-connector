@@ -275,7 +275,7 @@ export const RearrangePagesModal: React.FC<RearrangePagesModalProps> = ({
   };
 
   // Save changes
-  const handleSave = async () => {
+  const handleSave = async (triggerDownload = false) => {
     if (!rawPdfBytes) {
       toast.error("No PDF loaded.");
       return;
@@ -293,7 +293,7 @@ export const RearrangePagesModal: React.FC<RearrangePagesModalProps> = ({
 
     setIsSaving(true);
     try {
-      const sourceDoc = await PDFDocument.load(rawPdfBytes, { ignoreEncryption: true });
+      const sourceDoc = await PDFDocument.load(rawPdfBytes.slice(0), { ignoreEncryption: true });
       const newDoc = await PDFDocument.create();
 
       const pageIndices = remainingPages.map((p) => p.originalIndex);
@@ -301,14 +301,16 @@ export const RearrangePagesModal: React.FC<RearrangePagesModalProps> = ({
       copiedPages.forEach((p) => newDoc.addPage(p));
 
       const newBytes = await newDoc.save();
-      const newBlob = new Blob([newBytes], { type: "application/pdf" });
+      const newBuffer = newBytes.buffer.slice(
+        newBytes.byteOffset,
+        newBytes.byteOffset + newBytes.byteLength
+      );
+      const newBlob = new Blob([newBuffer], { type: "application/pdf" });
 
       const suffix = mode === "remove" ? "_modified.pdf" : "_rearranged.pdf";
       const finalName = activeFileName.replace(/\.pdf$/i, "") + suffix;
 
-      if (onSaved) {
-        onSaved(newBlob, finalName);
-      } else {
+      if (triggerDownload) {
         const url = URL.createObjectURL(newBlob);
         const a = document.createElement("a");
         a.href = url;
@@ -317,6 +319,10 @@ export const RearrangePagesModal: React.FC<RearrangePagesModalProps> = ({
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+      }
+
+      if (onSaved) {
+        onSaved(newBlob, finalName);
       }
 
       toast.success(
@@ -680,21 +686,21 @@ export const RearrangePagesModal: React.FC<RearrangePagesModalProps> = ({
                 : `${pages.length} pages total in sequence`}
             </span>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+                className="px-3.5 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
-                onClick={handleSave}
+                onClick={() => handleSave(false)}
                 disabled={
                   isSaving ||
                   pages.length === 0 ||
                   (mode === "remove" && selectedForRemoval.size === 0)
                 }
-                className={`px-5 py-2.5 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer ${
+                className={`px-4 py-2 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-md disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer ${
                   mode === "remove"
                     ? "bg-rose-600 hover:bg-rose-700"
                     : "bg-purple-600 hover:bg-purple-700"
@@ -702,19 +708,32 @@ export const RearrangePagesModal: React.FC<RearrangePagesModalProps> = ({
               >
                 {isSaving ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Saving Document...</span>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Saving...</span>
                   </>
                 ) : (
                   <>
-                    <CheckCircle2 className="w-4 h-4" />
+                    <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>
                       {mode === "remove"
-                        ? `Remove (${selectedForRemoval.size}) & Save`
+                        ? `Save (${selectedForRemoval.size} Removed)`
                         : "Save New Order"}
                     </span>
                   </>
                 )}
+              </button>
+              <button
+                onClick={() => handleSave(true)}
+                disabled={
+                  isSaving ||
+                  pages.length === 0 ||
+                  (mode === "remove" && selectedForRemoval.size === 0)
+                }
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 shadow-md disabled:opacity-40 disabled:pointer-events-none transition-all cursor-pointer"
+                title="Save changes and immediately download the modified PDF"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Save &amp; Download</span>
               </button>
             </div>
           </div>

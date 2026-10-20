@@ -1,0 +1,145 @@
+BIGsta — DOC/DOCX TO PDF + PDF READER/PRINT UPGRADE
+IMPLEMENTATION PROMPT FOR GOOGLE AI STUDIO
+
+PROJECT CONTEXT
+BIGsta is an existing React + TypeScript website/PWA. Use the latest BIGsta project/source supplied in this conversation, including the existing PDF Library integration if it is present. The project already has an established navigation/store structure, Home screen, Services Menu, and Downloads Center. Relevant existing source locations observed in the project include:
+- src/bigsta/App.tsx — app-level screen routing and shared screen layout.
+- src/bigsta/store/useTemplateStore.ts — central application state/navigation.
+- src/bigsta/components/HomeScreen.tsx — Home/service entry points.
+- src/bigsta/components/DownloadsScreen.tsx — existing Downloads Center; preserve its current purpose and behavior.
+- src/bigsta/utils/idb.ts — existing IndexedDB utilities, if suitable for file persistence.
+- The PDF Library/Reader files added by the latest PDF Library patch, if included. Search the project for PdfLibrary, PDF Reader, Print, pdfjs, and related components before creating duplicates.
+
+PRIMARY OBJECTIVE
+Add a complete, clearly discoverable “DOC/DOCX to PDF” service in the Print area and in relevant PDF/document item actions. Fix PDF zoom so it genuinely scales the page content, and change multi-page PDF preview to continuous vertical scrolling like WPS Office. Add practical reader and print controls. Keep every unrelated BIGsta feature, design, workflow, data model, and existing screen intact.
+
+NON-NEGOTIABLE SAFETY RULES FOR THE CODE CHANGE
+1. Inspect the actual current source first. Do not assume filenames or create a second PDF Library/Reader if one already exists.
+2. Make the smallest integrated change possible. Do not rewrite App.tsx, the store, Home screen, Downloads Center, or global styling wholesale.
+3. Keep all existing features and routes working. Do not rename or remove existing routes, store fields, service cards, IndexedDB stores, or components unless technically unavoidable.
+4. Reuse current BIGsta buttons, colors, icons, spacing, responsive breakpoints, error/toast patterns, and navigation conventions.
+5. Every new action must work. No decorative or placeholder controls, TODOs, dead ends, fake progress, or success messages before an operation succeeds.
+6. Keep file processing local in the browser wherever feasible. Do not upload user documents to a remote service unless the user has explicitly enabled an existing upload feature and understands it.
+7. After changes, run the available TypeScript/lint/build checks. Fix errors introduced by this change. Report any check that cannot run and why; do not claim a build passed if it was not run successfully.
+
+AREA 1 — ADD “DOC/DOCX TO PDF” ENTRY POINTS
+A. In the existing Print screen/Print section, add a prominent “Convert Word to PDF” or “DOC/DOCX to PDF” action beside existing PDF actions.
+B. In PDF/document library item actions and the PDF/Print screen, add a consistent “Convert Word to PDF” entry point. This action is for selecting a Word document to convert; do not show it as if an existing PDF needs conversion.
+C. Add the service to the existing relevant service menu only if that menu already lists document/PDF tools. Reuse existing service-card patterns. Do not create a separate app or unrelated screen.
+D. Provide a clear flow: select .docx file → show filename and size → convert → preview generated PDF → print or download → return to previous screen/library.
+E. Support selecting one .docx at a time initially unless existing architecture already supports batch conversions cleanly. Disable duplicate submissions while conversion is running.
+F. Handle cancel, unsupported file, malformed/corrupt file, large file, conversion failure, and browser memory errors with clear messages and a retry/back action.
+
+AREA 2 — DOC/DOCX CONVERSION IMPLEMENTATION
+A. Inspect package.json and existing dependencies first. Reuse an existing client-side converter if available. Otherwise choose and add a maintained browser-compatible implementation with minimal dependencies, then update the lockfile if the project uses one.
+B. Prefer a real browser-side DOCX-to-PDF pipeline. Options to evaluate include docx-preview for page-like Word rendering followed by a reliable PDF export path, or Mammoth for DOCX-to-HTML plus a PDF generation library. Choose based on actual project compatibility and output quality; do not combine libraries unnecessarily.
+C. Important: Mammoth converts DOCX to semantic HTML and does not itself generate PDF. If selected, implement the PDF-generation stage explicitly.
+D. Legacy binary .doc is not the same format as .docx. Do not claim full .doc support unless the chosen library genuinely supports it. If only .docx is supported, label the picker “Word documents (.docx)” and explain that legacy .doc must first be saved as .docx or PDF. If an existing trusted conversion route supports .doc, integrate it without silently uploading files.
+E. Preserve the original document. Conversion must create a separate PDF result and never overwrite/delete the source Word file.
+F. Preserve headings, paragraphs, lists, tables, images, page breaks, margins, and reasonable spacing as well as the chosen browser-side library allows. Use appropriate page dimensions (default A4, with a settings option if practical), padding/margins, and page-break handling. State honestly that browser conversion may not match Microsoft Word pixel-for-pixel, especially for unsupported fonts, complex layouts, headers/footers, floating shapes, and page numbering.
+G. Do not inject untrusted DOCX content unsafely into the app. Sanitize any generated HTML before rendering, isolate conversion preview where appropriate, and avoid executing scripts or event attributes from document content.
+H. Show useful conversion progress/status only when measurable. Do not freeze the UI for large files; use asynchronous processing and provide a cancel/retry path where feasible.
+I. Name output sensibly, e.g. original-name.pdf. Offer “Preview PDF”, “Download PDF”, and “Print / Save as PDF”. Keep original and output distinguishable.
+J. Store the generated PDF in the existing PDF Library/IndexedDB if the current PDF Library architecture supports it. Store metadata and the PDF Blob together; ensure large files and quota errors are handled. Do not store a temporary blob URL as persistent data.
+
+AREA 3 — FIX THE PDF ZOOM BUG PROPERLY
+Current problem: zooming appears to make the document extend farther down instead of enlarging/shrinking the visible PDF page correctly. Diagnose the real cause in the current reader before patching.
+A. Identify whether pages are rendered as canvas, images, iframe/native browser PDF, or HTML. Implement zoom appropriate to that rendering architecture rather than merely increasing container height or adding arbitrary margins.
+B. Zoom in/out must scale the actual page content and page width. For a canvas-based PDF.js renderer, render each page using the selected scale/viewport and update canvas pixel dimensions and CSS dimensions consistently (including device-pixel ratio if used). For an HTML/page renderer, apply a correct page scale transform or layout scale and ensure the scroll container dimensions match the scaled content. Avoid scaling only the outer wrapper while leaving the rendered canvas at its old resolution.
+C. Do not make zoom appear to work by adding blank height, padding, or page margins. The page itself must visibly enlarge/reduce.
+D. Add a visible zoom toolbar with:
+- Zoom out button
+- Current zoom percentage (e.g. 100%)
+- Zoom in button
+- Reset to 100%
+- Fit width
+- Fit page
+- Optional selectable percentage presets (50%, 75%, 100%, 125%, 150%, 200%, 300%)
+E. Use a sensible minimum/maximum zoom (for example 50% to 300% or 400%), prevent values outside limits, and ensure repeated clicks do not accumulate CSS/layout errors.
+F. Fit width should fit the PDF page to the available reading viewport width while preserving aspect ratio. Fit page should fit both width and height of one page inside the viewport. Reset should restore actual-size/100% behavior.
+G. On zoom changes, preserve the user's approximate reading position/page when possible. Avoid unexpectedly jumping back to page one or the top after every zoom.
+H. If a canvas renderer is used, rerender pages at the requested scale and avoid stale asynchronous renders overwriting newer zoom settings. Cancel or disregard stale render tasks. For long documents, render lazily or in visible batches to prevent excessive memory use.
+I. Make zoom controls usable on desktop and mobile. Support Ctrl/Cmd + plus, Ctrl/Cmd + minus, and Ctrl/Cmd + 0 only when the PDF viewer is active and do not hijack normal typing in inputs.
+J. If native browser PDF iframe rendering is the reason custom zoom cannot reliably control the actual PDF, replace only the reader rendering layer with a proper client-side PDF viewer (prefer the existing PDF.js dependency if available, otherwise add it carefully). Do not fake custom zoom controls that cannot affect the actual PDF.
+
+AREA 4 — CONTINUOUS VERTICAL PDF READING (WPS-LIKE)
+A. For multi-page documents, display all pages in one continuous vertically scrollable reading area, in page order. The user should scroll naturally from page 1 through the final page, like WPS Office.
+B. Remove the requirement to click “Next” to advance through each page. Remove/hide previous/next page buttons from the primary reading flow. Do not implement one-page-at-a-time navigation as the default.
+C. Keep page boundaries visually clear using a white page surface, subtle border/shadow, consistent page gaps, and a neutral reader background. Keep page dimensions and aspect ratios correct.
+D. Keep the top toolbar usable while scrolling (sticky toolbar if compatible with the existing layout). The scroll area should be independent and should not make the whole app page jump unpredictably.
+E. Provide page count and optional current visible page indicator (e.g. “Page 4 of 28”) as informational feedback, not as a required Next/Previous workflow. A page-number field or thumbnail jump may be included as optional shortcuts, but continuous scrolling remains the default.
+F. If page thumbnails are feasible within the existing architecture, add a collapsible thumbnail sidebar/panel that jumps to a page. Do not block core scrolling functionality on this enhancement.
+G. Keep rendering efficient for large PDFs: render visible pages first, use lazy rendering/IntersectionObserver or the PDF library's equivalent, clean up canvases/render tasks when documents close, and display page placeholders/loading indicators for not-yet-rendered pages.
+H. Make sure vertical scrolling still works at high zoom. At high zoom, horizontal overflow may be allowed inside the viewer, but must not disable vertical scrolling or crop content without a way to pan horizontally.
+I. Support mobile touch scrolling and avoid accidental text-selection/drag behavior that prevents reading.
+
+AREA 5 — EXPAND THE PDF READER TOOLBAR AND READER CONTROLS
+Add controls that are supported by the chosen renderer and actually function:
+- Back to PDF Library / previous screen (must never leave the user stranded)
+- Document filename
+- Page count / current visible page indicator
+- Zoom out, zoom percentage, zoom in, reset, fit width, fit page
+- Print
+- Download/save a copy
+- Open/import another PDF
+- Rotate page/view clockwise and counterclockwise if supported without corrupting the source file
+- Search text in the PDF if supported by the chosen viewer; show match count and next/previous match within search only (not document-page navigation)
+- Optional thumbnails toggle
+- Document details/properties: file size, last modified date where available, page count
+- Clear error/loading states
+Do not include buttons for features that have no implementation. Do not confuse search-result next/previous controls with next/previous document page controls.
+
+AREA 6 — PRINT SCREEN AND PDF ITEM ACTIONS
+A. In the Print section, show separate actions for “Open PDF Library”, “Import PDF”, “Convert DOC/DOCX to PDF”, and “Print current document” when a document is open.
+B. From any PDF item, tapping/clicking the item should open the continuous Reader & Print screen for that document. Provide a visible Back button and preserve library scroll/search/sort state on return.
+C. Provide a print settings panel where supported by browser printing: paper size (A4/Letter if feasible), orientation (portrait/landscape if feasible), and scale/fit option. Do not claim to control browser/OS printer settings that the web platform cannot control. Explain that the final printer dialog is controlled by the browser/operating system.
+D. Printing must not print the toolbar, library, navigation, loading spinners, or background UI. Add print-specific CSS and a clean print layout. For continuous multi-page output, ensure page breaks and white page backgrounds print correctly.
+E. Provide “Save as PDF” guidance through the browser print dialog when direct PDF generation is unavailable. Keep a separate “Download PDF” action for an already-generated PDF blob.
+F. For a DOCX conversion result, ensure print and download act on the generated PDF, not the original DOCX.
+G. Confirm before deleting a PDF from the library. Removing an item from the library must not delete the original file from the user's device. If there is an existing “remove from library” action, preserve its meaning and behavior.
+
+AREA 7 — STATE, STORAGE, NAVIGATION, AND CLEANUP
+A. Reuse the current app navigation/store mechanisms and preserve the route stack. Back returns to the exact prior context when possible, not always to Home.
+B. Keep existing IndexedDB schema stable if possible. If schema changes are required, implement a safe versioned migration and preserve existing stored data.
+C. Persist imported/generated PDF blobs and metadata when feasible. Explain browser storage limitations and handle quota errors with a clear option to download the file before leaving.
+D. Use object URLs only for previews/printing and revoke them when no longer needed; do not revoke a URL before the print/preview has consumed it.
+E. Clean up PDF document instances, canvas resources, observers, event listeners, keyboard shortcuts, and render tasks on close/unmount to avoid memory leaks.
+F. Avoid unnecessary full-project state changes. No change to authentication, billing, ID creation, templates, Passport Size Studio, image tools, SMS, admin, or unrelated business logic.
+
+AREA 8 — RESPONSIVE DESIGN AND ACCESSIBILITY
+A. Desktop: compact toolbar, centered pages, optional collapsible thumbnails, continuous scrolling.
+B. Mobile: wrap or horizontally scroll the toolbar safely; keep Back, zoom, print, and download discoverable; ensure touch targets are comfortable; never let a toolbar cover document content.
+C. Add accessible labels and tooltips for icon-only buttons, visible focus states, keyboard navigation, and sufficient contrast.
+D. Handle narrow viewport and landscape orientation without forcing the PDF to overflow the entire app shell.
+
+AREA 9 — TESTING AND ACCEPTANCE CHECKLIST
+Do not mark complete until these cases are tested or explicitly identified as not tested:
+1. Open a 1-page PDF: metadata appears; page renders; zoom in enlarges actual page; zoom out reduces it; reset returns to 100%; fit width and fit page work.
+2. Open a 20+ page PDF: every page is in one continuous vertical scroll; user can scroll from first to last without clicking Next; page order is correct.
+3. Zoom to 150%, 200%, and back to 75% on a multi-page file: no extra blank height, broken page gaps, or loss of scroll position.
+4. Test a wide/landscape PDF and a scanned/image-only PDF.
+5. Test a large PDF: loading feedback appears; UI remains usable; scrolling does not trigger excessive simultaneous renders.
+6. Import a valid DOCX: conversion creates a separate PDF; preview opens; download produces a valid PDF; print prints the PDF; original DOCX remains unchanged.
+7. Test corrupt DOCX, unsupported .doc, empty selection, cancelled picker, and conversion error: useful message and a working Back/retry route.
+8. Open PDF from Library, return with Back, and confirm search/sort/scroll selection is preserved.
+9. Print a multi-page PDF and ensure toolbar/navigation do not print and page breaks are sensible.
+10. Test mobile touch scrolling and desktop mouse/keyboard zoom.
+11. Test browser refresh/reopen with saved library items and handle missing/evicted browser storage gracefully.
+12. Confirm existing Downloads Center, Home, Services Menu, navigation, Passport Size Studio, and unrelated services remain functional.
+13. Run npm run build and the project's available type/lint checks. Resolve errors introduced by the patch.
+
+AREA 10 — DELIVERABLES FROM THE AI BUILDER
+1. Implement changes directly in the existing BIGsta project.
+2. List every file created/modified and explain its exact responsibility.
+3. Identify the specific PDF zoom root cause and explain the fix.
+4. Identify how continuous scrolling is implemented and confirm page Next/Previous navigation is no longer required for ordinary reading.
+5. Identify the DOCX conversion libraries and any format limitations.
+6. Provide build/test results honestly, including errors that remain.
+7. Do not return only a mockup, generic instructions, or isolated code sample. Integrate with existing screens and routes.
+
+REFERENCE GUIDANCE
+Use the official PDF.js viewer as a functional reference for zoom controls, fit-width/fit-page behavior, continuous scrolling, search, and document properties. Its viewer documentation describes zoom presets and vertical scrolling controls: https://github.com/mozilla/pdf.js/wiki/Viewer-options and https://github.com/mozilla/pdf.js/wiki/Frequently-asked-questions.
+For DOCX conversion, evaluate the browser capabilities and limits of Mammoth (DOCX to HTML, not PDF by itself): https://github.com/mwilliamson/mammoth. If using a DOCX-to-HTML approach, explicitly add and test the PDF-generation stage. Conversion should remain local to the browser whenever possible.
+
+FINAL INSTRUCTION
+Implement only the requested PDF/Print and DOC/DOCX-to-PDF improvements. Keep all other BIGsta logic, layouts, services, and data intact. Inspect first, patch precisely, test the complete flow, and report exactly what was changed and what was verified.

@@ -221,6 +221,29 @@ export const HomeScreen: React.FC = () => {
         isPinned: true,
       },
       {
+        id: "docx_to_pdf",
+        name: "Word (DOCX) to PDF",
+        authority: "BIGsta Tools",
+        description: "Convert Word documents (.docx) to clean, printable A4 PDF documents offline.",
+        category: "document",
+        icon: FileText,
+        iconBg: "bg-indigo-500/15 border-indigo-500/30",
+        iconColor: "text-indigo-400",
+        status: "active",
+        badgeText: "Free",
+        action: () => {
+          setActiveScreen("pdf_viewer");
+        },
+        primaryActionLabel: "Convert Document",
+        features: [
+          "Client-Side Conversion",
+          "A4 Print Layout",
+          "Heading & Table Support",
+          "Zero Cloud Uploads",
+        ],
+        isPinned: true,
+      },
+      {
         id: "nida_request",
         name: "Request NIDA Info",
         authority: "National Identification Authority",
