@@ -187,7 +187,7 @@ export const PdfLibraryScreen: React.FC = () => {
               className="px-3.5 py-2 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-xl text-xs font-black flex items-center gap-1.5 cursor-pointer shadow-2xs transition-all active:scale-95"
             >
               <FileCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              <span>Convert Word to PDF</span>
+              <span>Open Doc File</span>
             </button>
 
             {/* Import PDF button */}

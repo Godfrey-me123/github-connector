@@ -222,9 +222,9 @@ export const HomeScreen: React.FC = () => {
       },
       {
         id: "docx_to_pdf",
-        name: "Word (DOCX) to PDF",
+        name: "Open Doc File (Word to PDF)",
         authority: "BIGsta Tools",
-        description: "Convert Word documents (.docx) to clean, printable A4 PDF documents offline.",
+        description: "Open and fetch any document file (.doc, .docx, .txt, .rtf, .md) on your device or computer to convert to PDF offline.",
         category: "document",
         icon: FileText,
         iconBg: "bg-indigo-500/15 border-indigo-500/30",
@@ -232,13 +232,13 @@ export const HomeScreen: React.FC = () => {
         status: "active",
         badgeText: "Free",
         action: () => {
-          setActiveScreen("pdf_viewer");
+          setActiveScreen("docx_to_pdf");
         },
-        primaryActionLabel: "Convert Document",
+        primaryActionLabel: "Open Doc File",
         features: [
-          "Client-Side Conversion",
+          "Universal Document Fetching",
+          "Open .doc, .docx, .txt, .rtf",
           "A4 Print Layout",
-          "Heading & Table Support",
           "Zero Cloud Uploads",
         ],
         isPinned: true,

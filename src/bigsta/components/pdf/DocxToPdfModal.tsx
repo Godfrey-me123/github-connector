@@ -10,6 +10,8 @@ import {
   Eye,
   AlertCircle,
   FileCheck,
+  FolderOpen,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { convertDocxToPdf, DocxConversionResult } from "../../utils/docxToPdf";
@@ -39,22 +41,6 @@ export const DocxToPdfModal: React.FC<DocxToPdfModalProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.name.toLowerCase().endsWith(".doc") && !file.name.toLowerCase().endsWith(".docx")) {
-      setErrorMsg(
-        "Legacy binary Word (.doc) is not supported directly in the browser. Please open the file in Microsoft Word, Google Docs, or LibreOffice and save it as .docx or PDF first."
-      );
-      setSelectedFile(null);
-      setResult(null);
-      return;
-    }
-
-    if (!file.name.toLowerCase().endsWith(".docx")) {
-      setErrorMsg("Please select a valid Word document (.docx).");
-      setSelectedFile(null);
-      setResult(null);
-      return;
-    }
-
     setErrorMsg(null);
     setSelectedFile(file);
     setResult(null);
@@ -65,7 +51,7 @@ export const DocxToPdfModal: React.FC<DocxToPdfModalProps> = ({
 
     setIsConverting(true);
     setErrorMsg(null);
-    setConversionStatus("Reading Word document...");
+    setConversionStatus("Reading document file...");
 
     try {
       const convResult = await convertDocxToPdf(selectedFile, (status) => {
@@ -76,9 +62,9 @@ export const DocxToPdfModal: React.FC<DocxToPdfModalProps> = ({
 
       // Save to IndexedDB
       const record: DownloadRecord = {
-        id: `docx_pdf_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        id: `doc_pdf_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         fileName: convResult.fileName,
-        service: "DOCX to PDF",
+        service: "DOC to PDF",
         format: "PDF",
         date: new Date().toLocaleDateString(undefined, {
           month: "short",
@@ -96,10 +82,13 @@ export const DocxToPdfModal: React.FC<DocxToPdfModalProps> = ({
       };
 
       await saveDownloadRecordDB(record);
-      toast.success("Word document converted to PDF successfully!");
+      toast.success("Document converted to PDF successfully!");
     } catch (err: any) {
-      console.error("DOCX conversion error:", err);
-      setErrorMsg(err?.message || "Failed to convert Word document. Please ensure the file is not password-protected.");
+      console.error("Document conversion error:", err);
+      setErrorMsg(
+        err?.message ||
+          "Failed to convert document. Please ensure the file is valid and not password-protected."
+      );
       toast.error("Conversion failed.");
     } finally {
       setIsConverting(false);
@@ -155,22 +144,23 @@ export const DocxToPdfModal: React.FC<DocxToPdfModalProps> = ({
           type="file"
           ref={fileInputRef}
           onChange={handleFileChange}
-          accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          accept=".doc,.docx,.txt,.rtf,.odt,.html,.htm,.md,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/html,text/markdown,text/rtf,application/rtf,*"
           className="hidden"
+          id="doc-file-input"
         />
 
         {/* Header */}
         <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-              <FileCheck className="w-5 h-5" />
+              <FolderOpen className="w-5 h-5" />
             </div>
             <div>
               <h2 className="text-sm sm:text-base font-black text-slate-900 dark:text-white">
-                Convert Word to PDF
+                Open Doc File
               </h2>
               <p className="text-[11px] text-slate-500">
-                Fast, 100% offline DOCX to PDF converter
+                Convert Word (.doc, .docx) &amp; any document on your computer or device
               </p>
             </div>
           </div>
@@ -202,31 +192,48 @@ export const DocxToPdfModal: React.FC<DocxToPdfModalProps> = ({
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isConverting}
-                className="w-full py-8 px-4 border-2 border-dashed border-blue-400 dark:border-blue-500/60 hover:border-blue-600 rounded-3xl bg-blue-50/40 dark:bg-blue-950/20 text-center flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors"
+                className="w-full py-8 px-4 border-2 border-dashed border-blue-400 dark:border-blue-500/60 hover:border-blue-600 rounded-3xl bg-blue-50/40 dark:bg-blue-950/20 text-center flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors group"
               >
-                <div className="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-                  <FileUp className="w-6 h-6" />
+                <div className="w-14 h-14 rounded-2xl bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <FileUp className="w-7 h-7" />
                 </div>
-                <span className="text-xs font-black text-blue-600 dark:text-blue-400">
-                  {selectedFile ? selectedFile.name : "Select Word Document (.docx)"}
-                </span>
-                <span className="text-[10px] text-slate-400 max-w-xs">
-                  {selectedFile
-                    ? `${formatSize(selectedFile.size)} • Tap to change file`
-                    : "Tap to browse your device. Note: Legacy .doc should be saved as .docx first."}
-                </span>
+                <div className="space-y-1">
+                  <span className="text-sm font-black text-blue-600 dark:text-blue-400 block">
+                    {selectedFile ? selectedFile.name : "Open Doc File"}
+                  </span>
+                  <span className="text-xs text-slate-600 dark:text-slate-300 block font-bold">
+                    {selectedFile
+                      ? `${formatSize(selectedFile.size)} • Tap to change document`
+                      : "Tap to open and fetch any document file on device or computer"}
+                  </span>
+                </div>
+                <div className="mt-1 flex flex-wrap justify-center gap-1.5 text-[10px] text-slate-400">
+                  <span className="px-2 py-0.5 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 font-bold">
+                    .DOCX / .DOC
+                  </span>
+                  <span className="px-2 py-0.5 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 font-bold">
+                    .TXT / .MD
+                  </span>
+                  <span className="px-2 py-0.5 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 font-bold">
+                    .RTF / .ODT
+                  </span>
+                  <span className="px-2 py-0.5 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 font-bold">
+                    HTML Documents
+                  </span>
+                </div>
               </button>
 
-              {/* Format Note */}
+              {/* Conversion Information */}
               <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
-                <p className="font-bold text-slate-700 dark:text-slate-200">
-                  Document Conversion Details:
+                <p className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-blue-500" />
+                  <span>Universal Document to PDF Engine:</span>
                 </p>
                 <p>
-                  • Preserves headings, paragraphs, lists, tables, images, and page spacing into standard A4 PDF pages.
+                  • Open any Word (.doc, .docx), Rich Text (.rtf), Plain Text (.txt), or Markdown (.md) document file.
                 </p>
                 <p>
-                  • All conversion runs 100% locally in your browser. Your document is never sent to any external server.
+                  • Converts formatting, tables, lists, and spacing into standard A4 PDF pages with 100% client-side privacy.
                 </p>
               </div>
             </>
@@ -234,14 +241,14 @@ export const DocxToPdfModal: React.FC<DocxToPdfModalProps> = ({
 
           {/* Conversion In Progress */}
           {isConverting && (
-            <div className="py-6 text-center space-y-3 bg-blue-50/50 dark:bg-blue-950/20 rounded-2xl border border-blue-100 dark:border-blue-900/40 p-4">
-              <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600 dark:text-blue-400" />
+            <div className="py-8 text-center space-y-3 bg-blue-50/50 dark:bg-blue-950/20 rounded-2xl border border-blue-100 dark:border-blue-900/40 p-4">
+              <Loader2 className="w-9 h-9 animate-spin mx-auto text-blue-600 dark:text-blue-400" />
               <div>
                 <p className="text-xs font-bold text-slate-800 dark:text-slate-100">
-                  {conversionStatus || "Converting document..."}
+                  {conversionStatus || "Processing document..."}
                 </p>
                 <p className="text-[10px] text-slate-400 mt-0.5">
-                  Rendering styled A4 pages...
+                  Rendering styled A4 PDF pages...
                 </p>
               </div>
             </div>
@@ -272,7 +279,7 @@ export const DocxToPdfModal: React.FC<DocxToPdfModalProps> = ({
                   className="py-3 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm cursor-pointer transition-all"
                 >
                   <Eye className="w-4 h-4" />
-                  <span>Read / Open</span>
+                  <span>Open in PDF Reader</span>
                 </button>
 
                 <button
@@ -335,7 +342,7 @@ export const DocxToPdfModal: React.FC<DocxToPdfModalProps> = ({
               }}
               className="px-4 py-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer"
             >
-              Convert Another Word File
+              Open Another Doc File
             </button>
           )}
         </div>

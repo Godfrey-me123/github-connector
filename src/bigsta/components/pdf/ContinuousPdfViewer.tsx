@@ -15,6 +15,7 @@ import {
   PanelLeftClose,
   PanelLeft,
   Loader2,
+  LayoutGrid,
 } from "lucide-react";
 
 export interface ContinuousPdfViewerProps {
@@ -27,6 +28,7 @@ export interface ContinuousPdfViewerProps {
   onToggleFitWidth: () => void;
   activePageNumber: number;
   onActivePageChange: (page: number) => void;
+  onToggleGridView?: () => void;
 }
 
 interface PageRenderItem {
@@ -46,6 +48,7 @@ export const ContinuousPdfViewer: React.FC<ContinuousPdfViewerProps> = ({
   onToggleFitWidth,
   activePageNumber,
   onActivePageChange,
+  onToggleGridView,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [pageItems, setPageItems] = useState<PageRenderItem[]>([]);
@@ -478,8 +481,20 @@ export const ContinuousPdfViewer: React.FC<ContinuousPdfViewerProps> = ({
           </button>
         </div>
 
-        {/* Right: Text Search Toggle */}
-        <div className="flex items-center gap-1">
+        {/* Right: Grid View Toggle & Text Search */}
+        <div className="flex items-center gap-1.5">
+          {onToggleGridView && (
+            <button
+              type="button"
+              onClick={onToggleGridView}
+              className="p-1.5 px-2 rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/50 hover:bg-purple-100 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 font-bold flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
+              title="Switch to Grid View (Page Reordering & Multi-Select)"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Grid View</span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => setShowSearch(!showSearch)}

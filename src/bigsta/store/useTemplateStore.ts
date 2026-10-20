@@ -499,7 +499,8 @@ interface TemplateState {
     | "billing"
     | "settings"
     | "pdf_viewer"
-    | "pdf_library";
+    | "pdf_library"
+    | "docx_to_pdf";
   currentTemplate: CardTemplate;
   frontPopulatedTemplate: CardTemplate | null;
   backPopulatedTemplate: CardTemplate | null;

@@ -24,6 +24,8 @@ import {
   X,
   FileCheck,
   ArrowRightLeft,
+  LayoutGrid,
+  ScrollText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTemplateStore } from "../store/useTemplateStore";
@@ -38,6 +40,7 @@ import { RearrangePagesModal } from "./pdf/RearrangePagesModal";
 import { DocxToPdfModal } from "./pdf/DocxToPdfModal";
 import { PdfPageManager } from "./pdf/PdfPageManager";
 import { ContinuousPdfViewer } from "./pdf/ContinuousPdfViewer";
+import { PdfGridView } from "./pdf/PdfGridView";
 
 // Initialize worker safely from local bundled asset for 100% offline support
 if (typeof window !== "undefined") {
@@ -58,6 +61,7 @@ export const PDFViewerScreen: React.FC = () => {
   const [scale, setScale] = useState<number>(1.0);
   const [rotation, setRotation] = useState<number>(0);
   const [fitToWidth, setFitToWidth] = useState<boolean>(true);
+  const [viewMode, setViewMode] = useState<"continuous" | "grid">("continuous");
 
   // In-memory raw bytes for instant page manipulation (remove, merge, rearrange)
   const [rawPdfBytes, setRawPdfBytes] = useState<ArrayBuffer | null>(null);
@@ -665,21 +669,21 @@ export const PDFViewerScreen: React.FC = () => {
                   </div>
                 </button>
 
-                {/* Tool 2: Convert Word to PDF */}
+                {/* Tool 2: Open Doc File */}
                 <button
                   type="button"
                   onClick={() => setShowDocxModal(true)}
                   className="p-4 bg-white dark:bg-[#1E293B] hover:bg-blue-50/60 dark:hover:bg-blue-950/30 border-2 border-slate-200 dark:border-slate-800 hover:border-blue-500 rounded-2xl text-left transition-all shadow-2xs hover:shadow-sm flex flex-col justify-between gap-3 group cursor-pointer"
                 >
                   <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center group-hover:scale-105 transition-transform">
-                    <FileCheck className="w-5 h-5" />
+                    <FolderOpen className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="text-xs font-black text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                      Word to PDF
+                      Open Doc File
                     </h3>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
-                      Convert .docx to clean A4 PDF
+                      Fetch .doc, .docx, or text file
                     </p>
                   </div>
                 </button>
@@ -974,12 +978,42 @@ export const PDFViewerScreen: React.FC = () => {
                     {currentFileTitle}
                   </h1>
                   <span className="text-[10px] text-slate-400">
-                    Continuous Scroll • {numPages} Page{numPages !== 1 ? "s" : ""}
+                    {viewMode === "grid" ? "Grid View" : "Continuous Scroll"} • {numPages} Page{numPages !== 1 ? "s" : ""}
                   </span>
+                </div>
+
+                {/* View Mode Segmented Control: Reader View vs Grid View */}
+                <div className="flex items-center bg-slate-100 dark:bg-slate-800 p-0.5 rounded-xl border border-slate-200 dark:border-slate-700 ml-1">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("continuous")}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      viewMode === "continuous"
+                        ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs"
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    }`}
+                    title="Continuous Vertical Reader"
+                  >
+                    <ScrollText className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Reader</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("grid")}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      viewMode === "grid"
+                        ? "bg-white dark:bg-slate-700 text-purple-600 dark:text-purple-400 shadow-2xs"
+                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    }`}
+                    title="Grid View (Sortable Thumbnails & Multi-Select)"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Grid View</span>
+                  </button>
                 </div>
               </div>
 
-              {/* Right: Quick Action Buttons (Page Manager, Saved Files, Print, Download) */}
+              {/* Right: Quick Action Buttons (Saved Files, Print, Download) */}
               <div className="flex items-center gap-1.5">
                 {/* Dedicated Drag-and-Drop Page Manager Button */}
                 <button
@@ -1085,18 +1119,33 @@ export const PDFViewerScreen: React.FC = () => {
                   </button>
                 </div>
 
-                {/* 3. Open Drag-and-Drop Page Manager Modal */}
+                {/* 3. Grid View Toggle (Sortable Thumbnails & Multi-Select) */}
+                <button
+                  type="button"
+                  onClick={() => setViewMode(viewMode === "grid" ? "continuous" : "grid")}
+                  className={`px-2.5 py-1.5 rounded-lg font-black flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs border ${
+                    viewMode === "grid"
+                      ? "bg-purple-600 text-white border-purple-600"
+                      : "bg-white dark:bg-slate-800 hover:bg-purple-50 dark:hover:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-slate-200 dark:border-slate-700 hover:border-purple-300"
+                  }`}
+                  title="Toggle Grid View for thumbnail reordering and multi-page selection"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>{viewMode === "grid" ? "Exit Grid View" : "Grid View (Organizer)"}</span>
+                </button>
+
+                {/* 4. Page Manager Modal */}
                 <button
                   type="button"
                   onClick={() => setShowPageManager(true)}
-                  className="px-2.5 py-1.5 bg-white dark:bg-slate-800 hover:bg-purple-50 dark:hover:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-slate-200 dark:border-slate-700 hover:border-purple-300 rounded-lg font-black flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
-                  title="Open drag-and-drop page manager"
+                  className="px-2.5 py-1.5 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-lg font-bold flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+                  title="Open drag-and-drop page manager dialog"
                 >
-                  <ArrowRightLeft className="w-3.5 h-3.5 text-purple-600" />
-                  <span>Page Manager (Drag &amp; Drop)</span>
+                  <ArrowRightLeft className="w-3.5 h-3.5 text-slate-500" />
+                  <span className="hidden sm:inline">Page Manager</span>
                 </button>
 
-                {/* 4. Merge More PDFs Button */}
+                {/* 5. Merge More PDFs Button */}
                 <button
                   type="button"
                   onClick={() => setShowMergeModal(true)}
@@ -1107,20 +1156,20 @@ export const PDFViewerScreen: React.FC = () => {
                   <span>+ Add &amp; Merge</span>
                 </button>
 
-                {/* 5. Convert Word to PDF */}
+                {/* 6. Open Doc File */}
                 <button
                   type="button"
                   onClick={() => setShowDocxModal(true)}
                   className="px-2.5 py-1.5 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-950/40 text-blue-600 dark:text-blue-400 border border-slate-200 dark:border-slate-700 hover:border-blue-300 rounded-lg font-bold flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
-                  title="Convert Word (.docx) document to PDF"
+                  title="Open and convert any document (.doc, .docx, .txt, .rtf) to PDF"
                 >
-                  <FileCheck className="w-3.5 h-3.5" />
-                  <span>Word to PDF</span>
+                  <FolderOpen className="w-3.5 h-3.5 text-blue-500" />
+                  <span>Open Doc File</span>
                 </button>
               </div>
 
               <div className="flex items-center gap-1.5 text-slate-500 text-[11px] font-semibold">
-                {/* 6. Switch / Open New PDF */}
+                {/* 7. Switch / Open New PDF */}
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
@@ -1133,21 +1182,39 @@ export const PDFViewerScreen: React.FC = () => {
             </div>
           </div>
 
-          {/* CONTINUOUS VERTICAL READING COMPONENT WITH REAL CANVAS SCALING */}
-          <ContinuousPdfViewer
-            pdfDoc={pdfDoc}
-            scale={scale}
-            rotation={rotation}
-            onScaleChange={setScale}
-            onRotationChange={setRotation}
-            fitToWidth={fitToWidth}
-            onToggleFitWidth={() => {
-              setFitToWidth(!fitToWidth);
-              if (!fitToWidth) setScale(1.0);
-            }}
-            activePageNumber={pageNumber}
-            onActivePageChange={setPageNumber}
-          />
+          {/* VIEWER CONTENT: CONTINUOUS VERTICAL READER OR SORTABLE THUMBNAIL GRID VIEW */}
+          {viewMode === "grid" ? (
+            <PdfGridView
+              pdfDoc={pdfDoc}
+              rawPdfBytes={rawPdfBytes}
+              fileName={currentFileTitle}
+              activePageNumber={pageNumber}
+              onJumpToPage={(p) => {
+                setPageNumber(p);
+                setViewMode("continuous");
+              }}
+              onSaveDocument={async (newBlob, updatedFileName, newBytes) => {
+                await handleFilePicked(newBlob, updatedFileName);
+              }}
+              onCloseGrid={() => setViewMode("continuous")}
+            />
+          ) : (
+            <ContinuousPdfViewer
+              pdfDoc={pdfDoc}
+              scale={scale}
+              rotation={rotation}
+              onScaleChange={setScale}
+              onRotationChange={setRotation}
+              fitToWidth={fitToWidth}
+              onToggleFitWidth={() => {
+                setFitToWidth(!fitToWidth);
+                if (!fitToWidth) setScale(1.0);
+              }}
+              activePageNumber={pageNumber}
+              onActivePageChange={setPageNumber}
+              onToggleGridView={() => setViewMode("grid")}
+            />
+          )}
         </div>
       )}
 

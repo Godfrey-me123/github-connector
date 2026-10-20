@@ -35,6 +35,7 @@ import { SettingsScreen } from "./components/SettingsScreen";
 import { PassportStudioScreen } from "./components/PassportStudioScreen";
 import { PDFViewerScreen } from "./components/PDFViewerScreen";
 import { PdfLibraryScreen } from "./components/PdfLibraryScreen";
+import { DocxToPdfScreen } from "./components/DocxToPdfScreen";
 import { ImageEditStudioScreen } from "./components/ImageEditStudioScreen";
 import { PaymentDashboard } from "./components/admin/PaymentDashboard";
 import { UnsavedChangesModal } from "./components/common/UnsavedChangesModal";
@@ -446,6 +447,10 @@ export default function App() {
 
   if (activeScreen === "pdf_library") {
     return <PdfLibraryScreen />;
+  }
+
+  if (activeScreen === "docx_to_pdf") {
+    return <DocxToPdfScreen onBack={() => useTemplateStore.getState().setActiveScreen("home")} />;
   }
 
   if (activeScreen === "nrc_zambia") {
