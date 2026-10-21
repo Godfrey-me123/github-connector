@@ -38,42 +38,6 @@ export const DownloadsScreen: React.FC = () => {
   const { authRole, setActiveScreen, consumeUsage, userPreferences, navigateSafely } =
     useTemplateStore();
 
-  if (authRole === "user") {
-    return (
-      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full text-center space-y-5 border border-slate-200 animate-in fade-in zoom-in duration-300">
-          <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl w-16 h-16 mx-auto flex items-center justify-center">
-            <DownloadCloud className="w-8 h-8" />
-          </div>
-          <div className="space-y-2">
-            <h2 className="text-lg font-bold text-slate-900">Downloads Center</h2>
-            <p className="text-sm text-slate-600 font-medium">
-              Downloads Center is currently in progress.
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => navigateSafely("home")}
-              className="flex-1 py-3 bg-[#2563EB] hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-md transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
-            >
-              <Home className="w-4 h-4" /> Home
-            </button>
-            <button
-              onClick={() => {
-                const store = useTemplateStore.getState();
-                if (typeof store.goBack === "function") store.goBack();
-                else store.setActiveScreen("home");
-              }}
-              className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm border border-slate-200 transition-all active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
-            >
-              <ArrowLeft className="w-4 h-4" /> Back
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const [downloads, setDownloads] = useState<DownloadRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -126,12 +90,27 @@ export const DownloadsScreen: React.FC = () => {
     if (e) e.stopPropagation();
     try {
       playNotificationSound();
-      const link = document.createElement("a");
-      link.download = record.fileName;
-      link.href = record.dataUrl || "#";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      if (record.blobData) {
+        const url = URL.createObjectURL(record.blobData);
+        const link = document.createElement("a");
+        link.download = record.fileName;
+        link.href = url;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      } else if (record.dataUrl && !record.dataUrl.startsWith("#")) {
+        const link = document.createElement("a");
+        link.download = record.fileName;
+        link.href = record.dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        setSuccessToast("File content is unavailable on this device.");
+        setTimeout(() => setSuccessToast(null), 3000);
+        return;
+      }
 
       if (record.status === "READY") {
         record.status = "DOWNLOADED";
@@ -149,42 +128,49 @@ export const DownloadsScreen: React.FC = () => {
 
   const handleShare = async (record: DownloadRecord, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    if (navigator.share) {
-      try {
+    try {
+      if (
+        record.blobData &&
+        navigator.canShare &&
+        navigator.canShare({
+          files: [
+            new File([record.blobData], record.fileName, {
+              type: record.blobData.type || "application/octet-stream",
+            }),
+          ],
+        })
+      ) {
+        const fileObj = new File([record.blobData], record.fileName, {
+          type: record.blobData.type || "application/octet-stream",
+        });
+        await navigator.share({
+          files: [fileObj],
+          title: record.fileName,
+        });
+        return;
+      } else if (navigator.share) {
         await navigator.share({
           title: record.fileName,
-          text: `BIGsta Document Export: ${record.fileName}`,
-          url: window.location.href,
+          text: `BIGsta Document: ${record.fileName}`,
         });
-      } catch (err) {
-        console.log("Share canceled or not supported", err);
+        return;
       }
-    } else {
-      navigator.clipboard.writeText(window.location.href);
-      setSuccessToast("Download link copied to clipboard");
-      setTimeout(() => setSuccessToast(null), 2500);
+    } catch (err: any) {
+      if (err?.name === "AbortError") return;
     }
+    // Fallback: download directly
+    handleDownload(record);
   };
 
   const handleRetry = async (record: DownloadRecord, e: React.MouseEvent) => {
     e.stopPropagation();
-    try {
-      record.status = "GENERATING";
-      record.progressPercent = 10;
-      await saveDownloadRecordDB(record);
-      setDownloads([...downloads]);
-
-      setTimeout(async () => {
-        record.status = "READY";
-        record.progressPercent = 100;
-        await saveDownloadRecordDB(record);
-        setDownloads([...downloads]);
-        setSuccessToast(`Regeneration complete for ${record.fileName}`);
-        setTimeout(() => setSuccessToast(null), 2500);
-      }, 1500);
-    } catch (err) {
-      console.error("Retry failed:", err);
+    if (!record.blobData) {
+      setSuccessToast("Original source is unavailable. Please re-import or convert the file.");
+      setTimeout(() => setSuccessToast(null), 3500);
+      return;
     }
+    setSuccessToast(`File is ready: ${record.fileName}`);
+    setTimeout(() => setSuccessToast(null), 2500);
   };
 
   // Grouping & Filtering
@@ -468,12 +454,17 @@ export const DownloadsScreen: React.FC = () => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setPreviewRecord(record);
-                            setZoomScale(1);
-                            setRotationAngle(0);
+                            if (record.format === "PDF" || record.fileName.toLowerCase().endsWith(".pdf")) {
+                              useTemplateStore.setState({ activePdf: record });
+                              setActiveScreen("pdf_viewer");
+                            } else {
+                              setPreviewRecord(record);
+                              setZoomScale(1);
+                              setRotationAngle(0);
+                            }
                           }}
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-1.5"
-                          title="Open document in app"
+                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                          title="Open document in reader"
                         >
                           <Eye className="w-4 h-4" /> Open
                         </button>

@@ -14,6 +14,8 @@ import {
   RefreshCw,
   Eye,
   AlertCircle,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useTemplateStore } from "../store/useTemplateStore";
@@ -24,6 +26,7 @@ import {
   deleteDownloadRecordDB,
 } from "../utils/idb";
 import { DocxToPdfModal } from "./pdf/DocxToPdfModal";
+import { PdfThumbnailCard } from "./pdf/PdfThumbnailCard";
 
 if (typeof window !== "undefined") {
   try {
@@ -38,6 +41,7 @@ export const PdfLibraryScreen: React.FC = () => {
   const [isImporting, setIsImporting] = useState(false);
   const [showDocxModal, setShowDocxModal] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [viewType, setViewType] = useState<"grid" | "list">("grid");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -219,95 +223,145 @@ export const PdfLibraryScreen: React.FC = () => {
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative mb-6">
-          <Search className="absolute left-3.5 top-3 text-slate-400 w-4 h-4" />
-          <input
-            type="text"
-            placeholder="Search documents by name..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1E293B] text-slate-800 dark:text-slate-100 text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        {/* Search & View Mode Toolbar */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-3 text-slate-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search documents by name..."
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1E293B] text-slate-800 dark:text-slate-100 text-xs font-medium focus:ring-2 focus:ring-blue-500 focus:outline-hidden shadow-2xs"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          <div className="flex items-center gap-1.5 self-end sm:self-auto bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+            <button
+              type="button"
+              onClick={() => setViewType("grid")}
+              className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
+                viewType === "grid"
+                  ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+              }`}
+              title="Grid View (Thumbnails)"
+            >
+              <LayoutGrid className="w-4 h-4" />
+              <span className="text-[11px]">Grid</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewType("list")}
+              className={`p-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all ${
+                viewType === "list"
+                  ? "bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-2xs"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+              }`}
+              title="List View"
+            >
+              <List className="w-4 h-4" />
+              <span className="text-[11px]">List</span>
+            </button>
+          </div>
         </div>
 
-        {/* PDF Items List */}
-        <div className="space-y-3 flex-1">
+        {/* PDF Items Grid or List */}
+        <div className="flex-1">
           {filteredPdfs.length > 0 ? (
-            filteredPdfs.map((pdf) => (
-              <div
-                key={pdf.id}
-                className="w-full p-4 bg-white dark:bg-[#1E293B] rounded-2xl shadow-2xs hover:shadow-sm border border-slate-200 dark:border-slate-800 transition-all flex flex-wrap items-center justify-between gap-4"
-              >
-                {/* Item Details (clickable to open in reader) */}
-                <div
-                  onClick={() => {
-                    useTemplateStore.setState({ activePdf: pdf });
-                    setActiveScreen("pdf_viewer");
-                  }}
-                  className="flex items-center gap-3.5 flex-1 min-w-[200px] cursor-pointer group"
-                >
-                  <div className="w-11 h-11 rounded-2xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                    <FileText className="w-6 h-6" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-bold text-xs sm:text-sm truncate text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                        {pdf.fileName}
-                      </p>
-                      {pdf.service === "Modified PDF" && (
-                        <span className="text-[9px] font-black px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 rounded shrink-0">
-                          Modified
-                        </span>
-                      )}
-                      {pdf.service === "DOCX to PDF" && (
-                        <span className="text-[9px] font-black px-1.5 py-0.5 bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 rounded shrink-0">
-                          Word Converted
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                      {pdf.pageCount && <span>{pdf.pageCount} pages •</span>}
-                      <span>{formatFileSize(pdf.sizeBytes)}</span>
-                      <span>• {pdf.lastModified ? new Date(pdf.lastModified).toLocaleDateString() : pdf.date}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      useTemplateStore.setState({ activePdf: pdf });
+            viewType === "grid" ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredPdfs.map((pdf) => (
+                  <PdfThumbnailCard
+                    key={pdf.id}
+                    pdf={pdf}
+                    onOpen={(target) => {
+                      useTemplateStore.setState({ activePdf: target });
                       setActiveScreen("pdf_viewer");
                     }}
-                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>Open</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleDownload(pdf)}
-                    className="p-2 text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-xl transition-colors cursor-pointer"
-                    title="Download a copy"
-                  >
-                    <Download className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setDeletingId(pdf.id)}
-                    className="p-2 text-slate-400 hover:text-red-500 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
-                    title="Remove from library"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+                    onDownload={handleDownload}
+                    onDelete={(target) => setDeletingId(target.id)}
+                  />
+                ))}
               </div>
-            ))
+            ) : (
+              <div className="space-y-3">
+                {filteredPdfs.map((pdf) => (
+                  <div
+                    key={pdf.id}
+                    className="w-full p-4 bg-white dark:bg-[#1E293B] rounded-2xl shadow-2xs hover:shadow-sm border border-slate-200 dark:border-slate-800 transition-all flex flex-wrap items-center justify-between gap-4"
+                  >
+                    {/* Item Details (clickable to open in reader) */}
+                    <div
+                      onClick={() => {
+                        useTemplateStore.setState({ activePdf: pdf });
+                        setActiveScreen("pdf_viewer");
+                      }}
+                      className="flex items-center gap-3.5 flex-1 min-w-[200px] cursor-pointer group"
+                    >
+                      <div className="w-11 h-11 rounded-2xl bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                        <FileText className="w-6 h-6" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-xs sm:text-sm truncate text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                            {pdf.fileName}
+                          </p>
+                          {pdf.service === "Modified PDF" && (
+                            <span className="text-[9px] font-black px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 rounded shrink-0">
+                              Modified
+                            </span>
+                          )}
+                          {pdf.service === "DOCX to PDF" && (
+                            <span className="text-[9px] font-black px-1.5 py-0.5 bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 rounded shrink-0">
+                              DOCX Converted
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                          {pdf.pageCount && <span>{pdf.pageCount} pages •</span>}
+                          <span>{formatFileSize(pdf.sizeBytes)}</span>
+                          <span>• {pdf.lastModified ? new Date(pdf.lastModified).toLocaleDateString() : pdf.date}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          useTemplateStore.setState({ activePdf: pdf });
+                          setActiveScreen("pdf_viewer");
+                        }}
+                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Open</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleDownload(pdf)}
+                        className="p-2 text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-xl transition-colors cursor-pointer"
+                        title="Download a copy"
+                      >
+                        <Download className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDeletingId(pdf.id)}
+                        className="p-2 text-slate-400 hover:text-red-500 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
+                        title="Remove from library"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
           ) : (
             <div className="bg-white dark:bg-[#1E293B] border border-dashed border-slate-200 dark:border-slate-800 rounded-3xl p-12 text-center space-y-3">
               <FileText className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto" />

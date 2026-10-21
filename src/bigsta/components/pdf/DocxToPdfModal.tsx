@@ -226,7 +226,7 @@ export const DocxToPdfModal: React.FC<DocxToPdfModalProps> = ({
               {/* Conversion Information */}
               <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 text-[11px] text-slate-500 dark:text-slate-400 space-y-1">
                 <p className="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-blue-500" />
+                  <FileCheck className="w-3.5 h-3.5 text-blue-500" />
                   <span>Universal Document to PDF Engine:</span>
                 </p>
                 <p>

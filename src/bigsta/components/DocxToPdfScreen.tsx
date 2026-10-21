@@ -244,7 +244,7 @@ export const DocxToPdfScreen: React.FC<DocxToPdfScreenProps> = ({ onBack }) => {
           <div className="absolute right-0 top-0 translate-x-12 -translate-y-8 w-64 h-64 bg-white/10 rounded-full blur-2xl pointer-events-none" />
           <div className="relative z-10 max-w-xl space-y-2">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/15 backdrop-blur-md rounded-full text-xs font-bold text-white mb-1">
-              <Sparkles className="w-3.5 h-3.5" />
+              <FileCheck className="w-3.5 h-3.5" />
               <span>Universal Document Converter</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black tracking-tight">
