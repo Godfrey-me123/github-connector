@@ -239,13 +239,18 @@ export async function convertDocxToPdf(
 
     await pdf.html(container, {
       html2canvas: {
-        scale: 1,
+        scale: 2, // Increase scale for higher quality and better rendering
         useCORS: true,
+        logging: false,
+        allowTaint: true,
       },
       width: 595,
       windowWidth: 595,
       autoPaging: "text",
     });
+
+    // Small delay to ensure all canvas operations are fully committed
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     const pageCount = pdf.getNumberOfPages();
     const outputBlob = pdf.output("blob");
