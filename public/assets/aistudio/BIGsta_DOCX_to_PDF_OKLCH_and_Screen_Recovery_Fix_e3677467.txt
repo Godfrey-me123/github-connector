@@ -1,0 +1,86 @@
+BIGsta — INDEPENDENT REPAIR PROMPT
+DOCX-to-PDF: Fix Unsupported OKLCH Error AND Restore the Entire Screen After Failure
+
+STRICT SCOPE
+Fix the DOCX-to-PDF error:
+“Attempting to parse an unsupported color function ‘oklch’”
+Also fix the related critical failure where, after this error occurs, the entire DOCX-to-PDF screen becomes unresponsive: Back, Open Recent Files, Convert, file selection, and other controls stop working.
+
+Only modify the DOCX-to-PDF workflow and directly necessary shared error-handling/rendering code. Preserve all unrelated BIGsta features, screens, routes, styling, roles, storage, PDF Library, Downloads Center, and existing functionality.
+
+FILES TO INSPECT FIRST
+- src/bigsta/utils/docxToPdf.ts
+- src/bigsta/components/DocxToPdfScreen.tsx
+- src/bigsta/components/pdf/DocxToPdfModal.tsx
+- src/bigsta/utils/idb.ts (only if needed to verify existing saved-file behavior)
+- package.json and the lockfile
+Inspect any directly related rendering helpers, recent-file handlers, modal logic, and screen-level loading/error state.
+
+A. TRACE AND FIX THE OKLCH COLOR ERROR
+1. Reproduce the error and trace the actual DOCX → HTML/CSS → PDF rendering pipeline. Identify which renderer and CSS declaration trigger it; do not guess.
+2. Verify installed jsPDF and HTML-rendering dependency versions, including html2canvas if used.
+3. Before the incompatible renderer receives HTML/CSS, normalize unsupported modern color syntax such as oklch(), oklab(), color(), lab(), and lch() when relevant.
+4. Prefer a standards-aware color parser/converter that is compatible with the project. Convert values to equivalent rgb(), rgba(), or hexadecimal colors where possible.
+5. Preserve the document's appearance as closely as possible. Do not turn every color black or remove all styling. If one value cannot be converted safely, apply a sensible fallback only to that declaration.
+6. Cover relevant inline styles, embedded style blocks, inherited/computed styles, CSS variables, and application theme styles if they are actually responsible.
+7. Keep normalization isolated to the DOCX-to-PDF conversion pipeline. Do not change global BIGsta styling.
+8. Update dependencies only if necessary and keep package.json and the lockfile consistent. Do not rely on undeclared transitive dependencies.
+
+B. FIX THE SCREEN BECOMING UNRESPONSIVE AFTER AN ERROR
+Treat this as a separate required defect, not as an automatic consequence of fixing oklch.
+
+1. Audit every asynchronous conversion/rendering path and all state transitions for loading, converting, rendering, error, preview, and completion.
+2. Ensure every operation uses try/catch/finally or an equivalent reliable cleanup path. Every exit path, including a thrown CSS parsing error, rejected promise, failed resource load, invalid DOCX, cancelled operation, or PDF validation failure, must release the busy state.
+3. Always reset conversion/loading flags in `finally`. Do not leave `isConverting`, `isLoading`, `isRendering`, disabled states, progress overlays, or modal locks stuck after failure.
+4. Catch errors at the correct boundary so an unsupported color or rendering exception is displayed as a recoverable error instead of becoming an unhandled promise rejection or crashing the screen.
+5. Keep the screen mounted and interactive after a failed conversion. The user must still be able to:
+   - Go Back or close the screen/modal.
+   - Open Recent Files.
+   - Choose another DOCX file.
+   - Retry Convert after selecting a valid file.
+   - Clear or replace the failed selection.
+   - Access any existing supported actions that are unrelated to the failed conversion.
+6. Ensure error overlays, progress overlays, and modal backdrops do not remain invisibly on top of the screen or intercept pointer/touch/keyboard events after failure.
+7. Ensure disabled controls are re-enabled correctly. Disable Convert only while a conversion is genuinely running or when required input is absent; never leave controls permanently disabled because of a previous error.
+8. If an operation is cancelled or a newer file is selected, prevent stale asynchronous results from overwriting the new state. Use a cancellation token, operation ID, or AbortController where applicable and supported.
+9. Clean up temporary object URLs, rendering canvases, event listeners, timers, and other resources on both success and failure. Do not revoke URLs while an active preview still needs them.
+10. Error handling must not reset or erase the user's unrelated saved files or recent-file history. Do not clear IndexedDB or the whole application state to recover from this error.
+11. Show a concise actionable error message. If the color normalization fallback succeeds, continue conversion. If it fails, show the error and leave the rest of the screen usable.
+12. Do not reload the whole application as a recovery strategy, and do not require the user to refresh the page to regain control.
+
+C. PRESERVE THE EXISTING CONVERSION AND FILE WORKFLOW
+- Keep DOCX-only file validation and existing file-picker behavior, except for directly necessary fixes.
+- Keep the existing Recent Files behavior and navigation.
+- Keep genuine PDF generation, validation, preview, IndexedDB saving, and download behavior.
+- Never create a fake, empty, or placeholder PDF and never display false success.
+- Do not replace the existing conversion implementation wholesale if a targeted correction can fix it.
+- Keep the interface consistent with BIGsta's existing PDF & Print section and responsive on mobile phones, tablets, laptops, and desktop computers.
+- Do not add AI/Sparkles icons or computer-specific labels.
+
+D. ACCEPTANCE TESTS
+Run and report actual results for these cases:
+1. A DOCX that previously triggered the unsupported oklch error now converts successfully, if the color can be normalized.
+2. If conversion still fails, the error is displayed and the screen remains responsive.
+3. After an error, Back works immediately.
+4. After an error, Open Recent Files works.
+5. After an error, Choose File and Convert can be used again.
+6. Repeated failures and retries do not leave controls disabled or stack overlays.
+7. A second valid DOCX can be converted after a first DOCX fails.
+8. Standard RGB, RGBA, hexadecimal, and named colors still render correctly.
+9. The resulting PDF is genuine, nonempty, opens in the existing PDF viewer, and downloads correctly.
+10. Saved PDFs and Recent Files are not deleted by error recovery.
+11. No unhandled promise rejection or uncaught rendering error remains.
+12. Relevant tests and the production build pass. If a test cannot be run, explicitly report that it was not run; do not claim success without evidence.
+
+E. REQUIRED FINAL REPORT
+Provide:
+- Verified root cause of the oklch parsing error.
+- Verified cause of the screen becoming unresponsive.
+- Exact files changed.
+- Color normalization/fallback strategy.
+- How loading state, overlays, disabled controls, and asynchronous cleanup were repaired.
+- Tests/build commands actually run and their real results.
+- Any remaining limitations.
+
+FINAL NON-NEGOTIABLE RULE
+Fix both the color parsing error and the screen recovery defect. A failed conversion must never make Back, Recent Files, file selection, or other unrelated screen controls unusable. Keep all unrelated BIGsta functionality intact.

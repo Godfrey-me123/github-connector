@@ -159,10 +159,9 @@ export async function convertDocxToPdf(
   } else if (fileNameLower.endsWith(".doc")) {
     onProgress?.("Parsing Word (.doc) document stream...");
     try {
-      // Try mammoth in case it's a docx renamed to .doc
-      const mammothResult = await mammoth.convertToHtml({ arrayBuffer });
-      if (mammothResult.value && mammothResult.value.trim().length > 20) {
-        rawHtml = mammothResult.value;
+      const mammothResultDoc = await mammoth.convertToHtml({ arrayBuffer });
+      if (mammothResultDoc.value && mammothResultDoc.value.trim().length > 20) {
+        rawHtml = mammothResultDoc.value;
       } else {
         rawHtml = extractTextFromBinaryDoc(arrayBuffer);
       }
@@ -202,37 +201,29 @@ export async function convertDocxToPdf(
 
   onProgress?.("Formatting pages for PDF generation...");
 
-  // Create an offscreen, styled rendering container representing A4 pages (794px width)
+  // Create an offscreen, styled rendering container
   const container = document.createElement("div");
+  container.className = "docx-pdf-content";
   container.style.position = "fixed";
   container.style.left = "-9999px";
   container.style.top = "0";
-  container.style.width = "794px"; // Standard A4 width at 96 DPI
+  container.style.width = "595px"; // A4 pt width
   container.style.backgroundColor = "#ffffff";
-  container.style.color = "#111827";
-  container.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
-  container.style.fontSize = "13px";
-  container.style.lineHeight = "1.6";
-  container.style.padding = "48px 56px";
+  container.style.padding = "40px";
   container.style.boxSizing = "border-box";
+  container.style.fontFamily = "sans-serif";
+  container.style.fontSize = "12pt";
+  container.style.lineHeight = "1.5";
+  container.style.color = "#000000";
 
   container.innerHTML = `
     <style>
-      .docx-pdf-content h1 { font-size: 24px; font-weight: 800; margin: 20px 0 10px 0; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; }
-      .docx-pdf-content h2 { font-size: 19px; font-weight: 700; margin: 16px 0 8px 0; color: #1e293b; }
-      .docx-pdf-content h3 { font-size: 15px; font-weight: 600; margin: 12px 0 6px 0; color: #334155; }
-      .docx-pdf-content p { margin: 0 0 10px 0; }
-      .docx-pdf-content table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 12px; }
-      .docx-pdf-content th, .docx-pdf-content td { border: 1px solid #cbd5e1; padding: 6px 10px; text-align: left; }
-      .docx-pdf-content th { background-color: #f1f5f9; font-weight: 700; }
-      .docx-pdf-content img { max-width: 100%; height: auto; display: block; margin: 12px auto; }
-      .docx-pdf-content ul, .docx-pdf-content ol { margin: 8px 0 12px 24px; padding: 0; }
-      .docx-pdf-content li { margin-bottom: 4px; }
-      .docx-pdf-content blockquote { border-left: 3px solid #3b82f6; margin: 12px 0; padding-left: 14px; color: #475569; font-style: italic; }
+      .docx-pdf-content h1 { font-size: 24pt; font-weight: bold; margin: 10pt 0; }
+      .docx-pdf-content h2 { font-size: 18pt; font-weight: bold; margin: 8pt 0; }
+      .docx-pdf-content p { margin: 6pt 0; }
+      .docx-pdf-content img { max-width: 100%; }
     </style>
-    <div class="docx-pdf-content">
-      ${rawHtml}
-    </div>
+    ${rawHtml}
   `;
 
   document.body.appendChild(container);
@@ -246,20 +237,14 @@ export async function convertDocxToPdf(
       format: "a4",
     });
 
-    await new Promise<void>((resolve, reject) => {
-      pdf.html(container, {
-        html2canvas: {
-          scale: 0.75, // Scale down from 794px to match A4 pt width (~595pt)
-          useCORS: true,
-          logging: false,
-        },
-        x: 0,
-        y: 0,
-        width: 595.28, // A4 width in pt
-        windowWidth: 794,
-        autoPaging: "text",
-        callback: () => resolve(),
-      }).catch(reject);
+    await pdf.html(container, {
+      html2canvas: {
+        scale: 1,
+        useCORS: true,
+      },
+      width: 595,
+      windowWidth: 595,
+      autoPaging: "text",
     });
 
     const pageCount = pdf.getNumberOfPages();
