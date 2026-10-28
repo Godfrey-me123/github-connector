@@ -1143,7 +1143,10 @@ export const CanvasWorkspace: React.FC = () => {
                   };
 
                   if (layer.type === "text" || layer.type === "licence_category") {
-                    const fontSizePx = mmToPx(layer.fontSize || 3.5, 300);
+                    // Calculate a dynamic scale factor based on container width (reference width 1024px)
+                    const fontScaleFactor = Math.max(0.7, Math.min(1.3, containerDimensions.width / 1024));
+                    const baseFontSizePx = mmToPx(layer.fontSize || 3.5, 300);
+                    const fontSizePx = baseFontSizePx * fontScaleFactor;
 
                     // Text width preset scaling (Normal, Condensed, Expanded)
                     const PRESET_SCALES: Record<string, number> = {
