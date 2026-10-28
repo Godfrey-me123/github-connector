@@ -1143,7 +1143,7 @@ export const CanvasWorkspace: React.FC = () => {
                   };
 
                   if (layer.type === "text" || layer.type === "licence_category") {
-                    const fontSizePx = (layer.fontSize || 3.5) * pxPerMm;
+                    const fontSizePx = mmToPx(layer.fontSize || 3.5, 300);
 
                     // Text width preset scaling (Normal, Condensed, Expanded)
                     const PRESET_SCALES: Record<string, number> = {

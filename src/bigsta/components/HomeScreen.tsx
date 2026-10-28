@@ -70,9 +70,12 @@ export const HomeScreen: React.FC = () => {
 
   // Load saved count on mount
   React.useEffect(() => {
-    loadSavedTemplates()
-      .then((list) => setSavedCount(list.length))
-      .catch(() => {});
+    // Non-blocking load
+    setTimeout(() => {
+      loadSavedTemplates()
+        .then((list) => setSavedCount(list.length))
+        .catch(() => {});
+    }, 100);
   }, [loadSavedTemplates]);
 
   // Color configurations for services

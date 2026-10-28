@@ -227,30 +227,6 @@ export async function forceLoadAppFonts(): Promise<void> {
     } catch {}
   }
 
-  // 3. Inject an offscreen DOM primer to force Android WebView / APK layout engine to rasterize
-  try {
-    if (!document.getElementById("bigsta-font-primer")) {
-      const primer = document.createElement("div");
-      primer.id = "bigsta-font-primer";
-      primer.setAttribute("aria-hidden", "true");
-      primer.style.cssText =
-        "position:absolute;left:-9999px;top:-9999px;opacity:0;pointer-events:none;z-index:-1;width:1px;height:1px;overflow:hidden;";
-      primer.innerHTML = `
-        <span style="font-family:'Manual Typewriter', monospace; font-weight:400;">Manual Typewriter Regular</span>
-        <span style="font-family:'Manual Typewriter', monospace; font-weight:700;">Manual Typewriter Bold</span>
-        <span style="font-family:'Manual Typewriter Regular', monospace; font-weight:400;">Manual Typewriter Regular</span>
-        <span style="font-family:'Courier Prime', monospace; font-weight:400;">Courier Prime Regular</span>
-        <span style="font-family:'Courier Prime', monospace; font-weight:700;">Courier Prime Bold</span>
-        <span style="font-family:'Special Elite', cursive, monospace; font-weight:400;">Special Elite Primer</span>
-        <span style="font-family:'Olympia Congress', monospace; font-weight:400;">Olympia Congress Primer</span>
-        <span style="font-family:'Cooper Black', serif; font-weight:400;">Cooper Black Primer</span>
-        <span style="font-family:'Cooper Black Regular', serif; font-weight:400;">Cooper Black Regular Primer</span>
-        <span style="font-family:'Cooper Black', serif; font-weight:400; font-style:italic;">Cooper Black Italic Primer</span>
-      `;
-      document.body?.appendChild(primer);
-    }
-  } catch {}
-
   // 4. Ensure document.fonts.ready has resolved
   if (typeof document !== "undefined" && document.fonts) {
     try {
