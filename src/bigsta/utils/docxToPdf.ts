@@ -1,6 +1,5 @@
 import mammoth from "mammoth";
-import { jsPDF } from "jspdf";
-import html2canvas from "html2canvas";
+import html2pdf from "html2pdf.js";
 
 export interface DocxConversionResult {
   blob: Blob;
@@ -16,6 +15,11 @@ function escapeHtml(text: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function normalizeColors(html: string): string {
+  // More robustly replace oklch color functions, even if they have space-separated arguments
+  return html.replace(/oklch\([^)]+\)/gi, "black");
 }
 
 function parseRtfToHtml(rtf: string): string {
@@ -223,7 +227,7 @@ export async function convertDocxToPdf(
       .docx-pdf-content p { margin: 6pt 0; }
       .docx-pdf-content img { max-width: 100%; }
     </style>
-    ${rawHtml}
+    ${normalizeColors(rawHtml)}
   `;
 
   document.body.appendChild(container);
@@ -231,36 +235,21 @@ export async function convertDocxToPdf(
   try {
     onProgress?.("Rendering PDF pages...");
 
-    const pdf = new jsPDF({
-      orientation: "portrait",
-      unit: "pt",
-      format: "a4",
-    });
+    const options = {
+      margin: 10,
+      filename: file.name.replace(/\.[a-zA-Z0-9]+$/i, "") + ".pdf",
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
 
-    await pdf.html(container, {
-      html2canvas: {
-        scale: 2, // Increase scale for higher quality and better rendering
-        useCORS: true,
-        logging: false,
-        allowTaint: true,
-      },
-      width: 595,
-      windowWidth: 595,
-      autoPaging: "text",
-    });
-
-    // Small delay to ensure all canvas operations are fully committed
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    const pageCount = pdf.getNumberOfPages();
-    const outputBlob = pdf.output("blob");
-    const outputName = file.name.replace(/\.[a-zA-Z0-9]+$/i, "") + ".pdf";
+    const pdfBlob: Blob = await html2pdf().set(options).from(container).outputPdf('blob');
 
     return {
-      blob: outputBlob,
-      fileName: outputName,
-      pageCount,
-      sizeBytes: outputBlob.size,
+      blob: pdfBlob,
+      fileName: options.filename,
+      pageCount: 0,
+      sizeBytes: pdfBlob.size,
     };
   } finally {
     if (container.parentNode) {

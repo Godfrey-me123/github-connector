@@ -263,6 +263,13 @@ export const DocxToPdfScreen: React.FC<DocxToPdfScreenProps> = ({ onBack }) => {
             <div className="flex-1">
               <p className="font-bold">Conversion Notice</p>
               <p className="mt-0.5 text-xs leading-relaxed">{errorMsg}</p>
+              <button
+                type="button"
+                onClick={() => setErrorMsg(null)}
+                className="mt-2 text-red-600 dark:text-red-400 font-bold hover:underline"
+              >
+                Dismiss & Try Again
+              </button>
             </div>
           </div>
         )}

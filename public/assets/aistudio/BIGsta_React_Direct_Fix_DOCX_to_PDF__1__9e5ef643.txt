@@ -1,0 +1,200 @@
+BIGsta — EXECUTE THIS DIRECT REACT FIX: DOC/DOCX TO PDF BLANK PAGES
+Priority: Critical. Make the changes in the existing React project now.
+Do not return a general plan, a list of alternative libraries, or a new
+disconnected demo.
+
+DECISION: USE ONE SHARED CLIENT-SIDE CONVERSION PIPELINE - DOCX parsing:
+mammoth - HTML-to-PDF conversion: html2pdf.js, using its html2canvas and
+jsPDF dependencies - UI integration: the existing React Convert to PDF
+screen and existing PDF preview/print/download/navigation flow - Runtime
+targets: Google AI Studio preview, production web deployment on Vercel,
+and Android APK/WebView Use the project’s existing compatible package
+versions if already installed. Do not create duplicate or conflicting
+dependencies. Do not introduce another competing converter. This
+pipeline targets DOCX. If BIGsta currently advertises legacy binary .doc
+support, do not pretend Mammoth supports .doc: preserve that feature
+only if the project already has a real .doc parser/converter, and show a
+clear unsupported-format message otherwise.
+
+1.  FIND THE EXACT SOURCE FILES FIRST Search the actual repository.
+    Identify the exact file paths for:
+
+-   React Convert to PDF page/component.
+-   File input and DOCX parsing handler.
+-   PDF-generation function.
+-   PDF preview, print, download, recent-file and navigation components.
+-   Shared CSS/theme styles affecting conversion.
+-   package.json, Vite/build settings, Vercel settings and Android
+    WebView/download integration. Search for mammoth, html2pdf,
+    html2canvas, jsPDF, docx, FileReader, ArrayBuffer, Blob,
+    createObjectURL, print, pdf and conversion button handlers. Edit the
+    real existing files. Do not invent filenames, build a parallel
+    screen, or stop after reporting likely causes.
+
+2.  FIX THE REACT DATA AND RENDER ORDER Implement this exact sequence in
+    the existing conversion handler: A. Validate that the selected file
+    is a non-empty .docx file. B. Read the file as an ArrayBuffer and
+    await completion. C. Call Mammoth’s browser API with the real bytes,
+    using mammoth.convertToHtml({ arrayBuffer }), and await the
+    result. D. Validate that the returned HTML/text has meaningful
+    content. If it is empty, stop and show a useful error. E. Render the
+    resulting HTML into a dedicated conversion container using React
+    state/refs or the project’s established rendering pattern. Do not
+    pass the React state value immediately after calling its setter;
+    state updates are asynchronous. F. Wait until React has committed
+    the content to the DOM. Use a controlled render-ready mechanism
+    (such as a ref plus useEffect/requestAnimationFrame) rather than an
+    arbitrary long timeout. G. Ensure the container is measurable and
+    visible to the rendering engine. It must not use display:none, zero
+    dimensions, or a stale/empty selector. Set a suitable white
+    background, readable text color, and document width. Keep the
+    container within the page layout or off-screen only if its layout
+    remains measurable and capture works. H. Wait for document fonts and
+    embedded images to finish loading where applicable; handle image
+    load failures without freezing conversion. Wait for layout to settle
+    before capture. I. Generate the PDF from the actual populated
+    container using html2pdf.js. Configure a sensible page format (A4),
+    portrait orientation by default, consistent margins, readable scale,
+    and page-break handling. Preserve paragraphs, headings, lists,
+    tables, images and multipage flow. Avoid creating blank page objects
+    without drawing the rendered content. J. Await generation and obtain
+    the final PDF Blob/output from the same operation. K. Validate that
+    the PDF Blob has non-zero size and a plausible page count, and
+    validate the rendered source container and capture dimensions. Do
+    not rely on file size/page count alone to prove visible content. L.
+    Only after successful validation, open the PDF preview and enable
+    Print/Download using the exact generated Blob. Create the object URL
+    once and manage its lifecycle correctly; do not revoke it before
+    preview/print use finishes. M. In all success/failure cases, restore
+    loading state and buttons in finally. Never navigate to an empty
+    preview or claim success when validation fails.
+
+3.  IMPLEMENT THE CORE CONVERSION WITH THESE LIBRARY APIS Use the
+    browser-compatible Mammoth API:
+    const result = await mammoth.convertToHtml({ arrayBuffer }); Use
+    result.value as the HTML. Preserve any existing appropriate Mammoth
+    style map and image handling. Do not parse a File object as if it
+    were an ArrayBuffer.
+
+Use html2pdf.js on the actual rendered element:
+const worker = html2pdf().set(options).from(conversionElement).toPdf();
+Then obtain the PDF Blob from the worker using its supported output API
+for the installed html2pdf.js version. If the existing UI requires jsPDF
+access, use the documented worker/get API supported by the installed
+version. Do not guess method signatures; check installed package
+documentation/types.
+
+Suggested baseline options to adapt and test: - margin: 10–12 mm -
+filename derived safely from the source filename - image type JPEG with
+sensible quality for embedded raster images - html2canvas scale: 2 where
+device memory permits - html2canvas backgroundColor: ‘#ffffff’ - jsPDF
+unit: ‘mm’, format: ‘a4’, orientation: ‘portrait’ - pagebreak modes that
+respect CSS and avoid splitting table rows where possible - useCORS only
+where appropriate; do not assume it bypasses browser security Do not
+force every document onto one giant canvas or shrink multipage content
+until unreadable. If html2pdf.js proves unsuitable for the existing
+document structures after testing, do not silently substitute a
+different library; report the precise blocker and stop before claiming
+the fix is complete.
+
+4.  FIX THE oklch ERROR IN THIS CONVERSION PATH The previous error was:
+    Attempting to parse an unsupported color "oklch". Find which
+    style/property and renderer causes this. Scope the fix to the
+    dedicated conversion container, not the entire BIGsta app.
+
+-   Avoid passing unsupported oklch()/oklab() values to html2canvas.
+-   Ensure computed foreground/background colors in the cloned or
+    conversion-specific styles are compatible RGB/RGBA/hex.
+-   Prefer explicit conversion-container styles for body, text,
+    headings, links, borders and table cells.
+-   If a style cloning/normalization step is needed, handle the actual
+    offending CSS properties safely; do not blindly replace arbitrary
+    CSS strings or globally modify the Tailwind/theme stylesheet.
+-   Keep contrast and content visibility.
+-   If normalization fails, show a recoverable error with diagnostic
+    context; never output a blank PDF as success.
+
+5.  REACT COMPONENT AND STATE REQUIREMENTS Keep the existing BIGsta
+    design and navigation. Implement conversion using the existing
+    component structure and state conventions.
+
+-   Add or reuse clear states: idle, reading, parsing, rendering,
+    generating, validating, success, error.
+-   Prevent double submission while conversion is running.
+-   Keep the selected source file available for retry when safe.
+-   Keep Back, Choose Another File, Retry, Recent Files, Preview, Print
+    and Download responsive.
+-   Ensure errors are caught and surfaced to the user, and console
+    diagnostics do not expose document contents.
+-   Do not let a rejected promise leave a spinner, disabled button,
+    modal, or screen stuck.
+-   Remove temporary DOM nodes and large canvas resources when safe.
+
+6.  WEB AND APK COMPATIBILITY The conversion must be in the shared React
+    code and must not depend on Google AI Studio-only APIs.
+
+-   Inspect package.json and the actual lockfile. Add only the needed
+    dependencies and avoid duplicate/conflicting versions.
+-   Ensure required packages are runtime dependencies and included in
+    the production build.
+-   Use browser-supported APIs available in target WebView versions;
+    test File input, Blob, object URLs, PDF preview, download and print
+    on Android.
+-   If the Android wrapper requires a native download/share bridge,
+    integrate with the project’s existing bridge instead of inventing a
+    new one.
+-   Keep file URLs, Blob URLs and generated bytes valid for the entire
+    preview/print lifecycle.
+-   Build the production Vite app and fix all resulting errors. Do not
+    claim APK compatibility solely because the browser preview works.
+
+7.  TEST BEFORE REPORTING SUCCESS Test real DOCX fixtures:
+
+-   A simple file with multiple paragraphs and headings.
+-   A file with a formatted table.
+-   A file with an embedded image.
+-   A multi-page file with long content/page breaks.
+-   A file with Unicode and non-English characters.
+-   A file that triggers the previous oklch error.
+-   Empty, corrupt and unsupported-format inputs. Open the output PDF
+    and visually verify the text is actually visible on every expected
+    page. Verify Convert, Preview, Print, Download, Back, Retry and
+    Recent Files after success and failure. Run the production build.
+    Test the deployed web app and APK/WebView when those environments
+    are available. Clearly identify any environment that could not
+    actually be tested.
+
+8.  PRESERVE ALL UNRELATED FEATURES Do not redesign BIGsta or change
+    authentication, PDF Library behavior, unrelated tools, branding, or
+    navigation. Reuse the existing preview/print/download/recent-file
+    logic if it is correct. Fix only the necessary conversion path and
+    any shared helper proven to cause the bug. Regression-test callers
+    if shared logic changes.
+
+9.  REQUIRED FINAL RESPONSE FROM THE AI BUILDER After implementing,
+    state:
+
+-   Exact file paths edited.
+-   Root cause found in the actual code.
+-   Exact fix implemented.
+-   Dependencies added/changed, if any.
+-   Production build result.
+-   Real DOCX test results, including tables, images and multipage
+    output.
+-   Separate verified status for Google AI Studio, Vercel production and
+    Android APK/WebView. Do not state a test passed if it was not run.
+    If an environment is unavailable, label it untested and provide the
+    remaining specific validation step.
+
+REFERENCES Mammoth.js: https://github.com/mwilliamson/mammoth.js
+html2pdf.js: https://github.com/eKoopmans/html2pdf.js html2canvas:
+https://html2canvas.hertzen.com/documentation jsPDF:
+https://github.com/parallax/jsPDF Vercel: https://vercel.com/docs
+Android WebView:
+https://developer.android.com/develop/ui/views/layout/webapps/webview
+
+ACCEPTANCE TEST A real DOCX with readable text must produce a PDF
+containing that readable text on the expected pages in the shared React
+implementation. An empty or invalid render must fail with a clear
+recoverable error. The actual source code must be changed and tested; a
+written explanation alone is not completion.

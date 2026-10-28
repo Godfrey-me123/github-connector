@@ -15,6 +15,7 @@ import {
   Scissors,
   GripVertical,
   ArrowRightLeft,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 
