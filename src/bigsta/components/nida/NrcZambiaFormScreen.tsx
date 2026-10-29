@@ -15,6 +15,7 @@ import { useTemplateStore } from "../../store/useTemplateStore";
 import { applyTemplateMapping } from "../../utils/templateMappingEngine";
 import { formatToDdMmYyyy, formatToDdMmYy, toTitleCase } from "../../utils/dateValidation";
 import { WorkflowStep, SubmissionStepId } from "./submissionWorkflow";
+import { saveGeneratedCardSupabase } from "../../services/supabase";
 
 export interface NrcZambiaFormData {
   nrcNumber: string;
@@ -493,6 +494,16 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({
         submittedAt: new Date().toISOString(),
       };
       await saveNidaSubmissionRecord(submissionRecord as any);
+
+      // Persist the NRC submission to the cloud database (photo/signature stay on device)
+      const { photoUrl, photo, signatureUrl, signature, officerSignatureUrl, officerSignature, officer_signature, ...nrcCloudData } = mappedFormData as any;
+      const savedToCloud = await saveGeneratedCardSupabase({
+        id: submissionRecord.id,
+        serviceType: "nrc_zambia",
+        cardData: { ...nrcCloudData, submittedAt: submissionRecord.submittedAt },
+        userId: (useTemplateStore.getState() as any).currentUser?.id ?? null,
+      });
+      if (!savedToCloud) console.warn("NRC record saved on this device only; cloud save failed.");
 
       const populatedFront = frontRes.populatedTemplate || frontTemplate;
       const populatedBack = backRes.populatedTemplate || backTemplate;
