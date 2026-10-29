@@ -1714,3 +1714,32 @@ export async function saveOwnProfileSupabase(
   }
   return true;
 }
+
+/** Save a generated ID card (e.g. Zambia NRC) to the cloud database. */
+export async function saveGeneratedCardSupabase(card: {
+  id: string;
+  serviceType: string;
+  cardData: Record<string, any>;
+  userId?: string | null;
+}): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const uid = card.userId && /^[0-9a-f-]{36}$/i.test(card.userId) ? card.userId : null;
+    const { error } = await withTimeout(
+      supabase.from("user_generated_cards").upsert({
+        id: card.id,
+        user_id: uid,
+        service_type: card.serviceType,
+        card_data: card.cardData,
+      }),
+    );
+    if (error) {
+      console.error("[Supabase] saveGeneratedCard failed:", error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error("[Supabase] saveGeneratedCard error:", err);
+    return false;
+  }
+}
