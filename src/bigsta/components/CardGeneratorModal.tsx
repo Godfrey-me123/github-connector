@@ -121,7 +121,7 @@ export const CardGeneratorModal: React.FC = () => {
     setIsRendering(true);
 
     if (outputType === "single") {
-      renderTemplateToCanvas(activeSingleTemplate, submittedData, 200)
+      renderTemplateToCanvas(activeSingleTemplate, submittedData, 150)
         .then((canvas) => {
           if (isMounted) {
             setSinglePreviewUrl(canvas.toDataURL("image/png"));
@@ -133,8 +133,8 @@ export const CardGeneratorModal: React.FC = () => {
         });
     } else {
       Promise.all([
-        renderTemplateToCanvas(resolvedFrontTemplate, submittedData, 96),
-        renderTemplateToCanvas(resolvedBackTemplate, submittedData, 96),
+        renderTemplateToCanvas(resolvedFrontTemplate, submittedData, 72),
+        renderTemplateToCanvas(resolvedBackTemplate, submittedData, 72),
       ])
         .then(([frontCanvas, backCanvas]) => {
           if (isMounted) {

@@ -232,7 +232,7 @@ export const DownloadsScreen: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 pt-6 space-y-6">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6 space-y-4 sm:space-y-6">
         {/* Success / Notification Toast */}
         {successToast && (
           <div className="bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-lg flex items-center justify-between text-xs font-medium animate-fadeIn">
@@ -250,7 +250,7 @@ export const DownloadsScreen: React.FC = () => {
         )}
 
         {/* Card 1: Downloads Summary */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
           <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
             <div>
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
@@ -308,7 +308,7 @@ export const DownloadsScreen: React.FC = () => {
         </div>
 
         {/* Card 2: Search & Filter Toolbar */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="relative w-full sm:w-72">
             <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
             <input
