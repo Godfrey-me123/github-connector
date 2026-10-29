@@ -1,48 +1,117 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import React, { useEffect } from "react";
-import { CheckCircle2 } from "lucide-react";
 import { useTemplateStore } from "./store/useTemplateStore";
-import { UploadScreen } from "./components/UploadScreen";
-import { TemplatesScreen } from "./components/TemplatesScreen";
-import { Toolbar } from "./components/Toolbar";
-import { LeftPanel } from "./components/LeftPanel";
-import { CanvasWorkspace } from "./components/CanvasWorkspace";
-import { RightPanel } from "./components/RightPanel";
-import { BottomStatusBar } from "./components/BottomStatusBar";
-import { TemplateLibraryModal } from "./components/TemplateLibraryModal";
-import { CardGeneratorModal } from "./components/CardGeneratorModal";
-import { ExportModal } from "./components/ExportModal";
-import { SaveTemplateModal } from "./components/SaveTemplateModal";
-import { MergeCardModal } from "./components/MergeCardModal";
-import { MobileNavBar } from "./components/MobileNavBar";
-import { MobileBottomSheet } from "./components/MobileBottomSheet";
-import { NidaFormScreen } from "./components/nida";
-import { NidaRequestFormScreen } from "./components/nida/NidaRequestFormScreen";
-import { DrivingLicenseFormScreen } from "./components/nida/DrivingLicenseFormScreen";
-import { NhifFormScreen } from "./components/nida/NhifFormScreen";
-import { NrcZambiaFormScreen } from "./components/nida/NrcZambiaFormScreen";
-import { NidaSuccessToast } from "./components/nida/NidaSuccessToast";
-import { HomeScreen } from "./components/HomeScreen";
-import { CardPreviewScreen } from "./components/CardPreviewScreen";
 import { PasskeyScreen } from "./components/auth/PasskeyScreen";
-import { PasskeyManagerModal } from "./components/auth/PasskeyManagerModal";
-import { ManualApplicationModal } from "./components/auth/ManualApplicationModal";
-import { RechargeModal } from "./components/auth/RechargeModal";
-import { UsageExhaustedBanner } from "./components/auth/UsageExhaustedBanner";
-import { DownloadsScreen } from "./components/DownloadsScreen";
-import { TokenBillingScreen } from "./components/billing/TokenBillingScreen";
-import { SettingsScreen } from "./components/SettingsScreen";
-import { PassportStudioScreen } from "./components/PassportStudioScreen";
-import { PDFViewerScreen } from "./components/PDFViewerScreen";
-import { PdfLibraryScreen } from "./components/PdfLibraryScreen";
-import { DocxToPdfScreen } from "./components/DocxToPdfScreen";
-import { ImageEditStudioScreen } from "./components/ImageEditStudioScreen";
-import { PaymentDashboard } from "./components/admin/PaymentDashboard";
-import { UnsavedChangesModal } from "./components/common/UnsavedChangesModal";
 import { StartupDisclaimerModal } from "./components/common/StartupDisclaimerModal";
-import { SuccessActivationModal } from "./components/common/SuccessActivationModal";
-
 import { forceLoadAppFonts } from "./utils/fonts";
+
+const lazyNamed = (loader: () => Promise<unknown>, exportName: string) =>
+  React.lazy(() =>
+    loader().then((module) => ({
+      default: (module as Record<string, React.ComponentType>)[exportName],
+    })),
+  );
+
+const UploadScreen = lazyNamed(() => import("./components/UploadScreen"), "UploadScreen");
+const TemplatesScreen = lazyNamed(() => import("./components/TemplatesScreen"), "TemplatesScreen");
+const Toolbar = lazyNamed(() => import("./components/Toolbar"), "Toolbar");
+const LeftPanel = lazyNamed(() => import("./components/LeftPanel"), "LeftPanel");
+const CanvasWorkspace = lazyNamed(() => import("./components/CanvasWorkspace"), "CanvasWorkspace");
+const RightPanel = lazyNamed(() => import("./components/RightPanel"), "RightPanel");
+const BottomStatusBar = lazyNamed(() => import("./components/BottomStatusBar"), "BottomStatusBar");
+const TemplateLibraryModal = lazyNamed(
+  () => import("./components/TemplateLibraryModal"),
+  "TemplateLibraryModal",
+);
+const CardGeneratorModal = lazyNamed(
+  () => import("./components/CardGeneratorModal"),
+  "CardGeneratorModal",
+);
+const ExportModal = lazyNamed(() => import("./components/ExportModal"), "ExportModal");
+const SaveTemplateModal = lazyNamed(
+  () => import("./components/SaveTemplateModal"),
+  "SaveTemplateModal",
+);
+const MergeCardModal = lazyNamed(() => import("./components/MergeCardModal"), "MergeCardModal");
+const MobileNavBar = lazyNamed(() => import("./components/MobileNavBar"), "MobileNavBar");
+const MobileBottomSheet = lazyNamed(
+  () => import("./components/MobileBottomSheet"),
+  "MobileBottomSheet",
+);
+const NidaFormScreen = lazyNamed(
+  () => import("./components/nida/NidaFormScreen"),
+  "NidaFormScreen",
+);
+const NidaRequestFormScreen = lazyNamed(
+  () => import("./components/nida/NidaRequestFormScreen"),
+  "NidaRequestFormScreen",
+);
+const DrivingLicenseFormScreen = lazyNamed(
+  () => import("./components/nida/DrivingLicenseFormScreen"),
+  "DrivingLicenseFormScreen",
+);
+const NhifFormScreen = lazyNamed(
+  () => import("./components/nida/NhifFormScreen"),
+  "NhifFormScreen",
+);
+const NrcZambiaFormScreen = lazyNamed(
+  () => import("./components/nida/NrcZambiaFormScreen"),
+  "NrcZambiaFormScreen",
+);
+const NidaSuccessToast = lazyNamed(
+  () => import("./components/nida/NidaSuccessToast"),
+  "NidaSuccessToast",
+);
+const HomeScreen = lazyNamed(() => import("./components/HomeScreen"), "HomeScreen");
+const CardPreviewScreen = lazyNamed(
+  () => import("./components/CardPreviewScreen"),
+  "CardPreviewScreen",
+);
+const PasskeyManagerModal = lazyNamed(
+  () => import("./components/auth/PasskeyManagerModal"),
+  "PasskeyManagerModal",
+);
+const ManualApplicationModal = lazyNamed(
+  () => import("./components/auth/ManualApplicationModal"),
+  "ManualApplicationModal",
+);
+const RechargeModal = lazyNamed(() => import("./components/auth/RechargeModal"), "RechargeModal");
+const UsageExhaustedBanner = lazyNamed(
+  () => import("./components/auth/UsageExhaustedBanner"),
+  "UsageExhaustedBanner",
+);
+const DownloadsScreen = lazyNamed(() => import("./components/DownloadsScreen"), "DownloadsScreen");
+const TokenBillingScreen = lazyNamed(
+  () => import("./components/billing/TokenBillingScreen"),
+  "TokenBillingScreen",
+);
+const SettingsScreen = lazyNamed(() => import("./components/SettingsScreen"), "SettingsScreen");
+const PassportStudioScreen = lazyNamed(
+  () => import("./components/PassportStudioScreen"),
+  "PassportStudioScreen",
+);
+const PDFViewerScreen = lazyNamed(() => import("./components/PDFViewerScreen"), "PDFViewerScreen");
+const PdfLibraryScreen = lazyNamed(
+  () => import("./components/PdfLibraryScreen"),
+  "PdfLibraryScreen",
+);
+const DocxToPdfScreen = lazyNamed(() => import("./components/DocxToPdfScreen"), "DocxToPdfScreen");
+const ImageEditStudioScreen = lazyNamed(
+  () => import("./components/ImageEditStudioScreen"),
+  "ImageEditStudioScreen",
+);
+const PaymentDashboard = lazyNamed(
+  () => import("./components/admin/PaymentDashboard"),
+  "PaymentDashboard",
+);
+const UnsavedChangesModal = lazyNamed(
+  () => import("./components/common/UnsavedChangesModal"),
+  "UnsavedChangesModal",
+);
+const SuccessActivationModal = lazyNamed(
+  () => import("./components/common/SuccessActivationModal"),
+  "SuccessActivationModal",
+);
 
 export default function App() {
   const {
