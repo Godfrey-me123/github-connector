@@ -75,7 +75,7 @@ export const DocxToPdfModal: React.FC<DocxToPdfModalProps> = ({
         timestamp: Date.now(),
         dataUrl: URL.createObjectURL(convResult.blob),
         blobData: convResult.blob,
-        status: "COMPLETED",
+        status: "READY",
         sizeBytes: convResult.sizeBytes,
         pageCount: convResult.pageCount,
         lastModified: Date.now(),
@@ -105,7 +105,8 @@ export const DocxToPdfModal: React.FC<DocxToPdfModalProps> = ({
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    // Give mobile browsers time to start the download before releasing the blob.
+    window.setTimeout(() => URL.revokeObjectURL(url), 1500);
     toast.success(`Downloaded: ${result.fileName}`);
   };
 

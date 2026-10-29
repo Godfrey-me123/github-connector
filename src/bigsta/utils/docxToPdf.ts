@@ -1,5 +1,6 @@
 import mammoth from "mammoth";
 import html2pdf from "html2pdf.js";
+import { PDFDocument } from "pdf-lib";
 
 export interface DocxConversionResult {
   blob: Blob;
@@ -208,10 +209,16 @@ export async function convertDocxToPdf(
   // Create an offscreen, styled rendering container
   const container = document.createElement("div");
   container.className = "docx-pdf-content";
-  container.style.position = "fixed";
-  container.style.left = "-9999px";
+  container.style.position = "absolute";
+  container.style.left = "0";
   container.style.top = "0";
-  container.style.width = "595px"; // A4 pt width
+  container.style.width = "794px"; // A4 CSS pixels at 96 DPI
+  container.style.minHeight = "1123px";
+  // html2canvas skips fully transparent elements. Keep the page in the DOM and
+  // render it behind the app while conversion is running so content is captured.
+  container.style.opacity = "1";
+  container.style.pointerEvents = "none";
+  container.style.zIndex = "-1";
   container.style.backgroundColor = "#ffffff";
   container.style.padding = "40px";
   container.style.boxSizing = "border-box";
@@ -244,11 +251,21 @@ export async function convertDocxToPdf(
     };
 
     const pdfBlob: Blob = await html2pdf().set(options).from(container).outputPdf('blob');
+    if (pdfBlob.size === 0) {
+      throw new Error("The PDF renderer produced an empty file.");
+    }
+
+    const generatedBytes = await pdfBlob.arrayBuffer();
+    const generatedPdf = await PDFDocument.load(generatedBytes);
+    const pageCount = generatedPdf.getPageCount();
+    if (pageCount === 0) {
+      throw new Error("The PDF renderer produced a document with no pages.");
+    }
 
     return {
       blob: pdfBlob,
       fileName: options.filename,
-      pageCount: 0,
+      pageCount,
       sizeBytes: pdfBlob.size,
     };
   } finally {

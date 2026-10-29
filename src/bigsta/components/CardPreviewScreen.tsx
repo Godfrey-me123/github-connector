@@ -259,7 +259,7 @@ export const CardPreviewScreen: React.FC = () => {
     setIsRendering(true);
 
     if (outputMode === "single") {
-      renderTemplateToCanvas(activeTemplate, activeFormData, 300)
+      renderTemplateToCanvas(activeTemplate, activeFormData, 150)
         .then((canvas) => {
           if (!isCancelled) {
             setPreviewDataUrl(canvas.toDataURL("image/png"));

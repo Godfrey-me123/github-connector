@@ -423,10 +423,27 @@ export const PdfLibraryScreen: React.FC = () => {
           isOpen={showDocxModal}
           onClose={() => setShowDocxModal(false)}
           onOpenPdf={async (blob, name) => {
-            await loadPdfs();
-            const matchingRecord = pdfs.find((p) => p.fileName === name);
+            const records = await getAllDownloadRecordsDB();
+            const matchingRecord = records.find((p) => p.fileName === name);
             if (matchingRecord) {
               useTemplateStore.setState({ activePdf: matchingRecord });
+            } else {
+              const objectUrl = URL.createObjectURL(blob);
+              useTemplateStore.setState({
+                activePdf: {
+                  id: `doc_pdf_open_${Date.now()}`,
+                  fileName: name,
+                  service: "DOCX to PDF",
+                  format: "PDF",
+                  date: new Date().toLocaleDateString(),
+                  timestamp: Date.now(),
+                  dataUrl: objectUrl,
+                  blobData: blob,
+                  status: "COMPLETED",
+                  sizeBytes: blob.size,
+                  lastModified: Date.now(),
+                },
+              });
             }
             setActiveScreen("pdf_viewer");
           }}
