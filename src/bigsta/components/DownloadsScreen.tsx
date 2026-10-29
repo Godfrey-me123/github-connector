@@ -174,7 +174,9 @@ export const DownloadsScreen: React.FC = () => {
   };
 
   // Grouping & Filtering
-  const readyDownloads = downloads.filter((d) => d.status === "READY" || d.status === "DOWNLOADED");
+  const readyDownloads = downloads.filter(
+    (d) => d.status === "READY" || d.status === "COMPLETED" || d.status === "DOWNLOADED",
+  );
   const processingDownloads = downloads.filter(
     (d) => d.status === "GENERATING" || d.status === "QUEUED",
   );
@@ -187,7 +189,9 @@ export const DownloadsScreen: React.FC = () => {
 
     if (!matchesSearch) return false;
 
-    if (statusFilter === "ready") return d.status === "READY" || d.status === "DOWNLOADED";
+    if (statusFilter === "ready") {
+      return d.status === "READY" || d.status === "COMPLETED" || d.status === "DOWNLOADED";
+    }
     if (statusFilter === "processing") return d.status === "GENERATING" || d.status === "QUEUED";
     if (statusFilter === "failed") return d.status === "FAILED";
 
@@ -449,7 +453,7 @@ export const DownloadsScreen: React.FC = () => {
                       >
                         <RefreshCw className="w-3.5 h-3.5" /> Retry
                       </button>
-                    ) : record.status === "READY" || record.status === "DOWNLOADED" ? (
+                    ) : record.status === "READY" || record.status === "COMPLETED" || record.status === "DOWNLOADED" ? (
                       <>
                         <button
                           onClick={(e) => {

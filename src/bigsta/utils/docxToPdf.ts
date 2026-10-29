@@ -214,7 +214,9 @@ export async function convertDocxToPdf(
   container.style.top = "0";
   container.style.width = "794px"; // A4 CSS pixels at 96 DPI
   container.style.minHeight = "1123px";
-  container.style.opacity = "0";
+  // html2canvas skips fully transparent elements. Keep the page in the DOM and
+  // render it behind the app while conversion is running so content is captured.
+  container.style.opacity = "1";
   container.style.pointerEvents = "none";
   container.style.zIndex = "-1";
   container.style.backgroundColor = "#ffffff";
