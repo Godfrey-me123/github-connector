@@ -131,6 +131,8 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
     try {
       const mergedPdf = await PDFDocument.create();
 
+      let mergedPageCount = 0;
+
       for (const item of files) {
         let bytes: ArrayBuffer;
         if (item.bytes) {
@@ -144,8 +146,15 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
         }
 
         const doc = await PDFDocument.load(bytes.slice(0), { ignoreEncryption: true });
-        const copiedPages = await mergedPdf.copyPages(doc, doc.getPageIndices());
+        const pageIndices = doc.getPageIndices();
+        if (pageIndices.length === 0) continue;
+        const copiedPages = await mergedPdf.copyPages(doc, pageIndices);
         copiedPages.forEach((page) => mergedPdf.addPage(page));
+        mergedPageCount += copiedPages.length;
+      }
+
+      if (mergedPageCount === 0) {
+        throw new Error("No readable pages were found in the selected PDF files.");
       }
 
       const mergedBytes = await mergedPdf.save();
