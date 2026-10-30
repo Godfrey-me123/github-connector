@@ -59,84 +59,68 @@ export default function App() {
 
   useEffect(() => {
     forceLoadAppFonts();
-
-    // Render immediately from local state/IndexedDB. Cloud data is a background
-    // enhancement and must never delay the first usable home screen.
+    fetchPasskeysFromSupabase();
     loadSavedTemplates();
+    loadTokenPackages();
+    loadWeeklyOffers();
 
     let unsubPkgs: (() => void) | null = null;
-    let idleHandle: number | null = null;
-    let cloudSyncStarted = false;
-    const startCloudSync = () => {
-      if (cloudSyncStarted || !navigator.onLine) return;
-      cloudSyncStarted = true;
-      fetchPasskeysFromSupabase();
-      loadTokenPackages();
-      loadWeeklyOffers();
+    let unsubOffers: (() => void) | null = null;
 
-      import("./services/supabase")
-        .then(({ subscribeTokenPackagesRealtime, subscribeWeeklyOffersRealtime }) => {
-          unsubPkgs = subscribeTokenPackagesRealtime((freshPkgs) => {
-            console.log("Realtime update: token packages received", freshPkgs);
-            if (freshPkgs && Array.isArray(freshPkgs)) {
-              const mapped = freshPkgs.map((p) => ({
-                id: p.id,
-                name: p.name,
-                usages: p.usages,
-                price: p.price,
-                description: p.description || "",
-                visibility: (p.visibility || "public") as "public" | "hidden",
-                active: p.is_active !== false,
-                sortOrder: p.sort_order ?? 0,
-                bonus: p.bonus ?? 0,
-                promotion: p.promotion || "",
-              }));
-              useTemplateStore.setState({ tokenPackages: mapped });
-            }
-          });
+    import("./services/supabase")
+      .then(({ subscribeTokenPackagesRealtime, subscribeWeeklyOffersRealtime }) => {
+        unsubPkgs = subscribeTokenPackagesRealtime((freshPkgs) => {
+          console.log("Realtime update: token packages received", freshPkgs);
+          if (freshPkgs && Array.isArray(freshPkgs)) {
+            const mapped = freshPkgs.map((p) => ({
+              id: p.id,
+              name: p.name,
+              usages: p.usages,
+              price: p.price,
+              description: p.description || "",
+              visibility: (p.visibility || "public") as "public" | "hidden",
+              active: p.is_active !== false,
+              sortOrder: p.sort_order ?? 0,
+              bonus: p.bonus ?? 0,
+              promotion: p.promotion || "",
+            }));
+            useTemplateStore.setState({ tokenPackages: mapped });
+          }
+        });
 
-          unsubOffers = subscribeWeeklyOffersRealtime((freshOffers) => {
-            if (freshOffers && Array.isArray(freshOffers)) {
-              const mapped = freshOffers.map((o) => ({
-                id: o.id,
-                title: o.title,
-                description: o.description || "",
-                tokens: o.tokens,
-                price: o.price,
-                services: o.services || [],
-                startDate: o.start_date,
-                endDate: o.end_date,
-                active: o.is_active !== false,
-              }));
-              useTemplateStore.setState({ weeklyOffers: mapped });
-            }
-          });
-        })
-        .catch(() => {});
+        unsubOffers = subscribeWeeklyOffersRealtime((freshOffers) => {
+          if (freshOffers && Array.isArray(freshOffers)) {
+            const mapped = freshOffers.map((o) => ({
+              id: o.id,
+              title: o.title,
+              description: o.description || "",
+              tokens: o.tokens,
+              price: o.price,
+              services: o.services || [],
+              startDate: o.start_date,
+              endDate: o.end_date,
+              active: o.is_active !== false,
+            }));
+            useTemplateStore.setState({ weeklyOffers: mapped });
+          }
+        });
+      })
+      .catch(() => {});
 
-      import("./services/supabase")
-        .then(({ supabase }) => {
-          if (!supabase) return;
-          templatesClient = supabase;
-          templatesChannel = supabase
-            .channel("realtime_templates")
-            .on("postgres_changes", { event: "*", schema: "public", table: "templates" }, () => {
-              loadSavedTemplates(true);
-            })
-            .subscribe();
-        })
-        .catch(() => {});
-    };
-
-    const scheduleCloudSync = () => {
-      if (typeof requestIdleCallback === "function") {
-        idleHandle = requestIdleCallback(startCloudSync, { timeout: 5000 });
-      } else {
-        idleHandle = window.setTimeout(startCloudSync, 1500);
-      }
-    };
-    scheduleCloudSync();
-    window.addEventListener("online", startCloudSync);
+    let templatesChannel: any = null;
+    let templatesClient: any = null;
+    import("./services/supabase")
+      .then(({ supabase }) => {
+        if (!supabase) return;
+        templatesClient = supabase;
+        templatesChannel = supabase
+          .channel("realtime_templates")
+          .on("postgres_changes", { event: "*", schema: "public", table: "templates" }, () => {
+            loadSavedTemplates();
+          })
+          .subscribe();
+      })
+      .catch(() => {});
 
     const refreshFromCloud = () => {
       if (document.visibilityState === "visible") {
@@ -147,11 +131,6 @@ export default function App() {
     document.addEventListener("visibilitychange", refreshFromCloud);
 
     return () => {
-      if (idleHandle !== null) {
-        if (typeof cancelIdleCallback === "function") cancelIdleCallback(idleHandle);
-        else window.clearTimeout(idleHandle);
-      }
-      window.removeEventListener("online", startCloudSync);
       if (unsubPkgs) unsubPkgs();
       if (unsubOffers) unsubOffers();
       if (templatesClient && templatesChannel) templatesClient.removeChannel(templatesChannel);
