@@ -104,10 +104,16 @@ export const DownloadsScreen: React.FC = () => {
         return;
       }
 
-      await triggerUniversalDownload({
+      const delivered = await triggerUniversalDownload({
         fileName: record.fileName,
         content: content,
       });
+
+      if (!delivered) {
+        setSuccessToast("Download is unavailable in this APK. Please update the app or enable storage access.");
+        setTimeout(() => setSuccessToast(null), 4000);
+        return;
+      }
 
       if (record.status === "READY" || record.status === "COMPLETED") {
         record.status = "DOWNLOADED";

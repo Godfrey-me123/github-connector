@@ -232,7 +232,7 @@ export default function App() {
         (window as any).JSInterface ||
         (window as any).BIGstaAndroid ||
         (window as any).WebAppInterface;
-      if (!android) return false;
+      if (!android || typeof fileName !== "string" || typeof base64Data !== "string" || !base64Data) return false;
       try {
         if (typeof android.saveFile === "function") {
           android.saveFile(fileName, base64Data);
