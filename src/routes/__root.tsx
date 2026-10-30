@@ -12,7 +12,6 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { forceLoadAppFonts } from "../bigsta/utils/fonts";
 
 function NotFoundComponent() {
   return (
@@ -173,7 +172,11 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   useEffect(() => {
-    forceLoadAppFonts();
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {
+        // Offline support is progressive enhancement; the app remains usable without it.
+      });
+    }
   }, []);
 
   return (
