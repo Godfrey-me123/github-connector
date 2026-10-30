@@ -59,6 +59,35 @@ migrateLegacySupabaseCache();
 
 const DEFAULT_TIMEOUT = 12000; // 12 seconds
 
+/** Canonical category contract shared by database rows and Storage paths. */
+export const TEMPLATE_CATEGORY_CONFIG: Record<string, { serviceType: string; folder: string }> = {
+  nida: { serviceType: "nida", folder: "nida" },
+  driving_license: { serviceType: "driving_license", folder: "driving_license" },
+  passport: { serviceType: "passport", folder: "passport" },
+  birth_certificate: { serviceType: "birth_certificate", folder: "birth_certificate" },
+  nhif: { serviceType: "nhif", folder: "nhif" },
+  nrc_zambia: { serviceType: "nrc_zambia", folder: "nrc_zambia" },
+  tin: { serviceType: "tin", folder: "tin" },
+  business_license: { serviceType: "business_license", folder: "business_license" },
+  heslb: { serviceType: "heslb", folder: "heslb" },
+  ajira: { serviceType: "ajira", folder: "ajira" },
+};
+
+export function normalizeTemplateCategory(value?: string | null): string {
+  const normalized = String(value || "custom")
+    .trim()
+    .toLowerCase()
+    .replace(/[\\s-]+/g, "_");
+  if (normalized === "driving_licence") return "driving_license";
+  if (normalized === "nrc") return "nrc_zambia";
+  return normalized || "custom";
+}
+
+export function getTemplateCategoryConfig(value?: string | null) {
+  const serviceType = normalizeTemplateCategory(value);
+  return TEMPLATE_CATEGORY_CONFIG[serviceType] || { serviceType, folder: serviceType };
+}
+
 async function withTimeout<T>(
   promise: Promise<T>,
   timeoutMs: number = DEFAULT_TIMEOUT,
@@ -463,10 +492,12 @@ END $$;
 export async function uploadBackgroundToSupabase(
   file: File | Blob,
   filename: string,
+  serviceType?: string,
 ): Promise<string | null> {
   if (!supabase) return null;
   try {
-    const cleanFilename = `${Date.now()}_${filename.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    const { folder } = getTemplateCategoryConfig(serviceType);
+    const cleanFilename = `${folder}/${Date.now()}_${filename.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
     const { data, error } = await supabase.storage.from("backgrounds").upload(cleanFilename, file, {
       cacheControl: "3600",
       upsert: true,
@@ -483,6 +514,35 @@ export async function uploadBackgroundToSupabase(
     console.error("Upload background failed:", err);
     return null;
   }
+}
+
+export async function registerBackgroundAssetSupabase(asset: {
+  id: string;
+  name: string;
+  url: string;
+  serviceType?: string;
+}): Promise<boolean> {
+  if (!supabase) return false;
+  const { serviceType } = getTemplateCategoryConfig(asset.serviceType);
+  const { error } = await supabase.from("background_assets").upsert({
+    id: asset.id,
+    name: asset.name,
+    url: asset.url,
+    service_type: serviceType,
+  });
+  return !error;
+}
+
+export async function fetchBackgroundAssetsSupabase(serviceType?: string): Promise<any[] | null> {
+  if (!supabase) return null;
+  const category = getTemplateCategoryConfig(serviceType).serviceType;
+  const { data, error } = await supabase
+    .from("background_assets")
+    .select("id, name, url, service_type, created_at")
+    .eq("service_type", category)
+    .order("created_at", { ascending: false });
+  if (error || !data) return null;
+  return data;
 }
 
 // Helper: Sync/Upsert Manual Request on Supabase
@@ -562,7 +622,7 @@ export async function sanitizeAndUploadTemplateBackground(template: any): Promis
         if (blob) {
           const safeId = (template.id || "tpl").replace(/[^a-zA-Z0-9_-]/g, "_");
           const filename = `${safeId}_bg_latest.png`; // Fixed filename
-          const publicUrl = await uploadBackgroundToSupabase(blob, filename);
+          const publicUrl = await uploadBackgroundToSupabase(blob, filename, template.serviceId);
           if (publicUrl) {
             return {
               ...template,
@@ -590,8 +650,9 @@ export async function saveUniversalTemplateSupabase(
 ): Promise<boolean> {
   if (!supabase) return false;
   try {
-    // Sanitize background and upload to Supabase Storage if needed
-    const cleanTemplate = await sanitizeAndUploadTemplateBackground(template);
+    const category = getTemplateCategoryConfig(serviceType).serviceType;
+    // Sanitize background and upload to the category-owned Storage folder.
+    const cleanTemplate = await sanitizeAndUploadTemplateBackground({ ...template, serviceId: category });
 
     // 1. Deactivate previous active version for this service_type & specific side (PROMPT 50.4)
     const sideValue = isUniversalBack ? "Back Side" : "Front Side";
@@ -600,7 +661,7 @@ export async function saveUniversalTemplateSupabase(
     const { data: activeRows } = await supabase
       .from("templates")
       .select("id, template_json")
-      .eq("service_type", serviceType)
+      .eq("service_type", category)
       .eq("is_universal", true)
       .eq("is_active", true);
     const sameSideIds = (activeRows || [])
@@ -649,10 +710,7 @@ export async function saveTemplateSupabase(template: any): Promise<boolean> {
 
     const { error } = await supabase.from("templates").upsert({
       id: cleanTemplate.id,
-      service_type:
-        cleanTemplate.serviceId ||
-        cleanTemplate.cardType?.toLowerCase().replace(" ", "_") ||
-        "custom",
+      service_type: getTemplateCategoryConfig(cleanTemplate.serviceId || cleanTemplate.cardType).serviceType,
       template_name: cleanTemplate.templateName || "Untitled Template",
       template_json: cleanTemplate,
       background_url: cleanTemplate.background?.src || null,
@@ -697,11 +755,12 @@ export async function fetchActiveUniversalTemplateSupabase(
 ): Promise<any | null> {
   if (!supabase) return null;
   try {
+    const category = getTemplateCategoryConfig(serviceType).serviceType;
     const sideValue = isBack ? "Back Side" : "Front Side";
     const { data, error } = await supabase
       .from("templates")
       .select("*")
-      .eq("service_type", serviceType)
+      .eq("service_type", category)
       .eq("is_universal", true)
       .eq("is_active", true)
       .eq("template_json->>side", sideValue)

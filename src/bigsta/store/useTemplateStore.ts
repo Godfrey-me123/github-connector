@@ -2141,7 +2141,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       );
       if (fallbackSample) return ensureTemplateFieldIds(fallbackSample);
 
-      return ensureTemplateFieldIds(SAMPLE_TEMPLATES[0]);
+      return null;
     },
 
     getUniversalBackTemplate: (serviceId: string) => {
@@ -2235,7 +2235,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       );
       if (fallbackSample) return ensureTemplateFieldIds(fallbackSample);
 
-      return ensureTemplateFieldIds(SAMPLE_TEMPLATES[1]);
+      return null;
     },
 
     saveUniversalFrontTemplate: async (serviceId: string, template: CardTemplate) => {
@@ -5125,10 +5125,64 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       get().pushHistoryState(updated);
     },
 
-    loadUploadedBackgrounds: async () => {
-      const bgs = await getAllBackgroundsDB();
-      set({ uploadedBackgrounds: bgs });
-    },
+  loadUploadedBackgrounds: async () => {
+  const category = (await import("../services/supabase")).getTemplateCategoryConfig(get().activeServiceId).serviceType;
+  const localBgs = await getAllBackgroundsDB();
+  const scopedLocal = localBgs.filter((bg: any) => bg.serviceType === category);
+  let cloudBgs: any[] = [];
+  try {
+    const { fetchBackgroundAssetsSupabase } = await import("../services/supabase");
+    const rows = await fetchBackgroundAssetsSupabase(category);
+    cloudBgs = (rows || []).map((row: any) => ({
+      id: row.id,
+      name: row.name || "Background",
+      src: row.url,
+      serviceType: row.service_type,
+      createdAt: row.created_at,
+      originalWidthPx: 0,
+      originalHeightPx: 0,
+      orientation: "landscape",
+    }));
+  } catch (error) {
+    console.warn("Category background fetch skipped:", error);
+  }
+  const merged = [...cloudBgs, ...scopedLocal.filter((local: any) => !cloudBgs.some((cloud) => cloud.id === local.id))];
+  set({ uploadedBackgrounds: merged });
+  },
+  
+  addUploadedBackground: async (bgData) => {
+  let finalSrc = bgData.src;
+  const serviceType = (await import("../services/supabase")).getTemplateCategoryConfig(get().activeServiceId).serviceType;
+  
+  try {
+  if (bgData.src && bgData.src.startsWith("data:")) {
+  const { uploadBackgroundToSupabase, registerBackgroundAssetSupabase, supabase } = await import("../services/supabase");
+  if (supabase) {
+  const res = await fetch(bgData.src);
+  const blob = await res.blob();
+  const id = "bg_" + Date.now() + "_" + Math.random().toString(36).substring(2, 6);
+  const cloudUrl = await uploadBackgroundToSupabase(blob, `${bgData.name}.png`, serviceType);
+  if (cloudUrl) {
+    finalSrc = cloudUrl;
+    await registerBackgroundAssetSupabase({ id, name: bgData.name, url: cloudUrl, serviceType });
+  }
+  }
+  }
+  } catch (e) {
+  console.warn("Cloud category background upload skipped, using local data URL", e);
+  }
+  
+  const newBg: UploadedBackground = {
+  ...bgData,
+  src: finalSrc,
+  serviceType,
+  id: "bg_" + Date.now() + "_" + Math.random().toString(36).substring(2, 6),
+  createdAt: new Date().toISOString(),
+  };
+  await saveBackgroundDB(newBg);
+  await get().loadUploadedBackgrounds();
+  return newBg;
+  },
 
     addUploadedBackground: async (bgData) => {
       let finalSrc = bgData.src;
