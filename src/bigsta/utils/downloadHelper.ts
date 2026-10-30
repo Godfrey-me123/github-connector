@@ -36,10 +36,11 @@ export function getAndroidBridge(): any {
  */
 export function isAndroidApp(): boolean {
   if (typeof window === "undefined") return false;
+  const userAgent = navigator.userAgent || "";
   return Boolean(
     getAndroidBridge() ||
     typeof (window as any).saveFileNatively === "function" ||
-    (/Android/i.test(navigator.userAgent) && /wv|BIGsta/i.test(navigator.userAgent)),
+    /Android/i.test(userAgent) && (/;\s*wv\)/i.test(userAgent) || /BIGsta/i.test(userAgent)),
   );
 }
 
@@ -225,6 +226,14 @@ export async function triggerUniversalDownload(
       );
       return true;
     }
+  }
+
+  // A native WebView without a working save bridge must not receive an anchor download.
+  // Android WebViews commonly delegate that navigation to an unavailable Activity and
+  // terminate the APK. Fail safely instead of falling through to the browser path.
+  if (isAndroidApp()) {
+    console.warn("[downloadHelper] Native download bridge unavailable; skipping WebView anchor fallback.");
+    return false;
   }
 
   // Step 3: Web Browser Download Delivery
