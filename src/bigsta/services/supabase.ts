@@ -7,27 +7,12 @@ const FALLBACK_URL = "https://yjnvjuouxzfrhlqzstlp.supabase.co";
 const FALLBACK_ANON =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlqbnZqdW91eHpmcmhscXpzdGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0MDg3MzQsImV4cCI6MjEwNTk4NDczNH0.VcGYMKh8yMSGUNzNnlpNcIhlEoC4A8q3WDEkmjEqU4o";
 
-// Read configuration from environment or fallback.
-// vite.config.ts maps the Supabase integration's injected names
-// (NEXT_PUBLIC_SUPABASE_* / SUPABASE_*) onto VITE_SUPABASE_* at build time,
-// but we also read the raw names here for robustness across contexts.
-const metaEnv = (import.meta as any).env || {};
-const procEnv = typeof process !== "undefined" ? process.env || {} : {};
-const supabaseUrl =
-  metaEnv.VITE_SUPABASE_URL ||
-  metaEnv.NEXT_PUBLIC_SUPABASE_URL ||
-  procEnv.VITE_SUPABASE_URL ||
-  procEnv.NEXT_PUBLIC_SUPABASE_URL ||
-  procEnv.SUPABASE_URL ||
-  FALLBACK_URL;
-const supabaseAnonKey =
-  metaEnv.VITE_SUPABASE_ANON_KEY ||
-  metaEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  procEnv.VITE_SUPABASE_ANON_KEY ||
-  procEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  procEnv.SUPABASE_ANON_KEY ||
-  metaEnv.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  FALLBACK_ANON;
+// The saved templates belong to the original project above. The Vercel/Supabase
+// integration may expose a different project during preview, so do not silently
+// switch projects and make the app appear empty; this app uses the legacy project
+// as its canonical data source until an explicit migration is completed.
+const supabaseUrl = FALLBACK_URL;
+const supabaseAnonKey = FALLBACK_ANON;
 
 // Devices that used the app before the move to the current Supabase project may
 // still hold cached template/background URLs pointing at the retired project.
@@ -114,9 +99,14 @@ export const isSupabaseConfigured = Boolean(
 
 // Initialize Supabase Client with persistent session handling
 export const supabase: SupabaseClient | null = createClient(
-  (metaEnv.VITE_SUPABASE_URL as string) || FALLBACK_URL,
-  (metaEnv.VITE_SUPABASE_PUBLISHABLE_KEY as string) || FALLBACK_ANON,
-  { auth: { persistSession: true, autoRefreshToken: true } },
+  supabaseUrl,
+  supabaseAnonKey,
+  {
+    auth: { persistSession: true, autoRefreshToken: true },
+    global: {
+      headers: { "x-client-info": "bigsta-template-sync" },
+    },
+  },
 );
 
 /**
