@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { Canvas, Image as FabricImage } from "fabric";
 import { PassportDocumentSpec, PASSPORT_SPECS } from "../../types/passport";
+import { triggerUniversalDownload } from "../../utils/downloadHelper";
 
 interface PassportToolProps {
   initialFile?: File | null;
@@ -474,12 +475,14 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
                 <Edit3 className="w-4 h-4" /> Annotation
               </button>
               <button
-                onClick={() => {
+                type="button"
+                onClick={async () => {
                   if (previewUrl) {
-                    const a = document.createElement("a");
-                    a.href = previewUrl;
-                    a.download = "passport.jpg";
-                    a.click();
+                    await triggerUniversalDownload({
+                      fileName: "BIGsta_passport.jpg",
+                      content: previewUrl,
+                      mimeType: "image/jpeg",
+                    });
                   }
                 }}
                 className="bg-slate-200 hover:bg-slate-300 text-slate-800 py-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-2xs cursor-pointer"

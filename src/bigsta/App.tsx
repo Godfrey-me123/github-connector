@@ -200,10 +200,39 @@ export default function App() {
     // 3. Native Storage Save Bridge
     (window as any).saveFileNatively = (fileName: string, base64Data: string) => {
       const android =
-        (window as any).AndroidInterface || (window as any).Android || (window as any).JSInterface;
-      if (android && typeof android.saveFile === "function") {
-        android.saveFile(fileName, base64Data);
-        return true;
+        (window as any).AndroidInterface ||
+        (window as any).Android ||
+        (window as any).JSInterface ||
+        (window as any).BIGstaAndroid ||
+        (window as any).WebAppInterface;
+      if (!android) return false;
+      try {
+        if (typeof android.saveFile === "function") {
+          android.saveFile(fileName, base64Data);
+          return true;
+        }
+        if (typeof android.downloadFile === "function") {
+          android.downloadFile(fileName, base64Data);
+          return true;
+        }
+        if (typeof android.saveBase64 === "function") {
+          android.saveBase64(fileName, base64Data);
+          return true;
+        }
+        if (typeof android.save === "function") {
+          android.save(fileName, base64Data);
+          return true;
+        }
+        if (typeof android.download === "function") {
+          android.download(fileName, base64Data);
+          return true;
+        }
+        if (typeof android.saveToGallery === "function") {
+          android.saveToGallery(base64Data, fileName);
+          return true;
+        }
+      } catch (e) {
+        console.warn("[Native APK Bridge] saveFile error:", e);
       }
       return false;
     };

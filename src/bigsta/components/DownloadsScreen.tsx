@@ -32,6 +32,7 @@ import {
   deleteDownloadRecordDB,
   saveDownloadRecordDB,
 } from "../utils/idb";
+import { triggerUniversalDownload } from "../utils/downloadHelper";
 import { UniversalBackButton } from "./common/UniversalBackButton";
 
 export const DownloadsScreen: React.FC = () => {
@@ -87,32 +88,28 @@ export const DownloadsScreen: React.FC = () => {
   };
 
   const handleDownload = async (record: DownloadRecord, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     try {
       playNotificationSound();
-      if (record.blobData) {
-        const url = URL.createObjectURL(record.blobData);
-        const link = document.createElement("a");
-        link.download = record.fileName;
-        link.href = url;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      } else if (record.dataUrl && !record.dataUrl.startsWith("#")) {
-        const link = document.createElement("a");
-        link.download = record.fileName;
-        link.href = record.dataUrl;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } else {
+      const content =
+        record.blobData ||
+        (record.dataUrl && !record.dataUrl.startsWith("#") ? record.dataUrl : null);
+
+      if (!content) {
         setSuccessToast("File content is unavailable on this device.");
         setTimeout(() => setSuccessToast(null), 3000);
         return;
       }
 
-      if (record.status === "READY") {
+      await triggerUniversalDownload({
+        fileName: record.fileName,
+        content: content,
+      });
+
+      if (record.status === "READY" || record.status === "COMPLETED") {
         record.status = "DOWNLOADED";
         await saveDownloadRecordDB(record);
         setDownloads([...downloads]);

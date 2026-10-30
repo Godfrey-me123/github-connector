@@ -15,6 +15,7 @@ import {
   Filter,
   Send,
 } from "lucide-react";
+import { triggerUniversalDownload } from "../../utils/downloadHelper";
 
 /*
  * SUPABASE DATABASE & STORAGE SETUP FOR USER FEEDBACK:
@@ -125,13 +126,10 @@ export const UserFeedbackAdminPanel: React.FC = () => {
 
   const handleDownloadAttachment = async (item: any) => {
     if (item.attachment_data) {
-      // Download Base64 data
-      const a = document.createElement("a");
-      a.href = item.attachment_data;
-      a.download = item.attachment_name || "feedback-attachment";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      await triggerUniversalDownload({
+        fileName: item.attachment_name || "feedback-attachment",
+        content: item.attachment_data,
+      });
       return;
     }
 
@@ -149,13 +147,10 @@ export const UserFeedbackAdminPanel: React.FC = () => {
           return;
         }
 
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(data);
-        a.download = item.attachment_name || "feedback-attachment";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+        await triggerUniversalDownload({
+          fileName: item.attachment_name || "feedback-attachment",
+          content: data,
+        });
       } catch (e: any) {
         alert("Download error: " + (e?.message || e));
       }

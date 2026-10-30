@@ -12,6 +12,7 @@ import {
   Check,
   RefreshCw,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useTemplateStore } from "../store/useTemplateStore";
 import { CardTemplate } from "../types";
 import {
@@ -208,7 +209,7 @@ export const CardGeneratorModal: React.FC = () => {
     const store = useTemplateStore.getState();
     const val = store.validateExportAccess(format);
     if (!val.allowed) {
-      alert(val.reason || "Export access not allowed. Please top up tokens.");
+      toast.error(val.reason || "Export access not allowed. Please top up tokens.");
       return;
     }
 
@@ -237,11 +238,12 @@ export const CardGeneratorModal: React.FC = () => {
 
       // 7. Only then consume token
       store.consumeUsage(description, undefined, 1);
+      toast.success(`${description} completed!`);
     } catch (e: any) {
       console.error("Export failed:", e);
       setDownloadState("FAILED");
       setDownloadError(e?.message || "Export generation failed. Token was NOT consumed.");
-      alert("Export failed: " + (e?.message || "Unknown error") + ". Token remains intact.");
+      toast.error("Export failed: " + (e?.message || "Unknown error") + ". Token remains intact.");
     } finally {
       setIsExporting(false);
     }

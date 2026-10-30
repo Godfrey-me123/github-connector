@@ -4,6 +4,7 @@ import { supabase } from "../../services/supabase";
 import { useTemplateStore } from "../../store/useTemplateStore";
 import { FloatingInput } from "./FloatingInput";
 import { ArrowLeft, Download, Loader2, CheckCircle2, AlertCircle, X, FileText } from "lucide-react";
+import { triggerUniversalDownload } from "../../utils/downloadHelper";
 
 const BUCKET = "nida_responses";
 
@@ -213,13 +214,10 @@ export const NidaRequestFormScreen: React.FC = () => {
       const { data, error } = await supabase.storage.from(BUCKET).download(filePath);
       if (error || !data) throw error || new Error("File not found in storage");
 
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(data);
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      await triggerUniversalDownload({
+        fileName: fileName,
+        content: data,
+      });
 
       await supabase.storage.from(BUCKET).remove([filePath]);
 
@@ -500,6 +498,7 @@ export const NidaRequestFormScreen: React.FC = () => {
 
                         return (
                           <button
+                            type="button"
                             key={downloadKey}
                             disabled={isDownloadingThis}
                             onClick={() => downloadIndividualFile(r, file.fileNum)}

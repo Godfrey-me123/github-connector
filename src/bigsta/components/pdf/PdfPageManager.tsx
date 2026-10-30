@@ -19,6 +19,7 @@ import {
   Eye,
 } from "lucide-react";
 import { toast } from "sonner";
+import { triggerUniversalDownload } from "../../utils/downloadHelper";
 
 export interface PdfPageManagerProps {
   isOpen: boolean;
@@ -261,14 +262,11 @@ export const PdfPageManager: React.FC<PdfPageManagerProps> = ({
       const finalName = activeFileName.replace(/(_reordered\d*)*\.pdf$/i, "") + "_reordered.pdf";
 
       if (triggerDownload) {
-        const url = URL.createObjectURL(newBlob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = finalName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        await triggerUniversalDownload({
+          fileName: finalName,
+          content: newBlob,
+          mimeType: "application/pdf",
+        });
       }
 
       if (onSave) {

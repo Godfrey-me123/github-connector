@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { OcrResult } from "../../types/imageTools";
 import { formatBytes } from "../../utils/imageProcessing";
+import { triggerUniversalDownload } from "../../../utils/downloadHelper";
 
 interface OcrToolProps {
   initialFile?: File | null;
@@ -81,17 +82,15 @@ export const OcrTool: React.FC<OcrToolProps> = ({ initialFile, onBack }) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleDownloadTxt = () => {
+  const handleDownloadTxt = async () => {
     if (!ocrResult?.extractedText || !file) return;
     const blob = new Blob([ocrResult.extractedText], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = file.name.replace(/\.[^/.]+$/, "") + "-ocr.txt";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const fileName = file.name.replace(/\.[^/.]+$/, "") + "-ocr.txt";
+    await triggerUniversalDownload({
+      fileName,
+      content: blob,
+      mimeType: "text/plain",
+    });
   };
 
   return (

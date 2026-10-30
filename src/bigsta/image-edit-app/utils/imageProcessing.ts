@@ -1,6 +1,7 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import { CropRect, WatermarkOptions, EnhanceOptions, ExportFormat } from "../types/imageTools";
 import { PDFDocument } from "pdf-lib";
+import { triggerUniversalDownload } from "../../utils/downloadHelper";
 
 /**
  * Compress PDF Document client-side
@@ -487,26 +488,36 @@ export async function enhanceImageCanvas(
 }
 
 /**
- * Trigger Browser Download for File & Auto Revoke Blob URL
+ * Trigger Safe Download for File & Auto Revoke Blob URL
  */
-export function downloadProcessedFile(
+export async function downloadProcessedFile(
   blobUrl: string,
   fileName: string,
   autoDeleteAfterMs: number = 3000,
 ) {
-  const link = document.createElement("a");
-  link.href = blobUrl;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  let content: Blob | string = blobUrl;
+  try {
+    if (blobUrl && blobUrl.startsWith("blob:")) {
+      const resp = await fetch(blobUrl);
+      content = await resp.blob();
+    }
+  } catch {
+    content = blobUrl;
+  }
 
-  // Auto clean up temporary blob URL from browser memory
+  await triggerUniversalDownload({
+    fileName,
+    content,
+  });
+
+  // Auto clean up temporary blob URL from browser memory after safe delay
   setTimeout(() => {
     try {
-      URL.revokeObjectURL(blobUrl);
+      if (blobUrl && blobUrl.startsWith("blob:")) {
+        URL.revokeObjectURL(blobUrl);
+      }
     } catch {
       // Ignore if already revoked
     }
-  }, autoDeleteAfterMs);
+  }, Math.max(autoDeleteAfterMs, 60000));
 }
