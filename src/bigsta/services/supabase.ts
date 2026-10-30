@@ -774,12 +774,20 @@ export async function fetchActiveUniversalTemplateSupabase(
 export async function fetchAllActiveTemplatesSupabase(): Promise<any[] | null> {
   if (!supabase) return null;
   try {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 5000);
     const { data, error } = await supabase
       .from("templates")
       .select("*")
-      .order("updated_at", { ascending: false });
+      .order("updated_at", { ascending: false })
+      .abortSignal(controller.signal);
+    window.clearTimeout(timeout);
 
-    if (error || !data || !Array.isArray(data)) return null;
+    if (error) {
+      console.warn("Template sync unavailable; using cached templates:", error.message);
+      return null;
+    }
+    if (!data || !Array.isArray(data)) return null;
 
     return data.map((d: any) => {
       let parsed = d.template_json;
@@ -807,8 +815,8 @@ export async function fetchAllActiveTemplatesSupabase(): Promise<any[] | null> {
       };
     });
   } catch (e) {
-    console.error("Error fetching all templates from Supabase:", e);
-    return [];
+    console.warn("Template sync timed out or failed; using cached templates:", e);
+    return null;
   }
 }
 
