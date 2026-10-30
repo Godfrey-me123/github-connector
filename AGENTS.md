@@ -17,3 +17,5 @@
 - Old Express endpoints live as server routes under `src/routes/api/` with the same URLs; SMS webhook also at `/api/public/payment-sms` — so existing client fetches keep working.
 - Webhook secret/settings persist in `system_settings` (ids `webhook_secret`, `webhook_settings`) — serverless workers keep no memory.
 - Legacy files in `src/bigsta` carry `// @ts-nocheck` until typed during the audit — project tsconfig is stricter than the original.
+- Backend-dependent actions call `ensureBackend()`/`checkBackend()` from `src/bigsta/services/connectivity.ts` (probes `/api/health?deep=1`) — `navigator.onLine` alone lies in WebViews and captive portals.
+- Service worker never caches `/api/*`; Supabase public storage images go to the persistent `bigsta-media` cache — so offline backgrounds survive version bumps.

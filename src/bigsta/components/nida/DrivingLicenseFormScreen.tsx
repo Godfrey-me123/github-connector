@@ -1,4 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
+import { checkBackend } from "../../services/connectivity";
 import React, { useState, useMemo, useEffect } from "react";
 import {
   Menu,
@@ -319,7 +320,8 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
     setIsWorkflowCompleted(false);
     setIsSubmissionModalOpen(true);
 
-    const isOnline = navigator.onLine;
+    // Probe the real server + database, not just the device network flag.
+    const isOnline = (await checkBackend(true)).state === "online";
     const hasCachedTemplates = resolvedFrontTpl && resolvedBackTpl;
 
     const updateStep = (
