@@ -1,4 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code
+import { MyRequestsPanel } from "./common/MyRequestsPanel";
 import React, { useState, useEffect } from "react";
 import { supabase } from "../services/supabase";
 import {
@@ -1071,6 +1072,7 @@ export const SettingsScreen: React.FC = () => {
                       : "Send Feedback to Admin"}
                   </button>
                 </form>
+                <MyRequestsPanel authKey={currentAuthKey} />
               </div>
             )}
 

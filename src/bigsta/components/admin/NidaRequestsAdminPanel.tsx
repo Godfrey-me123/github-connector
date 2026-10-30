@@ -1,4 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
+import { useAutoRefresh } from "../../hooks/useAutoRefresh";
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../services/supabase";
 import { Eye, Download, Send, RotateCcw, RefreshCw, X, MessageCircle } from "lucide-react";
@@ -61,6 +62,8 @@ export const NidaRequestsAdminPanel: React.FC = () => {
     else setRequests(data || []);
     setLoading(false);
   };
+
+  useAutoRefresh(() => fetchRequests());
 
   useEffect(() => {
     fetchRequests();

@@ -57,6 +57,33 @@ export default function App() {
     loadWeeklyOffers,
   } = useTemplateStore();
 
+  // Silently cache template images for offline/fast card generation (token holders only).
+  useEffect(() => {
+    const run = () => {
+      const st = useTemplateStore.getState();
+      import("./services/offlineTemplates")
+        .then(({ prefetchTemplatesSilently }) =>
+          prefetchTemplatesSilently(st, st.customTemplates || []),
+        )
+        .catch(() => {});
+    };
+    const t = setTimeout(run, 8000);
+    const unsub = useTemplateStore.subscribe((st, prev) => {
+      if (
+        st.customTemplates !== prev.customTemplates ||
+        st.activePasskeys !== prev.activePasskeys ||
+        st.currentAuthKey !== prev.currentAuthKey
+      )
+        run();
+    });
+    window.addEventListener("online", run);
+    return () => {
+      clearTimeout(t);
+      unsub();
+      window.removeEventListener("online", run);
+    };
+  }, []);
+
   useEffect(() => {
     forceLoadAppFonts();
     fetchPasskeysFromSupabase();

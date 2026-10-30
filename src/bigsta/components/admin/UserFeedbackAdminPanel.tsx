@@ -1,4 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
+import { useAutoRefresh } from "../../hooks/useAutoRefresh";
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../services/supabase";
 import {
@@ -77,6 +78,8 @@ export const UserFeedbackAdminPanel: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useAutoRefresh(() => fetchFeedbacks());
 
   useEffect(() => {
     fetchFeedbacks();

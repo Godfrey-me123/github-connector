@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useAutoRefresh } from "../../hooks/useAutoRefresh";
 import {
   Phone,
   MessageSquare,
@@ -17,6 +18,12 @@ import { useTemplateStore, ManualRequestItem } from "../../store/useTemplateStor
 export const ManualRequestsAdminTab: React.FC = () => {
   const { manualRequests, updateManualRequestStatus, deleteManualRequest, currentAuthKey } =
     useTemplateStore();
+  // Pull the latest requests from the database (not just this device's copy).
+  const refresh = () => useTemplateStore.getState().loadSavedTemplates(true);
+  React.useEffect(() => {
+    void refresh();
+  }, []);
+  useAutoRefresh(refresh);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 

@@ -555,7 +555,11 @@ export async function syncManualRequestSupabase(req: any): Promise<boolean> {
       whatsapp_number: req.whatsappNumber,
       normal_call_number: req.normalCallNumber || req.normalNumber || "",
       service_name: req.serviceName,
+      service_id: req.serviceId || null,
+      user_passkey: req.userPasskey || req.accountKey || null,
+      submitted_at: new Date(req.submittedAt || req.timestamp || Date.now()).toISOString(),
       status: req.status,
+      ...(req.adminNotes !== undefined ? { admin_notes: req.adminNotes } : {}),
     });
 
     if (error) {
@@ -576,7 +580,7 @@ export async function fetchManualRequestsSupabase(): Promise<any[]> {
     const { data, error } = await supabase
       .from("manual_requests")
       .select("*")
-      .order("id", { ascending: false });
+      .order("submitted_at", { ascending: false, nullsFirst: false });
     if (error || !data) return [];
     return data.map((d: any) => ({
       id: d.id,

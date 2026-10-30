@@ -1,4 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code
+import { useAutoRefresh } from "../../hooks/useAutoRefresh";
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../services/supabase";
 import { useTemplateStore } from "../../store/useTemplateStore";
@@ -115,6 +116,7 @@ export const NidaRequestFormScreen: React.FC = () => {
   useEffect(() => {
     loadMine();
   }, [currentAuthKey]);
+  useAutoRefresh(() => loadMine());
 
   const handleBack = () => {
     const store = useTemplateStore.getState();

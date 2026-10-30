@@ -72,7 +72,7 @@ self.addEventListener("fetch", (event) => {
   if (isSupabaseMedia(url)) {
     event.respondWith(
       caches.open(MEDIA_CACHE).then(async (cache) => {
-        const cached = await cache.match(request);
+        const cached = (await cache.match(request)) || (await cache.match(request.url));
         const network = fetch(request)
           .then((response) => {
             if (response.ok || response.type === "opaque") {
@@ -88,7 +88,18 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (url.origin !== self.location.origin) return;
+  // Other cross-origin images prefetched silently for offline templates.
+  if (url.origin !== self.location.origin) {
+    if (request.destination === "image" || /\.(png|jpe?g|webp|svg)$/i.test(url.pathname)) {
+      event.respondWith(
+        caches
+          .open(MEDIA_CACHE)
+          .then((cache) => cache.match(request.url))
+          .then((cached) => cached || fetch(request)),
+      );
+    }
+    return;
+  }
   // Never cache live data: API, payments, health probes.
   if (url.pathname.startsWith("/api/")) return;
 
