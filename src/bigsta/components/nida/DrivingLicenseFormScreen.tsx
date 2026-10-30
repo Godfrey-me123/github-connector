@@ -158,8 +158,12 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
   });
 
   // Resolved Universal Templates for background mapping (active in store)
-  const [resolvedFrontTpl, setResolvedFrontTpl] = useState<CardTemplate | null>(null);
-  const [resolvedBackTpl, setResolvedBackTpl] = useState<CardTemplate | null>(null);
+  const [resolvedFrontTpl, setResolvedFrontTpl] = useState<CardTemplate | null>(
+    () => SAMPLE_TEMPLATES.find((template) => template.id === "sample_driving_license_front") || null,
+  );
+  const [resolvedBackTpl, setResolvedBackTpl] = useState<CardTemplate | null>(
+    () => SAMPLE_TEMPLATES.find((template) => template.id === "sample_driving_license_back") || null,
+  );
 
   const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState(false);
   const [isSubmissionModalOpen, setIsSubmissionModalOpen] = useState(false);
