@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { RequestFilterBar, filterRequestRows } from "./RequestFilterBar";
 import { RefreshCw, Inbox } from "lucide-react";
 import { supabase } from "../../services/supabase";
 import { useAutoRefresh } from "../../hooks/useAutoRefresh";
@@ -54,6 +55,8 @@ export function MyRequestsPanel({ authKey }: { authKey?: string | null }) {
   const [rows, setRows] = useState<MyRequestRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
   const load = useCallback(async () => {
     if (!authKey || !supabase) return;
@@ -113,8 +116,18 @@ export function MyRequestsPanel({ authKey }: { authKey?: string | null }) {
           <Inbox className="h-4 w-4" /> You haven't sent any requests yet.
         </p>
       )}
+      {rows.length > 0 && (
+        <RequestFilterBar
+          rows={rows}
+          query={query}
+          onQuery={setQuery}
+          status={statusFilter}
+          onStatus={setStatusFilter}
+          placeholder="Search your requests…"
+        />
+      )}
       <ul className="space-y-2">
-        {rows.map((r) => (
+        {filterRequestRows(rows, query, statusFilter, ["title", "kind", "reply", "id"]).map((r) => (
           <li
             key={r.id}
             className="rounded-xl border border-slate-200 p-3 text-xs dark:border-white/10"

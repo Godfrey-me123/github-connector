@@ -1,4 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
+import { RequestFilterBar, filterRequestRows } from "../common/RequestFilterBar";
 import { useAutoRefresh } from "../../hooks/useAutoRefresh";
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../services/supabase";
@@ -50,6 +51,8 @@ export const NidaRequestsAdminPanel: React.FC = () => {
   const [file2, setFile2] = useState<File | null>(null);
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
   const fetchRequests = async () => {
     setLoading(true);
@@ -202,6 +205,16 @@ export const NidaRequestsAdminPanel: React.FC = () => {
         </button>
       </div>
 
+      {!loading && !error && requests.length > 0 && (
+        <RequestFilterBar
+          rows={requests}
+          query={query}
+          onQuery={setQuery}
+          status={statusFilter}
+          onStatus={setStatusFilter}
+          placeholder="Search name, NIDA no, passkey, WhatsApp…"
+        />
+      )}
       {loading ? (
         <p className="text-sm text-gray-500">Loading requests…</p>
       ) : error ? (
@@ -210,7 +223,22 @@ export const NidaRequestsAdminPanel: React.FC = () => {
         <p className="text-sm text-gray-500">No requests yet.</p>
       ) : (
         <div className="space-y-3">
-          {requests.map((r) => (
+          {filterRequestRows(requests, query, statusFilter, [
+            "requester_name",
+            "nida_no",
+            "requester_key",
+            "whatsapp_number",
+            "request_type",
+            "id",
+          ]).length === 0 && <p className="text-sm text-gray-500">No requests match.</p>}
+          {filterRequestRows(requests, query, statusFilter, [
+            "requester_name",
+            "nida_no",
+            "requester_key",
+            "whatsapp_number",
+            "request_type",
+            "id",
+          ]).map((r) => (
             <div key={r.id} className="border border-gray-200 rounded-xl p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>

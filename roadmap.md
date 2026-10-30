@@ -11,3 +11,4 @@
 - [ ] Stage 4 payments review — needs admin confirmation of current provider flow
 - [x] Silent offline template prefetch (only for users with tokens)
 - [x] Recent requests not showing — audit all user & admin request sections so every user request appears
+- [x] Search + status filters on user and admin request lists; live user↔admin round-trip verified
