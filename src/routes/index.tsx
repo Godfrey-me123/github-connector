@@ -25,18 +25,10 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-function Loading() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background text-muted-foreground">
-      Loading BIGsta…
-    </div>
-  );
-}
-
 function Index() {
   return (
-    <ClientOnly fallback={<Loading />}>
-      <Suspense fallback={<Loading />}>
+    <ClientOnly fallback={null}>
+      <Suspense fallback={null}>
         <BigstaApp />
       </Suspense>
     </ClientOnly>
