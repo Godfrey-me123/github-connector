@@ -1060,341 +1060,169 @@ export function safeLocalStorageSetItem(key: string, value: string): boolean {
 }
 
 export const useTemplateStore = create<TemplateState>((set, get) => {
-  const savedDefaultFrontId =
-    typeof window !== "undefined" ? localStorage.getItem("nida_default_front_template_id") : null;
-  const savedDefaultBackId =
-    typeof window !== "undefined" ? localStorage.getItem("nida_default_back_template_id") : null;
+  const savedDefaultFrontId = null;
+  const savedDefaultBackId = null;
 
-  const savedSelectedFrontId =
-    typeof window !== "undefined"
-      ? localStorage.getItem("nida_selected_front_template_id") ||
-        savedDefaultFrontId ||
-        "sample_tanzania_nida"
-      : savedDefaultFrontId || "sample_tanzania_nida";
-  const savedSelectedBackId =
-    typeof window !== "undefined"
-      ? localStorage.getItem("nida_selected_back_template_id") ||
-        savedDefaultBackId ||
-        "sample_tanzania_nida_back"
-      : savedDefaultBackId || "sample_tanzania_nida_back";
+  const savedSelectedFrontId = "sample_tanzania_nida";
+  const savedSelectedBackId = "sample_tanzania_nida_back";
 
-  const initialAuthRole: AuthRole = (() => {
-    if (typeof window === "undefined") return null;
-    try {
-      const stored = localStorage.getItem("bigsta_auth_role");
-      if (stored === "admin" || stored === "user") return stored;
-    } catch (e) {}
-    return null;
-  })();
+  const initialAuthRole: AuthRole = null;
+  const initialAuthKey: string | null = null;
+  const initialPasskeys: PasskeyItem[] = [];
+  const initialRegisteredUsers: RegisteredUser[] = DEFAULT_REGISTERED_USERS;
+  const initialPaymentRequests: PaymentRequest[] = DEFAULT_PAYMENT_REQUESTS;
+  const initialManualRequests: ManualRequestItem[] = DEFAULT_MANUAL_REQUESTS;
+  const initialTokenPackages: UsagePackage[] = NIDA_USAGE_PACKAGES;
+  const initialServicesList: ServiceData[] = INITIAL_SERVICES;
 
-  const initialAuthKey: string | null = (() => {
-    if (typeof window === "undefined") return null;
-    try {
-      return localStorage.getItem("bigsta_auth_key");
-    } catch (e) {}
-    return null;
-  })();
+  const DEFAULT_METHODS: ConfigurablePaymentMethod[] = [
+    {
+      id: "pm_mpesa",
+      name: "M-Pesa",
+      title: "Lipa kwa Simu / Till Number",
+      number: "0123 000 111",
+      accountName: "BIGSTA SERVICES LTD",
+      amount: "TSh 10,000",
+      instructions: "Dial *150*00# -> Pay Merchant (Lipa kwa Simu) -> Enter Till Number",
+      confirmMessage:
+        "Confirm after payment: Enter your transaction reference code below for instant verification.",
+      whatsappNumber: "+255 712 345 678",
+      irreversibleNotice: "Note: All mobile payments are final and irreversible once processed.",
+      customMessage: "Instant automated activation after SMS or reference confirmation.",
+      status: "active",
+    },
+    {
+      id: "pm_mixx",
+      name: "Mixx by Yas",
+      title: "Merchant Number",
+      number: "0123 000 222",
+      accountName: "BIGSTA SERVICES LTD",
+      amount: "TSh 10,000",
+      instructions: "Dial *150*01# -> Pay Merchant -> Enter Number",
+      confirmMessage:
+        "Confirm payment by uploading receipt screenshot or sending reference code.",
+      whatsappNumber: "+255 712 345 678",
+      irreversibleNotice: "Payment is strictly irreversible. Verify recipient before confirming.",
+      customMessage: "Available 24/7 with automatic token crediting.",
+      status: "active",
+    },
+    {
+      id: "pm_airtel",
+      name: "Airtel Money",
+      title: "Paybill / Agent Number",
+      number: "0123 000 333",
+      accountName: "BIGSTA SERVICES LTD",
+      amount: "TSh 10,000",
+      instructions: "Dial *150*60# -> Paybill -> Enter Business Number",
+      confirmMessage: "Confirm after payment: Reference code is required for instant tokens.",
+      whatsappNumber: "+255 712 345 678",
+      irreversibleNotice:
+        "Payment is irreversible. Double check the account name BIGSTA SERVICES LTD.",
+      customMessage: "Tokens credit immediately upon reference match.",
+      status: "active",
+    },
+    {
+      id: "pm_halopesa",
+      name: "HaloPesa",
+      title: "Agent / Till Number",
+      number: "0123 000 444",
+      accountName: "BIGSTA SERVICES LTD",
+      amount: "TSh 10,000",
+      instructions: "Dial *150*88# -> Send Money / Pay Merchant",
+      confirmMessage: "Confirm on WhatsApp or enter transaction ID below.",
+      whatsappNumber: "+255 712 345 678",
+      irreversibleNotice: "Payment is irreversible once submitted.",
+      customMessage: "Contact support if tokens do not appear within 2 minutes.",
+      status: "active",
+    },
+    {
+      id: "pm_lipanamba",
+      name: "Lipa Namba",
+      title: "Merchant Till Number",
+      number: "1234567",
+      accountName: "BIGSTA SERVICES LTD",
+      amount: "TSh 10,000",
+      instructions: "Pay via Lipa Namba merchant payment to till number 1234567",
+      confirmMessage: "Confirm after payment by entering your reference number.",
+      whatsappNumber: "+255 712 345 678",
+      irreversibleNotice: "Payment is irreversible once confirmed.",
+      customMessage: "Direct merchant payment across all networks.",
+      status: "active",
+    },
+  ];
 
-  const initialPasskeys: PasskeyItem[] = (() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const raw = localStorage.getItem("bigsta_passkeys");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          import("../services/supabase")
-            .then(({ syncPasskeySupabase }) => {
-              parsed.forEach((p) => {
-                if (p && p.key) {
-                  syncPasskeySupabase(normalizePasskeyItem(p));
-                }
-              });
-            })
-            .catch(() => {});
-        }
-        localStorage.removeItem("bigsta_passkeys");
-      }
-    } catch (e) {
-      try {
-        localStorage.removeItem("bigsta_passkeys");
-      } catch (err) {}
-    }
-    return [];
-  })();
+  const initialPaymentMethods: ConfigurablePaymentMethod[] = DEFAULT_METHODS;
 
-  const initialRegisteredUsers: RegisteredUser[] = (() => {
-    if (typeof window === "undefined") return DEFAULT_REGISTERED_USERS;
-    try {
-      const raw = localStorage.getItem("bigsta_registered_users");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {}
-    return DEFAULT_REGISTERED_USERS;
-  })();
+  const initialUserProfile: UserProfileSettings = { name: "", phone: "", email: "", region: "" };
 
-  const initialPaymentRequests: PaymentRequest[] = (() => {
-    if (typeof window === "undefined") return DEFAULT_PAYMENT_REQUESTS;
-    try {
-      const raw = localStorage.getItem("bigsta_payment_requests");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {}
-    return DEFAULT_PAYMENT_REQUESTS;
-  })();
+  const initialUserPreferences: UserPreferences = {
+    theme: "light",
+    language: "en",
+    fontSize: "standard",
+    paymentAlerts: true,
+    downloadAlerts: true,
+    systemAlerts: true,
+    downloadFolder: "Downloads/BIGsta",
+    autoSave: true,
+    openAfterDownload: false,
+    keepHistoryDays: 30,
+  };
 
-  const initialManualRequests: ManualRequestItem[] = (() => {
-    if (typeof window === "undefined") return DEFAULT_MANUAL_REQUESTS;
-    try {
-      const raw = localStorage.getItem("bigsta_manual_requests");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {}
-    return DEFAULT_MANUAL_REQUESTS;
-  })();
+  const initialAdminSettings: AdminSystemSettings = {
+    ocrProvider: "Local AI / Tesseract Engine",
+    ocrConfidenceThreshold: 85,
+    autoApprovalEnabled: true,
+    tokenPriceTsh: 2000,
+    tokenRewardBonus: 10,
+    maxDailyTokenLimit: 1000,
+    autoApprovalRules: "Auto approve reference matches with confidence > 85%",
+  };
 
-  const initialTokenPackages: UsagePackage[] = (() => {
-    if (typeof window === "undefined") return NIDA_USAGE_PACKAGES;
-    try {
-      const raw = localStorage.getItem("bigsta_token_packages");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {}
-    return NIDA_USAGE_PACKAGES;
-  })();
-
-  const initialServicesList: ServiceData[] = (() => {
-    if (typeof window === "undefined") return INITIAL_SERVICES;
-    try {
-      const raw = localStorage.getItem("bigsta_services");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {}
-    return INITIAL_SERVICES;
-  })();
-
-  const initialPaymentMethods: ConfigurablePaymentMethod[] = (() => {
-    const DEFAULT_METHODS: ConfigurablePaymentMethod[] = [
-      {
-        id: "pm_mpesa",
-        name: "M-Pesa",
-        title: "Lipa kwa Simu / Till Number",
-        number: "0123 000 111",
-        accountName: "BIGSTA SERVICES LTD",
-        amount: "TSh 10,000",
-        instructions: "Dial *150*00# -> Pay Merchant (Lipa kwa Simu) -> Enter Till Number",
-        confirmMessage:
-          "Confirm after payment: Enter your transaction reference code below for instant verification.",
-        whatsappNumber: "+255 712 345 678",
-        irreversibleNotice: "Note: All mobile payments are final and irreversible once processed.",
-        customMessage: "Instant automated activation after SMS or reference confirmation.",
-        status: "active",
-      },
-      {
-        id: "pm_mixx",
-        name: "Mixx by Yas",
-        title: "Merchant Number",
-        number: "0123 000 222",
-        accountName: "BIGSTA SERVICES LTD",
-        amount: "TSh 10,000",
-        instructions: "Dial *150*01# -> Pay Merchant -> Enter Number",
-        confirmMessage:
-          "Confirm payment by uploading receipt screenshot or sending reference code.",
-        whatsappNumber: "+255 712 345 678",
-        irreversibleNotice: "Payment is strictly irreversible. Verify recipient before confirming.",
-        customMessage: "Available 24/7 with automatic token crediting.",
-        status: "active",
-      },
-      {
-        id: "pm_airtel",
-        name: "Airtel Money",
-        title: "Paybill / Agent Number",
-        number: "0123 000 333",
-        accountName: "BIGSTA SERVICES LTD",
-        amount: "TSh 10,000",
-        instructions: "Dial *150*60# -> Paybill -> Enter Business Number",
-        confirmMessage: "Confirm after payment: Reference code is required for instant tokens.",
-        whatsappNumber: "+255 712 345 678",
-        irreversibleNotice:
-          "Payment is irreversible. Double check the account name BIGSTA SERVICES LTD.",
-        customMessage: "Tokens credit immediately upon reference match.",
-        status: "active",
-      },
-      {
-        id: "pm_halopesa",
-        name: "HaloPesa",
-        title: "Agent / Till Number",
-        number: "0123 000 444",
-        accountName: "BIGSTA SERVICES LTD",
-        amount: "TSh 10,000",
-        instructions: "Dial *150*88# -> Send Money / Pay Merchant",
-        confirmMessage: "Confirm on WhatsApp or enter transaction ID below.",
-        whatsappNumber: "+255 712 345 678",
-        irreversibleNotice: "Payment is irreversible once submitted.",
-        customMessage: "Contact support if tokens do not appear within 2 minutes.",
-        status: "active",
-      },
-      {
-        id: "pm_lipanamba",
-        name: "Lipa Namba",
-        title: "Merchant Till Number",
-        number: "1234567",
-        accountName: "BIGSTA SERVICES LTD",
-        amount: "TSh 10,000",
-        instructions: "Pay via Lipa Namba merchant payment to till number 1234567",
-        confirmMessage: "Confirm after payment by entering your reference number.",
-        whatsappNumber: "+255 712 345 678",
-        irreversibleNotice: "Payment is irreversible once confirmed.",
-        customMessage: "Direct merchant payment across all networks.",
-        status: "active",
-      },
-    ];
-    if (typeof window === "undefined") return DEFAULT_METHODS;
-    try {
-      const raw = localStorage.getItem("bigsta_payment_methods");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch (e) {}
-    return DEFAULT_METHODS;
-  })();
-
-  const initialUserProfile: UserProfileSettings = (() => {
-    if (typeof window === "undefined") return { name: "", phone: "", email: "", region: "" };
-    try {
-      const raw = localStorage.getItem("bigsta_user_profile");
-      if (raw) return JSON.parse(raw);
-    } catch (e) {}
-    return { name: "", phone: "", email: "", region: "" };
-  })();
-
-  const initialUserPreferences: UserPreferences = (() => {
-    if (typeof window === "undefined")
-      return {
-        theme: "light",
-        language: "en",
-        fontSize: "standard",
-        paymentAlerts: true,
-        downloadAlerts: true,
-        systemAlerts: true,
-        downloadFolder: "Downloads/BIGsta",
-        autoSave: true,
-        openAfterDownload: false,
-        keepHistoryDays: 30,
-      };
-    try {
-      const raw = localStorage.getItem("bigsta_user_preferences");
-      if (raw) return JSON.parse(raw);
-    } catch (e) {}
-    return {
-      theme: "light",
-      language: "en",
-      fontSize: "standard",
-      paymentAlerts: true,
-      downloadAlerts: true,
-      systemAlerts: true,
-      downloadFolder: "Downloads/BIGsta",
-      autoSave: true,
-      openAfterDownload: false,
-      keepHistoryDays: 30,
-    };
-  })();
-
-  const initialAdminSettings: AdminSystemSettings = (() => {
-    if (typeof window === "undefined")
-      return {
-        ocrProvider: "Local AI / Tesseract Engine",
-        ocrConfidenceThreshold: 85,
-        autoApprovalEnabled: true,
-        tokenPriceTsh: 2000,
-        tokenRewardBonus: 10,
-        maxDailyTokenLimit: 1000,
-        autoApprovalRules: "Auto approve reference matches with confidence > 85%",
-      };
-    try {
-      const raw = localStorage.getItem("bigsta_admin_settings");
-      if (raw) return JSON.parse(raw);
-    } catch (e) {}
-    return {
-      ocrProvider: "Local AI / Tesseract Engine",
-      ocrConfidenceThreshold: 85,
-      autoApprovalEnabled: true,
-      tokenPriceTsh: 2000,
-      tokenRewardBonus: 10,
-      maxDailyTokenLimit: 1000,
-      autoApprovalRules: "Auto approve reference matches with confidence > 85%",
-    };
-  })();
-
-  const initialUserPayments: UserPaymentSubmission[] = (() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const raw = localStorage.getItem("bigsta_user_payment_submissions");
-      if (raw) return JSON.parse(raw);
-    } catch (e) {}
-    return [
-      {
-        id: "sub_sample_1",
-        userId: "pk_user_1",
+  const initialUserPayments: UserPaymentSubmission[] = [
+    {
+      id: "sub_sample_1",
+      userId: "pk_user_1",
+      amount: 6000,
+      sender: "John Sample (0123456789)",
+      receiver: "BIGsta Services",
+      reference: "ABC1234567",
+      date: "2026-09-17",
+      submittedAt: "2026-09-17T00:00:00.000Z",
+      status: "verified",
+      extractedData: {
         amount: 6000,
-        sender: "John Sample (0123456789)",
-        receiver: "BIGsta Services",
+        sender: "John Sample",
+        receiver: "BIGsta",
         reference: "ABC1234567",
         date: "2026-09-17",
-        submittedAt: new Date(Date.now() - 86400000).toISOString(),
-        status: "verified",
-        extractedData: {
-          amount: 6000,
-          sender: "John Sample",
-          receiver: "BIGsta",
-          reference: "ABC1234567",
-          date: "2026-09-17",
-        },
-        tokensGranted: 3,
       },
-    ];
-  })();
+      tokensGranted: 3,
+    },
+  ];
 
-  const initialTokenHistory: TokenTransaction[] = (() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const raw = localStorage.getItem("bigsta_token_history");
-      if (raw) return JSON.parse(raw);
-    } catch (e) {}
-    return [
-      {
-        id: "th_1",
-        userId: "pk_user_1",
-        amount: 5,
-        reason: "Welcome Token Package Granted",
-        timestamp: new Date(Date.now() - 172800000).toISOString(),
-      },
-      {
-        id: "th_2",
-        userId: "pk_user_1",
-        amount: 3,
-        reason: "Payment Top-Up Verified (Ref: ABC1234567)",
-        timestamp: new Date(Date.now() - 86400000).toISOString(),
-      },
-      {
-        id: "th_3",
-        userId: "pk_user_1",
-        amount: -1,
-        reason: "Generated ID Card Export",
-        timestamp: new Date(Date.now() - 36000000).toISOString(),
-      },
-    ];
-  })();
+  const initialTokenHistory: TokenTransaction[] = [
+    {
+      id: "th_1",
+      userId: "pk_user_1",
+      amount: 5,
+      reason: "Welcome Token Package Granted",
+      timestamp: "2026-09-15T00:00:00.000Z",
+    },
+    {
+      id: "th_2",
+      userId: "pk_user_1",
+      amount: 3,
+      reason: "Payment Top-Up Verified (Ref: ABC1234567)",
+      timestamp: "2026-09-16T00:00:00.000Z",
+    },
+    {
+      id: "th_3",
+      userId: "pk_user_1",
+      amount: -1,
+      reason: "Generated ID Card Export",
+      timestamp: "2026-09-17T00:00:00.000Z",
+    },
+  ];
 
   return {
     activeScreen: "home",
