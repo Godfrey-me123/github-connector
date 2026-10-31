@@ -107,6 +107,8 @@ export const NidaFormScreen: React.FC<NidaFormScreenProps> = ({ onSuccess, onCan
     loadSavedTemplates,
     setLastNidaFormData,
     setActiveServiceId,
+    loadServiceTemplates,
+    customTemplates,
     authRole,
   } = useTemplateStore();
 
@@ -140,8 +142,9 @@ export const NidaFormScreen: React.FC<NidaFormScreenProps> = ({ onSuccess, onCan
 
   useEffect(() => {
     setActiveServiceId("nida");
+    loadServiceTemplates("nida");
     setLastNidaFormData(formData);
-  }, [formData, setLastNidaFormData, setActiveServiceId]);
+  }, [formData, setLastNidaFormData, setActiveServiceId, loadServiceTemplates]);
 
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
 
@@ -199,6 +202,7 @@ export const NidaFormScreen: React.FC<NidaFormScreenProps> = ({ onSuccess, onCan
     defaultNidaFrontTemplateId,
     defaultNidaBackTemplateId,
     loadSavedTemplates,
+    customTemplates,
   ]);
 
   // Automatic Template Type Detection

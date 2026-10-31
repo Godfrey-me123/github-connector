@@ -82,6 +82,7 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({
     loadTemplate,
     pushHistoryState,
     setActiveServiceId,
+    loadServiceTemplates,
   } = useTemplateStore();
 
   const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState(false);
@@ -166,7 +167,8 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({
 
   useEffect(() => {
     setActiveServiceId("nrc_zambia");
-  }, [setActiveServiceId]);
+    loadServiceTemplates("nrc_zambia");
+  }, [setActiveServiceId, loadServiceTemplates]);
 
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
   const [errors, setErrors] = useState<{ [key: string]: string }>({});

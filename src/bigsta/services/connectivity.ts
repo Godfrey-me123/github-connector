@@ -41,7 +41,7 @@ export function classifyProbe(input: {
   if (input.error !== undefined || input.status === undefined) return "offline";
   if (input.status >= 500 || input.status === 0) return "backend-down";
   if (input.status !== 200) return "backend-down";
-  if (input.body?.database && input.body.database !== "ok") return "backend-down";
+  if (input.body?.database && input.body.database !== "ok" && input.body.database !== "connected") return "backend-down";
   return "online";
 }
 

@@ -925,6 +925,7 @@ interface TemplateState {
   saveCurrentTemplate: () => Promise<void>;
   saveAsNewTemplate: (newName: string, cardType?: any, side?: any) => Promise<CardTemplate>;
   loadSavedTemplates: (force?: boolean) => Promise<CardTemplate[]>;
+  loadServiceTemplates: (serviceType: string) => Promise<{ front: any | null; back: any | null }>;
   deleteSavedTemplate: (id: string) => Promise<void>;
 
   updateAllLicenceCategoryStyle: (stylePatch: Partial<LicenceCategoryLayer>) => void;
@@ -5191,96 +5192,47 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     },
 
     loadSavedTemplates: async (force = false) => {
-      const nowSync = Date.now();
-      const lastSync = get().lastTemplateSync || 0;
-      const CACHE_TTL = 60 * 1000; // 60-second cache TTL for template syncing to prevent redundant network requests during repeated form submissions
-
-      // Only skip remote fetch if we already have data and it's fresh (< 60 seconds)
-      if (!force && get().customTemplates.length > 0 && nowSync - lastSync < CACHE_TTL) {
-        return get().customTemplates;
-      }
-
       set({ loadingTemplates: true });
       try {
         // 1. Fetch locally saved templates from IndexedDB
         const dbTemplates = await getAllTemplatesDB();
         const map = new Map<string, CardTemplate>();
+        dbTemplates.forEach((t) => map.set(t.id, ensureTemplateFieldIds(t)));
 
-        dbTemplates.forEach((t) => {
-          map.set(t.id, ensureTemplateFieldIds(t));
-        });
-
-        // 2. Fetch active universal templates and sync
+        // 2. Fetch manual requests
         try {
-          const {
-            fetchAllActiveTemplatesSupabase,
-            isSupabaseConfigured,
-            fetchManualRequestsSupabase,
-          } = await import("../services/supabase");
-          if (isSupabaseConfigured) {
-            // Fetch active templates
-            const supabaseTemplates = await fetchAllActiveTemplatesSupabase();
-            if (supabaseTemplates) {
-              // Supabase is the source of truth: drop cached universal/cloud copies the admin deleted.
-              const cloudIds = new Set(supabaseTemplates.map((t: any) => t.id));
-              for (const [id, t] of Array.from(map.entries())) {
-                const isCloudCopy =
-                  t.isUniversal || id.startsWith("tpl_") || id.startsWith("template_");
-                if (isCloudCopy && !cloudIds.has(id)) {
-                  map.delete(id);
-                  await deleteTemplateDB(id);
-                }
-              }
-            }
-            for (const t of supabaseTemplates || []) {
-              if (t && t.id) {
-                const sanitized = ensureTemplateFieldIds(t);
-                map.set(sanitized.id, sanitized);
-                await saveTemplateDB(sanitized);
-              }
-            }
-
-            // Fetch manual requests and sync/merge
-            const supabaseManuals = await fetchManualRequestsSupabase();
-            const localManuals = get().manualRequests || [];
-            const manualMap = new Map<string, ManualRequestItem>();
-            localManuals.forEach((m) => manualMap.set(m.id, m));
-            supabaseManuals.forEach((m) => {
-              manualMap.set(m.id, {
-                ...manualMap.get(m.id),
-                ...m,
-              });
-            });
-            const mergedManuals = Array.from(manualMap.values()).sort(
-              (a, b) => b.submittedAt - a.submittedAt,
-            );
-            localStorage.setItem("bigsta_manual_requests", JSON.stringify(mergedManuals));
-            set({ manualRequests: mergedManuals });
-          }
+          const { fetchManualRequestsSupabase } = await import("../services/supabase");
+          const supabaseManuals = await fetchManualRequestsSupabase();
+          const localManuals = get().manualRequests || [];
+          const manualMap = new Map<string, ManualRequestItem>();
+          localManuals.forEach((m) => manualMap.set(m.id, m));
+          supabaseManuals.forEach((m) => {
+            manualMap.set(m.id, { ...manualMap.get(m.id), ...m });
+          });
+          const mergedManuals = Array.from(manualMap.values()).sort(
+            (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+          );
+          localStorage.setItem("bigsta_manual_requests", JSON.stringify(mergedManuals));
+          set({ manualRequests: mergedManuals });
         } catch (e) {
-          console.warn("Sync skipped:", e);
+          console.warn("Manual requests sync skipped:", e);
         }
 
-        // 3. Detect which serviceIds have custom/admin made templates for front and back separately
+        // 3. Detect custom templates
         const servicesWithCustomFront = new Set<string>();
         const servicesWithCustomBack = new Set<string>();
         map.forEach((t) => {
           if (t.serviceId && !t.id.startsWith("sample_")) {
-            if (isBackSideTemplate(t)) {
-              servicesWithCustomBack.add(t.serviceId);
-            } else {
-              servicesWithCustomFront.add(t.serviceId);
-            }
+            if (isBackSideTemplate(t)) servicesWithCustomBack.add(t.serviceId);
+            else servicesWithCustomFront.add(t.serviceId);
           }
         });
 
-        // 4. Ensure SAMPLE_TEMPLATES are kept for whichever side lacks custom templates
+        // 4. Ensure SAMPLE_TEMPLATES
         for (const sample of SAMPLE_TEMPLATES) {
           const serviceId = sample.serviceId || "";
           const isBack = isBackSideTemplate(sample);
-          const hasCustomForSide = isBack
-            ? servicesWithCustomBack.has(serviceId)
-            : servicesWithCustomFront.has(serviceId);
+          const hasCustomForSide = isBack ? servicesWithCustomBack.has(serviceId) : servicesWithCustomFront.has(serviceId);
 
           if (!hasCustomForSide) {
             if (!map.has(sample.id)) {
@@ -5288,22 +5240,39 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
               map.set(sanitized.id, sanitized);
               await saveTemplateDB(sanitized);
             }
-          } else {
-            // Only remove sample if custom for that side exists
-            if (map.has(sample.id)) {
-              map.delete(sample.id);
-            }
+          } else if (map.has(sample.id)) {
+            map.delete(sample.id);
+            await deleteTemplateDB(sample.id);
           }
         }
 
-        const all = Array.from(map.values());
-        const sorted = all.sort((a, b) => {
+        const sorted = Array.from(map.values()).sort((a, b) => {
           const timeA = new Date(a.updatedAt || a.createdAt || 0).getTime() || 0;
           const timeB = new Date(b.updatedAt || b.createdAt || 0).getTime() || 0;
           return timeB - timeA;
         });
-        set({ customTemplates: sorted, lastTemplateSync: nowSync });
+
+        set({ customTemplates: sorted, lastTemplateSync: Date.now() });
         return sorted;
+      } finally {
+        set({ loadingTemplates: false });
+      }
+    },
+
+    loadServiceTemplates: async (serviceType: string) => {
+      set({ loadingTemplates: true });
+      try {
+        const { fetchActiveTemplatesForService } = await import("../services/supabase");
+        const { front, back } = await fetchActiveTemplatesForService(serviceType);
+
+        if (front) await saveTemplateDB(front);
+        if (back) await saveTemplateDB(back);
+        
+        await get().loadSavedTemplates();
+        return { front, back };
+      } catch (e) {
+        console.error("Failed to load service templates:", e);
+        return { front: null, back: null };
       } finally {
         set({ loadingTemplates: false });
       }

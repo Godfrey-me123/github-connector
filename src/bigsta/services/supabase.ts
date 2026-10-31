@@ -637,45 +637,72 @@ export async function sanitizeAndUploadTemplateBackground(template: any): Promis
 
 // Helper: Save/Update Universal Template on Supabase
 export async function saveUniversalTemplateSupabase(
-  serviceType: string,
-  template: any,
-  isUniversalFront: boolean,
-  isUniversalBack: boolean,
+  arg1: any,
+  arg2?: any,
+  arg3?: boolean,
+  arg4?: boolean,
 ): Promise<boolean> {
   if (!supabase) return false;
   try {
-    const category = getTemplateCategoryConfig(serviceType).serviceType;
+    let serviceType: string;
+    let template: any;
+    let isUniversalFront: boolean | undefined;
+    let isUniversalBack: boolean | undefined;
+
+    if (typeof arg1 === "string" && arg2) {
+      serviceType = arg1;
+      template = arg2;
+      isUniversalFront = arg3;
+      isUniversalBack = arg4;
+    } else {
+      template = arg1;
+      serviceType = template.service_type || template.serviceId || template.cardType || "custom";
+      isUniversalFront = arg3 ?? (template.template_json?.side === "Front Side" || template.side === "Front Side");
+      isUniversalBack = arg4 ?? (template.template_json?.side === "Back Side" || template.side === "Back Side");
+    }
+
+    const category = normalizeTemplateCategory(serviceType);
     // Sanitize background and upload to the category-owned Storage folder.
     const cleanTemplate = await sanitizeAndUploadTemplateBackground({ ...template, serviceId: category });
 
-    // 1. Deactivate previous active version for this service_type & specific side (PROMPT 50.4)
-    const sideValue = isUniversalBack ? "Back Side" : "Front Side";
+    // Determine target side accurately
+    const isBack = isUniversalBack !== undefined ? isUniversalBack : (cleanTemplate.side === "Back Side" || cleanTemplate.template_json?.side === "Back Side");
+    const sideValue: "Front Side" | "Back Side" = isBack ? "Back Side" : "Front Side";
+    cleanTemplate.side = sideValue;
+    cleanTemplate.isUniversal = true;
 
-    // Filter by side in JS: the JSON-path filter was unreliable and deactivated the opposite side too.
+    // 1. Identify all existing rows in templates matching service_type == category, is_universal == true, is_active == true, and template_json->>side == current side
     const { data: activeRows } = await supabase
       .from("templates")
       .select("id, template_json")
       .eq("service_type", category)
       .eq("is_universal", true)
       .eq("is_active", true);
+
     const sameSideIds = (activeRows || [])
-      .filter(
-        (r: any) =>
-          r.id !== cleanTemplate.id &&
-          String(r.template_json?.side || "").toLowerCase() === sideValue.toLowerCase(),
-      )
+      .filter((r: any) => {
+        if (r.id === cleanTemplate.id) return false;
+        let rowParsed = r.template_json;
+        if (typeof rowParsed === "string") {
+          try { rowParsed = JSON.parse(rowParsed); } catch {}
+        }
+        const rowSide = rowParsed?.side || (rowParsed?.isBackSide ? "Back Side" : "Front Side");
+        return String(rowSide || "").toLowerCase().trim() === sideValue.toLowerCase().trim();
+      })
       .map((r: any) => r.id);
+
+    // Update matching rows to is_active = false (Crucial: never touch opposite side!)
     if (sameSideIds.length > 0) {
       await supabase.from("templates").update({ is_active: false }).in("id", sameSideIds);
     }
 
-    // 2. Insert new active template record
+    // 2. Upsert new template row with is_universal = true, is_active = true, version = Date.now(), updated_at = NOW()
     const { error } = await supabase.from("templates").upsert({
       id: cleanTemplate.id,
-      service_type: serviceType,
+      service_type: category,
       template_name:
         cleanTemplate.templateName ||
-        `${serviceType} ${sideValue.split(" ")[0].toUpperCase()} Universal`,
+        `${category} ${sideValue.split(" ")[0].toUpperCase()} Universal`,
       template_json: cleanTemplate,
       background_url: cleanTemplate.background?.src || null,
       is_universal: true,
@@ -1810,3 +1837,83 @@ export async function saveGeneratedCardSupabase(card: {
     return false;
   }
 }
+
+/**
+ * Fetch active templates for a specific service category, scoped to front/back sides.
+ */
+export async function fetchActiveTemplatesForService(
+  serviceType: string,
+): Promise<{ front: any | null; back: any | null }> {
+  if (!supabase) return { front: null, back: null };
+  const normalized = normalizeTemplateCategory(serviceType);
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+
+    const { data, error } = await supabase
+      .from("templates")
+      .select("*")
+      .eq("service_type", normalized)
+      .eq("is_active", true)
+      .eq("is_universal", true)
+      .order("version", { ascending: false })
+      .abortSignal(controller.signal);
+
+    clearTimeout(timeout);
+
+    if (error || !data || !Array.isArray(data)) {
+      if (error) console.warn(`[Supabase] Service template fetch error for ${normalized}:`, error.message);
+      return { front: null, back: null };
+    }
+
+    const parseRow = (d: any) => {
+      let parsed = d.template_json;
+      if (typeof parsed === "string") {
+        try {
+          parsed = JSON.parse(parsed);
+        } catch {}
+      }
+      if (!parsed || typeof parsed !== "object") {
+        parsed = {};
+      }
+      return {
+        ...parsed,
+        id: d.id || parsed.id,
+        serviceId: parsed.serviceId || d.service_type || normalized,
+        templateName: d.template_name || parsed.templateName || "Universal Template",
+        isUniversal: d.is_universal !== undefined ? d.is_universal : true,
+        isActive: d.is_active !== undefined ? d.is_active : true,
+        background:
+          parsed.background ||
+          (d.background_url ? { type: "image", src: d.background_url } : undefined),
+      };
+    };
+
+    let front: any | null = null;
+    let back: any | null = null;
+
+    for (const row of data) {
+      const parsed = parseRow(row);
+      const isBack =
+        parsed.side === "Back Side" ||
+        row.template_json?.side === "Back Side" ||
+        String(parsed.id || "").toLowerCase().includes("back");
+
+      if (isBack && !back) {
+        back = parsed;
+      } else if (!isBack && !front) {
+        front = parsed;
+      }
+
+      if (front && back) break;
+    }
+
+    return { front, back };
+  } catch (e) {
+    console.warn(`[Supabase] Template fetch failed for ${normalized}, using cached:`, e);
+    return { front: null, back: null }; // Clean fallback to IndexedDB
+  }
+}
+
+

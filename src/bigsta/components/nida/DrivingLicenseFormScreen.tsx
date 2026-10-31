@@ -93,6 +93,7 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
     lastDrivingLicenseFormData,
     setLastDrivingLicenseFormData,
     setActiveServiceId,
+    loadServiceTemplates,
   } = useTemplateStore();
 
   const [formData, setFormData] = useState<DrivingLicenseFormData>(() => {
@@ -146,7 +147,8 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
 
   useEffect(() => {
     setActiveServiceId("driving_license");
-  }, [setActiveServiceId]);
+    loadServiceTemplates("driving_license");
+  }, [setActiveServiceId, loadServiceTemplates]);
 
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
 
