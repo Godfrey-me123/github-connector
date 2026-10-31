@@ -587,7 +587,10 @@ interface TemplateState {
       | "nrc_zambia"
       | "admin-payments"
       | "billing"
-      | "settings";
+      | "settings"
+      | "pdf_viewer"
+      | "pdf_library"
+      | "docx_to_pdf";
     serviceId?: string;
     templateId?: string;
   }>;
@@ -625,7 +628,10 @@ interface TemplateState {
       | "nrc_zambia"
       | "admin-payments"
       | "billing"
-      | "settings",
+      | "settings"
+      | "pdf_viewer"
+      | "pdf_library"
+      | "docx_to_pdf",
     serviceId?: string,
     bypassDraftRestore?: boolean,
   ) => void;
@@ -831,7 +837,10 @@ interface TemplateState {
       | "nrc_zambia"
       | "admin-payments"
       | "billing"
-      | "settings",
+      | "settings"
+      | "pdf_viewer"
+      | "pdf_library"
+      | "docx_to_pdf",
   ) => void;
   setPopulatedCardPair: (
     front: CardTemplate | null,

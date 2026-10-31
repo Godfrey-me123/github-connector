@@ -63,7 +63,7 @@ export const MergePdfTool: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         copiedPages.forEach((page) => mergedPdf.addPage(page));
       }
       const mergedPdfBytes = await mergedPdf.save();
-      const blob = new Blob([mergedPdfBytes], { type: "application/pdf" });
+      const blob = new Blob([mergedPdfBytes as BlobPart], { type: "application/pdf" });
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
       link.download = "merged.pdf";

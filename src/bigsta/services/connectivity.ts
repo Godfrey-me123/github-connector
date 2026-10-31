@@ -70,7 +70,7 @@ export async function checkBackend(force = false): Promise<ConnectivitySnapshot>
         body = null;
       }
       const state = classifyProbe({ deviceOnline, status: res.status, body });
-      const snap = { state, checkedAt: Date.now(), detail: body?.database };
+      const snap: ConnectivitySnapshot = { state, checkedAt: Date.now(), ...(body?.database ? { detail: body.database } : {}) };
       emit(snap);
       return snap;
     } catch (error) {

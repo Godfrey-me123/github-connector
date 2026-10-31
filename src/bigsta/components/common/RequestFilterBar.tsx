@@ -9,7 +9,7 @@ export function filterRequestRows<T extends Record<string, any>>(
 ): T[] {
   const q = query.trim().toLowerCase();
   return rows.filter((r) => {
-    if (status !== "ALL" && String(r.status || "").toUpperCase() !== status.toUpperCase())
+    if (status !== "ALL" && String(r["status"] || "").toUpperCase() !== status.toUpperCase())
       return false;
     if (!q) return true;
     return fields.some((f) => String(r[f] ?? "").toLowerCase().includes(q));
@@ -20,7 +20,7 @@ export function filterRequestRows<T extends Record<string, any>>(
 export function statusCounts(rows: { status?: string }[]): [string, number][] {
   const m = new Map<string, number>();
   for (const r of rows) {
-    const s = String(r.status || "PENDING").toUpperCase();
+    const s = String(r["status"] || "PENDING").toUpperCase();
     m.set(s, (m.get(s) || 0) + 1);
   }
   return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0]));

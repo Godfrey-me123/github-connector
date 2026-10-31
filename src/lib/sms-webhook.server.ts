@@ -260,7 +260,7 @@ export async function handleIncomingSms(request: Request): Promise<Response> {
     amount: fields.amount as number,
     sender: name,
     receiver: device || "BIGsta Gateway",
-    reference: fields.reference,
+    reference: fields.reference ?? null,
     payment_date: receivedAt,
   };
   const { data: existing } = await db
@@ -270,9 +270,10 @@ export async function handleIncomingSms(request: Request): Promise<Response> {
     .limit(1);
   const { error } =
     existing && existing.length
-      ? await db.from("user_payments").update({...paymentRow, reference: paymentRow.reference?.toLowerCase()}).eq("id", existing[0]!.id)
+      ? await db.from("user_payments").update({...paymentRow, reference: paymentRow.reference?.toLowerCase() ?? null}).eq("id", existing[0]!.id)
       : await db
-          .insert({ id: crypto.randomUUID(), status: "PENDING", tokens_granted: 0, ...paymentRow, reference: paymentRow.reference?.toLowerCase() });
+          .from("user_payments")
+          .insert({ id: crypto.randomUUID(), status: "PENDING", tokens_granted: 0, ...paymentRow, reference: paymentRow.reference?.toLowerCase() ?? null });
   if (error)
     return json(
       { success: false, received: true, stored: true, status: "FAILED", error: error.message },

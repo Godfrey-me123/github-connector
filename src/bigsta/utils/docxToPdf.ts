@@ -242,7 +242,7 @@ export async function convertDocxToPdf(
   try {
     onProgress?.("Rendering PDF pages...");
 
-    const options = {
+    const options: any = {
       margin: 10,
       filename: file.name.replace(/\.[a-zA-Z0-9]+$/i, "") + ".pdf",
       image: { type: 'jpeg', quality: 0.98 },

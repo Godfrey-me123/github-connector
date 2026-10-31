@@ -4,8 +4,8 @@ import { createFileRoute } from "@tanstack/react-router";
 // GET /api/health?deep=1   -> also checks that the database answers, so the
 //                             client can tell "online" from "backend down".
 async function databaseReachable(): Promise<"ok" | "down" | "unconfigured"> {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
+  const url = process.env["SUPABASE_URL"];
+  const key = process.env["SUPABASE_PUBLISHABLE_KEY"] || process.env["SUPABASE_ANON_KEY"];
   if (!url || !key) return "unconfigured";
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 4000);
