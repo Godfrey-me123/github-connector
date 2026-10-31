@@ -41,7 +41,6 @@ import { PaymentDashboard } from "./components/admin/PaymentDashboard";
 import { UnsavedChangesModal } from "./components/common/UnsavedChangesModal";
 import { StartupDisclaimerModal } from "./components/common/StartupDisclaimerModal";
 import { SuccessActivationModal } from "./components/common/SuccessActivationModal";
-import { DownloadProgressBar } from "./components/common/DownloadProgressBar";
 
 import { forceLoadAppFonts } from "./utils/fonts";
 
@@ -222,46 +221,6 @@ export default function App() {
       console.warn(
         "[Native APK Bridge] No Java/Kotlin interface found. Run inside APK with standard WebAppInterface bindings.",
       );
-      return false;
-    };
-
-    // 3. Native Storage Save Bridge
-    (window as any).saveFileNatively = (fileName: string, base64Data: string) => {
-      const android =
-        (window as any).AndroidInterface ||
-        (window as any).Android ||
-        (window as any).JSInterface ||
-        (window as any).BIGstaAndroid ||
-        (window as any).WebAppInterface;
-      if (!android) return false;
-      try {
-        if (typeof android.saveFile === "function") {
-          android.saveFile(fileName, base64Data);
-          return true;
-        }
-        if (typeof android.downloadFile === "function") {
-          android.downloadFile(fileName, base64Data);
-          return true;
-        }
-        if (typeof android.saveBase64 === "function") {
-          android.saveBase64(fileName, base64Data);
-          return true;
-        }
-        if (typeof android.save === "function") {
-          android.save(fileName, base64Data);
-          return true;
-        }
-        if (typeof android.download === "function") {
-          android.download(fileName, base64Data);
-          return true;
-        }
-        if (typeof android.saveToGallery === "function") {
-          android.saveToGallery(base64Data, fileName);
-          return true;
-        }
-      } catch (e) {
-        console.warn("[Native APK Bridge] saveFile error:", e);
-      }
       return false;
     };
 
@@ -629,7 +588,6 @@ export default function App() {
       <ExportModal />
       <SaveTemplateModal />
       <MergeCardModal />
-      <DownloadProgressBar />
 
       {/* Global Saving Indicator (PROMPT 51) */}
       {isSaving && (

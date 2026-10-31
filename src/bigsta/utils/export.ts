@@ -21,7 +21,6 @@ import { FONT_WEIGHTS_BY_FAMILY, forceLoadAppFonts } from "./fonts";
 import { useTemplateStore } from "../store/useTemplateStore";
 import { SAMPLE_TEMPLATES } from "./sampleTemplates";
 import { calculateTypewriterLayout } from "./typewriterEffect";
-import { triggerUniversalDownload, canvasToBlobPromise } from "./downloadHelper";
 
 export interface CropRegion {
   x: number; // in mm
@@ -949,17 +948,17 @@ export async function downloadPNG(
   cropRegion?: CropRegion,
 ) {
   const canvas = await renderTemplateToCanvas(template, cardData, 300, cropRegion);
-  const blob = await canvasToBlobPromise(canvas, "image/png", 1.0);
   const dataUrl = canvas.toDataURL("image/png");
   const rawName =
     filename || `${template.templateName?.toLowerCase().replace(/\s+/g, "_") || "card"}_300dpi.png`;
   const finalFilename = rawName.startsWith("BIGsta_") ? rawName : `BIGsta_${rawName}`;
 
-  await triggerUniversalDownload({
-    fileName: finalFilename,
-    content: blob,
-    mimeType: "image/png",
-  });
+  const link = document.createElement("a");
+  link.download = finalFilename;
+  link.href = dataUrl;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 
   const recordId = `dl_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   const { saveDownloadRecordDB } = await import("./idb");
@@ -971,7 +970,6 @@ export async function downloadPNG(
     date: new Date().toLocaleString(),
     timestamp: Date.now(),
     dataUrl: dataUrl,
-    blobData: blob,
     status: "COMPLETED",
   });
 }
@@ -983,17 +981,17 @@ export async function downloadJPG(
   cropRegion?: CropRegion,
 ) {
   const canvas = await renderTemplateToCanvas(template, cardData, 300, cropRegion);
-  const blob = await canvasToBlobPromise(canvas, "image/jpeg", 0.95);
   const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
   const rawName =
     filename || `${template.templateName?.toLowerCase().replace(/\s+/g, "_") || "card"}_300dpi.jpg`;
   const finalFilename = rawName.startsWith("BIGsta_") ? rawName : `BIGsta_${rawName}`;
 
-  await triggerUniversalDownload({
-    fileName: finalFilename,
-    content: blob,
-    mimeType: "image/jpeg",
-  });
+  const link = document.createElement("a");
+  link.download = finalFilename;
+  link.href = dataUrl;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 
   const recordId = `dl_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   const { saveDownloadRecordDB } = await import("./idb");
@@ -1005,7 +1003,6 @@ export async function downloadJPG(
     date: new Date().toLocaleString(),
     timestamp: Date.now(),
     dataUrl: dataUrl,
-    blobData: blob,
     status: "COMPLETED",
   });
 }
@@ -1026,17 +1023,17 @@ export async function downloadPDF(
   });
 
   pdf.addImage(imgData, "JPEG", 0, 0, template.cardWidth, template.cardHeight);
-  const pdfBlob = pdf.output("blob");
   const pdfOutput = pdf.output("datauristring");
   const rawName =
     filename || `${template.templateName?.toLowerCase().replace(/\s+/g, "_") || "card"}_print.pdf`;
   const finalFilename = rawName.startsWith("BIGsta_") ? rawName : `BIGsta_${rawName}`;
 
-  await triggerUniversalDownload({
-    fileName: finalFilename,
-    content: pdfBlob,
-    mimeType: "application/pdf",
-  });
+  const link = document.createElement("a");
+  link.download = finalFilename;
+  link.href = pdfOutput;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 
   const recordId = `dl_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   const { saveDownloadRecordDB } = await import("./idb");
@@ -1048,7 +1045,6 @@ export async function downloadPDF(
     date: new Date().toLocaleString(),
     timestamp: Date.now(),
     dataUrl: pdfOutput,
-    blobData: pdfBlob,
     status: "COMPLETED",
   });
 }
@@ -1082,16 +1078,16 @@ export async function download2In1PDF(
     pdf.addImage(backImg, "JPEG", xOffset, 30 + h, w, h);
   }
 
-  const pdfBlob = pdf.output("blob");
   const pdfOutput = pdf.output("datauristring");
   const rawName = filename || `2in1_merged_card_sheet.pdf`;
   const finalFilename = rawName.startsWith("BIGsta_") ? rawName : `BIGsta_${rawName}`;
 
-  await triggerUniversalDownload({
-    fileName: finalFilename,
-    content: pdfBlob,
-    mimeType: "application/pdf",
-  });
+  const link = document.createElement("a");
+  link.download = finalFilename;
+  link.href = pdfOutput;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 
   const recordId = `dl_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   const { saveDownloadRecordDB } = await import("./idb");
@@ -1103,12 +1099,11 @@ export async function download2In1PDF(
     date: new Date().toLocaleString(),
     timestamp: Date.now(),
     dataUrl: pdfOutput,
-    blobData: pdfBlob,
     status: "COMPLETED",
   });
 }
 
-export async function downloadJSON(template: CardTemplate, filename?: string) {
+export function downloadJSON(template: CardTemplate, filename?: string) {
   const exportPayload = {
     templateName: template.templateName,
     cardWidth: template.cardWidth,
@@ -1130,16 +1125,11 @@ export async function downloadJSON(template: CardTemplate, filename?: string) {
 
   const jsonStr = JSON.stringify(exportPayload, null, 2);
   const blob = new Blob([jsonStr], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
 
   const rawName =
     filename || `${template.templateName.toLowerCase().replace(/\s+/g, "_")}_template.json`;
   const finalFilename = rawName.startsWith("BIGsta_") ? rawName : `BIGsta_${rawName}`;
-
-  await triggerUniversalDownload({
-    fileName: finalFilename,
-    content: blob,
-    mimeType: "application/json",
-  });
 
   const reader = new FileReader();
   reader.onloadend = () => {
@@ -1153,13 +1143,18 @@ export async function downloadJSON(template: CardTemplate, filename?: string) {
           date: new Date().toLocaleString(),
           timestamp: Date.now(),
           dataUrl: reader.result as string,
-          blobData: blob,
           status: "COMPLETED",
         });
       })
       .catch((e) => console.warn("Could not save download to history:", e));
   };
   reader.readAsDataURL(blob);
+
+  const link = document.createElement("a");
+  link.download = finalFilename;
+  link.href = url;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 export async function downloadSVG(template: CardTemplate, cardData: CardData = {}): Promise<void> {
@@ -1187,15 +1182,10 @@ export async function downloadSVG(template: CardTemplate, cardData: CardData = {
   </svg>`;
 
   const blob = new Blob([svgString], { type: "image/svg+xml" });
+  const url = URL.createObjectURL(blob);
 
   const rawSvgName = `${template.templateName.toLowerCase().replace(/\s+/g, "_")}.svg`;
   const finalFilename = rawSvgName.startsWith("BIGsta_") ? rawSvgName : `BIGsta_${rawSvgName}`;
-
-  await triggerUniversalDownload({
-    fileName: finalFilename,
-    content: blob,
-    mimeType: "image/svg+xml",
-  });
 
   const reader = new FileReader();
   reader.onloadend = () => {
@@ -1209,16 +1199,21 @@ export async function downloadSVG(template: CardTemplate, cardData: CardData = {
           date: new Date().toLocaleString(),
           timestamp: Date.now(),
           dataUrl: reader.result as string,
-          blobData: blob,
           status: "COMPLETED",
         });
       })
       .catch((e) => console.warn("Could not save download to history:", e));
   };
   reader.readAsDataURL(blob);
+
+  const link = document.createElement("a");
+  link.download = finalFilename;
+  link.href = url;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
-export async function downloadBIGstaAPK(): Promise<void> {
+export function downloadBIGstaAPK(): void {
   const apkMeta = {
     appName: "BIGsta Tanzania ID Generator",
     packageName: "tz.co.bigsta.mobile",
@@ -1231,10 +1226,11 @@ export async function downloadBIGstaAPK(): Promise<void> {
 
   const jsonContent = JSON.stringify(apkMeta, null, 2);
   const blob = new Blob([jsonContent], { type: "application/vnd.android.package-archive" });
+  const url = URL.createObjectURL(blob);
 
-  await triggerUniversalDownload({
-    fileName: "BIGsta_Official_v2.5.apk",
-    content: blob,
-    mimeType: "application/vnd.android.package-archive",
-  });
+  const link = document.createElement("a");
+  link.download = "BIGsta_Official_v2.5.apk";
+  link.href = url;
+  link.click();
+  URL.revokeObjectURL(url);
 }

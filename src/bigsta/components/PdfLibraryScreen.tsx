@@ -25,7 +25,6 @@ import {
   saveDownloadRecordDB,
   deleteDownloadRecordDB,
 } from "../utils/idb";
-import { triggerUniversalDownload } from "../utils/downloadHelper";
 import { DocxToPdfModal } from "./pdf/DocxToPdfModal";
 import { PdfThumbnailCard } from "./pdf/PdfThumbnailCard";
 
@@ -128,17 +127,25 @@ export const PdfLibraryScreen: React.FC = () => {
     }
   };
 
-  const handleDownload = async (record: DownloadRecord) => {
-    const content = record.blobData || record.dataUrl;
-    if (content) {
-      await triggerUniversalDownload({
-        fileName: record.fileName,
-        content: content,
-        mimeType: "application/pdf",
-      });
+  const handleDownload = (record: DownloadRecord) => {
+    if (record.blobData) {
+      const url = URL.createObjectURL(record.blobData);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = record.fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
       toast.success(`Downloaded: ${record.fileName}`);
-    } else {
-      toast.error("File content is unavailable on this device.");
+    } else if (record.dataUrl) {
+      const a = document.createElement("a");
+      a.href = record.dataUrl;
+      a.download = record.fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      toast.success(`Downloaded: ${record.fileName}`);
     }
   };
 
