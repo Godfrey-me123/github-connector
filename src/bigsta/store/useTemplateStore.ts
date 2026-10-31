@@ -2129,6 +2129,13 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         } catch {}
         await saveTemplateDB(sanitized);
 
+        // Persist deactivated same-side templates to IndexedDB
+        for (const t of updatedCustoms) {
+          if (t.serviceId === serviceId && !isBackSideTemplate(t) && t.id !== uniqueFrontId) {
+            await saveTemplateDB(sanitizeTemplateForSaving(t));
+          }
+        }
+
         if (typeof window !== "undefined") {
           safeLocalStorageSetItem(`universal_front_${serviceId}`, sanitized.id);
           safeLocalStorageSetItem(`universal_front_obj_${serviceId}`, JSON.stringify(sanitized));
@@ -2208,6 +2215,13 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         } catch {}
         await saveTemplateDB(sanitized);
 
+        // Persist deactivated same-side templates to IndexedDB
+        for (const t of updatedCustoms) {
+          if (t.serviceId === serviceId && isBackSideTemplate(t) && t.id !== uniqueBackId) {
+            await saveTemplateDB(sanitizeTemplateForSaving(t));
+          }
+        }
+
         if (typeof window !== "undefined") {
           safeLocalStorageSetItem(`universal_back_${serviceId}`, sanitized.id);
           safeLocalStorageSetItem(`universal_back_obj_${serviceId}`, JSON.stringify(sanitized));
@@ -2266,9 +2280,16 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         set({ currentTemplate: { ...get().currentTemplate, isActive } });
       }
 
-      // Persist to local DB
+      // Persist to local DB for target and all affected same-side templates
       const updatedTarget = updatedCustoms.find((t) => t.id === templateId)!;
-      await saveTemplateDB(sanitizeTemplateForSaving(updatedTarget));
+      for (const t of updatedCustoms) {
+        if (
+          t.id === templateId ||
+          (isActive && t.serviceId === serviceId && isBackSideTemplate(t) === isBack)
+        ) {
+          await saveTemplateDB(sanitizeTemplateForSaving(t));
+        }
+      }
 
       // Persist to Supabase
       try {

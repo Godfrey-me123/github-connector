@@ -143,8 +143,11 @@ export const NidaFormScreen: React.FC<NidaFormScreenProps> = ({ onSuccess, onCan
   useEffect(() => {
     setActiveServiceId("nida");
     loadServiceTemplates("nida");
+  }, [setActiveServiceId, loadServiceTemplates]);
+
+  useEffect(() => {
     setLastNidaFormData(formData);
-  }, [formData, setLastNidaFormData, setActiveServiceId, loadServiceTemplates]);
+  }, [formData, setLastNidaFormData]);
 
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
 

@@ -16,16 +16,32 @@ function formatTime(date: Date): string {
 
 export function ConnectivityBanner() {
   const [state, setState] = useState<ConnectivityState>("unknown");
-  const [mode, setMode] = useState<"open" | "mini" | "closed" | "recovered">("open");
+  const [mode, setMode] = useState<"open" | "mini" | "closed" | "recovered">(() => {
+    try {
+      if (typeof window !== "undefined" && sessionStorage.getItem("bigsta_conn_banner_closed") === "1") {
+        return "closed";
+      }
+    } catch {}
+    return "open";
+  });
   const [checking, setChecking] = useState(false);
   const [failedPings, setFailedPings] = useState(0);
   const [lastSynced, setLastSynced] = useState<string>(() => formatTime(new Date()));
   const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    try {
+      if (sessionStorage.getItem("bigsta_conn_banner_closed") === "1") {
+        setMode("closed");
+      }
+    } catch {}
+
     const unsub = subscribeConnectivity((s) => {
       if (s.state === "online") {
         setLastSynced(formatTime(new Date()));
+        try {
+          sessionStorage.removeItem("bigsta_conn_banner_closed");
+        } catch {}
         setState((prevState) => {
           if (prevState !== "online" && prevState !== "unknown") {
             setMode("recovered");
@@ -37,7 +53,13 @@ export function ConnectivityBanner() {
       } else {
         setFailedPings((prev) => prev + 1);
         setState(s.state);
-        setMode((prev) => (prev === "closed" ? "open" : prev));
+        let isSessionClosed = false;
+        try {
+          isSessionClosed = sessionStorage.getItem("bigsta_conn_banner_closed") === "1";
+        } catch {}
+        if (!isSessionClosed) {
+          setMode((prev) => (prev === "closed" ? "open" : prev));
+        }
       }
     });
 
@@ -60,11 +82,12 @@ export function ConnectivityBanner() {
     };
   }, [mode]);
 
-  // Genuine offline condition or 3 consecutive probe failures
+  // Genuine offline condition or failed probe threshold (supports dead Wi-Fi and backend down)
   const genuinelyOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+  const isProbeFailing = (state === "offline" || state === "backend-down") && failedPings >= 2;
   const shouldShow =
     mode !== "closed" &&
-    (mode === "recovered" || genuinelyOffline || (state === "backend-down" && failedPings >= 3));
+    (mode === "recovered" || genuinelyOffline || isProbeFailing);
 
   if (!shouldShow) return null;
 
@@ -79,6 +102,13 @@ export function ConnectivityBanner() {
     } finally {
       setChecking(false);
     }
+  };
+
+  const handleClose = () => {
+    setMode("closed");
+    try {
+      sessionStorage.setItem("bigsta_conn_banner_closed", "1");
+    } catch {}
   };
 
   return (
@@ -125,7 +155,7 @@ export function ConnectivityBanner() {
 
           <button
             type="button"
-            onClick={() => setMode("closed")}
+            onClick={handleClose}
             aria-label="Close notification"
             className="shrink-0 rounded-full p-1 hover:bg-black/15 transition-colors"
           >
