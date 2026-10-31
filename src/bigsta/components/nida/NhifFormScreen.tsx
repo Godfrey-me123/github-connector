@@ -42,6 +42,7 @@ export const NhifFormScreen: React.FC<NhifFormScreenProps> = ({ onCancel, onSucc
     getUniversalBackTemplate,
     loadTemplate,
     pushHistoryState,
+    setActiveServiceId,
   } = useTemplateStore();
 
   const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState(false);
@@ -82,6 +83,10 @@ export const NhifFormScreen: React.FC<NhifFormScreenProps> = ({ onCancel, onSucc
   useEffect(() => {
     setLastNhifFormData(formData);
   }, [formData, setLastNhifFormData]);
+
+  useEffect(() => {
+    setActiveServiceId("nhif");
+  }, [setActiveServiceId]);
 
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
