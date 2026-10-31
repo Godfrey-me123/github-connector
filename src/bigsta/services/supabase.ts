@@ -1423,6 +1423,9 @@ export async function fetchTokenPackagesSupabase(): Promise<any[] | null> {
       .order("usages", { ascending: true });
 
     if (error) {
+      if (error.code === "PGRST100" || error.message.includes("find the table")) {
+        return [];
+      }
       console.error("Supabase fetch token packages error:", error.message);
       return null;
     }
@@ -1515,6 +1518,9 @@ export async function fetchAllWeeklyOffersSupabase(retries = 3): Promise<any[]> 
         .order("created_at", { ascending: false });
 
       if (error) {
+        if (error.code === "PGRST100" || error.message.includes("find the table")) {
+          return [];
+        }
         console.error(`Supabase fetch weekly offers error (attempt ${i + 1}):`, error.message);
         if (i === retries - 1) return [];
         await new Promise((resolve) => setTimeout(resolve, 1000 * (i + 1))); // exponential backoff

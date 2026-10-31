@@ -5373,14 +5373,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
           map.set(t.id, ensureTemplateFieldIds(t));
         });
 
-        // Local IndexedDB data is intentionally loaded before the network so each
-        // service can open immediately with the last admin-synced template.
-        const cachedTemplates = Array.from(map.values());
-        if (cachedTemplates.length > 0) {
-          set({ customTemplates: cachedTemplates, loadingTemplates: false });
-        }
-
-        // 2. Fetch active universal templates and sync in the background
+        // 2. Fetch active universal templates and sync
         try {
           const {
             fetchAllActiveTemplatesSupabase,

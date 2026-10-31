@@ -104,6 +104,84 @@ export function canvasToBlobPromise(
   });
 }
 
+export type DownloadProgressListener = (progress: {
+  fileName: string;
+  progressPercent: number;
+  statusText: string;
+  isDone: boolean;
+}) => void;
+
+const listeners = new Set<DownloadProgressListener>();
+
+export function subscribeDownloadProgress(listener: DownloadProgressListener) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function notifyProgress(
+  fileName: string,
+  progressPercent: number,
+  statusText: string,
+  isDone = false,
+) {
+  listeners.forEach((l) => {
+    try {
+      l({ fileName, progressPercent, statusText, isDone });
+    } catch {}
+  });
+}
+
+/**
+ * Pre-check storage permissions from Android native interface before attempting to save,
+ * and show an alert if permissions are missing.
+ */
+export async function checkAndRequestAndroidStoragePermission(): Promise<boolean> {
+  if (typeof window === "undefined") return true;
+  const bridge = getAndroidBridge();
+  const w = window as any;
+
+  try {
+    let hasPermission = true;
+    if (bridge) {
+      if (typeof bridge.hasStoragePermission === "function") {
+        hasPermission = bridge.hasStoragePermission();
+      } else if (typeof bridge.checkStoragePermissions === "function") {
+        hasPermission = bridge.checkStoragePermissions();
+      } else if (typeof bridge.hasPermission === "function") {
+        hasPermission = bridge.hasPermission("storage");
+      } else if (typeof bridge.checkPermission === "function") {
+        hasPermission = bridge.checkPermission("android.permission.WRITE_EXTERNAL_STORAGE");
+      }
+    }
+    if (w && typeof w.hasStoragePermission === "function") {
+      hasPermission = w.hasStoragePermission();
+    } else if (w && w.androidStoragePermissionGranted === false) {
+      hasPermission = false;
+    }
+
+    if (hasPermission === false) {
+      console.warn("[downloadHelper] Android storage permission missing.");
+      if (bridge && typeof bridge.requestStoragePermissions === "function") {
+        bridge.requestStoragePermissions();
+      } else if (bridge && typeof bridge.requestPermission === "function") {
+        bridge.requestPermission("storage");
+      } else if (w && typeof w.requestStoragePermissions === "function") {
+        w.requestStoragePermissions();
+      }
+
+      alert(
+        "Android Storage Permission is required to save files natively. Please grant storage access in your app permissions or device settings.",
+      );
+      return false;
+    }
+  } catch (e) {
+    console.warn("[downloadHelper] Storage permission check exception:", e);
+  }
+  return true;
+}
+
 /**
  * Try delivering file to Native Android APK bridge
  */
@@ -112,6 +190,12 @@ async function tryNativeAndroidSave(
   base64Data: string,
   dataUrl: string,
 ): Promise<boolean> {
+  // Pre-check storage permissions from Android native interface before attempting to save
+  const hasPermission = await checkAndRequestAndroidStoragePermission();
+  if (!hasPermission) {
+    return false;
+  }
+
   const bridge = getAndroidBridge();
   const w = typeof window !== "undefined" ? (window as any) : null;
 
@@ -166,11 +250,26 @@ export async function triggerUniversalDownload(
   const { fileName, content, mimeType } = payload;
   const safeFileName = fileName.replace(/[/\\?%*:|"<>]/g, "_");
 
+  // Confirm download or export files whether on web or when in apk
+  const confirmed = window.confirm(
+    `Confirm Download / Export:\n\nDo you want to save "${safeFileName}" to your device (${
+      isAndroidApp() ? "Android APK Storage" : "Web Browser Downloads"
+    })?`,
+  );
+  if (!confirmed) {
+    notifyProgress(safeFileName, 100, "Download cancelled by user", true);
+    return false;
+  }
+
+  notifyProgress(safeFileName, 15, "Preparing export...");
+
   // Step 1: Normalize content into Blob, base64, and dataUrl
   let resolvedBlob: Blob;
   let resolvedBase64: string = "";
   let resolvedDataUrl: string = "";
   let resolvedMime: string = mimeType || "application/octet-stream";
+
+  notifyProgress(safeFileName, 40, "Processing file content & encoding...");
 
   if (content instanceof Blob) {
     resolvedBlob = content;
@@ -211,8 +310,11 @@ export async function triggerUniversalDownload(
     } catch {}
   } else {
     console.error("[downloadHelper] Unsupported content type for download:", content);
+    notifyProgress(safeFileName, 100, "Export failed: unsupported content", true);
     return false;
   }
+
+  notifyProgress(safeFileName, 75, "Saving file to device storage...");
 
   // Step 2: Native Android APK Bridge Check
   // In an Android WebView, an unhandled <a download> click crashes the app due to ActivityNotFoundException.
@@ -223,9 +325,12 @@ export async function triggerUniversalDownload(
       console.log(
         `[downloadHelper] Saved natively to device storage via Android APK: ${safeFileName}`,
       );
+      notifyProgress(safeFileName, 100, "Saved successfully!", true);
       return true;
     }
   }
+
+  notifyProgress(safeFileName, 90, "Triggering browser download...");
 
   // Step 3: Web Browser Download Delivery
   // Create object URL from resolvedBlob - NEVER assign large data: URIs to link.href directly
@@ -277,5 +382,6 @@ export async function triggerUniversalDownload(
     } catch {}
   }, 60000);
 
+  notifyProgress(safeFileName, 100, "Download complete!", true);
   return true;
 }

@@ -41,6 +41,7 @@ import { PaymentDashboard } from "./components/admin/PaymentDashboard";
 import { UnsavedChangesModal } from "./components/common/UnsavedChangesModal";
 import { StartupDisclaimerModal } from "./components/common/StartupDisclaimerModal";
 import { SuccessActivationModal } from "./components/common/SuccessActivationModal";
+import { DownloadProgressBar } from "./components/common/DownloadProgressBar";
 
 import { forceLoadAppFonts } from "./utils/fonts";
 
@@ -628,6 +629,7 @@ export default function App() {
       <ExportModal />
       <SaveTemplateModal />
       <MergeCardModal />
+      <DownloadProgressBar />
 
       {/* Global Saving Indicator (PROMPT 51) */}
       {isSaving && (
