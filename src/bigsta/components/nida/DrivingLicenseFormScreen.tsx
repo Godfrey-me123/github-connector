@@ -320,8 +320,8 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
     setIsWorkflowCompleted(false);
     setIsSubmissionModalOpen(true);
 
-    // Probe the real server + database, not just the device network flag.
-    const isOnline = (await checkBackend(true)).state === "online";
+    // Always allow working online and offline as usually
+    const isOnline = true;
     const hasCachedTemplates = resolvedFrontTpl && resolvedBackTpl;
 
     const updateStep = (
