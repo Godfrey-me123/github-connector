@@ -35,7 +35,6 @@ import {
   saveDownloadRecordDB,
   deleteDownloadRecordDB,
 } from "../utils/idb";
-import { triggerUniversalDownload } from "../utils/downloadHelper";
 import { MergePdfModal } from "./pdf/MergePdfModal";
 import { RearrangePagesModal } from "./pdf/RearrangePagesModal";
 import { DocxToPdfModal } from "./pdf/DocxToPdfModal";
@@ -310,7 +309,7 @@ export const PDFViewerScreen: React.FC = () => {
   };
 
   // Handle file download directly to device with complete safety
-  const handleDownloadCopy = async (name?: string) => {
+  const handleDownloadCopy = (name?: string) => {
     const finalName = (name || customSaveName || currentFileTitle || "document.pdf").trim();
     const downloadName = finalName.toLowerCase().endsWith(".pdf") ? finalName : `${finalName}.pdf`;
 
@@ -323,21 +322,21 @@ export const PDFViewerScreen: React.FC = () => {
       downloadUrl = tempUrl;
     }
 
-    if (!rawPdfBytes && !downloadUrl && !pdfBlob) {
+    if (!downloadUrl) {
       toast.error("No document available to download.");
       return;
     }
 
-    const contentToDownload = rawPdfBytes
-      ? new Blob([rawPdfBytes.slice(0)], { type: "application/pdf" })
-      : pdfBlob || downloadUrl;
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = downloadName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 
-    await triggerUniversalDownload({
-      fileName: downloadName,
-      content: contentToDownload,
-      mimeType: "application/pdf",
-    });
-
+    if (tempUrl) {
+      setTimeout(() => URL.revokeObjectURL(tempUrl!), 1000);
+    }
     toast.success(`Downloaded: ${downloadName}`);
     setShowPrintModal(false);
   };
@@ -872,20 +871,29 @@ export const PDFViewerScreen: React.FC = () => {
                       <div className="flex items-center gap-1 shrink-0">
                         <button
                           type="button"
-                          onClick={async (e) => {
-                            e.preventDefault();
+                          onClick={(e) => {
                             e.stopPropagation();
-                            const content = pdf.blobData || pdf.dataUrl;
-                            if (content) {
-                              await triggerUniversalDownload({
-                                fileName: pdf.fileName,
-                                content: content,
-                                mimeType: "application/pdf",
-                              });
+                            if (pdf.blobData) {
+                              const url = URL.createObjectURL(pdf.blobData);
+                              const a = document.createElement("a");
+                              a.href = url;
+                              a.download = pdf.fileName;
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
+                              URL.revokeObjectURL(url);
+                              toast.success(`Downloaded: ${pdf.fileName}`);
+                            } else if (pdf.dataUrl) {
+                              const a = document.createElement("a");
+                              a.href = pdf.dataUrl;
+                              a.download = pdf.fileName;
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
                               toast.success(`Downloaded: ${pdf.fileName}`);
                             }
                           }}
-                          className="p-1.5 text-slate-400 hover:text-emerald-600 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer"
+                          className="p-1.5 text-slate-400 hover:text-emerald-600 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
                           title="Download this file"
                         >
                           <Download className="w-3.5 h-3.5" />
@@ -1394,14 +1402,24 @@ export const PDFViewerScreen: React.FC = () => {
                         </button>
                         <button
                           type="button"
-                          onClick={async () => {
-                            const content = pdf.blobData || pdf.dataUrl;
-                            if (content) {
-                              await triggerUniversalDownload({
-                                fileName: pdf.fileName,
-                                content: content,
-                                mimeType: "application/pdf",
-                              });
+                          onClick={() => {
+                            if (pdf.blobData) {
+                              const url = URL.createObjectURL(pdf.blobData);
+                              const a = document.createElement("a");
+                              a.href = url;
+                              a.download = pdf.fileName;
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
+                              URL.revokeObjectURL(url);
+                              toast.success(`Downloaded: ${pdf.fileName}`);
+                            } else if (pdf.dataUrl) {
+                              const a = document.createElement("a");
+                              a.href = pdf.dataUrl;
+                              a.download = pdf.fileName;
+                              document.body.appendChild(a);
+                              a.click();
+                              document.body.removeChild(a);
                               toast.success(`Downloaded: ${pdf.fileName}`);
                             }
                           }}

@@ -2,7 +2,6 @@ import React, { useState, useRef } from "react";
 import { PDFDocument } from "pdf-lib";
 import { FileUp, FileText, X, ArrowLeft, Download, Loader2, GripVertical } from "lucide-react";
 import { toast } from "sonner";
-import { triggerUniversalDownload } from "../../../utils/downloadHelper";
 
 interface PdfFile {
   id: string;
@@ -65,11 +64,10 @@ export const MergePdfTool: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       }
       const mergedPdfBytes = await mergedPdf.save();
       const blob = new Blob([mergedPdfBytes], { type: "application/pdf" });
-      await triggerUniversalDownload({
-        fileName: "BIGsta_merged.pdf",
-        content: blob,
-        mimeType: "application/pdf",
-      });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "merged.pdf";
+      link.click();
       toast.success("PDFs merged successfully!");
     } catch (error) {
       console.error(error);
