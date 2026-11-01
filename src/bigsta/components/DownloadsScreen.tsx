@@ -5,25 +5,12 @@ import {
   Trash2,
   Search,
   CheckCircle2,
-  Clock,
-  XCircle,
   Eye,
   RefreshCw,
-  AlertCircle,
   X,
-  FolderOpen,
   Share2,
   FileText,
   Image as ImageIcon,
-  ArrowLeft,
-  ZoomIn,
-  ZoomOut,
-  RotateCw,
-  HardDrive,
-  BarChart3,
-  ShieldCheck,
-  Filter,
-  Home,
 } from "lucide-react";
 import { useTemplateStore } from "../store/useTemplateStore";
 import {
@@ -31,26 +18,24 @@ import {
   getAllDownloadRecordsDB,
   deleteDownloadRecordDB,
   saveDownloadRecordDB,
+  clearDownloadRecordsDB,
 } from "../utils/idb";
 import { UniversalBackButton } from "./common/UniversalBackButton";
 
 export const DownloadsScreen: React.FC = () => {
-  const { authRole, setActiveScreen, consumeUsage, userPreferences, navigateSafely } =
-    useTemplateStore();
+  const { setActiveScreen, userPreferences } = useTemplateStore();
 
   const [downloads, setDownloads] = useState<DownloadRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [dateFilter, setDateFilter] = useState<"all" | "today" | "yesterday" | "month">("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "ready" | "processing" | "failed">(
-    "all",
-  );
-
-  // Preview & Zoom Modal State
   const [previewRecord, setPreviewRecord] = useState<DownloadRecord | null>(null);
-  const [zoomScale, setZoomScale] = useState<number>(1);
-  const [rotationAngle, setRotationAngle] = useState<number>(0);
-  const [successToast, setSuccessToast] = useState<string | null>(null);
+  const [confirmClearAll, setConfirmClearAll] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (message: string, ms = 3000) => {
+    setToast(message);
+    setTimeout(() => setToast(null), ms);
+  };
 
   useEffect(() => {
     loadDownloads();
@@ -65,8 +50,7 @@ export const DownloadsScreen: React.FC = () => {
           await deleteDownloadRecordDB(r.id);
         }
       }
-      const realRecords = records.filter((r) => !r.id.startsWith("dl_sample_"));
-      setDownloads(realRecords);
+      setDownloads(records.filter((r) => !r.id.startsWith("dl_sample_")));
     } catch (e) {
       console.error("Error loading downloads", e);
     } finally {
@@ -79,10 +63,21 @@ export const DownloadsScreen: React.FC = () => {
     try {
       await deleteDownloadRecordDB(id);
       setDownloads(downloads.filter((d) => d.id !== id));
-      setSuccessToast("File removed from Downloads Center");
-      setTimeout(() => setSuccessToast(null), 2500);
+      showToast("File removed from Downloads");
     } catch (e) {
       console.error("Error deleting download", e);
+    }
+  };
+
+  const handleClearAll = async () => {
+    try {
+      await clearDownloadRecordsDB();
+      setDownloads([]);
+      setConfirmClearAll(false);
+      showToast("All downloads cleared");
+    } catch (e) {
+      console.error("Error clearing downloads", e);
+      showToast("Could not clear downloads. Please try again.");
     }
   };
 
@@ -107,8 +102,7 @@ export const DownloadsScreen: React.FC = () => {
         link.click();
         document.body.removeChild(link);
       } else {
-        setSuccessToast("File content is unavailable on this device.");
-        setTimeout(() => setSuccessToast(null), 3000);
+        showToast("File content is unavailable on this device.");
         return;
       }
 
@@ -119,8 +113,7 @@ export const DownloadsScreen: React.FC = () => {
       }
 
       const folderName = userPreferences.downloadFolder || "Downloads/BIGsta";
-      setSuccessToast(`Saved directly to device storage: ${folderName}/${record.fileName}`);
-      setTimeout(() => setSuccessToast(null), 3500);
+      showToast(`Saved to device: ${folderName}/${record.fileName}`, 3500);
     } catch (err) {
       console.error("Download delivery failed:", err);
     }
@@ -143,10 +136,7 @@ export const DownloadsScreen: React.FC = () => {
         const fileObj = new File([record.blobData], record.fileName, {
           type: record.blobData.type || "application/octet-stream",
         });
-        await navigator.share({
-          files: [fileObj],
-          title: record.fileName,
-        });
+        await navigator.share({ files: [fileObj], title: record.fileName });
         return;
       } else if (navigator.share) {
         await navigator.share({
@@ -162,210 +152,86 @@ export const DownloadsScreen: React.FC = () => {
     handleDownload(record);
   };
 
-  const handleRetry = async (record: DownloadRecord, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!record.blobData) {
-      setSuccessToast("Original source is unavailable. Please re-import or convert the file.");
-      setTimeout(() => setSuccessToast(null), 3500);
-      return;
+  const handleOpen = (record: DownloadRecord, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (record.format === "PDF" || record.fileName.toLowerCase().endsWith(".pdf")) {
+      useTemplateStore.setState({ activePdf: record });
+      setActiveScreen("pdf_viewer");
+    } else {
+      setPreviewRecord(record);
     }
-    setSuccessToast(`File is ready: ${record.fileName}`);
-    setTimeout(() => setSuccessToast(null), 2500);
   };
 
-  // Grouping & Filtering
-  const readyDownloads = downloads.filter(
-    (d) => d.status === "READY" || d.status === "COMPLETED" || d.status === "DOWNLOADED",
-  );
-  const processingDownloads = downloads.filter(
-    (d) => d.status === "GENERATING" || d.status === "QUEUED",
-  );
-  const failedDownloads = downloads.filter((d) => d.status === "FAILED");
-
-  const filteredDownloads = downloads.filter((d) => {
-    const matchesSearch =
+  const filteredDownloads = downloads.filter(
+    (d) =>
       d.fileName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      d.service.toLowerCase().includes(searchQuery.toLowerCase());
+      d.service.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
-    if (!matchesSearch) return false;
-
-    if (statusFilter === "ready") {
-      return d.status === "READY" || d.status === "COMPLETED" || d.status === "DOWNLOADED";
-    }
-    if (statusFilter === "processing") return d.status === "GENERATING" || d.status === "QUEUED";
-    if (statusFilter === "failed") return d.status === "FAILED";
-
-    return true;
-  });
+  const isImage = (record: DownloadRecord) =>
+    record.format !== "PDF" && !record.fileName.toLowerCase().endsWith(".pdf");
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-16 text-[#111827]">
-      {/* Top Header */}
+      {/* Header */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
-        <div className="max-w-6xl mx-auto px-4 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-3xl mx-auto px-4 py-3.5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <UniversalBackButton />
-            <button
-              type="button"
-              onClick={() => setActiveScreen("home")}
-              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 transition-colors flex items-center justify-center cursor-pointer"
-              title="Return to Home Portal"
-              aria-label="Return to Home Portal"
-            >
-              <Home className="w-4 h-4 text-slate-700" />
-            </button>
-            <div>
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                <DownloadCloud className="w-5 h-5 text-[#2563EB]" />
-                Downloads Center
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                <DownloadCloud className="w-5 h-5 text-[#2563EB] shrink-0" />
+                Downloads
               </h1>
-              <p className="text-xs text-slate-500">
-                {authRole === "admin"
-                  ? "System-wide File Generation & Storage Center"
-                  : "Single source of truth for all your generated documents"}
-              </p>
             </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 flex items-center gap-1.5">
-              <FolderOpen className="w-3.5 h-3.5 text-blue-600" />
-              {userPreferences.downloadFolder || "Downloads/BIGsta"}
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100 shrink-0">
+              {downloads.length}
             </span>
           </div>
+
+          {downloads.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setConfirmClearAll(true)}
+              className="px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> Clear All
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-3 sm:px-4 pt-4 sm:pt-6 space-y-4 sm:space-y-6">
-        {/* Success / Notification Toast */}
-        {successToast && (
+      <div className="max-w-3xl mx-auto px-3 sm:px-4 pt-4 space-y-4">
+        {/* Toast */}
+        {toast && (
           <div className="bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-lg flex items-center justify-between text-xs font-medium animate-fadeIn">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>{successToast}</span>
+              <span>{toast}</span>
             </div>
-            <button
-              onClick={() => setSuccessToast(null)}
-              className="text-slate-400 hover:text-white"
-            >
+            <button onClick={() => setToast(null)} className="text-slate-400 hover:text-white">
               <X className="w-4 h-4" />
             </button>
           </div>
         )}
 
-        {/* Card 1: Downloads Summary */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                Ready Files
-              </span>
-              <p className="text-2xl font-extrabold text-slate-900 mt-1">{readyDownloads.length}</p>
-            </div>
-            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100">
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                Processing
-              </span>
-              <p className="text-2xl font-extrabold text-blue-600 mt-1">
-                {processingDownloads.length}
-              </p>
-            </div>
-            <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100">
-              <RefreshCw className="w-6 h-6 animate-spin" />
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                Failed Exports
-              </span>
-              <p className="text-2xl font-extrabold text-red-600 mt-1">{failedDownloads.length}</p>
-            </div>
-            <div className="p-3 bg-red-50 text-red-600 rounded-2xl border border-red-100">
-              <XCircle className="w-6 h-6" />
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                Total Storage
-              </span>
-              <p className="text-2xl font-extrabold text-slate-800 mt-1">
-                {(
-                  downloads.reduce((acc, d) => acc + (d.sizeBytes || 1200000), 0) / 1000000
-                ).toFixed(1)}{" "}
-                MB
-              </p>
-            </div>
-            <div className="p-3 bg-slate-100 text-slate-700 rounded-2xl border border-slate-200">
-              <HardDrive className="w-6 h-6" />
-            </div>
-          </div>
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search by document name or service..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
         </div>
 
-        {/* Card 2: Search & Filter Toolbar */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-          <div className="relative w-full sm:w-72">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search documents by name or service..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
-            <span className="text-xs font-semibold text-slate-400 flex items-center gap-1">
-              <Filter className="w-3.5 h-3.5" /> Filter:
-            </span>
-            <button
-              onClick={() => setStatusFilter("all")}
-              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
-                statusFilter === "all"
-                  ? "bg-[#2563EB] text-white shadow-xs"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              All ({downloads.length})
-            </button>
-            <button
-              onClick={() => setStatusFilter("ready")}
-              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
-                statusFilter === "ready"
-                  ? "bg-[#2563EB] text-white shadow-xs"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              Ready ({readyDownloads.length})
-            </button>
-            <button
-              onClick={() => setStatusFilter("processing")}
-              className={`px-3 py-1 rounded-xl text-xs font-bold transition-all ${
-                statusFilter === "processing"
-                  ? "bg-[#2563EB] text-white shadow-xs"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              Processing ({processingDownloads.length})
-            </button>
-          </div>
-        </div>
-
-        {/* Card 3: Main File Grid & List */}
+        {/* List */}
         {isLoading ? (
           <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-400 space-y-3">
             <RefreshCw className="w-8 h-8 mx-auto animate-spin text-blue-600" />
-            <p className="text-xs font-semibold">Loading your downloads repository...</p>
+            <p className="text-xs font-semibold">Loading your downloads...</p>
           </div>
         ) : filteredDownloads.length === 0 ? (
           <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center text-slate-400 space-y-3">
@@ -376,295 +242,177 @@ export const DownloadsScreen: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h2 className="text-base font-bold text-slate-900">Document Repository</h2>
-              <span className="text-xs text-slate-400">{filteredDownloads.length} Records</span>
-            </div>
-
-            <div className="space-y-3">
-              {filteredDownloads.map((record) => (
-                <div
-                  key={record.id}
-                  onClick={() => {
-                    setPreviewRecord(record);
-                    setZoomScale(1);
-                    setRotationAngle(0);
-                  }}
-                  className="p-4 rounded-2xl border border-slate-200 bg-white hover:border-blue-300 hover:shadow-md transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4 cursor-pointer group"
-                >
-                  <div className="flex items-start gap-3.5">
-                    <div
-                      className={`p-3 rounded-2xl shrink-0 ${
-                        record.format === "PDF"
-                          ? "bg-red-50 text-red-600 border border-red-100"
-                          : "bg-blue-50 text-blue-600 border border-blue-100"
-                      }`}
-                    >
-                      {record.format === "PDF" ? (
-                        <FileText className="w-6 h-6" />
-                      ) : (
-                        <ImageIcon className="w-6 h-6" />
-                      )}
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-slate-900">{record.fileName}</span>
-                        <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
-                          {record.format}
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-500">
-                        {record.service} • {record.date} •{" "}
-                        {((record.sizeBytes || 1200000) / 1000000).toFixed(2)} MB
-                      </p>
-
-                      {/* Processing Progress Bar */}
-                      {(record.status === "GENERATING" || record.status === "QUEUED") && (
-                        <div className="w-full max-w-md pt-1">
-                          <div className="flex items-center justify-between text-[11px] text-blue-700 font-medium mb-1">
-                            <span>Generating high-resolution document...</span>
-                            <span>{record.progressPercent || 65}%</span>
-                          </div>
-                          <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-blue-600 transition-all duration-300"
-                              style={{ width: `${record.progressPercent || 65}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      )}
-
-                      {record.status === "FAILED" && (
-                        <p className="text-xs font-semibold text-red-600">
-                          Failure: {record.failureReason || "Generation timeout."}
-                        </p>
-                      )}
-                    </div>
+          <div className="space-y-2.5">
+            {filteredDownloads.map((record) => (
+              <div
+                key={record.id}
+                onClick={() => handleOpen(record)}
+                className="p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-blue-300 hover:shadow-md transition-all flex items-center justify-between gap-3 cursor-pointer"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div
+                    className={`p-2.5 rounded-xl shrink-0 ${
+                      record.format === "PDF"
+                        ? "bg-red-50 text-red-600 border border-red-100"
+                        : "bg-blue-50 text-blue-600 border border-blue-100"
+                    }`}
+                  >
+                    {record.format === "PDF" ? (
+                      <FileText className="w-5 h-5" />
+                    ) : (
+                      <ImageIcon className="w-5 h-5" />
+                    )}
                   </div>
 
-                  {/* Actions Bar */}
-                  <div className="flex items-center gap-2 self-end md:self-center">
-                    {record.status === "FAILED" ? (
-                      <button
-                        onClick={(e) => handleRetry(record, e)}
-                        className="px-3.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-xl text-xs font-bold border border-amber-200 transition-all flex items-center gap-1.5"
-                      >
-                        <RefreshCw className="w-3.5 h-3.5" /> Retry
-                      </button>
-                    ) : record.status === "READY" || record.status === "COMPLETED" || record.status === "DOWNLOADED" ? (
-                      <>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (record.format === "PDF" || record.fileName.toLowerCase().endsWith(".pdf")) {
-                              useTemplateStore.setState({ activePdf: record });
-                              setActiveScreen("pdf_viewer");
-                            } else {
-                              setPreviewRecord(record);
-                              setZoomScale(1);
-                              setRotationAngle(0);
-                            }
-                          }}
-                          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
-                          title="Open document in reader"
-                        >
-                          <Eye className="w-4 h-4" /> Open
-                        </button>
-                        <button
-                          onClick={(e) => handleDownload(record, e)}
-                          className="p-2 text-slate-600 hover:text-blue-600 bg-slate-50 hover:bg-blue-100 border border-slate-200 rounded-xl text-xs font-semibold transition-all"
-                          title="Save to device storage"
-                        >
-                          <DownloadCloud className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={(e) => handleShare(record, e)}
-                          className="p-2 text-slate-600 hover:text-blue-600 bg-slate-50 hover:bg-blue-100 border border-slate-200 rounded-xl text-xs font-semibold transition-all"
-                          title="Share Document"
-                        >
-                          <Share2 className="w-4 h-4" />
-                        </button>
-                      </>
-                    ) : null}
-
-                    <button
-                      onClick={(e) => handleDelete(record.id, e)}
-                      className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                      title="Delete File"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-slate-900 truncate">
+                        {record.fileName}
+                      </span>
+                      <span className="text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600 shrink-0">
+                        {record.format === "PDF" ? "PDF" : "IMG"}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 truncate">
+                      {record.service} • {record.date} •{" "}
+                      {((record.sizeBytes || 1200000) / 1000000).toFixed(2)} MB
+                    </p>
+                    {record.status === "FAILED" && (
+                      <p className="text-xs font-semibold text-red-600 truncate">
+                        Failed: {record.failureReason || "Generation timeout."}
+                      </p>
+                    )}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
 
-        {/* ADMIN DOWNLOAD STATS & SYSTEM LOGS */}
-        {authRole === "admin" && (
-          <div className="bg-slate-900 text-slate-100 rounded-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-blue-400" />
-                <h2 className="text-base font-bold text-white">
-                  System Export Logs & Admin Analytics
-                </h2>
+                {/* Actions */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {record.status !== "FAILED" && (
+                    <>
+                      <button
+                        onClick={(e) => handleOpen(record, e)}
+                        className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all cursor-pointer"
+                        title="Open"
+                        aria-label="Open document"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={(e) => handleDownload(record, e)}
+                        className="p-2 text-slate-600 hover:text-blue-600 bg-slate-50 hover:bg-blue-100 border border-slate-200 rounded-xl transition-all"
+                        title="Download"
+                        aria-label="Download file"
+                      >
+                        <DownloadCloud className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={(e) => handleShare(record, e)}
+                        className="p-2 text-slate-600 hover:text-blue-600 bg-slate-50 hover:bg-blue-100 border border-slate-200 rounded-xl transition-all"
+                        title="Share"
+                        aria-label="Share document"
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={(e) => handleDelete(record.id, e)}
+                    className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                    title="Delete"
+                    aria-label="Delete file"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              <span className="text-xs text-blue-400 font-mono">ROLE: CEO ADMIN</span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-              <div className="bg-slate-800/80 p-4 rounded-xl border border-slate-700 space-y-1">
-                <span className="text-slate-400">Total System File Renders</span>
-                <p className="text-2xl font-extrabold text-blue-400">{downloads.length}</p>
-              </div>
-              <div className="bg-slate-800/80 p-4 rounded-xl border border-slate-700 space-y-1">
-                <span className="text-slate-400">Export Success Rate</span>
-                <p className="text-2xl font-extrabold text-emerald-400">
-                  {downloads.length > 0
-                    ? `${Math.round(
-                        (downloads.filter((d) => d.status === "READY" || d.status === "DOWNLOADED")
-                          .length /
-                          downloads.length) *
-                          100,
-                      )}%`
-                    : "100%"}
-                </p>
-              </div>
-              <div className="bg-slate-800/80 p-4 rounded-xl border border-slate-700 space-y-1">
-                <span className="text-slate-400">Default Target Directory</span>
-                <p className="text-sm font-mono text-slate-200 mt-1">Downloads/BIGsta/</p>
-              </div>
-            </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* FULL SCREEN PREVIEW MODAL */}
+      {/* Clear All Confirmation */}
+      {confirmClearAll && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-2xl w-full max-w-sm p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-red-50 text-red-600 rounded-xl border border-red-100">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900">Clear all downloads?</h3>
+            </div>
+            <p className="text-xs text-slate-500">
+              This permanently removes all {downloads.length} saved document
+              {downloads.length === 1 ? "" : "s"} from this device. This cannot be undone.
+            </p>
+            <div className="flex items-center gap-2 justify-end">
+              <button
+                onClick={() => setConfirmClearAll(false)}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleClearAll}
+                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-colors cursor-pointer"
+              >
+                Clear All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Simple Image Preview Modal */}
       {previewRecord && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
-            {/* Modal Header */}
-            <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <FileText className="w-5 h-5 text-blue-400" />
-                <div>
-                  <h3 className="text-sm font-bold truncate max-w-md">{previewRecord.fileName}</h3>
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn"
+          onClick={() => setPreviewRecord(null)}
+        >
+          <div
+            className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-5 py-3.5 bg-slate-900 text-white flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <FileText className="w-5 h-5 text-blue-400 shrink-0" />
+                <div className="min-w-0">
+                  <h3 className="text-sm font-bold truncate">{previewRecord.fileName}</h3>
                   <p className="text-[11px] text-slate-400">
                     {previewRecord.service} • {previewRecord.format}
                   </p>
                 </div>
               </div>
-
-              {/* Zoom & Controls Toolbar */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setPreviewRecord(null)}
-                  className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-lg active:scale-95 mr-2"
-                >
-                  <ArrowLeft className="w-4 h-4" /> CLOSE & RETURN
-                </button>
-                <div className="h-6 w-px bg-slate-800 mx-1 hidden sm:block"></div>
-                <button
-                  onClick={() => setZoomScale((prev) => Math.min(prev + 0.25, 2.5))}
-                  className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg"
-                  title="Zoom In"
-                >
-                  <ZoomIn className="w-4 h-4" />
-                </button>
-                <span className="text-xs font-mono text-slate-300 min-w-[40px] text-center">
-                  {Math.round(zoomScale * 100)}%
-                </span>
-                <button
-                  onClick={() => setZoomScale((prev) => Math.max(prev - 0.25, 0.5))}
-                  className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg"
-                  title="Zoom Out"
-                >
-                  <ZoomOut className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setRotationAngle((prev) => (prev + 90) % 360)}
-                  className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg"
-                  title="Rotate"
-                >
-                  <RotateCw className="w-4 h-4" />
-                </button>
-                <div className="h-4 w-px bg-slate-800 mx-1"></div>
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => handleDownload(previewRecord)}
-                  className="px-3 py-1.5 bg-[#2563EB] hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5"
+                  className="px-3 py-1.5 bg-[#2563EB] hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer"
                 >
                   <DownloadCloud className="w-3.5 h-3.5" /> Download
+                </button>
+                <button
+                  onClick={() => setPreviewRecord(null)}
+                  className="p-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-xl cursor-pointer"
+                  aria-label="Close preview"
+                >
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            {/* Modal Body / Interactive Canvas Stage */}
-            <div className="flex-1 bg-slate-900 overflow-auto p-6 flex items-center justify-center min-h-[400px]">
-              <div
-                className="transition-transform duration-200 ease-out shadow-2xl rounded-xl bg-white overflow-hidden max-w-full max-h-full"
-                style={{
-                  transform: `scale(${zoomScale}) rotate(${rotationAngle}deg)`,
-                }}
-              >
-                {previewRecord.dataUrl ? (
-                  previewRecord.format === "PDF" ? (
-                    <div className="w-full h-full flex flex-col items-center">
-                      <iframe
-                        src={previewRecord.dataUrl}
-                        className="w-[85vw] max-w-3xl h-[70vh] rounded-xl border-none"
-                        title="PDF Preview"
-                      />
-                      <div className="mt-4 p-5 bg-white/10 rounded-2xl backdrop-blur-md text-center border border-white/10 shadow-xl">
-                        <p className="text-white text-sm font-bold mb-3 flex items-center justify-center gap-2">
-                          <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                          PDF Document Securely Generated
-                        </p>
-                        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                          <button
-                            onClick={() => handleDownload(previewRecord)}
-                            className="w-full sm:w-auto px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-black shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95"
-                          >
-                            <FileText className="w-4 h-4" />
-                            Open in System Viewer
-                          </button>
-                          <button
-                            onClick={() => {
-                              const win = window.open();
-                              if (win) {
-                                win.document.write(
-                                  `<iframe src="${previewRecord.dataUrl}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`,
-                                );
-                              }
-                            }}
-                            className="w-full sm:w-auto px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold border border-white/10 flex items-center justify-center gap-2 transition-all"
-                          >
-                            <ZoomIn className="w-4 h-4" />
-                            Full Screen Mode
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <img
-                      src={previewRecord.dataUrl}
-                      alt={previewRecord.fileName}
-                      className="max-h-[75vh] object-contain rounded-xl"
-                    />
-                  )
-                ) : (
-                  <div className="w-[500px] h-[320px] bg-slate-800 text-slate-200 flex flex-col items-center justify-center p-6 text-center space-y-3">
-                    <FileText className="w-12 h-12 text-blue-400" />
-                    <div>
-                      <p className="text-sm font-bold">Document Preview Generating</p>
-                      <p className="text-xs text-slate-400 mt-1">{previewRecord.fileName}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
+            <div className="flex-1 bg-slate-900 overflow-auto p-4 flex items-center justify-center min-h-[300px]">
+              {previewRecord.dataUrl && isImage(previewRecord) ? (
+                <img
+                  src={previewRecord.dataUrl}
+                  alt={previewRecord.fileName}
+                  className="max-h-[70vh] object-contain rounded-xl"
+                />
+              ) : (
+                <div className="text-slate-200 flex flex-col items-center justify-center p-6 text-center space-y-3">
+                  <FileText className="w-12 h-12 text-blue-400" />
+                  <p className="text-sm font-bold">Preview unavailable</p>
+                  <p className="text-xs text-slate-400">{previewRecord.fileName}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

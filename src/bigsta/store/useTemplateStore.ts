@@ -5043,47 +5043,6 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
   return newBg;
   },
 
-    addUploadedBackground: async (bgData) => {
-      let finalSrc = bgData.src;
-
-      // Supabase Storage Background Asset Sync (PROMPT 50.5)
-      try {
-        if (bgData.src && bgData.src.startsWith("data:")) {
-          const { uploadBackgroundToSupabase, supabase } = await import("../services/supabase");
-          if (supabase) {
-            // Convert base64 data URL to blob and upload
-            const res = await fetch(bgData.src);
-            const blob = await res.blob();
-            const filename = bgData.name ? `${bgData.name}.png` : "background.png";
-            const supabaseUrl = await uploadBackgroundToSupabase(blob, filename);
-            if (supabaseUrl) {
-              finalSrc = supabaseUrl;
-              // Also store asset reference in background_assets table
-              await supabase.from("background_assets").upsert({
-                id: "bg_" + Date.now(),
-                name: bgData.name || "Background Asset",
-                url: supabaseUrl,
-                service_type: (bgData as any).category || "general",
-                created_at: new Date().toISOString(),
-              });
-            }
-          }
-        }
-      } catch (e) {
-        console.warn("Supabase storage background upload skipped:", e);
-      }
-
-      const newBg: UploadedBackground = {
-        ...bgData,
-        src: finalSrc,
-        id: "bg_" + Date.now() + "_" + Math.random().toString(36).substring(2, 6),
-        createdAt: new Date().toISOString(),
-      };
-      await saveBackgroundDB(newBg);
-      await get().loadUploadedBackgrounds();
-      return newBg;
-    },
-
     updateUploadedBackground: async (id, patch) => {
       const { uploadedBackgrounds } = get();
       const existing = uploadedBackgrounds.find((b) => b.id === id);
