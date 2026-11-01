@@ -4516,12 +4516,24 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     },
 
     updateTemplateMeta: (meta) => {
+      const current = get().currentTemplate;
       const updated = {
-        ...get().currentTemplate,
+        ...current,
         ...meta,
         updatedAt: new Date().toISOString(),
       };
-      set({ currentTemplate: updated });
+      
+      const isBackSide = isBackSideTemplate(updated);
+      
+      const newState: Partial<TemplateState> = { currentTemplate: updated };
+      
+      if (isBackSide) {
+        newState.backPopulatedTemplate = updated;
+      } else {
+        newState.frontPopulatedTemplate = updated;
+      }
+      
+      set(newState);
       get().pushHistoryState(updated);
     },
 
