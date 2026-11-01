@@ -211,6 +211,11 @@ export async function deleteDownloadRecordDB(id: string): Promise<void> {
   await db.delete("downloads", id);
 }
 
+export async function clearDownloadRecordsDB(): Promise<void> {
+  const db = await getDB();
+  await db.clear("downloads");
+}
+
 // ==========================================
 // STUDIO DRAFTS PERSISTENCE (IndexedDB - Quota Safe)
 // ==========================================
