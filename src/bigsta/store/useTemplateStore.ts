@@ -28,6 +28,11 @@ import {
   SupportedBinding,
   isBackSideTemplate,
 } from "../utils/templateMappingEngine";
+import {
+  resolveDocumentTypeId,
+  normalizeSide,
+  checkTemplateCompletion,
+} from "../utils/templateCategoryEngine";
 import { getClosestValidWeight } from "../utils/fonts";
 // import { parseUniversalGSON } from '../utils/gsonImporter';
 
@@ -792,6 +797,9 @@ interface TemplateState {
   activeSmartGuides: SmartGuide[];
 
   uploadedBackgrounds: UploadedBackground[];
+  activeEditorSide: "front" | "back";
+  completionBannerMessage: string | null;
+  setCompletionBannerMessage: (msg: string | null) => void;
 
   // Modals
   isTemplateLibraryOpen: boolean;
@@ -888,12 +896,23 @@ interface TemplateState {
   distributeSelectedLayers: (direction: "horizontal" | "vertical") => void;
 
   // Background Library
-  loadUploadedBackgrounds: () => Promise<void>;
+  loadUploadedBackgrounds: (
+    docTypeId?: string,
+    templateId?: string,
+    side?: "front" | "back",
+  ) => Promise<void>;
   addUploadedBackground: (
     bg: Omit<UploadedBackground, "id" | "createdAt">,
   ) => Promise<UploadedBackground>;
   updateUploadedBackground: (id: string, patch: Partial<UploadedBackground>) => Promise<void>;
   deleteUploadedBackground: (id: string) => Promise<void>;
+  activateBackground: (
+    bgId: string,
+    docTypeId: string,
+    templateId: string,
+    side: "front" | "back",
+  ) => Promise<any>;
+  switchEditorSide: (targetSide: "front" | "back") => Promise<void>;
 
   // Guides & Rulers & Safe Zones
   addGuide: (guide: Omit<Guide, "id">) => void;
@@ -1239,6 +1258,9 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     activePdf: null,
     setActivePdf: (pdf: any | null) => set({ activePdf: pdf }),
     currentTemplate: DEFAULT_TEMPLATE,
+    activeEditorSide: "front",
+    completionBannerMessage: null,
+    setCompletionBannerMessage: (msg: string | null) => set({ completionBannerMessage: msg }),
     frontPopulatedTemplate: null,
     backPopulatedTemplate: null,
     lastNidaFormData: null,
@@ -1719,7 +1741,12 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         }
 
         if (serviceId) {
-          get().setActiveServiceId(serviceId);
+          if (finalTarget === "editor" && bypassDraftRestore) {
+            set({ activeServiceId: serviceId });
+            safeLocalStorageSetItem("bigsta_active_service", serviceId);
+          } else {
+            get().setActiveServiceId(serviceId);
+          }
         }
 
         set({
@@ -4364,8 +4391,9 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         | "nhif"
         | "nrc_zambia"
         | "admin-payments",
+      serviceId?: string,
     ) => {
-      get().navigateSafely(screen);
+      get().navigateSafely(screen, serviceId);
     },
 
     setPopulatedCardPair: (front, back, formData) => {
@@ -4415,7 +4443,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       }
     },
 
-    createNewTemplate: (background, name) => {
+    createNewTemplate: (background, name, serviceId = "nida") => {
       let cardWidth = CR80_WIDTH_MM;
       let cardHeight = CR80_HEIGHT_MM;
       let orientation: "landscape" | "portrait" = "landscape";
@@ -4435,6 +4463,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       const newTpl: CardTemplate = {
         id: "template_" + Date.now(),
         templateName: name || "New Card Template",
+        serviceId,
         cardWidth,
         cardHeight,
         unit: "mm",
@@ -4449,12 +4478,17 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
 
       set({
         currentTemplate: newTpl,
+        activeServiceId: serviceId,
+        activeEditorSide: "front",
+        frontPopulatedTemplate: newTpl,
         selectedLayerIds: [],
         activeScreen: "editor",
+        studioMode: true,
         zoom: 1.0,
         history: [newTpl],
         historyIndex: 0,
       });
+      get().loadUploadedBackgrounds(serviceId, newTpl.id, "front");
     },
 
     loadTemplate: (template: CardTemplate) => {
@@ -4463,10 +4497,12 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         return;
       }
 
-      const prepared = ensureTemplateFieldIds(template);
-      const serviceId = prepared.serviceId || get().activeServiceId || "nida";
+      const resolvedDocType = resolveDocumentTypeId(template, false) || template.serviceId || "nida";
+      const prepared = ensureTemplateFieldIds({ ...template, serviceId: resolvedDocType });
+      const serviceId = resolvedDocType;
+      const currentSide = normalizeSide(prepared);
 
-      // Diagnostic logging for template load (PROMPT 26)
+      // Diagnostic logging for template load
       const elementCount = prepared.layers?.length || 0;
       const variableLayers = (prepared.layers || []).filter((l) => {
         if (l.bindingKey) return true;
@@ -4486,7 +4522,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         id: prepared.id,
         name: prepared.templateName,
         serviceId: serviceId,
-        side: prepared.side || "Front",
+        side: currentSide,
         background: bgInfo,
         elementCount: elementCount,
         variableCount: variableLayers.length,
@@ -4498,9 +4534,18 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         );
       }
 
+      const completion = checkTemplateCompletion(
+        prepared,
+        get().uploadedBackgrounds,
+        currentSide === "front" ? prepared : get().frontPopulatedTemplate,
+        currentSide === "back" ? prepared : get().backPopulatedTemplate,
+      );
+
       set({
         currentTemplate: prepared,
         activeServiceId: serviceId,
+        activeEditorSide: currentSide,
+        completionBannerMessage: completion.statusMessage,
         selectedLayerIds: [],
         activeScreen: "editor",
         studioMode: true,
@@ -4508,14 +4553,17 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         historyIndex: 0,
         zoom: 1.0,
         hasUnsavedChanges: false,
+        ...(currentSide === "front" ? { frontPopulatedTemplate: prepared } : { backPopulatedTemplate: prepared }),
       });
 
-      // Save as studio draft for this active service to ensure navigating to editor restores this exact template
+      // Save as studio draft for this active service
       if (typeof window !== "undefined") {
         saveStudioDraftDB(serviceId, prepared);
         safeLocalStorageSetItem(`bigsta_studio_draft_${serviceId}`, JSON.stringify(prepared));
         safeLocalStorageSetItem("bigsta_active_service", serviceId);
       }
+
+      get().loadUploadedBackgrounds(serviceId, prepared.id, currentSide);
     },
 
     setCurrentTemplate: (template) => {
@@ -5003,78 +5051,312 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       get().pushHistoryState(updated);
     },
 
-  loadUploadedBackgrounds: async () => {
-  const category = (await import("../services/supabase")).getTemplateCategoryConfig(get().activeServiceId).serviceType;
-  const localBgs = await getAllBackgroundsDB();
-  const scopedLocal = localBgs.filter((bg: any) => bg.serviceType === category);
-  let cloudBgs: any[] = [];
-  try {
-    const { fetchBackgroundAssetsSupabase } = await import("../services/supabase");
-    const rows = await fetchBackgroundAssetsSupabase(category);
-    cloudBgs = (rows || []).map((row: any) => ({
-      id: row.id,
-      name: row.name || "Background",
-      src: row.url,
-      serviceType: row.service_type,
-      createdAt: row.created_at,
-      originalWidthPx: 0,
-      originalHeightPx: 0,
-      orientation: "landscape",
-    }));
-  } catch (error) {
-    console.warn("Category background fetch skipped:", error);
-  }
-  const merged = [...cloudBgs, ...scopedLocal.filter((local: any) => !cloudBgs.some((cloud) => cloud.id === local.id))];
-  set({ uploadedBackgrounds: merged });
+  loadUploadedBackgrounds: async (docTypeId?: string, templateId?: string, side?: "front" | "back") => {
+    const currentTpl = get().currentTemplate;
+    const category = docTypeId || resolveDocumentTypeId(currentTpl, false) || get().activeServiceId || "nida";
+    const localBgs = await getAllBackgroundsDB();
+
+    // Map and normalize local backgrounds with the three independent identifiers
+    const scopedLocal = localBgs
+      .map((bg: any) => {
+        const itemDocType = bg.documentTypeId || bg.document_type_id || bg.serviceType || category;
+        const itemSide = normalizeSide(bg.side || (bg.name?.toLowerCase().includes("back") ? "back" : "front"));
+        const itemTemplateId = bg.templateId || bg.template_id || (currentTpl ? currentTpl.id : "");
+        const isActive = bg.isActive !== undefined ? bg.isActive : (currentTpl?.background?.src === bg.src && itemSide === normalizeSide(currentTpl));
+        return {
+          ...bg,
+          documentTypeId: itemDocType,
+          document_type_id: itemDocType,
+          side: itemSide,
+          templateId: itemTemplateId,
+          template_id: itemTemplateId,
+          isActive,
+          is_active: isActive,
+        };
+      })
+      .filter((bg: any) => bg.documentTypeId === category);
+
+    let cloudBgs: any[] = [];
+    try {
+      const { fetchBackgroundAssetsSupabase } = await import("../services/supabase");
+      const rows = await fetchBackgroundAssetsSupabase(category);
+      cloudBgs = (rows || []).map((row: any) => {
+        const itemSide = normalizeSide(row.name?.toLowerCase().includes("back") ? "back" : "front");
+        const isActive = currentTpl?.background?.src === row.url && itemSide === normalizeSide(currentTpl);
+        return {
+          id: row.id,
+          name: row.name || "Background",
+          src: row.url,
+          serviceType: row.service_type || category,
+          documentTypeId: category,
+          document_type_id: category,
+          templateId: currentTpl?.id || "",
+          template_id: currentTpl?.id || "",
+          side: itemSide,
+          isActive,
+          is_active: isActive,
+          createdAt: row.created_at || new Date().toISOString(),
+          originalWidthPx: 0,
+          originalHeightPx: 0,
+          orientation: "landscape",
+        };
+      });
+    } catch (error) {
+      console.warn("Category background fetch skipped:", error);
+    }
+
+    const merged = [...cloudBgs, ...scopedLocal.filter((local: any) => !cloudBgs.some((cloud) => cloud.id === local.id))];
+    set({ uploadedBackgrounds: merged });
   },
-  
+
   addUploadedBackground: async (bgData) => {
-  let finalSrc = bgData.src;
-  const serviceType = (await import("../services/supabase")).getTemplateCategoryConfig(get().activeServiceId).serviceType;
-  
-  try {
-  if (bgData.src && bgData.src.startsWith("data:")) {
-  const { uploadBackgroundToSupabase, registerBackgroundAssetSupabase, supabase } = await import("../services/supabase");
-  if (supabase) {
-  const res = await fetch(bgData.src);
-  const blob = await res.blob();
-  const id = "bg_" + Date.now() + "_" + Math.random().toString(36).substring(2, 6);
-  const cloudUrl = await uploadBackgroundToSupabase(blob, `${bgData.name}.png`, serviceType);
-  if (cloudUrl) {
-    finalSrc = cloudUrl;
-    await registerBackgroundAssetSupabase({ id, name: bgData.name, url: cloudUrl, serviceType });
-  }
-  }
-  }
-  } catch (e) {
-  console.warn("Cloud category background upload skipped, using local data URL", e);
-  }
-  
-  const newBg: UploadedBackground = {
-  ...bgData,
-  src: finalSrc,
-  serviceType,
-  id: "bg_" + Date.now() + "_" + Math.random().toString(36).substring(2, 6),
-  createdAt: new Date().toISOString(),
-  };
-  await saveBackgroundDB(newBg);
-  await get().loadUploadedBackgrounds();
-  return newBg;
+    let finalSrc = bgData.src;
+    const currentTpl = get().currentTemplate;
+    const documentTypeId =
+      bgData.documentTypeId ||
+      bgData.document_type_id ||
+      resolveDocumentTypeId(currentTpl, false) ||
+      get().activeServiceId ||
+      "nida";
+    const side = normalizeSide(bgData.side || (isBackSideTemplate(currentTpl) ? "back" : "front"));
+    const templateId = bgData.templateId || bgData.template_id || (currentTpl ? currentTpl.id : `tpl_${documentTypeId}`);
+    const isActive = bgData.isActive ?? true;
+
+    try {
+      if (bgData.src && bgData.src.startsWith("data:")) {
+        const { uploadBackgroundToSupabase, registerBackgroundAssetSupabase, supabase } = await import("../services/supabase");
+        if (supabase) {
+          const res = await fetch(bgData.src);
+          const blob = await res.blob();
+          const id = "bg_" + Date.now() + "_" + Math.random().toString(36).substring(2, 6);
+          const cloudUrl = await uploadBackgroundToSupabase(blob, `${bgData.name}.png`, documentTypeId);
+          if (cloudUrl) {
+            finalSrc = cloudUrl;
+            await registerBackgroundAssetSupabase({ id, name: bgData.name, url: cloudUrl, serviceType: documentTypeId });
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Cloud category background upload skipped, using local data URL", e);
+    }
+
+    const newBg: UploadedBackground = {
+      ...bgData,
+      src: finalSrc,
+      serviceType: documentTypeId,
+      documentTypeId,
+      document_type_id: documentTypeId,
+      templateId,
+      template_id: templateId,
+      side,
+      isActive,
+      is_active: isActive,
+      id: "bg_" + Date.now() + "_" + Math.random().toString(36).substring(2, 6),
+      createdAt: new Date().toISOString(),
+    };
+
+    await saveBackgroundDB(newBg);
+
+    // If active, run scoped activation immediately
+    if (isActive) {
+      await get().activateBackground(newBg.id, documentTypeId, templateId, side);
+    } else {
+      await get().loadUploadedBackgrounds(documentTypeId, templateId, side);
+    }
+
+    return newBg;
   },
 
-    updateUploadedBackground: async (id, patch) => {
-      const { uploadedBackgrounds } = get();
-      const existing = uploadedBackgrounds.find((b) => b.id === id);
-      if (!existing) return;
-      const updated = { ...existing, ...patch };
-      await saveBackgroundDB(updated);
-      await get().loadUploadedBackgrounds();
-    },
+  activateBackground: async (bgId: string, docTypeId: string, templateId: string, side: "front" | "back") => {
+    const canonicalCategory = docTypeId || resolveDocumentTypeId(get().currentTemplate, false) || get().activeServiceId || "nida";
+    const canonicalSide = normalizeSide(side);
+    const targetBg = get().uploadedBackgrounds.find((b) => b.id === bgId);
+    if (!targetBg) return { success: false, message: "Background not found in store" };
 
-    deleteUploadedBackground: async (id) => {
-      await deleteBackgroundDB(id);
-      await get().loadUploadedBackgrounds();
-    },
+    // 1. STRICT SCOPED DEACTIVATION: Only deactivate same (docTypeId, templateId, side)
+    // NEVER touch backgrounds where side !== canonicalSide or documentTypeId !== canonicalCategory!
+    const updatedBackgrounds = get().uploadedBackgrounds.map((b) => {
+      if (b.documentTypeId === canonicalCategory && b.side === canonicalSide) {
+        return {
+          ...b,
+          isActive: b.id === bgId,
+          is_active: b.id === bgId,
+        };
+      }
+      return b;
+    });
+
+    set({ uploadedBackgrounds: updatedBackgrounds });
+
+    // Persist all updated backgrounds in IndexedDB
+    for (const b of updatedBackgrounds) {
+      if (b.documentTypeId === canonicalCategory && b.side === canonicalSide) {
+        await saveBackgroundDB(b);
+      }
+    }
+
+    // 2. Build side background config
+    const bgConfig: BackgroundConfig = {
+      type: "image",
+      src: targetBg.src,
+      originalWidthPx: targetBg.originalWidthPx,
+      originalHeightPx: targetBg.originalHeightPx,
+      opacity: get().currentTemplate?.background?.opacity ?? 1,
+    };
+
+    // 3. Update currentTemplate with independent Front and Back status
+    const current = get().currentTemplate;
+    const isEditingThisSide = get().activeEditorSide === canonicalSide || normalizeSide(current) === canonicalSide;
+
+    const updatedTpl: CardTemplate = {
+      ...current,
+      serviceId: canonicalCategory,
+      ...(isEditingThisSide ? { background: bgConfig, side: canonicalSide === "front" ? "Front Side" : "Back Side" } : {}),
+      ...(canonicalSide === "front"
+        ? {
+            front_background: bgConfig,
+            active_front_bg_id: bgId,
+            front_status: "configured" as const,
+          }
+        : {
+            back_background: bgConfig,
+            active_back_bg_id: bgId,
+            back_status: "configured" as const,
+          }),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Ensure opposite side status is properly preserved
+    if (canonicalSide === "front") {
+      const existingBackBg = get().backPopulatedTemplate?.background?.src || updatedTpl.back_background?.src;
+      updatedTpl.back_status = existingBackBg ? "configured" : (updatedTpl.back_status || "missing");
+      updatedTpl.is_complete = updatedTpl.front_status === "configured" && updatedTpl.back_status === "configured";
+
+      const frontInstance = { ...updatedTpl, background: bgConfig, side: "Front Side" as const };
+      set({ frontPopulatedTemplate: frontInstance });
+
+      if (updatedTpl.isUniversal) {
+        try {
+          await get().saveUniversalFrontTemplate(canonicalCategory, frontInstance);
+        } catch (e) {
+          console.warn("Universal front template sync skipped:", e);
+        }
+      }
+    } else {
+      const existingFrontBg = get().frontPopulatedTemplate?.background?.src || updatedTpl.front_background?.src;
+      updatedTpl.front_status = existingFrontBg ? "configured" : (updatedTpl.front_status || "missing");
+      updatedTpl.is_complete = updatedTpl.front_status === "configured" && updatedTpl.back_status === "configured";
+
+      const backInstance = { ...updatedTpl, background: bgConfig, side: "Back Side" as const };
+      set({ backPopulatedTemplate: backInstance });
+
+      if (updatedTpl.isUniversal) {
+        try {
+          await get().saveUniversalBackTemplate(canonicalCategory, backInstance);
+        } catch (e) {
+          console.warn("Universal back template sync skipped:", e);
+        }
+      }
+    }
+
+    // Persist template
+    await saveTemplateDB(sanitizeTemplateForSaving(updatedTpl));
+    get().saveStudioDraft();
+
+    // 4. Run Intelligent Front/Back Completion Check
+    const completion = checkTemplateCompletion(
+      updatedTpl,
+      updatedBackgrounds,
+      get().frontPopulatedTemplate,
+      get().backPopulatedTemplate,
+    );
+
+    set({
+      currentTemplate: updatedTpl,
+      completionBannerMessage: completion.statusMessage,
+    });
+
+    return { success: true, completionStatus: completion };
+  },
+
+  switchEditorSide: async (targetSide: "front" | "back") => {
+    const canonicalTarget = normalizeSide(targetSide);
+    if (get().activeEditorSide === canonicalTarget) return;
+
+    const current = get().currentTemplate;
+    const currentSide = normalizeSide(current);
+    const serviceId = current.serviceId || get().activeServiceId || "nida";
+
+    // 1. Preserve current side template
+    if (currentSide === "front") {
+      const frontSnapshot = { ...current, side: "Front Side" as const };
+      set({ frontPopulatedTemplate: frontSnapshot });
+      await saveTemplateDB(sanitizeTemplateForSaving(frontSnapshot));
+    } else {
+      const backSnapshot = { ...current, side: "Back Side" as const };
+      set({ backPopulatedTemplate: backSnapshot });
+      await saveTemplateDB(sanitizeTemplateForSaving(backSnapshot));
+    }
+
+    // 2. Load or construct opposite side template
+    let targetTemplate: CardTemplate | null = null;
+    if (canonicalTarget === "front") {
+      targetTemplate = get().frontPopulatedTemplate;
+      if (!targetTemplate && current.isUniversal) {
+        targetTemplate = get().getUniversalFrontTemplate(serviceId);
+      }
+      if (!targetTemplate) {
+        targetTemplate = {
+          ...current,
+          id: current.id.endsWith("_back") ? current.id.replace(/_back$/, "_front") : `${current.id}_front`,
+          side: "Front Side",
+          templateName: current.templateName.replace(/back/i, "Front"),
+          background: current.front_background || { type: "color", color: "#ffffff" },
+          layers: [],
+        };
+      }
+    } else {
+      targetTemplate = get().backPopulatedTemplate;
+      if (!targetTemplate && current.isUniversal) {
+        targetTemplate = get().getUniversalBackTemplate(serviceId);
+      }
+      if (!targetTemplate) {
+        targetTemplate = {
+          ...current,
+          id: current.id.endsWith("_front") ? current.id.replace(/_front$/, "_back") : `${current.id}_back`,
+          side: "Back Side",
+          templateName: current.templateName.replace(/front/i, "Back"),
+          background: current.back_background || { type: "color", color: "#ffffff" },
+          layers: [],
+        };
+      }
+    }
+
+    const sanitizedTarget = ensureTemplateFieldIds(targetTemplate);
+
+    set({
+      currentTemplate: sanitizedTarget,
+      activeEditorSide: canonicalTarget,
+      selectedLayerIds: [],
+    });
+
+    get().saveStudioDraft();
+    await get().loadUploadedBackgrounds(serviceId, sanitizedTarget.id, canonicalTarget);
+  },
+
+  updateUploadedBackground: async (id, patch) => {
+    const { uploadedBackgrounds } = get();
+    const existing = uploadedBackgrounds.find((b) => b.id === id);
+    if (!existing) return;
+    const updated = { ...existing, ...patch };
+    await saveBackgroundDB(updated);
+    await get().loadUploadedBackgrounds();
+  },
+
+  deleteUploadedBackground: async (id) => {
+    await deleteBackgroundDB(id);
+    await get().loadUploadedBackgrounds();
+  },
 
     toggleSafeZones: () => set((state) => ({ showSafeZones: !state.showSafeZones })),
 

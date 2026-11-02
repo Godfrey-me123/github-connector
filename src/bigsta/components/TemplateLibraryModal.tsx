@@ -18,6 +18,7 @@ import { CardTemplate } from "../types";
 import { downloadJSON } from "../utils/export";
 
 import { TemplateBadge } from "./TemplateBadge";
+import { resolveDocumentTypeId } from "../utils/templateCategoryEngine";
 
 export const TemplateLibraryModal: React.FC = () => {
   const {
@@ -232,9 +233,10 @@ export const TemplateLibraryModal: React.FC = () => {
               <div
                 key={`${tpl.id}-${idx}`}
                 onClick={() => {
-                  loadTemplate(tpl);
+                  const docTypeId = resolveDocumentTypeId(tpl, false) || tpl.serviceId || "nida";
+                  const safeTpl = { ...tpl, serviceId: docTypeId };
+                  loadTemplate(safeTpl);
                   setTemplateLibraryOpen(false);
-                  setActiveScreen("editor");
                 }}
                 className="group p-4 bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 hover:border-blue-500 rounded-xl transition-all cursor-pointer flex flex-col justify-between"
               >

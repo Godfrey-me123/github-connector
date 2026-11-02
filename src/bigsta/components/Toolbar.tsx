@@ -38,6 +38,7 @@ import { HorizontalActionRow } from "./common/HorizontalActionRow";
 import { UserUsageBadge } from "./auth/UserUsageBadge";
 import { SampleDataPreviewModal } from "./SampleDataPreviewModal";
 import { UniversalBackButton } from "./common/UniversalBackButton";
+import { normalizeSide, checkTemplateCompletion } from "../utils/templateCategoryEngine";
 
 export const Toolbar: React.FC = () => {
   const {
@@ -81,6 +82,11 @@ export const Toolbar: React.FC = () => {
     setSaveModalOpen,
     lastEditingContext,
     returnToEditingContext,
+    activeEditorSide,
+    switchEditorSide,
+    frontPopulatedTemplate,
+    backPopulatedTemplate,
+    uploadedBackgrounds,
   } = useTemplateStore();
 
   const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState(false);
@@ -201,6 +207,58 @@ export const Toolbar: React.FC = () => {
               <option value="nrc_zambia">NRC card-zambia</option>
               <option value="ajira">Ajira Portal</option>
             </select>
+          </div>
+
+          {/* Studio Side Switcher Pill */}
+          <div className="flex items-center bg-[#E7E9EB] p-0.5 rounded-lg border border-[#dadcdc] shrink-0">
+            <button
+              type="button"
+              onClick={() => switchEditorSide("front")}
+              className={`px-2 py-0.5 text-xs font-bold rounded-md flex items-center gap-1.5 transition-all cursor-pointer ${
+                (activeEditorSide || normalizeSide(currentTemplate)) === "front"
+                  ? "bg-white text-black shadow-xs"
+                  : "text-slate-600 hover:text-black"
+              }`}
+              title="Switch to Front Side"
+            >
+              <span>Front</span>
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  checkTemplateCompletion(
+                    currentTemplate,
+                    uploadedBackgrounds,
+                    frontPopulatedTemplate,
+                    backPopulatedTemplate,
+                  ).front_status === "configured"
+                    ? "bg-emerald-500"
+                    : "bg-amber-500"
+                }`}
+              />
+            </button>
+            <button
+              type="button"
+              onClick={() => switchEditorSide("back")}
+              className={`px-2 py-0.5 text-xs font-bold rounded-md flex items-center gap-1.5 transition-all cursor-pointer ${
+                (activeEditorSide || normalizeSide(currentTemplate)) === "back"
+                  ? "bg-white text-black shadow-xs"
+                  : "text-slate-600 hover:text-black"
+              }`}
+              title="Switch to Back Side"
+            >
+              <span>Back</span>
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  checkTemplateCompletion(
+                    currentTemplate,
+                    uploadedBackgrounds,
+                    frontPopulatedTemplate,
+                    backPopulatedTemplate,
+                  ).back_status === "configured"
+                    ? "bg-emerald-500"
+                    : "bg-amber-500"
+                }`}
+              />
+            </button>
           </div>
         </div>
 

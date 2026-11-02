@@ -20,6 +20,7 @@ import { TemplateBadge } from "./TemplateBadge";
 import { renderTemplateToCanvas } from "../utils/export";
 import { AppFooter } from "./common/AppFooter";
 import { UniversalBackButton } from "./common/UniversalBackButton";
+import { resolveDocumentTypeId } from "../utils/templateCategoryEngine";
 
 export const UploadScreen: React.FC = () => {
   const {
@@ -31,6 +32,7 @@ export const UploadScreen: React.FC = () => {
     saveCurrentTemplate,
     setActiveScreen,
     setCardGeneratorOpen,
+    activeServiceId,
   } = useTemplateStore();
 
   const [dragActive, setDragActive] = useState(false);
@@ -121,6 +123,7 @@ export const UploadScreen: React.FC = () => {
 
   const handleCreateTemplate = async () => {
     console.log("handleCreateTemplate called", { previewImage: !!previewImage, imageMeta });
+    const targetService = activeServiceId || "nida";
     if (previewImage && imageMeta) {
       const isPortrait = imageMeta.height > imageMeta.width;
       await addUploadedBackground({
@@ -129,6 +132,10 @@ export const UploadScreen: React.FC = () => {
         originalWidthPx: imageMeta.width,
         originalHeightPx: imageMeta.height,
         orientation: isPortrait ? "portrait" : "landscape",
+        documentTypeId: targetService,
+        document_type_id: targetService,
+        side: "front",
+        isActive: true,
       });
 
       createNewTemplate(
@@ -139,8 +146,8 @@ export const UploadScreen: React.FC = () => {
           originalHeightPx: imageMeta.height,
         },
         customName || "Custom ID Template",
+        targetService,
       );
-      setActiveScreen("editor");
     } else {
       console.log("Creating template with default background");
       // Create with clean default background
@@ -150,15 +157,15 @@ export const UploadScreen: React.FC = () => {
           color: "#ffffff",
         },
         "Blank ID Template",
+        targetService,
       );
-      setActiveScreen("editor");
     }
   };
 
   const handleOpenEdit = (tpl: CardTemplate, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    loadTemplate(tpl);
-    setActiveScreen("editor");
+    const docTypeId = resolveDocumentTypeId(tpl, false) || tpl.serviceId || "nida";
+    loadTemplate({ ...tpl, serviceId: docTypeId });
   };
 
   const handleUseInGenerator = (tpl: CardTemplate, e: React.MouseEvent) => {

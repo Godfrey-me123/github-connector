@@ -29,6 +29,7 @@ import { downloadJSON, renderTemplateToCanvas } from "../utils/export";
 import { TemplateBadge } from "./TemplateBadge";
 import { AppFooter } from "./common/AppFooter";
 import { UniversalBackButton } from "./common/UniversalBackButton";
+import { resolveDocumentTypeId } from "../utils/templateCategoryEngine";
 
 export const TemplatesScreen: React.FC = () => {
   const {
@@ -109,8 +110,15 @@ export const TemplatesScreen: React.FC = () => {
 
   const handleOpenEdit = (tpl: CardTemplate, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    loadTemplate(tpl);
-    setActiveScreen("editor");
+    const docTypeId = resolveDocumentTypeId(tpl, false) || tpl.serviceId;
+    if (!docTypeId) {
+      alert(
+        `Unable to identify document category for template "${tpl.templateName}". Please check template settings.`,
+      );
+      return;
+    }
+    const safeTpl = { ...tpl, serviceId: docTypeId };
+    loadTemplate(safeTpl);
   };
 
   const handleUseInGenerator = (tpl: CardTemplate, e: React.MouseEvent) => {
@@ -187,12 +195,32 @@ export const TemplatesScreen: React.FC = () => {
     }
   };
 
+  const categoryServiceMap: Record<string, string> = {
+    "National ID": "nida",
+    "Driving Licence": "driving_license",
+    "Driving License": "driving_license",
+    Passport: "passport",
+    "NHIF Health Card": "nhif",
+    "NRC Zambia": "nrc_zambia",
+    "Employee ID": "nida",
+    "Student ID": "heslb",
+    "Membership Card": "nhif",
+    "Birth Certificate": "birth_certificate",
+    "TIN Certificate": "tin",
+    "Business License": "business_license",
+  };
+
   // Filter & Sort
   const filtered = templates.filter((t) => {
     const matchesSearch = t.templateName.toLowerCase().includes(searchTerm.toLowerCase());
+    const docTypeId = resolveDocumentTypeId(t, false) || t.serviceId || "";
+    const targetService = categoryServiceMap[selectedCategory];
+
     const matchesCategory =
       selectedCategory === "All" ||
+      (targetService && docTypeId === targetService) ||
       (t.cardType && t.cardType.toLowerCase() === selectedCategory.toLowerCase());
+
     return matchesSearch && matchesCategory;
   });
 
@@ -239,7 +267,10 @@ export const TemplatesScreen: React.FC = () => {
           </button>
 
           <button
-            onClick={() => setActiveScreen("editor")}
+            onClick={() => {
+              const targetService = categoryServiceMap[selectedCategory] || "nida";
+              setActiveScreen("editor", targetService);
+            }}
             className="px-4 py-2 bg-[#000000] hover:bg-[#222222] text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -264,7 +295,17 @@ export const TemplatesScreen: React.FC = () => {
 
         {/* Categories Pills */}
         <div className="flex items-center justify-center sm:justify-start gap-1.5 overflow-x-auto py-1 scrollbar-none w-full sm:w-auto">
-          {["All", "National ID", "Employee ID", "Student ID", "Membership Card"].map((cat) => (
+          {[
+            "All",
+            "National ID",
+            "Driving Licence",
+            "Passport",
+            "NHIF Health Card",
+            "NRC Zambia",
+            "Employee ID",
+            "Student ID",
+            "Membership Card",
+          ].map((cat) => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}

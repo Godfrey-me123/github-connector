@@ -80,6 +80,14 @@ export interface UploadedBackground {
   originalHeightPx: number;
   orientation: "landscape" | "portrait";
   createdAt: string;
+  serviceType?: string;
+  documentTypeId?: string;
+  document_type_id?: string;
+  templateId?: string;
+  template_id?: string;
+  side?: "front" | "back";
+  isActive?: boolean;
+  is_active?: boolean;
 }
 
 export interface SmartGuide {
@@ -325,6 +333,13 @@ export interface CardTemplate {
   publishedAt?: string;
   publishedBy?: string;
   version?: number;
+  front_status?: "configured" | "missing";
+  back_status?: "configured" | "missing";
+  is_complete?: boolean;
+  front_background?: BackgroundConfig;
+  back_background?: BackgroundConfig;
+  active_front_bg_id?: string;
+  active_back_bg_id?: string;
   createdAt: string;
   updatedAt: string;
 }

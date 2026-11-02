@@ -1,8 +1,27 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import React, { useState, useEffect } from "react";
-import { Upload, Check, Edit3, Trash2, RefreshCw, Palette, Sun } from "lucide-react";
+import {
+  Upload,
+  Check,
+  Edit3,
+  Trash2,
+  RefreshCw,
+  Palette,
+  Sun,
+  ShieldAlert,
+  CheckCircle2,
+  AlertCircle,
+  Layers,
+  ArrowRight,
+} from "lucide-react";
 import { useTemplateStore } from "../store/useTemplateStore";
 import { isBackSideTemplate } from "../utils/templateMappingEngine";
+import {
+  resolveDocumentTypeId,
+  normalizeSide,
+  checkTemplateCompletion,
+  SUPPORTED_DOCUMENT_CATEGORIES,
+} from "../utils/templateCategoryEngine";
 
 interface BackgroundsPanelProps {
   onBackgroundSelected?: () => void;
@@ -17,18 +36,64 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
     addUploadedBackground,
     updateUploadedBackground,
     deleteUploadedBackground,
+    activateBackground,
+    switchEditorSide,
+    activeEditorSide,
     setIsSaving,
     activeServiceId,
-    saveUniversalFrontTemplate,
-    saveUniversalBackTemplate,
+    frontPopulatedTemplate,
+    backPopulatedTemplate,
+    completionBannerMessage,
   } = useTemplateStore();
 
   const [editingBgId, setEditingBgId] = useState<string | null>(null);
   const [editingBgName, setEditingBgName] = useState("");
 
+  // Determine current 3 independent identifiers
+  const currentCategory =
+    resolveDocumentTypeId(currentTemplate, false) ||
+    currentTemplate.serviceId ||
+    activeServiceId ||
+    "nida";
+  const templateId = currentTemplate.id;
+  const activeSide = activeEditorSide || normalizeSide(currentTemplate);
+
+  // Tab selection inside Backgrounds Panel: defaults to currently active editor side
+  const [selectedSideTab, setSelectedSideTab] = useState<"front" | "back">(activeSide);
+
+  // Sync tab with editor side when editor side changes externally
   useEffect(() => {
-    loadUploadedBackgrounds();
-  }, [loadUploadedBackgrounds]);
+    setSelectedSideTab(activeSide);
+  }, [activeSide]);
+
+  // Load backgrounds scoped to this category
+  useEffect(() => {
+    loadUploadedBackgrounds(currentCategory, templateId, selectedSideTab);
+  }, [loadUploadedBackgrounds, currentCategory, templateId, selectedSideTab]);
+
+  // Check completion status of current template
+  const completion = checkTemplateCompletion(
+    currentTemplate,
+    uploadedBackgrounds,
+    frontPopulatedTemplate,
+    backPopulatedTemplate,
+  );
+
+  // Category display name
+  const categoryConfig =
+    SUPPORTED_DOCUMENT_CATEGORIES.find((c) => c.id === currentCategory) || {
+      displayName: currentCategory.toUpperCase(),
+    };
+
+  // Filter backgrounds strictly by category and side
+  const filteredBackgrounds = uploadedBackgrounds.filter((bg) => {
+    const bgDocType =
+      bg.documentTypeId || bg.document_type_id || bg.serviceType || currentCategory;
+    if (bgDocType !== currentCategory) return false;
+
+    const bgSide = normalizeSide(bg.side || (bg.name?.toLowerCase().includes("back") ? "back" : "front"));
+    return bgSide === selectedSideTab;
+  });
 
   const handleBgLibraryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -42,44 +107,26 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
       img.onload = async () => {
         try {
           const orientation = img.height > img.width ? "portrait" : "landscape";
+          const newBgName = `${file.name.split(".")[0] || "Card Background"} (${selectedSideTab.toUpperCase()})`;
+
+          // Save with the three independent identifiers
           const newBg = await addUploadedBackground({
-            name: file.name.split(".")[0] || "Card Background",
+            name: newBgName,
             src,
             originalWidthPx: img.width,
             originalHeightPx: img.height,
             orientation,
+            documentTypeId: currentCategory,
+            document_type_id: currentCategory,
+            templateId: templateId,
+            template_id: templateId,
+            side: selectedSideTab,
+            isActive: true,
           });
 
-          const finalSrc = newBg.src;
-
-          // Set as active background
-          const backgroundConfig = {
-            type: "image" as const,
-            src: finalSrc,
-            originalWidthPx: img.width,
-            originalHeightPx: img.height,
-          };
-
-          updateTemplateMeta({
-            background: backgroundConfig,
-          });
-
-          // AUTO-SYNC TO CLOUD: If this is a universal template, push background change to Supabase immediately
-          if (currentTemplate.isUniversal) {
-            const sideIsBack = isBackSideTemplate(currentTemplate);
-            const sId = currentTemplate.serviceId || activeServiceId || "nida";
-
-            const updatedTpl = {
-              ...currentTemplate,
-              background: backgroundConfig,
-              updatedAt: new Date().toISOString(),
-            };
-
-            if (sideIsBack) {
-              await saveUniversalBackTemplate(sId, updatedTpl as any);
-            } else {
-              await saveUniversalFrontTemplate(sId, updatedTpl as any);
-            }
+          // Ensure editor side matches the tab uploaded to
+          if (activeSide !== selectedSideTab) {
+            await switchEditorSide(selectedSideTab);
           }
 
           onBackgroundSelected?.();
@@ -105,46 +152,24 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
       img.onload = async () => {
         try {
           const orientation = img.height > img.width ? "portrait" : "landscape";
-          const updatedBg = await updateUploadedBackground(id, {
+          await updateUploadedBackground(id, {
             src,
             originalWidthPx: img.width,
             originalHeightPx: img.height,
             orientation,
+            documentTypeId: currentCategory,
+            side: selectedSideTab,
           });
 
-          // If we updated a library background that is currently in use, sync it to the active template
-          if (
+          // If this background is currently in use on active side, re-activate it
+          const isCurrentlyActive =
             currentTemplate.background.src === src ||
-            currentTemplate.background.src?.includes(id)
-          ) {
-            const backgroundConfig = {
-              type: "image" as const,
-              src,
-              originalWidthPx: img.width,
-              originalHeightPx: img.height,
-            };
+            currentTemplate.background.src?.includes(id) ||
+            (selectedSideTab === "front" && currentTemplate.active_front_bg_id === id) ||
+            (selectedSideTab === "back" && currentTemplate.active_back_bg_id === id);
 
-            updateTemplateMeta({
-              background: backgroundConfig,
-            });
-
-            // AUTO-SYNC TO CLOUD: Push change to Supabase if it's the active universal template
-            if (currentTemplate.isUniversal) {
-              const sideIsBack = isBackSideTemplate(currentTemplate);
-              const sId = currentTemplate.serviceId || activeServiceId || "nida";
-
-              const updatedTpl = {
-                ...currentTemplate,
-                background: backgroundConfig,
-                updatedAt: new Date().toISOString(),
-              };
-
-              if (sideIsBack) {
-                await saveUniversalBackTemplate(sId, updatedTpl as any);
-              } else {
-                await saveUniversalFrontTemplate(sId, updatedTpl as any);
-              }
-            }
+          if (isCurrentlyActive) {
+            await activateBackground(id, currentCategory, templateId, selectedSideTab);
           }
         } finally {
           setIsSaving(false);
@@ -154,6 +179,21 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
     };
     reader.readAsDataURL(file);
     e.target.value = "";
+  };
+
+  const handleApplyBackground = async (bg: any) => {
+    setIsSaving(true);
+    try {
+      // Ensure canvas is on the corresponding side
+      if (activeSide !== selectedSideTab) {
+        await switchEditorSide(selectedSideTab);
+      }
+
+      await activateBackground(bg.id, currentCategory, templateId, selectedSideTab);
+      onBackgroundSelected?.();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const presetColors = [
@@ -170,12 +210,136 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
   ];
 
   return (
-    <div className="space-y-4 pb-4">
+    <div className="space-y-4 pb-4 select-none">
+      {/* Category & Template Context Header */}
+      <div className="p-3 bg-slate-900/90 rounded-xl border border-slate-800 space-y-2">
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            Document Category
+          </span>
+          <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
+            {categoryConfig.displayName}
+          </span>
+        </div>
+        <div className="flex items-center justify-between text-xs">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            Template
+          </span>
+          <span className="text-xs font-semibold text-slate-200 truncate max-w-[150px]">
+            {currentTemplate.templateName}
+          </span>
+        </div>
+      </div>
+
+      {/* Side Selector Tabs (Front vs Back) */}
+      <div className="flex items-center bg-slate-900 p-1 rounded-xl border border-slate-800">
+        <button
+          type="button"
+          onClick={async () => {
+            setSelectedSideTab("front");
+            if (activeSide !== "front") {
+              await switchEditorSide("front");
+            }
+          }}
+          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+            selectedSideTab === "front"
+              ? "bg-blue-600 text-white shadow-sm"
+              : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+          }`}
+        >
+          <span>Front Side</span>
+          <span
+            className={`w-2 h-2 rounded-full ${
+              completion.front_status === "configured" ? "bg-emerald-400" : "bg-amber-400"
+            }`}
+            title={`Front: ${completion.front_status}`}
+          />
+        </button>
+
+        <button
+          type="button"
+          onClick={async () => {
+            setSelectedSideTab("back");
+            if (activeSide !== "back") {
+              await switchEditorSide("back");
+            }
+          }}
+          className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+            selectedSideTab === "back"
+              ? "bg-purple-600 text-white shadow-sm"
+              : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+          }`}
+        >
+          <span>Back Side</span>
+          <span
+            className={`w-2 h-2 rounded-full ${
+              completion.back_status === "configured" ? "bg-emerald-400" : "bg-amber-400"
+            }`}
+            title={`Back: ${completion.back_status}`}
+          />
+        </button>
+      </div>
+
+      {/* Intelligent Front/Back Completion Check Alert Banner */}
+      <div
+        className={`p-3 rounded-xl border text-xs leading-relaxed space-y-1.5 ${
+          completion.situation === "D"
+            ? "bg-emerald-950/40 border-emerald-500/50 text-emerald-200"
+            : completion.situation === "A"
+            ? "bg-amber-950/40 border-amber-500/50 text-amber-200"
+            : "bg-blue-950/40 border-blue-500/50 text-blue-200"
+        }`}
+      >
+        <div className="flex items-center gap-1.5 font-bold">
+          {completion.situation === "D" ? (
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          ) : (
+            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+          )}
+          <span>
+            {completion.situation === "D"
+              ? "Template Configuration Complete"
+              : "Background Setup Status"}
+          </span>
+        </div>
+        <p className="text-[11px] opacity-90">
+          {completionBannerMessage || completion.statusMessage}
+        </p>
+
+        {/* Quick helper action if opposite side is missing */}
+        {completion.situation === "B" && selectedSideTab === "front" && (
+          <button
+            type="button"
+            onClick={async () => {
+              setSelectedSideTab("back");
+              await switchEditorSide("back");
+            }}
+            className="mt-1 px-2.5 py-1 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors"
+          >
+            <span>Switch to configure Back background</span>
+            <ArrowRight className="w-3 h-3" />
+          </button>
+        )}
+        {completion.situation === "C" && selectedSideTab === "back" && (
+          <button
+            type="button"
+            onClick={async () => {
+              setSelectedSideTab("front");
+              await switchEditorSide("front");
+            }}
+            className="mt-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-colors"
+          >
+            <span>Switch to configure Front background</span>
+            <ArrowRight className="w-3 h-3" />
+          </button>
+        )}
+      </div>
+
       {/* 1. Background Color Section */}
       <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/60 space-y-2">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
           <Palette className="w-3.5 h-3.5 text-blue-400" />
-          <span>Card Background Color</span>
+          <span>{selectedSideTab === "front" ? "Front" : "Back"} Canvas Color</span>
         </div>
 
         <div className="flex items-center gap-2">
@@ -208,7 +372,7 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
                   },
                 })
               }
-              className="w-6 h-6 rounded-md border border-slate-700/80 shadow-sm transition-transform hover:scale-110 flex items-center justify-center"
+              className="w-6 h-6 rounded-md border border-slate-700/80 shadow-sm transition-transform hover:scale-110 flex items-center justify-center cursor-pointer"
               style={{ backgroundColor: col }}
               title={col}
             >
@@ -232,7 +396,7 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
               <Sun className="w-3.5 h-3.5 text-blue-400" />
-              <span>Background Opacity</span>
+              <span>{selectedSideTab === "front" ? "Front" : "Back"} Image Opacity</span>
             </div>
             <span className="text-xs font-mono font-bold text-slate-200 bg-slate-900 px-2 py-0.5 rounded border border-slate-700">
               {Math.round((currentTemplate.background.opacity ?? 1) * 100)}%
@@ -273,7 +437,7 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
                     },
                   })
                 }
-                className={`flex-1 py-1 text-[10px] font-mono font-bold rounded transition-colors ${
+                className={`flex-1 py-1 text-[10px] font-mono font-bold rounded transition-colors cursor-pointer ${
                   Math.round((currentTemplate.background.opacity ?? 1) * 100) === preset
                     ? "bg-blue-600 text-white shadow-sm"
                     : "bg-slate-700/60 text-slate-300 hover:bg-slate-700"
@@ -286,15 +450,28 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
         </div>
       )}
 
-      {/* 2. Uploaded Background Image Library */}
+      {/* 2. Uploaded Background Image Library - Filtered Strictly by Side */}
       <div className="space-y-2">
         <div className="flex items-center justify-between pb-1 border-b border-slate-800 text-xs">
-          <span className="font-semibold text-slate-300">
-            Image Backgrounds ({uploadedBackgrounds.length})
-          </span>
-          <label className="min-h-[36px] px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm">
+          <div className="flex items-center gap-1.5">
+            <span className="font-semibold text-slate-300">
+              {selectedSideTab === "front" ? "Front" : "Back"} Backgrounds (
+              {filteredBackgrounds.length})
+            </span>
+            <span className="text-[10px] font-mono text-slate-500">
+              [{categoryConfig.displayName}]
+            </span>
+          </div>
+
+          <label
+            className={`min-h-[36px] px-3 py-1 text-white rounded-lg font-medium flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm ${
+              selectedSideTab === "front"
+                ? "bg-blue-600 hover:bg-blue-500"
+                : "bg-purple-600 hover:bg-purple-500"
+            }`}
+          >
             <Upload className="w-3.5 h-3.5" />
-            <span>Upload New</span>
+            <span>Upload {selectedSideTab === "front" ? "Front" : "Back"}</span>
             <input
               type="file"
               accept="image/*"
@@ -304,15 +481,28 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
           </label>
         </div>
 
-        {uploadedBackgrounds.length === 0 ? (
-          <div className="text-center py-6 text-xs text-slate-500">
-            No image backgrounds stored yet. Upload an image template (front/back design) to use it
-            as card canvas background.
+        {filteredBackgrounds.length === 0 ? (
+          <div className="text-center py-6 px-4 bg-slate-900/50 rounded-xl border border-dashed border-slate-800 text-xs text-slate-500 space-y-1">
+            <p>
+              No {selectedSideTab} backgrounds found for {categoryConfig.displayName}.
+            </p>
+            <p className="text-[11px] text-slate-600">
+              Click &quot;Upload {selectedSideTab === "front" ? "Front" : "Back"}&quot; to configure this side independently.
+            </p>
           </div>
         ) : (
           <div className="space-y-2">
-            {uploadedBackgrounds.map((bg) => {
-              const isActive = currentTemplate.background.src === bg.src;
+            {filteredBackgrounds.map((bg) => {
+              // Active check: matches current template's background src for this side
+              const isActive =
+                (selectedSideTab === "front" &&
+                  (currentTemplate.active_front_bg_id === bg.id ||
+                    (activeSide === "front" && currentTemplate.background.src === bg.src))) ||
+                (selectedSideTab === "back" &&
+                  (currentTemplate.active_back_bg_id === bg.id ||
+                    (activeSide === "back" && currentTemplate.background.src === bg.src))) ||
+                (bg.isActive && bg.side === selectedSideTab);
+
               const isEditing = editingBgId === bg.id;
 
               return (
@@ -320,7 +510,9 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
                   key={bg.id}
                   className={`p-2.5 rounded-xl border flex flex-col gap-2 transition-all ${
                     isActive
-                      ? "bg-blue-950/40 border-blue-500/80 shadow-md shadow-blue-900/20 ring-1 ring-blue-500/40"
+                      ? selectedSideTab === "front"
+                        ? "bg-blue-950/40 border-blue-500/80 shadow-md shadow-blue-900/20 ring-1 ring-blue-500/40"
+                        : "bg-purple-950/40 border-purple-500/80 shadow-md shadow-purple-900/20 ring-1 ring-purple-500/40"
                       : "bg-slate-800/60 border-slate-700/60 hover:bg-slate-800"
                   }`}
                 >
@@ -349,7 +541,7 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
                               }
                               setEditingBgId(null);
                             }}
-                            className="p-1 text-emerald-400 hover:bg-slate-700 rounded"
+                            className="p-1 text-emerald-400 hover:bg-slate-700 rounded cursor-pointer"
                           >
                             <Check className="w-3.5 h-3.5" />
                           </button>
@@ -358,15 +550,20 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
                         <div className="flex items-center justify-between gap-1 mb-0.5">
                           <span className="font-semibold text-slate-200 truncate">{bg.name}</span>
                           {isActive && (
-                            <span className="px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/30">
-                              ACTIVE
+                            <span className="px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 text-[9px] font-bold rounded border border-emerald-500/30 shrink-0">
+                              ACTIVE {selectedSideTab.toUpperCase()}
                             </span>
                           )}
                         </div>
                       )}
 
-                      <div className="text-[10px] font-mono text-slate-400">
-                        {bg.originalWidthPx} × {bg.originalHeightPx} px ({bg.orientation})
+                      <div className="text-[10px] font-mono text-slate-400 flex items-center gap-2">
+                        <span>
+                          {bg.originalWidthPx || 0} × {bg.originalHeightPx || 0} px
+                        </span>
+                        <span className="uppercase text-[9px] px-1 py-0.2 rounded bg-slate-700/60 text-slate-300">
+                          {selectedSideTab}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -374,52 +571,18 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
                   {/* Action Bar */}
                   <div className="flex items-center justify-between pt-1.5 border-t border-slate-700/50 text-xs">
                     <button
-                      onClick={async () => {
-                        const backgroundConfig = {
-                          type: "image" as const,
-                          src: bg.src,
-                          originalWidthPx: bg.originalWidthPx,
-                          originalHeightPx: bg.originalHeightPx,
-                        };
-
-                        updateTemplateMeta({
-                          background: backgroundConfig,
-                        });
-
-                        // AUTO-SYNC TO CLOUD: If applying to a universal template, push to Supabase
-                        if (currentTemplate.isUniversal) {
-                          setIsSaving(true);
-                          try {
-                            const sideIsBack = isBackSideTemplate(currentTemplate);
-                            const sId = currentTemplate.serviceId || activeServiceId || "nida";
-
-                            const updatedTpl = {
-                              ...currentTemplate,
-                              background: backgroundConfig,
-                              updatedAt: new Date().toISOString(),
-                            };
-
-                            if (sideIsBack) {
-                              await saveUniversalBackTemplate(sId, updatedTpl as any);
-                            } else {
-                              await saveUniversalFrontTemplate(sId, updatedTpl as any);
-                            }
-                          } finally {
-                            setIsSaving(false);
-                          }
-                        }
-
-                        onBackgroundSelected?.();
-                      }}
+                      onClick={() => handleApplyBackground(bg)}
                       disabled={isActive}
-                      className={`min-h-[32px] px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center gap-1 ${
+                      className={`min-h-[32px] px-2.5 py-1 rounded-lg font-medium transition-colors flex items-center gap-1 cursor-pointer ${
                         isActive
                           ? "bg-slate-800 text-slate-500 cursor-default"
-                          : "bg-blue-600 hover:bg-blue-500 text-white"
+                          : selectedSideTab === "front"
+                          ? "bg-blue-600 hover:bg-blue-500 text-white"
+                          : "bg-purple-600 hover:bg-purple-500 text-white"
                       }`}
                     >
                       <Check className="w-3 h-3" />
-                      <span>{isActive ? "In Use" : "Apply Background"}</span>
+                      <span>{isActive ? "Active on " + selectedSideTab : "Apply as " + selectedSideTab}</span>
                     </button>
 
                     <div className="flex items-center gap-1 text-slate-400">
@@ -441,7 +604,7 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
                           setEditingBgId(bg.id);
                           setEditingBgName(bg.name);
                         }}
-                        className="p-1.5 hover:bg-slate-700 rounded hover:text-slate-200"
+                        className="p-1.5 hover:bg-slate-700 rounded hover:text-slate-200 cursor-pointer"
                         title="Rename Background"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
@@ -453,7 +616,7 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
                             await deleteUploadedBackground(bg.id);
                           }
                         }}
-                        className="p-1.5 hover:bg-red-500/20 text-red-400 rounded"
+                        className="p-1.5 hover:bg-red-500/20 text-red-400 rounded cursor-pointer"
                         title="Delete Background"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
