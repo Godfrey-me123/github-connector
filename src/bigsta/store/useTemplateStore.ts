@@ -1789,28 +1789,35 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         return;
       }
 
-      // 3. From 'preview', going back returns to the corresponding form, AND strips 'preview' & 'downloads' from history
-      // so pressing Back on the form will never loop back to 'preview'
-      if (current === "preview") {
-        const targetForm =
-          get().activeServiceId === "driving_license"
-            ? "driving_license"
-            : get().activeServiceId === "nhif"
-              ? "nhif"
-              : get().activeServiceId === "nrc_zambia"
-                ? "nrc_zambia"
-                : "nida";
-
-        const cleanedHistory = get().navigationHistory.filter(
-          (h) => h.screen !== "preview" && h.screen !== "downloads",
-        );
-        set({
-          navigationHistory: cleanedHistory,
-          activeScreen: targetForm as any,
-          hasUnsavedChanges: false,
-          isUnsavedModalOpen: false,
-          pendingNavigation: null,
-        });
+      // 3. From any step inside a card flow (preview, templates, upload, studio), Back always returns
+      // to the form of the card currently being worked on — never to another category left in history.
+      const FORM_BY_SERVICE: Record<string, string> = {
+        nida: "nida",
+        driving_license: "driving_license",
+        nhif: "nhif",
+        nrc_zambia: "nrc_zambia",
+      };
+      const serviceId = String(get().activeServiceId || "");
+      const targetForm =
+        FORM_BY_SERVICE[serviceId] ||
+        Object.keys(FORM_BY_SERVICE).find((k) => serviceId.startsWith(k));
+      if (targetForm && ["preview", "templates", "upload", "editor"].includes(current as string)) {
+        const goToForm = () =>
+          set({
+            navigationHistory: get().navigationHistory.filter(
+              (h) => h.screen !== "preview" && h.screen !== "downloads" && h.screen !== current,
+            ),
+            activeScreen: targetForm as any,
+            studioMode: false,
+            hasUnsavedChanges: false,
+            isUnsavedModalOpen: false,
+            pendingNavigation: null,
+          });
+        if (current === "editor" && get().hasUnsavedChanges) {
+          set({ isUnsavedModalOpen: true, pendingNavigation: () => goToForm() });
+        } else {
+          goToForm();
+        }
         return;
       }
 
