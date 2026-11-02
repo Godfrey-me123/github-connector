@@ -208,357 +208,72 @@ export const Toolbar: React.FC = () => {
               <option value="ajira">Ajira Portal</option>
             </select>
           </div>
-
-          {/* Studio Side Switcher Pill */}
-          <div className="flex items-center bg-[#E7E9EB] p-0.5 rounded-lg border border-[#dadcdc] shrink-0">
-            <button
-              type="button"
-              onClick={() => switchEditorSide("front")}
-              className={`px-2 py-0.5 text-xs font-bold rounded-md flex items-center gap-1.5 transition-all cursor-pointer ${
-                (activeEditorSide || normalizeSide(currentTemplate)) === "front"
-                  ? "bg-white text-black shadow-xs"
-                  : "text-slate-600 hover:text-black"
-              }`}
-              title="Switch to Front Side"
-            >
-              <span>Front</span>
-              <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  checkTemplateCompletion(
-                    currentTemplate,
-                    uploadedBackgrounds,
-                    frontPopulatedTemplate,
-                    backPopulatedTemplate,
-                  ).front_status === "configured"
-                    ? "bg-emerald-500"
-                    : "bg-amber-500"
-                }`}
-              />
-            </button>
-            <button
-              type="button"
-              onClick={() => switchEditorSide("back")}
-              className={`px-2 py-0.5 text-xs font-bold rounded-md flex items-center gap-1.5 transition-all cursor-pointer ${
-                (activeEditorSide || normalizeSide(currentTemplate)) === "back"
-                  ? "bg-white text-black shadow-xs"
-                  : "text-slate-600 hover:text-black"
-              }`}
-              title="Switch to Back Side"
-            >
-              <span>Back</span>
-              <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  checkTemplateCompletion(
-                    currentTemplate,
-                    uploadedBackgrounds,
-                    frontPopulatedTemplate,
-                    backPopulatedTemplate,
-                  ).back_status === "configured"
-                    ? "bg-emerald-500"
-                    : "bg-amber-500"
-                }`}
-              />
-            </button>
-          </div>
         </div>
 
-        {/* Desktop View: Full Tools & Display Settings (Visible on md and up) */}
-        <div className="hidden md:flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {/* Undo / Redo */}
-          <div className="flex items-center bg-[#E7E9EB] rounded-lg p-0.5 border border-[#dadcdc]">
-            <button
-              onClick={undo}
-              disabled={historyIndex <= 0}
-              className="p-1.5 hover:bg-[#dadcdc] text-[#000000] disabled:opacity-30 disabled:hover:bg-transparent rounded flex items-center justify-center transition-colors cursor-pointer"
-              title="Undo"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={redo}
-              disabled={historyIndex >= history.length - 1}
-              className="p-1.5 hover:bg-[#dadcdc] text-[#000000] disabled:opacity-30 disabled:hover:bg-transparent rounded flex items-center justify-center transition-colors cursor-pointer"
-              title="Redo"
-            >
-              <RotateCw className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Unit Selector */}
-          <div className="relative">
-            <select
-              value={activeUnit}
-              onChange={(e) => setActiveUnit(e.target.value as Unit)}
-              className="h-8 bg-[#E7E9EB] text-xs text-[#000000] font-bold px-2 py-1 rounded-lg border border-[#dadcdc] focus:outline-none focus:border-[#000000] transition-colors cursor-pointer"
-              title="Change Active Unit"
-            >
-              {unitOptions.map((u) => (
-                <option key={u.value} value={u.value}>
-                  {u.value.toUpperCase()}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Zoom Controls, Fit & Recenter */}
-          <div className="flex items-center bg-[#E7E9EB] rounded-lg p-0.5 border border-[#dadcdc] text-xs text-[#000000]">
-            <button
-              onClick={() => setZoom((z) => Math.max(0.25, z - 0.25))}
-              disabled={zoom <= 0.25}
-              className="p-1.5 hover:bg-[#dadcdc] disabled:opacity-30 rounded flex items-center justify-center transition-colors cursor-pointer"
-              title="Zoom Out (-25%)"
-            >
-              <ZoomOut className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={resetView}
-              className="px-2 font-mono text-[11px] text-center font-bold hover:bg-[#dadcdc] rounded py-1 transition-colors flex items-center justify-center cursor-pointer"
-              title="Reset View (Center Card & Reset Zoom to 100%)"
-            >
-              {Math.round(zoom * 100)}%
-            </button>
-            <button
-              onClick={() => setZoom((z) => Math.min(5.0, z + 0.25))}
-              disabled={zoom >= 5.0}
-              className="p-1.5 hover:bg-[#dadcdc] disabled:opacity-30 rounded flex items-center justify-center transition-colors cursor-pointer"
-              title="Zoom In (+25%)"
-            >
-              <ZoomIn className="w-3.5 h-3.5" />
-            </button>
-
-            <div className="w-[1px] h-4 bg-[#dadcdc] mx-0.5" />
-
-            {/* Fit To Screen */}
-            <button
-              onClick={resetView}
-              className="p-1.5 hover:bg-[#dadcdc] rounded flex items-center justify-center text-[#000000] transition-colors cursor-pointer"
-              title="Fit To Screen (Auto Fit Card)"
-            >
-              <Maximize2 className="w-3.5 h-3.5" />
-            </button>
-
-            {/* Recenter Workspace */}
-            <button
-              onClick={recenterWorkspace}
-              className="p-1.5 hover:bg-[#dadcdc] rounded flex items-center justify-center text-[#000000] transition-colors cursor-pointer"
-              title="Recenter Workspace (Center Card, Keep Zoom Level)"
-            >
-              <Crosshair className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* Extended Tools (Visible directly on xl+ screens) */}
-          <div className="hidden xl:flex items-center gap-1.5">
-            {/* Rulers Toggle */}
-            <button
-              onClick={toggleRulers}
-              className={`p-1.5 rounded-lg border flex items-center justify-center transition-colors cursor-pointer ${
-                showRulers
-                  ? "bg-[#000000] border-[#000000] text-white"
-                  : "bg-[#E7E9EB] border-[#dadcdc] text-[#000000] hover:bg-[#dadcdc]"
-              }`}
-              title="Toggle Rulers"
-            >
-              <Ruler className="w-4 h-4" />
-            </button>
-
-            {/* Safe Zones Toggle */}
-            <button
-              onClick={toggleSafeZones}
-              className={`p-1.5 rounded-lg border flex items-center justify-center transition-colors cursor-pointer ${
-                showSafeZones
-                  ? "bg-[#000000] border-[#000000] text-white"
-                  : "bg-[#E7E9EB] border-[#dadcdc] text-[#000000] hover:bg-[#dadcdc]"
-              }`}
-              title="Toggle Safe / Cut / Bleed Zones"
-            >
-              <Shield className="w-4 h-4" />
-            </button>
-
-            {/* Grid Dropdown Toggle */}
-            <div className="relative">
+        {/* Right: PRIMARY SCROLLABLE OPTION BAR starting from Front and Back */}
+        <div className="flex-1 min-w-0 flex items-center justify-start overflow-x-auto no-scrollbar touch-pan-x scroll-smooth">
+          <HorizontalActionRow className="gap-1.5 justify-start">
+            {/* 1. Studio Side Switcher Pill (Front / Back) */}
+            <div className="flex items-center bg-[#E7E9EB] p-0.5 rounded-lg border border-[#dadcdc] shrink-0">
               <button
-                onClick={() => setShowGridDropdown(!showGridDropdown)}
-                className={`p-1.5 rounded-lg border transition-colors flex items-center gap-1 cursor-pointer ${
-                  gridSettings.enabled
-                    ? "bg-[#000000] border-[#000000] text-white"
-                    : "bg-[#E7E9EB] border-[#dadcdc] text-[#000000] hover:bg-[#dadcdc]"
+                type="button"
+                onClick={() => switchEditorSide("front")}
+                className={`px-2.5 py-1 text-xs font-bold rounded-md flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+                  (activeEditorSide || normalizeSide(currentTemplate)) === "front"
+                    ? "bg-white text-black shadow-xs"
+                    : "text-slate-600 hover:text-black"
                 }`}
-                title="Grid System Settings"
+                title="Switch to Front Side"
               >
-                <Grid className="w-4 h-4" />
-                <ChevronDown className="w-3 h-3 opacity-60" />
+                <span>Front</span>
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    checkTemplateCompletion(
+                      currentTemplate,
+                      uploadedBackgrounds,
+                      frontPopulatedTemplate,
+                      backPopulatedTemplate,
+                    ).front_status === "configured"
+                      ? "bg-emerald-500"
+                      : "bg-amber-500"
+                  }`}
+                />
               </button>
-
-              {showGridDropdown && (
-                <div className="absolute right-0 mt-2 w-48 bg-[#FFFFFF] border border-[#E7E9EB] rounded-xl shadow-xl p-3 z-30 text-xs space-y-2">
-                  <div className="flex items-center justify-between font-bold text-[#000000] pb-1 border-b border-[#E7E9EB]">
-                    <span>Grid Overlay</span>
-                    <input
-                      type="checkbox"
-                      checked={gridSettings.enabled}
-                      onChange={(e) => setGridSettings({ enabled: e.target.checked })}
-                      className="rounded accent-black cursor-pointer"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] text-[#555555] block mb-1 font-medium">
-                      Grid Size (mm)
-                    </label>
-                    <div className="grid grid-cols-4 gap-1">
-                      {[1, 2, 5, 10].map((size) => (
-                        <button
-                          key={size}
-                          onClick={() => setGridSettings({ sizeMm: size, enabled: true })}
-                          className={`py-1 rounded text-center border font-mono font-bold cursor-pointer ${
-                            gridSettings.sizeMm === size && gridSettings.enabled
-                              ? "bg-[#000000] text-white border-[#000000]"
-                              : "bg-[#E7E9EB] border-[#dadcdc] text-[#000000] hover:bg-[#dadcdc]"
-                          }`}
-                        >
-                          {size}mm
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
+              <button
+                type="button"
+                onClick={() => switchEditorSide("back")}
+                className={`px-2.5 py-1 text-xs font-bold rounded-md flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+                  (activeEditorSide || normalizeSide(currentTemplate)) === "back"
+                    ? "bg-white text-black shadow-xs"
+                    : "text-slate-600 hover:text-black"
+                }`}
+                title="Switch to Back Side"
+              >
+                <span>Back</span>
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    checkTemplateCompletion(
+                      currentTemplate,
+                      uploadedBackgrounds,
+                      frontPopulatedTemplate,
+                      backPopulatedTemplate,
+                    ).back_status === "configured"
+                      ? "bg-emerald-500"
+                      : "bg-amber-500"
+                  }`}
+                />
+              </button>
             </div>
 
-            {/* Magnetic Snap System Settings */}
-            <div className="relative">
-              <button
-                onClick={() => setShowSnapDropdown(!showSnapDropdown)}
-                className={`p-1.5 rounded-lg border transition-colors flex items-center gap-1 cursor-pointer ${
-                  snapSettings.snapToObjects || snapSettings.snapToGuides
-                    ? "bg-[#000000] border-[#000000] text-white"
-                    : "bg-[#E7E9EB] border-[#dadcdc] text-[#000000] hover:bg-[#dadcdc]"
-                }`}
-                title="Magnetic Snap System"
-              >
-                <Magnet className="w-4 h-4" />
-                <ChevronDown className="w-3 h-3 opacity-60" />
-              </button>
-
-              {showSnapDropdown && (
-                <div className="absolute right-0 mt-2 w-56 bg-[#FFFFFF] border border-[#E7E9EB] rounded-xl shadow-xl p-3 z-30 text-xs space-y-2">
-                  <div className="font-bold text-[#000000] pb-1 border-b border-[#E7E9EB]">
-                    Magnetic Snap Options
-                  </div>
-                  <label className="flex items-center gap-2 text-[#000000] font-medium cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={snapSettings.snapToGrid}
-                      onChange={(e) => setSnapSettings({ snapToGrid: e.target.checked })}
-                      className="accent-black rounded"
-                    />
-                    <span>Snap To Grid</span>
-                  </label>
-                  <label className="flex items-center gap-2 text-[#000000] font-medium cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={snapSettings.snapToGuides}
-                      onChange={(e) => setSnapSettings({ snapToGuides: e.target.checked })}
-                      className="accent-black rounded"
-                    />
-                    <span>Snap To Guides</span>
-                  </label>
-                  <label className="flex items-center gap-2 text-[#000000] font-medium cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={snapSettings.snapToObjects}
-                      onChange={(e) => setSnapSettings({ snapToObjects: e.target.checked })}
-                      className="accent-black rounded"
-                    />
-                    <span>Snap To Objects</span>
-                  </label>
-                  <label className="flex items-center gap-2 text-[#000000] font-medium cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={snapSettings.snapToCenter}
-                      onChange={(e) => setSnapSettings({ snapToCenter: e.target.checked })}
-                      className="accent-black rounded"
-                    />
-                    <span>Snap To Center</span>
-                  </label>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Compact View Dropdown for intermediate widths (md to xl) */}
-          <div className="flex xl:hidden relative">
-            <button
-              onClick={() => setShowSnapDropdown(!showSnapDropdown)}
-              className={`p-1.5 rounded-lg border transition-colors flex items-center gap-1 text-xs cursor-pointer ${
-                showRulers || showSafeZones || gridSettings.enabled || snapSettings.snapToObjects
-                  ? "bg-[#000000] border-[#000000] text-white"
-                  : "bg-[#E7E9EB] border-[#dadcdc] text-[#000000] hover:bg-[#dadcdc]"
-              }`}
-              title="Display & Snapping Options"
-            >
-              <Sliders className="w-3.5 h-3.5" />
-              <ChevronDown className="w-3 h-3 opacity-60" />
-            </button>
-
-            {showSnapDropdown && (
-              <div className="absolute right-0 mt-2 w-52 bg-[#FFFFFF] border border-[#E7E9EB] rounded-xl shadow-xl p-3 z-30 text-xs space-y-2">
-                <div className="font-bold text-[#000000] pb-1 border-b border-[#E7E9EB]">
-                  Display & Snapping
-                </div>
-                <label className="flex items-center justify-between text-[#000000] font-medium cursor-pointer py-0.5">
-                  <span>Show Rulers</span>
-                  <input
-                    type="checkbox"
-                    checked={showRulers}
-                    onChange={toggleRulers}
-                    className="accent-black rounded"
-                  />
-                </label>
-                <label className="flex items-center justify-between text-[#000000] font-medium cursor-pointer py-0.5">
-                  <span>Safe Zones</span>
-                  <input
-                    type="checkbox"
-                    checked={showSafeZones}
-                    onChange={toggleSafeZones}
-                    className="accent-black rounded"
-                  />
-                </label>
-                <label className="flex items-center justify-between text-[#000000] font-medium cursor-pointer py-0.5">
-                  <span>Grid Overlay</span>
-                  <input
-                    type="checkbox"
-                    checked={gridSettings.enabled}
-                    onChange={(e) => setGridSettings({ enabled: e.target.checked })}
-                    className="accent-black rounded"
-                  />
-                </label>
-                <label className="flex items-center justify-between text-[#000000] font-medium cursor-pointer py-0.5">
-                  <span>Snap to Objects</span>
-                  <input
-                    type="checkbox"
-                    checked={snapSettings.snapToObjects}
-                    onChange={(e) => setSnapSettings({ snapToObjects: e.target.checked })}
-                    className="accent-black rounded"
-                  />
-                </label>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Right: PRIMARY ACTION BAR - Swipable on mobile with smooth touch horizontal scrolling */}
-        <div className="flex-1 min-w-0 flex items-center justify-end gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar touch-pan-x scroll-smooth">
-          <HorizontalActionRow className="gap-1.5 justify-end">
-            {/* Undo / Redo for Mobile */}
-            <div className="flex md:hidden items-center bg-[#E7E9EB] rounded-lg p-0.5 border border-[#dadcdc] shrink-0">
+            {/* 2. Undo / Redo */}
+            <div className="flex items-center bg-[#E7E9EB] rounded-lg p-0.5 border border-[#dadcdc] shrink-0">
               <button
                 onClick={undo}
                 disabled={historyIndex <= 0}
                 className="w-7 h-7 hover:bg-[#dadcdc] disabled:opacity-30 flex items-center justify-center rounded transition-colors text-[#000000] cursor-pointer"
                 title="Undo"
               >
-                <RotateCcw className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <RotateCcw className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={redo}
@@ -566,11 +281,207 @@ export const Toolbar: React.FC = () => {
                 className="w-7 h-7 hover:bg-[#dadcdc] disabled:opacity-30 flex items-center justify-center rounded transition-colors text-[#000000] cursor-pointer"
                 title="Redo"
               >
-                <RotateCw className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <RotateCw className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            {/* Sample Data Preview Test Button */}
+            {/* 3. Unit Selector */}
+            <div className="relative shrink-0">
+              <select
+                value={activeUnit}
+                onChange={(e) => setActiveUnit(e.target.value as Unit)}
+                className="h-8 bg-[#E7E9EB] text-xs text-[#000000] font-bold px-2 py-1 rounded-lg border border-[#dadcdc] focus:outline-none focus:border-[#000000] transition-colors cursor-pointer"
+                title="Change Active Unit"
+              >
+                {unitOptions.map((u) => (
+                  <option key={u.value} value={u.value}>
+                    {u.value.toUpperCase()}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* 4. Zoom Controls, Fit & Recenter */}
+            <div className="flex items-center bg-[#E7E9EB] rounded-lg p-0.5 border border-[#dadcdc] text-xs text-[#000000] shrink-0">
+              <button
+                onClick={() => setZoom((z) => Math.max(0.25, z - 0.25))}
+                disabled={zoom <= 0.25}
+                className="p-1.5 hover:bg-[#dadcdc] disabled:opacity-30 rounded flex items-center justify-center transition-colors cursor-pointer"
+                title="Zoom Out (-25%)"
+              >
+                <ZoomOut className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={resetView}
+                className="px-2 font-mono text-[11px] text-center font-bold hover:bg-[#dadcdc] rounded py-1 transition-colors flex items-center justify-center cursor-pointer"
+                title="Reset View (Center Card & Reset Zoom to 100%)"
+              >
+                {Math.round(zoom * 100)}%
+              </button>
+              <button
+                onClick={() => setZoom((z) => Math.min(5.0, z + 0.25))}
+                disabled={zoom >= 5.0}
+                className="p-1.5 hover:bg-[#dadcdc] disabled:opacity-30 rounded flex items-center justify-center transition-colors cursor-pointer"
+                title="Zoom In (+25%)"
+              >
+                <ZoomIn className="w-3.5 h-3.5" />
+              </button>
+
+              <div className="w-[1px] h-4 bg-[#dadcdc] mx-0.5" />
+
+              <button
+                onClick={resetView}
+                className="p-1.5 hover:bg-[#dadcdc] rounded flex items-center justify-center text-[#000000] transition-colors cursor-pointer"
+                title="Fit To Screen (Auto Fit Card)"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                onClick={recenterWorkspace}
+                className="p-1.5 hover:bg-[#dadcdc] rounded flex items-center justify-center text-[#000000] transition-colors cursor-pointer"
+                title="Recenter Workspace (Center Card, Keep Zoom Level)"
+              >
+                <Crosshair className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* 5. Display Tools (Rulers, Safe Zones, Grid, Magnet) */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                onClick={toggleRulers}
+                className={`p-1.5 rounded-lg border flex items-center justify-center transition-colors cursor-pointer ${
+                  showRulers
+                    ? "bg-[#000000] border-[#000000] text-white"
+                    : "bg-[#E7E9EB] border-[#dadcdc] text-[#000000] hover:bg-[#dadcdc]"
+                }`}
+                title="Toggle Rulers"
+              >
+                <Ruler className="w-4 h-4" />
+              </button>
+
+              <button
+                onClick={toggleSafeZones}
+                className={`p-1.5 rounded-lg border flex items-center justify-center transition-colors cursor-pointer ${
+                  showSafeZones
+                    ? "bg-[#000000] border-[#000000] text-white"
+                    : "bg-[#E7E9EB] border-[#dadcdc] text-[#000000] hover:bg-[#dadcdc]"
+                }`}
+                title="Toggle Safe / Cut / Bleed Zones"
+              >
+                <Shield className="w-4 h-4" />
+              </button>
+
+              <div className="relative">
+                <button
+                  onClick={() => setShowGridDropdown(!showGridDropdown)}
+                  className={`p-1.5 rounded-lg border transition-colors flex items-center gap-1 cursor-pointer ${
+                    gridSettings.enabled
+                      ? "bg-[#000000] border-[#000000] text-white"
+                      : "bg-[#E7E9EB] border-[#dadcdc] text-[#000000] hover:bg-[#dadcdc]"
+                  }`}
+                  title="Grid System Settings"
+                >
+                  <Grid className="w-4 h-4" />
+                  <ChevronDown className="w-3 h-3 opacity-60" />
+                </button>
+
+                {showGridDropdown && (
+                  <div className="absolute right-0 mt-2 w-48 bg-[#FFFFFF] border border-[#E7E9EB] rounded-xl shadow-xl p-3 z-30 text-xs space-y-2">
+                    <div className="flex items-center justify-between font-bold text-[#000000] pb-1 border-b border-[#E7E9EB]">
+                      <span>Grid Overlay</span>
+                      <input
+                        type="checkbox"
+                        checked={gridSettings.enabled}
+                        onChange={(e) => setGridSettings({ enabled: e.target.checked })}
+                        className="rounded accent-black cursor-pointer"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-[#555555] block mb-1 font-medium">
+                        Grid Size (mm)
+                      </label>
+                      <div className="grid grid-cols-4 gap-1">
+                        {[1, 2, 5, 10].map((size) => (
+                          <button
+                            key={size}
+                            onClick={() => setGridSettings({ sizeMm: size, enabled: true })}
+                            className={`py-1 rounded text-center border font-mono font-bold cursor-pointer ${
+                              gridSettings.sizeMm === size && gridSettings.enabled
+                                ? "bg-[#000000] text-white border-[#000000]"
+                                : "bg-[#E7E9EB] border-[#dadcdc] text-[#000000] hover:bg-[#dadcdc]"
+                            }`}
+                          >
+                            {size}mm
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="relative">
+                <button
+                  onClick={() => setShowSnapDropdown(!showSnapDropdown)}
+                  className={`p-1.5 rounded-lg border transition-colors flex items-center gap-1 cursor-pointer ${
+                    snapSettings.snapToObjects || snapSettings.snapToGuides
+                      ? "bg-[#000000] border-[#000000] text-white"
+                      : "bg-[#E7E9EB] border-[#dadcdc] text-[#000000] hover:bg-[#dadcdc]"
+                  }`}
+                  title="Magnetic Snap System"
+                >
+                  <Magnet className="w-4 h-4" />
+                  <ChevronDown className="w-3 h-3 opacity-60" />
+                </button>
+
+                {showSnapDropdown && (
+                  <div className="absolute right-0 mt-2 w-56 bg-[#FFFFFF] border border-[#E7E9EB] rounded-xl shadow-xl p-3 z-30 text-xs space-y-2">
+                    <div className="font-bold text-[#000000] pb-1 border-b border-[#E7E9EB]">
+                      Magnetic Snap Options
+                    </div>
+                    <label className="flex items-center gap-2 text-[#000000] font-medium cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={snapSettings.snapToGrid}
+                        onChange={(e) => setSnapSettings({ snapToGrid: e.target.checked })}
+                        className="accent-black rounded"
+                      />
+                      <span>Snap To Grid</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-[#000000] font-medium cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={snapSettings.snapToGuides}
+                        onChange={(e) => setSnapSettings({ snapToGuides: e.target.checked })}
+                        className="accent-black rounded"
+                      />
+                      <span>Snap To Guides</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-[#000000] font-medium cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={snapSettings.snapToObjects}
+                        onChange={(e) => setSnapSettings({ snapToObjects: e.target.checked })}
+                        className="accent-black rounded"
+                      />
+                      <span>Snap To Objects</span>
+                    </label>
+                    <label className="flex items-center gap-2 text-[#000000] font-medium cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={snapSettings.snapToCenter}
+                        onChange={(e) => setSnapSettings({ snapToCenter: e.target.checked })}
+                        className="accent-black rounded"
+                      />
+                      <span>Snap To Center</span>
+                    </label>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 6. Sample Data Preview Button */}
             <button
               onClick={() => setIsSamplePreviewOpen(true)}
               className="h-8 px-2.5 bg-[#FEF08A] hover:bg-[#fde047] border border-[#facc15] text-[#000000] text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer shadow-xs"
@@ -580,7 +491,7 @@ export const Toolbar: React.FC = () => {
               <span className="text-xs whitespace-nowrap">Sample Preview</span>
             </button>
 
-            {/* Templates Button */}
+            {/* 7. Templates Button */}
             <button
               onClick={() => setActiveScreen("templates")}
               className="px-2 py-1.5 bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-[#000000] text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer"
@@ -590,7 +501,7 @@ export const Toolbar: React.FC = () => {
               <span className="text-xs whitespace-nowrap">Templates</span>
             </button>
 
-            {/* Import JSON Button */}
+            {/* 8. Import JSON Button */}
             <button
               onClick={handleImportClick}
               className="px-2 py-1.5 bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] text-[#000000] text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shrink-0 whitespace-nowrap cursor-pointer"
@@ -600,8 +511,8 @@ export const Toolbar: React.FC = () => {
               <span className="text-xs whitespace-nowrap">Import JSON</span>
             </button>
 
-            {/* Save Button */}
-            <div className="relative">
+            {/* 9. Save Button */}
+            <div className="relative shrink-0">
               <button
                 ref={saveButtonRef}
                 onClick={toggleSaveDropdown}

@@ -196,6 +196,72 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
     }
   };
 
+  const handleReplaceCurrentActivePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsSaving(true);
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const src = event.target?.result as string;
+      const img = new Image();
+      img.onload = async () => {
+        try {
+          const orientation = img.height > img.width ? "portrait" : "landscape";
+
+          // Find active background for current side
+          const activeBg = filteredBackgrounds.find(
+            (bg) =>
+              (selectedSideTab === "front" &&
+                (currentTemplate.active_front_bg_id === bg.id ||
+                  (activeSide === "front" && currentTemplate.background.src === bg.src))) ||
+              (selectedSideTab === "back" &&
+                (currentTemplate.active_back_bg_id === bg.id ||
+                  (activeSide === "back" && currentTemplate.background.src === bg.src))) ||
+              (bg.isActive && bg.side === selectedSideTab),
+          );
+
+          if (activeBg) {
+            // Update the existing active background record in place
+            await updateUploadedBackground(activeBg.id, {
+              src,
+              originalWidthPx: img.width,
+              originalHeightPx: img.height,
+              orientation,
+            });
+            await activateBackground(activeBg.id, currentCategory, templateId, selectedSideTab);
+          } else {
+            // If no active background record in library, update template background directly
+            const bgConfig = {
+              type: "image" as const,
+              src,
+              originalWidthPx: img.width,
+              originalHeightPx: img.height,
+              opacity: currentTemplate.background?.opacity ?? 1,
+            };
+            updateTemplateMeta({
+              background: bgConfig,
+              ...(selectedSideTab === "front"
+                ? { front_background: bgConfig }
+                : { back_background: bgConfig }),
+            });
+          }
+
+          if (activeSide !== selectedSideTab) {
+            await switchEditorSide(selectedSideTab);
+          }
+
+          onBackgroundSelected?.();
+        } finally {
+          setIsSaving(false);
+        }
+      };
+      img.src = src;
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
   const presetColors = [
     "#ffffff",
     "#f8fafc",
@@ -452,7 +518,7 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
 
       {/* 2. Uploaded Background Image Library - Filtered Strictly by Side */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between pb-1 border-b border-slate-800 text-xs">
+        <div className="flex flex-wrap items-center justify-between pb-1 border-b border-slate-800 text-xs gap-2">
           <div className="flex items-center gap-1.5">
             <span className="font-semibold text-slate-300">
               {selectedSideTab === "front" ? "Front" : "Back"} Backgrounds (
@@ -463,22 +529,39 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
             </span>
           </div>
 
-          <label
-            className={`min-h-[36px] px-3 py-1 text-white rounded-lg font-medium flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm ${
-              selectedSideTab === "front"
-                ? "bg-blue-600 hover:bg-blue-500"
-                : "bg-purple-600 hover:bg-purple-500"
-            }`}
-          >
-            <Upload className="w-3.5 h-3.5" />
-            <span>Upload {selectedSideTab === "front" ? "Front" : "Back"}</span>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleBgLibraryUpload}
-              className="hidden"
-            />
-          </label>
+          <div className="flex items-center gap-2">
+            <label
+              className={`min-h-[36px] px-3 py-1 text-white rounded-lg font-medium flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm ${
+                selectedSideTab === "front"
+                  ? "bg-blue-600 hover:bg-blue-500"
+                  : "bg-purple-600 hover:bg-purple-500"
+              }`}
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span>Upload {selectedSideTab === "front" ? "Front" : "Back"}</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleBgLibraryUpload}
+                className="hidden"
+              />
+            </label>
+
+            {/* Replace Photo Button */}
+            <label
+              className="min-h-[36px] px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg font-medium flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm"
+              title="Replace currently active photo/background image"
+            >
+              <RefreshCw className="w-3.5 h-3.5 text-blue-400" />
+              <span>Replace Photo</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleReplaceCurrentActivePhoto}
+                className="hidden"
+              />
+            </label>
+          </div>
         </div>
 
         {filteredBackgrounds.length === 0 ? (
