@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Remove embedded database credentials and legacy project fallbacks; configured database probe passes and browser requests reach only the configured project.
+
 - [x] Import BIGsta app code from GitHub repo "New-age" into this project
 - [x] Restore database access for all tables (grants were missing)
 - [x] Save Zambia NRC submissions to the database

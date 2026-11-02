@@ -1,46 +1,5 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-
-// Public project values (safe to ship) — used when build-time env vars are missing
-// (e.g. installed APK / preview builds), so the app always reaches the database.
-const FALLBACK_URL = "https://yjnvjuouxzfrhlqzstlp.supabase.co";
-const FALLBACK_ANON =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlqbnZqdW91eHpmcmhscXpzdGxwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0MDg3MzQsImV4cCI6MjEwNTk4NDczNH0.VcGYMKh8yMSGUNzNnlpNcIhlEoC4A8q3WDEkmjEqU4o";
-
-// The saved templates belong to the original project above. The Vercel/Supabase
-// integration may expose a different project during preview, so do not silently
-// switch projects and make the app appear empty; this app uses the legacy project
-// as its canonical data source until an explicit migration is completed.
-const supabaseUrl = FALLBACK_URL;
-const supabaseAnonKey = FALLBACK_ANON;
-
-// Devices that used the app before the move to the current Supabase project may
-// still hold cached template/background URLs pointing at the retired project.
-// Rewrite them once so every device resolves assets from the current project.
-const LEGACY_SUPABASE_HOST = "cxmbustlvhzentduuvnx.supabase.co";
-function migrateLegacySupabaseCache() {
-  if (typeof window === "undefined" || !window.localStorage) return;
-  try {
-    const currentHost = new URL(supabaseUrl).host;
-    if (currentHost === LEGACY_SUPABASE_HOST) return;
-    const storage = window.localStorage;
-    for (let i = storage.length - 1; i >= 0; i--) {
-      const key = storage.key(i);
-      if (!key) continue;
-      if (key.startsWith("sb-cxmbustlvhzentduuvnx")) {
-        storage.removeItem(key);
-        continue;
-      }
-      const value = storage.getItem(key);
-      if (value && value.includes(LEGACY_SUPABASE_HOST)) {
-        storage.setItem(key, value.split(LEGACY_SUPABASE_HOST).join(currentHost));
-      }
-    }
-  } catch {
-    // Cache migration is best-effort; the cloud fetch remains authoritative.
-  }
-}
-migrateLegacySupabaseCache();
+import { supabase as connectedSupabase } from "@/integrations/supabase/client";
 
 const DEFAULT_TIMEOUT = 12000; // 12 seconds
 
@@ -94,20 +53,11 @@ async function withTimeout<T>(
 }
 
 export const isSupabaseConfigured = Boolean(
-  supabaseUrl && supabaseAnonKey && !supabaseUrl.includes("YOUR_SUPABASE"),
+  import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
 );
 
-// Initialize Supabase Client with persistent session handling
-export const supabase: SupabaseClient | null = createClient(
-  supabaseUrl,
-  supabaseAnonKey,
-  {
-    auth: { persistSession: true, autoRefreshToken: true },
-    global: {
-      headers: { "x-client-info": "bigsta-template-sync" },
-    },
-  },
-);
+// Share the configured client: never select a second database or embedded key.
+export const supabase = connectedSupabase;
 
 /**
  * SQL Schema definition for PROMPT 50 Migration
