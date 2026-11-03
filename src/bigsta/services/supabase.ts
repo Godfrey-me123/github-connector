@@ -15,6 +15,7 @@ export const TEMPLATE_CATEGORY_CONFIG: Record<string, { serviceType: string; fol
   business_license: { serviceType: "business_license", folder: "business_license" },
   heslb: { serviceType: "heslb", folder: "heslb" },
   ajira: { serviceType: "ajira", folder: "ajira" },
+  kadi_ya_mpiga_kura: { serviceType: "kadi_ya_mpiga_kura", folder: "kadi_ya_mpiga_kura" },
 };
 
 export function normalizeTemplateCategory(value?: string | null): string {

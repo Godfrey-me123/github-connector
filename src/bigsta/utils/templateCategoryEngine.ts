@@ -71,6 +71,12 @@ export const SUPPORTED_DOCUMENT_CATEGORIES: {
     displayName: "Ajira Portal",
     aliases: ["ajira", "ajira portal"],
   },
+  {
+    id: "kadi_ya_mpiga_kura",
+    name: "Kadi ya Mpiga Kura",
+    displayName: "Kadi ya Mpiga Kura",
+    aliases: ["kadi ya mpiga kura", "voter card", "voter registration card", "mpiga kura"],
+  },
 ];
 
 /**

@@ -104,6 +104,7 @@ export const HomeScreen: React.FC = () => {
       },
       heslb: { iconBg: "bg-indigo-500/15 border-indigo-500/30", iconColor: "text-indigo-400" },
       ajira: { iconBg: "bg-teal-500/15 border-teal-500/30", iconColor: "text-teal-400" },
+      kadi_ya_mpiga_kura: { iconBg: "bg-sky-500/15 border-sky-500/30", iconColor: "text-sky-400" },
     }),
     [],
   );
@@ -423,6 +424,22 @@ export const HomeScreen: React.FC = () => {
           "Civil Service Application Sync",
           "Cadre Certificate Validation",
           "Interview Pass Generation",
+        ],
+      },
+      {
+        id: "kadi_ya_mpiga_kura",
+        name: "Kadi ya Mpiga Kura",
+        authority: "Tume ya Taifa ya Uchaguzi",
+        description:
+          "Voter registration card assistance, voter details capture and card template preparation.",
+        category: "identity" as ServiceCategory,
+        icon: CreditCard,
+        iconBg: colorMap.kadi_ya_mpiga_kura.iconBg,
+        iconColor: colorMap.kadi_ya_mpiga_kura.iconColor,
+        features: [
+          "Voter Details Capture",
+          "Registration Card Layout",
+          "Template Preparation",
         ],
       },
     ];
