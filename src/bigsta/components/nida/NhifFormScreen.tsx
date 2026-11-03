@@ -14,6 +14,7 @@ import { useTemplateStore } from "../../store/useTemplateStore";
 import { applyTemplateMapping } from "../../utils/templateMappingEngine";
 import { formatToDdMmYyyy, formatToMmmDdYyyy, toTitleCase } from "../../utils/dateValidation";
 import { WorkflowStep, SubmissionStepId } from "./submissionWorkflow";
+import { saveGeneratedCardSupabase } from "../../services/supabase";
 
 export interface NhifFormData {
   cardNumber: string;
@@ -360,13 +361,19 @@ export const NhifFormScreen: React.FC<NhifFormScreenProps> = ({ onCancel, onSucc
         return;
       }
 
+      const savedToCloud = await saveGeneratedCardSupabase({
+        id: submissionRecord.id,
+        serviceType: "nhif",
+        cardData: { ...mappedFormData, submittedAt: submissionRecord.submittedAt },
+      });
+
       updateStep("step9_open", "completed");
       setIsWorkflowCompleted(true);
       setIsSubmitting(false);
 
       setNidaSuccessNotification({
         title: "NHIF Membership Card Generated!",
-        message: `Front & Back NHIF templates successfully populated with member credentials.`,
+        message: `Front & Back NHIF templates populated. ${savedToCloud ? "Record saved securely to your account." : "Cloud sync failed; this record remains on this device only."}`,
         populatedCount: (frontRes.populatedCount || 0) + (backRes.populatedCount || 0),
         isBackSide: false,
       });

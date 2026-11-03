@@ -48,6 +48,7 @@ export default function App() {
   const {
     activeScreen,
     setActiveScreen,
+    authLoading,
     authRole,
     fetchPasskeysFromSupabase,
     userPreferences,
@@ -86,7 +87,6 @@ export default function App() {
 
   useEffect(() => {
     forceLoadAppFonts();
-    fetchPasskeysFromSupabase();
     loadSavedTemplates();
     loadTokenPackages();
     loadWeeklyOffers();
@@ -164,6 +164,162 @@ export default function App() {
       document.removeEventListener("visibilitychange", refreshFromCloud);
     };
   }, [fetchPasskeysFromSupabase, loadSavedTemplates, loadTokenPackages, loadWeeklyOffers]);
+
+  useEffect(() => {
+    let active = true;
+    let sequence = 0;
+    let initializedUserId: string | null = null;
+    let unsubscribe: (() => void) | undefined;
+
+    const syncSession = async (session: any, shouldBootstrap: boolean) => {
+      const currentSequence = ++sequence;
+      if (!session?.user) {
+        initializedUserId = null;
+        try {
+          localStorage.removeItem("bigsta_auth_role");
+          localStorage.removeItem("bigsta_auth_key");
+          localStorage.removeItem("bigsta_user_profile");
+          localStorage.removeItem("bigsta_passkeys");
+        } catch {}
+        useTemplateStore.setState({
+          authLoading: false,
+          authRole: null,
+          currentAuthKey: null,
+          activePasskeys: [],
+          registeredUsers: [],
+          userProfile: { name: "", phone: "", email: "", region: "" },
+        });
+        return;
+      }
+
+      const requestedUserId = session.user.id;
+      const needsBootstrap = shouldBootstrap || initializedUserId !== requestedUserId;
+      if (needsBootstrap) initializedUserId = requestedUserId;
+      const currentState = useTemplateStore.getState();
+      if (currentState.currentAuthKey !== requestedUserId || !currentState.authRole) {
+        useTemplateStore.setState({ authLoading: true });
+      }
+
+      try {
+        const { supabase } = await import("./services/supabase");
+        let activeSession = session;
+        let welcomeTokenGranted = false;
+
+        if (needsBootstrap) {
+          try {
+            const { bootstrapAuthenticatedSession } = await import("./services/auth");
+            const bootstrap = await bootstrapAuthenticatedSession(session);
+            activeSession = bootstrap.session;
+            welcomeTokenGranted = bootstrap.welcomeTokenGranted;
+          } catch (error) {
+            initializedUserId = null;
+            console.warn("Supabase session bootstrap was unavailable:", error);
+          }
+        }
+
+        if (!active || currentSequence !== sequence) return;
+
+        const user = activeSession.user;
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("id,name,phone,email,role,tokens,status,created_at,region,passkey")
+          .eq("auth_user_id", user.id)
+          .maybeSingle();
+        if (profileError) console.warn("Could not load the signed-in profile:", profileError.message);
+        if (profile?.status === "DISABLED") {
+          await supabase.auth.signOut();
+          return;
+        }
+
+        const fullName = profile?.name || user.user_metadata?.full_name || user.user_metadata?.name || "";
+        const phone = profile?.phone || user.user_metadata?.phone || "";
+        const role = user.app_metadata?.role === "admin" ? "admin" : "user";
+        const registeredUser = {
+          id: profile?.id || user.id,
+          fullName,
+          phone,
+          passkey: user.id,
+          passkeyId: profile?.id || user.id,
+          role: "user" as const,
+          tokens: Number(profile?.tokens) || 0,
+          status: (profile?.status || "ACTIVE") as "ACTIVE" | "DISABLED" | "PENDING",
+          registeredDate: profile?.created_at || user.created_at || new Date().toISOString(),
+          createdAtTimestamp: profile?.created_at
+            ? new Date(profile.created_at).getTime()
+            : Date.now(),
+          lastActive: "Just signed in",
+          lastActiveTimestamp: Date.now(),
+          isOnline: true,
+          currentService: "None",
+          currentActivity: "Active",
+          servicesUsed: [],
+        };
+
+        useTemplateStore.setState({
+          authLoading: false,
+          authRole: role,
+          currentAuthKey: user.id,
+          userProfile: { name: fullName, phone, email: user.email || "", region: profile?.region || "" },
+          registeredUsers: [registeredUser],
+          activeScreen: "home",
+          ...(welcomeTokenGranted ? { rechargeNotice: "A verified welcome token was added to your account." } : {}),
+        });
+        await fetchPasskeysFromSupabase();
+      } catch (error) {
+        if (!active || currentSequence !== sequence) return;
+        console.warn("Could not fully load the signed-in account:", error);
+        const user = session.user;
+        const role = user.app_metadata?.role === "admin" ? "admin" : "user";
+        useTemplateStore.setState({
+          authLoading: false,
+          authRole: role,
+          currentAuthKey: user.id,
+          userProfile: {
+            name: user.user_metadata?.full_name || user.user_metadata?.name || "",
+            phone: user.user_metadata?.phone || "",
+            email: user.email || "",
+            region: "",
+          },
+          activeScreen: "home",
+        });
+      }
+    };
+
+    const connectAuth = async () => {
+      try {
+        const { supabase } = await import("./services/supabase");
+        if (!active) return;
+
+        const { data } = supabase.auth.onAuthStateChange((event, session) => {
+          if (
+            event === "INITIAL_SESSION" ||
+            event === "SIGNED_IN" ||
+            event === "SIGNED_OUT" ||
+            event === "TOKEN_REFRESHED" ||
+            event === "USER_UPDATED" ||
+            event === "PASSWORD_RECOVERY"
+          ) {
+            window.setTimeout(() => {
+              void syncSession(session, event !== "TOKEN_REFRESHED");
+            }, 0);
+          }
+        });
+        unsubscribe = () => data.subscription.unsubscribe();
+
+        const { data: sessionData, error } = await supabase.auth.getSession();
+        if (!error && active) void syncSession(sessionData.session, true);
+      } catch (error) {
+        console.error("Supabase auth initialization failed:", error);
+        if (active) useTemplateStore.setState({ authLoading: false });
+      }
+    };
+
+    void connectAuth();
+    return () => {
+      active = false;
+      unsubscribe?.();
+    };
+  }, [fetchPasskeysFromSupabase]);
 
   // Guard Custom Studio access for non-admin users
   useEffect(() => {
@@ -261,7 +417,18 @@ export default function App() {
     }
   }, [userPreferences?.theme]);
 
-  // PASSKEY GATEWAY SYSTEM: Must enter valid passkey first
+  if (authLoading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-[#0B132B] text-slate-200">
+        <div className="flex flex-col items-center gap-3" role="status" aria-live="polite">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-600 border-t-[#47A5FF]" />
+          <span className="text-sm">Checking your secure session…</span>
+        </div>
+      </main>
+    );
+  }
+
+  // Supabase Auth gate: authenticated account required
   if (!authRole) {
     // Redirect all restricted paths to login
     const path = window.location.pathname;

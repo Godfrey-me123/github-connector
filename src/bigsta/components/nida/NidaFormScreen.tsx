@@ -68,6 +68,7 @@ import {
 } from "../../utils/templateMappingEngine";
 import { CardTemplate, NidaSubmissionRecord } from "../../types";
 import { renderTemplateToCanvas } from "../../utils/export";
+import { saveGeneratedCardSupabase } from "../../services/supabase";
 
 export interface NidaFormData {
   firstName: string;
@@ -512,6 +513,12 @@ export const NidaFormScreen: React.FC<NidaFormScreenProps> = ({ onSuccess, onCan
       return;
     }
 
+    const savedToCloud = await saveGeneratedCardSupabase({
+      id: submissionRecord.id,
+      serviceType: "nida",
+      cardData: { ...normalizedFormData, submittedAt: submissionRecord.submittedAt },
+    });
+
     updateStep("step9_open", "completed");
     setIsWorkflowCompleted(true);
     setIsProcessing(false);
@@ -520,7 +527,7 @@ export const NidaFormScreen: React.FC<NidaFormScreenProps> = ({ onSuccess, onCan
     // Set success notification toast
     setNidaSuccessNotification({
       title: "NIDA Card Successfully Populated!",
-      message: `Front & Back templates populated with verified data (${frontRes.populatedCount + backRes.populatedCount} elements mapped). Ready for preview and export.`,
+      message: `Front & Back templates populated (${frontRes.populatedCount + backRes.populatedCount} elements). ${savedToCloud ? "Record saved securely to your account." : "Cloud sync failed; this record remains on this device only."}`, 
       populatedCount: frontRes.populatedCount + backRes.populatedCount,
       isBackSide: false,
     });

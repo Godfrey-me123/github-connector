@@ -11,6 +11,7 @@ import {
   VerificationType,
 } from "../types";
 import { useTemplateStore } from "../store/useTemplateStore";
+import { adminApiFetch } from "./adminApi";
 
 export class PaymentService {
   async receiveSms(payload: {
@@ -492,7 +493,7 @@ export class PaymentService {
       const parsed = JSON.parse(saved);
       // Fetch current status from server or local state
       try {
-        const response = await fetch("/api/admin/webhook-debug");
+        const response = await adminApiFetch("/api/admin/webhook-debug");
         const debugData = await response.json();
         return {
           ...parsed,
@@ -521,7 +522,7 @@ export class PaymentService {
     localStorage.setItem("payment_settings", JSON.stringify(settings));
     // Also sync to server if needed
     try {
-      await fetch("/api/admin/webhook-settings", {
+      await adminApiFetch("/api/admin/webhook-settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(settings),

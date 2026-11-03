@@ -204,9 +204,9 @@ export const SettingsScreen: React.FC = () => {
       let attachmentName = feedbackFile ? feedbackFile.name : null;
       let attachmentData = null;
 
-      if (feedbackFile) {
+      if (feedbackFile && currentAuthKey) {
         try {
-          const path = `${Date.now()}-${feedbackFile.name.replace(/[^\w.-]/g, "_")}`;
+          const path = `${currentAuthKey}/${Date.now()}-${feedbackFile.name.replace(/[^\w.-]/g, "_")}`;
           const up = await supabase.storage.from("feedback_attachments").upload(path, feedbackFile);
           if (!up.error) {
             attachmentPath = path;
@@ -1506,27 +1506,15 @@ export const SettingsScreen: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="block text-xs font-bold text-purple-900 uppercase tracking-wider">
-                    Cloud SQL Schema Script (PROMPT 50)
-                  </label>
-                  <p className="text-xs text-slate-500">
-                    Run this SQL script in your Cloud SQL Editor if you need to create or verify
-                    tables:
+                <div className="space-y-2 rounded-2xl border border-blue-100 bg-blue-50 p-4">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-blue-800">
+                    Connected Supabase schema
+                  </h3>
+                  <p className="text-xs leading-relaxed text-slate-700">
+                    BIGsta&apos;s tables, storage buckets, and row-level security policies are managed
+                    by the connected Supabase migration. Do not run legacy public-access SQL from
+                    the app; service records are scoped to the signed-in account.
                   </p>
-                  <pre className="p-4 bg-slate-900 text-emerald-400 font-mono text-[11px] rounded-2xl overflow-x-auto max-h-48 border border-slate-800">
-                    {`-- BIGsta Migration Schema
-CREATE TABLE IF NOT EXISTS public.profiles (
-  id UUID PRIMARY KEY, name TEXT, phone TEXT UNIQUE,
-  email TEXT UNIQUE, role TEXT DEFAULT 'user', passkey TEXT, tokens INTEGER DEFAULT 0
-);
-CREATE TABLE IF NOT EXISTS public.templates (
-  id TEXT PRIMARY KEY, service_type TEXT, template_json JSONB, is_universal BOOLEAN
-);
-CREATE TABLE IF NOT EXISTS public.download_records (
-  id TEXT PRIMARY KEY, service TEXT, file_name TEXT, status TEXT
-);`}
-                  </pre>
                 </div>
               </div>
             )}

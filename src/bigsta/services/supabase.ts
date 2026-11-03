@@ -62,374 +62,6 @@ export const isSupabaseConfigured = Boolean(
 // Share the configured client: never select a second database or embedded key.
 export const supabase = connectedSupabase;
 
-/**
- * SQL Schema definition for PROMPT 50 Migration
- */
-export const SUPABASE_SQL_SCHEMA = `
--- =========================================================
--- BIGsta Supabase Database Foundation Migration Schema (Phases 1-10)
--- =========================================================
-
-CREATE TABLE IF NOT EXISTS public.users (
-  id UUID PRIMARY KEY,
-  email TEXT UNIQUE,
-  phone TEXT UNIQUE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access users" ON public.users FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.user_profiles (
-  id UUID PRIMARY KEY,
-  name TEXT,
-  phone TEXT UNIQUE,
-  email TEXT UNIQUE,
-  role TEXT DEFAULT 'user',
-  passkey TEXT,
-  tokens INTEGER DEFAULT 0,
-  status TEXT DEFAULT 'ACTIVE',
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.user_profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access user_profiles" ON public.user_profiles FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.profiles (
-  id UUID PRIMARY KEY,
-  name TEXT,
-  phone TEXT UNIQUE,
-  email TEXT UNIQUE,
-  role TEXT DEFAULT 'user',
-  passkey TEXT,
-  tokens INTEGER DEFAULT 0,
-  status TEXT DEFAULT 'ACTIVE',
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public select profiles" ON public.profiles FOR SELECT USING (true);
-CREATE POLICY "Allow individual insert/update profiles" ON public.profiles FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.token_wallets (
-  id TEXT PRIMARY KEY,
-  user_id UUID,
-  balance INTEGER DEFAULT 0,
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.token_wallets ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access token_wallets" ON public.token_wallets FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.tokens (
-  id TEXT PRIMARY KEY,
-  user_id UUID,
-  balance INTEGER DEFAULT 0,
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.tokens ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access tokens" ON public.tokens FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.services (
-  id TEXT PRIMARY KEY,
-  service_name TEXT NOT NULL,
-  description TEXT,
-  is_active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.services ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access services" ON public.services FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.template_categories (
-  id TEXT PRIMARY KEY,
-  category_name TEXT NOT NULL,
-  service_type TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.template_categories ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access template_categories" ON public.template_categories FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.templates (
-  id TEXT PRIMARY KEY,
-  service_type TEXT NOT NULL,
-  template_name TEXT,
-  template_json JSONB NOT NULL,
-  background_url TEXT,
-  is_universal BOOLEAN DEFAULT FALSE,
-  is_active BOOLEAN DEFAULT TRUE,
-  version INTEGER DEFAULT 1,
-  created_by TEXT,
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.templates ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public select templates" ON public.templates FOR SELECT USING (true);
-CREATE POLICY "Allow full write templates" ON public.templates FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.template_versions (
-  id TEXT PRIMARY KEY,
-  template_id TEXT REFERENCES public.templates(id) ON DELETE CASCADE,
-  version_number INTEGER NOT NULL,
-  template_json JSONB NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.template_versions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access template_versions" ON public.template_versions FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.template_elements (
-  id TEXT PRIMARY KEY,
-  template_id TEXT REFERENCES public.templates(id) ON DELETE CASCADE,
-  element_name TEXT,
-  element_type TEXT,
-  element_json JSONB,
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.template_elements ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access template_elements" ON public.template_elements FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.user_generated_cards (
-  id TEXT PRIMARY KEY,
-  user_id UUID,
-  service_type TEXT,
-  card_data JSONB,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.user_generated_cards ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access user_generated_cards" ON public.user_generated_cards FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.token_packages (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  usages INTEGER NOT NULL,
-  price TEXT NOT NULL,
-  description TEXT,
-  visibility TEXT DEFAULT 'public',
-  is_active BOOLEAN DEFAULT TRUE,
-  sort_order INTEGER DEFAULT 0,
-  bonus INTEGER DEFAULT 0,
-  promotion TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.token_packages ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public select token_packages" ON public.token_packages FOR SELECT USING (true);
-CREATE POLICY "Allow full write token_packages" ON public.token_packages FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.weekly_offers (
-  id TEXT PRIMARY KEY,
-  title TEXT NOT NULL,
-  description TEXT,
-  tokens INTEGER NOT NULL,
-  price TEXT NOT NULL,
-  services TEXT[], -- Array of service IDs
-  start_date TIMESTAMPTZ NOT NULL,
-  end_date TIMESTAMPTZ NOT NULL,
-  is_active BOOLEAN DEFAULT TRUE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.weekly_offers ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public select weekly_offers" ON public.weekly_offers FOR SELECT USING (true);
-CREATE POLICY "Allow full write weekly_offers" ON public.weekly_offers FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.background_assets (
-  id TEXT PRIMARY KEY,
-  name TEXT,
-  url TEXT NOT NULL,
-  service_type TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.background_assets ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public select background_assets" ON public.background_assets FOR SELECT USING (true);
-CREATE POLICY "Allow full write background_assets" ON public.background_assets FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.token_transactions (
-  id TEXT PRIMARY KEY,
-  user_id UUID,
-  user_email TEXT,
-  amount INTEGER NOT NULL,
-  reason TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.token_transactions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access token_transactions" ON public.token_transactions FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.user_payments (
-  id TEXT PRIMARY KEY,
-  user_id UUID,
-  user_name TEXT,
-  user_phone TEXT,
-  amount NUMERIC NOT NULL,
-  sender TEXT,
-  receiver TEXT,
-  reference TEXT,
-  status TEXT DEFAULT 'PENDING',
-  payment_date TEXT,
-  tokens_granted INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.user_payments ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access user_payments" ON public.user_payments FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.payment_submissions (
-  id TEXT PRIMARY KEY,
-  user_id UUID,
-  payload JSONB,
-  status TEXT DEFAULT 'PENDING',
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.payment_submissions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access payment_submissions" ON public.payment_submissions FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.payment_reviews (
-  id TEXT PRIMARY KEY,
-  submission_id TEXT,
-  admin_id UUID,
-  review_notes TEXT,
-  status TEXT,
-  reviewed_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.payment_reviews ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access payment_reviews" ON public.payment_reviews FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.user_settings (
-  user_id UUID PRIMARY KEY,
-  profile_settings JSONB,
-  preferences JSONB,
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.user_settings ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access user_settings" ON public.user_settings FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.system_settings (
-  id TEXT PRIMARY KEY,
-  config_key TEXT UNIQUE,
-  config_value JSONB,
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.system_settings ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access system_settings" ON public.system_settings FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.download_records (
-  id TEXT PRIMARY KEY,
-  user_id UUID,
-  service TEXT NOT NULL,
-  file_name TEXT NOT NULL,
-  file_type TEXT NOT NULL,
-  file_size NUMERIC DEFAULT 0,
-  status TEXT DEFAULT 'Ready',
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.download_records ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access download_records" ON public.download_records FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.audit_logs (
-  id TEXT PRIMARY KEY,
-  user_id UUID,
-  action TEXT NOT NULL,
-  details TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access audit_logs" ON public.audit_logs FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.user_roles (
-  user_id UUID PRIMARY KEY,
-  role TEXT DEFAULT 'user',
-  permissions JSONB,
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access user_roles" ON public.user_roles FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.manual_requests (
-  id TEXT PRIMARY KEY,
-  user_id UUID,
-  full_name TEXT NOT NULL,
-  whatsapp_number TEXT NOT NULL,
-  normal_call_number TEXT NOT NULL,
-  service_name TEXT NOT NULL,
-  status TEXT DEFAULT 'PENDING',
-  submitted_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.manual_requests ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access manual_requests" ON public.manual_requests FOR ALL USING (true);
-
-CREATE TABLE IF NOT EXISTS public.passkeys (
-  id TEXT PRIMARY KEY,
-  key TEXT UNIQUE NOT NULL,
-  role TEXT DEFAULT 'user',
-  active BOOLEAN DEFAULT TRUE,
-  created_date TEXT,
-  created_at_timestamp BIGINT,
-  created_by TEXT,
-  description TEXT,
-  last_used TEXT,
-  total_usages INTEGER DEFAULT 1,
-  used_usages INTEGER DEFAULT 0,
-  remaining_usages INTEGER DEFAULT 1,
-  payment_status TEXT DEFAULT 'ACTIVE',
-  package_name TEXT,
-  package_price TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.passkeys ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow public access passkeys" ON public.passkeys FOR ALL USING (true);
-
--- BIGsta internal APK SMS receiver (raw SMS is always kept)
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-CREATE TABLE IF NOT EXISTS public.sms_logs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  sms_hash TEXT UNIQUE NOT NULL,
-  sender TEXT NOT NULL,
-  raw_sms TEXT NOT NULL,
-  received_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  device_id TEXT NOT NULL,
-  network TEXT,
-  amount NUMERIC,
-  reference TEXT,
-  receiver TEXT,
-  balance NUMERIC,
-  transaction_id TEXT,
-  payer_name TEXT,
-  payer_phone TEXT,
-  status TEXT NOT NULL DEFAULT 'UNREVIEWED',
-  processing_state TEXT NOT NULL DEFAULT 'PARSE_FAILED',
-  source TEXT NOT NULL DEFAULT 'bigsta_apk',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-CREATE INDEX IF NOT EXISTS sms_logs_received_at_idx ON public.sms_logs (received_at DESC);
-CREATE INDEX IF NOT EXISTS sms_logs_status_idx ON public.sms_logs (status);
-CREATE INDEX IF NOT EXISTS sms_logs_sms_hash_idx ON public.sms_logs (sms_hash);
-CREATE TABLE IF NOT EXISTS public.nida_requests (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id),
-  mother_name TEXT,
-  ward_of_residence TEXT,
-  district_of_birth TEXT,
-  nida_registration_place TEXT,
-  request_type TEXT CHECK (request_type IN ('picture', 'signature', 'both', 'soft_copy')),
-  status TEXT DEFAULT 'pending',
-  picture_url TEXT,
-  signature_url TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE public.nida_requests ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow authenticated users to insert own requests" ON public.nida_requests FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Allow users to view own requests" ON public.nida_requests FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Allow admins to view/update all" ON public.nida_requests FOR ALL USING (true);
-ALTER TABLE public.sms_logs ENABLE ROW LEVEL SECURITY;
-GRANT SELECT, INSERT, UPDATE ON public.sms_logs TO anon, authenticated;
-DROP POLICY IF EXISTS "Allow public access sms_logs" ON public.sms_logs;
-CREATE POLICY "Allow public access sms_logs" ON public.sms_logs FOR ALL USING (true) WITH CHECK (true);
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_publication_tables
-    WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'sms_logs'
-  ) THEN
-    ALTER PUBLICATION supabase_realtime ADD TABLE public.sms_logs;
-  END IF;
-END $$;
-`;
 
 // Helper: Upload Background to Supabase Storage
 export async function uploadBackgroundToSupabase(
@@ -915,6 +547,7 @@ export async function fetchAllProfilesSupabase(): Promise<any[]> {
             seen.add(key);
             combined.push({
               id: u.id || u.user_id,
+              auth_user_id: u.auth_user_id,
               name: u.name || u.full_name,
               phone: u.phone || u.phone_number,
               email: u.email,
@@ -1026,52 +659,6 @@ export async function fetchAllPaymentsSupabase(): Promise<any[]> {
   } catch (e) {
     console.error("Failed to fetch payments from Supabase:", e);
     return [];
-  }
-}
-
-// Helper: Sync Profile
-export async function syncProfileSupabase(profile: {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-  role: string;
-  tokens: number;
-  passkey?: string;
-}): Promise<boolean> {
-  if (!supabase) return false;
-  try {
-    const pUuid = getUUID(profile.id);
-    const { error: err1 } = await supabase.from("profiles").upsert({
-      id: pUuid,
-      name: profile.name,
-      phone: profile.phone,
-      email: profile.email,
-      role: profile.role,
-      passkey: profile.passkey,
-      tokens: profile.tokens,
-      updated_at: new Date().toISOString(),
-    });
-
-    const { error: err2 } = await supabase.from("user_profiles").upsert({
-      id: pUuid,
-      name: profile.name,
-      phone: profile.phone,
-      email: profile.email,
-      role: profile.role,
-      passkey: profile.passkey,
-      tokens: profile.tokens,
-      updated_at: new Date().toISOString(),
-    });
-
-    if (err1 && err2) {
-      console.warn("Sync profile warning:", err1?.message || err2?.message);
-      return false;
-    }
-    return true;
-  } catch (e) {
-    console.error("Failed profile sync:", e);
-    return false;
   }
 }
 
@@ -1205,8 +792,8 @@ export async function fetchPasskeysSupabase(): Promise<any[]> {
           if (p.passkey && !seenKeys.has(p.passkey.toLowerCase())) {
             seenKeys.add(p.passkey.toLowerCase());
             list.push({
-              id: p.id || "pk_" + p.passkey,
-              key: p.passkey,
+              id: p.id || "pk_" + (p.auth_user_id || p.passkey),
+              key: p.auth_user_id || p.passkey,
               role: p.role || "user",
               active: p.status !== "DISABLED",
               createdDate:
@@ -1591,79 +1178,6 @@ export async function deleteWeeklyOfferSupabase(id: string): Promise<boolean> {
   }
 }
 
-// Helper: Recover / Reset Passkey by Phone Number
-export async function recoverPasskeyByPhoneSupabase(
-  phoneInput: string,
-  newPasskey: string,
-): Promise<{ success: boolean; message: string; fullName?: string }> {
-  if (!supabase) return { success: false, message: "Backend database not initialized" };
-  const rawPhone = phoneInput.trim().replace(/\s+/g, "");
-  const trimmedKey = newPasskey.trim();
-  if (!rawPhone || !trimmedKey) {
-    return { success: false, message: "Please provide both phone number and new passkey" };
-  }
-
-  try {
-    // 1. Check profiles table
-    const { data: profiles, error: profileErr } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("phone", rawPhone)
-      .limit(1);
-
-    if (profiles && profiles.length > 0) {
-      const prof = profiles[0];
-      const { error: updateErr } = await supabase
-        .from("profiles")
-        .update({ passkey: trimmedKey, updated_at: new Date().toISOString() })
-        .eq("id", prof.id);
-
-      if (updateErr) {
-        return {
-          success: false,
-          message: updateErr.message || "Failed to update passkey in backend",
-        };
-      }
-
-      return {
-        success: true,
-        message: "Passkey successfully recovered and updated",
-        fullName: prof.name,
-      };
-    }
-
-    // 2. Check passkeys table by description containing phone
-    const { data: passkeys } = await supabase
-      .from("passkeys")
-      .select("*")
-      .ilike("description", `%${rawPhone}%`)
-      .limit(1);
-
-    if (passkeys && passkeys.length > 0) {
-      const pk = passkeys[0];
-      const { error: pkErr } = await supabase
-        .from("passkeys")
-        .update({ key: trimmedKey })
-        .eq("id", pk.id);
-
-      if (pkErr) {
-        return { success: false, message: pkErr.message || "Failed to update passkey" };
-      }
-
-      return {
-        success: true,
-        message: "Passkey successfully recovered and updated",
-        fullName: pk.created_by || "User",
-      };
-    }
-
-    return { success: false, message: "No registered account found with this phone number" };
-  } catch (e: any) {
-    console.error("Error recovering passkey:", e);
-    return { success: false, message: e.message || "Failed to recover passkey" };
-  }
-}
-
 // ---------------------------------------------------------------------------
 // Token history (persisted in public.token_transactions)
 // user_id holds a deterministic UUID of the passkey id; user_email holds the raw
@@ -1738,46 +1252,84 @@ export async function fetchTokenHistorySupabase(
   }
 }
 
-// Save only the user's editable profile fields (never touches tokens/role).
+// Update only editable profile fields on the profile rows attached to the active Auth user.
 export async function saveOwnProfileSupabase(
   key: string,
-  p: { name?: string; phone?: string; email?: string; region?: string },
+  profile: { name?: string; phone?: string; email?: string; region?: string },
 ): Promise<boolean> {
   if (!supabase || !key) return false;
-  const id = getUUID(key);
-  const base = {
-    id,
-    name: p.name ?? null,
-    phone: p.phone ?? null,
-    email: p.email ?? null,
-    passkey: key,
-    updated_at: new Date().toISOString(),
-  };
-  const { error } = await supabase.from("profiles").upsert({ ...base, region: p.region ?? null });
-  await supabase.from("user_profiles").upsert(base);
-  if (error) {
-    console.error("Profile save failed:", error.message);
+
+  try {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user || user.id !== key) return false;
+
+    const updatedAt = new Date().toISOString();
+    const profileChanges = {
+      ...(profile.name !== undefined ? { name: profile.name } : {}),
+      ...(profile.phone !== undefined ? { phone: profile.phone } : {}),
+      ...(profile.region !== undefined ? { region: profile.region } : {}),
+      updated_at: updatedAt,
+    };
+    const mirrorChanges = {
+      ...(profile.name !== undefined ? { name: profile.name } : {}),
+      ...(profile.phone !== undefined ? { phone: profile.phone } : {}),
+      updated_at: updatedAt,
+    };
+
+    const [{ error: profileError }, { error: mirrorError }] = await Promise.all([
+      supabase.from("profiles").update(profileChanges).eq("auth_user_id", user.id),
+      supabase.from("user_profiles").update(mirrorChanges).eq("auth_user_id", user.id),
+    ]);
+
+    if (profileError || mirrorError) {
+      console.error("Profile save failed:", profileError?.message || mirrorError?.message);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error("Profile save failed:", error);
     return false;
   }
-  return true;
 }
 
-/** Save a generated ID card (e.g. Zambia NRC) to the cloud database. */
+/** Persist a generated service card under the authenticated owner's account. */
 export async function saveGeneratedCardSupabase(card: {
   id: string;
   serviceType: string;
   cardData: Record<string, any>;
-  userId?: string | null;
 }): Promise<boolean> {
-  if (!supabase) return false;
+  if (!supabase || !card.id.trim() || !card.serviceType.trim()) return false;
+
   try {
-    const uid = card.userId && /^[0-9a-f-]{36}$/i.test(card.userId) ? card.userId : null;
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user) return false;
+
+    const removeMedia = (value: any): any => {
+      if (Array.isArray(value)) return value.map(removeMedia);
+      if (!value || typeof value !== "object") {
+        return typeof value === "string" && /^(data:|blob:)/i.test(value) ? undefined : value;
+      }
+
+      return Object.fromEntries(
+        Object.entries(value)
+          .filter(([key]) => !/(photo|signature|image|base64)/i.test(key))
+          .map(([key, nested]) => [key, removeMedia(nested)])
+          .filter(([, nested]) => nested !== undefined),
+      );
+    };
+
     const { error } = await withTimeout(
       supabase.from("user_generated_cards").upsert({
-        id: card.id,
-        user_id: uid,
-        service_type: card.serviceType,
-        card_data: card.cardData,
+        id: card.id.trim().slice(0, 128),
+        user_id: user.id,
+        service_type: normalizeTemplateCategory(card.serviceType).slice(0, 80),
+        card_data: removeMedia(card.cardData),
       }),
     );
     if (error) {
@@ -1785,8 +1337,8 @@ export async function saveGeneratedCardSupabase(card: {
       return false;
     }
     return true;
-  } catch (err) {
-    console.error("[Supabase] saveGeneratedCard error:", err);
+  } catch (error) {
+    console.error("[Supabase] saveGeneratedCard error:", error);
     return false;
   }
 }

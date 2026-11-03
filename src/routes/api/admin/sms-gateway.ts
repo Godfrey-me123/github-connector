@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { gatewayStatus, getWebhookSecret } from "@/lib/sms-webhook.server";
-import { checkAdminKey } from "@/lib/admin-key.server";
+import { checkAdminSession } from "@/lib/admin-key.server";
 
 async function handle(request: Request) {
-  const denied = checkAdminKey(request);
+  const denied = await checkAdminSession(request);
   if (denied) return denied;
   try {
     const origin = new URL(request.url).origin;

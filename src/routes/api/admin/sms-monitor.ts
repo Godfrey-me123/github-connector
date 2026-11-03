@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { smsStats } from "@/lib/sms-webhook.server";
+import { checkAdminSession } from "@/lib/admin-key.server";
 
 export const Route = createFileRoute("/api/admin/sms-monitor")({
   server: {
     handlers: {
-      GET: async () => {
+      GET: async ({ request }) => {
+        const denied = await checkAdminSession(request);
+        if (denied) return denied;
         const rows = await smsStats();
         const logs = rows.map((r: any) => ({
           id: r.id,

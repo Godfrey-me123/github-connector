@@ -35,6 +35,7 @@ import { CardTemplate } from "../../types";
 import { applyTemplateMapping, sanitizeTemplateForSaving } from "../../utils/templateMappingEngine";
 import { formatToDdMmYyyy, validateDdMmYyyy } from "../../utils/dateValidation";
 import { renderTemplateToCanvas } from "../../utils/export";
+import { saveGeneratedCardSupabase } from "../../services/supabase";
 
 export interface DrivingLicenseFormData {
   firstName: string;
@@ -555,6 +556,12 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
       return;
     }
 
+    const savedToCloud = await saveGeneratedCardSupabase({
+      id: record.id,
+      serviceType: "driving_license",
+      cardData: { ...normalizedFormData, submittedAt: record.submittedAt },
+    });
+
     updateStep("step9_open", "completed");
 
     setIsWorkflowCompleted(true);
@@ -562,7 +569,7 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
 
     setNidaSuccessNotification({
       title: "Driving License Generated!",
-      message: `Front & Back templates populated with verified driver details and vehicle classes. Ready for export.`,
+      message: `Front & Back templates populated. ${savedToCloud ? "Record saved securely to your account." : "Cloud sync failed; this record remains on this device only."}`,
       populatedCount: frontRes.populatedCount + backRes.populatedCount,
       isBackSide: false,
     });

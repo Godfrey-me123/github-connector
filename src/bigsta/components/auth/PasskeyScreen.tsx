@@ -1,39 +1,35 @@
 import React, { useState } from "react";
 import {
-  Shield,
-  Key,
+  AlertCircle,
+  ArrowRight,
+  CheckCircle2,
   Eye,
   EyeOff,
-  ArrowRight,
-  AlertCircle,
-  Sparkles,
-  UserPlus,
-  CheckCircle2,
   HelpCircle,
+  LockKeyhole,
+  Mail,
+  Shield,
+  UserPlus,
 } from "lucide-react";
 import { useTemplateStore } from "../../store/useTemplateStore";
 import { UserRegistrationModal } from "./UserRegistrationModal";
 import { ForgotPasskeyModal } from "./ForgotPasskeyModal";
 
 export const PasskeyScreen: React.FC = () => {
-  const { loginWithPasskey, loadingPasskeys } = useTemplateStore();
-  const [passkeyInput, setPasskeyInput] = useState("");
-  const [showPasskey, setShowPasskey] = useState(false);
+  const { loginWithEmailPassword } = useTemplateStore();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [successNotice, setSuccessNotice] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isForgotOpen, setIsForgotOpen] = useState(false);
 
-  console.log("[Auth Debug] PasskeyScreen Render:", {
-    authRole: useTemplateStore.getState().authRole,
-    isRegisterOpen,
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!passkeyInput.trim()) {
-      setErrorMessage("Please enter your passkey to continue");
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!email.trim() || !password) {
+      setErrorMessage("Enter your email and password to continue.");
       return;
     }
 
@@ -42,187 +38,147 @@ export const PasskeyScreen: React.FC = () => {
     setSuccessNotice("");
 
     try {
-      const res = await loginWithPasskey(passkeyInput);
+      const result = await loginWithEmailPassword(email, password);
+      if (!result.success) setErrorMessage(result.message || "Sign-in failed.");
+    } catch {
+      setErrorMessage("Sign-in is temporarily unavailable. Please try again shortly.");
+    } finally {
       setIsLoading(false);
-      if (!res.success) {
-        setErrorMessage(res.message || "Invalid Passkey");
-      }
-    } catch (err: any) {
-      setIsLoading(false);
-      setErrorMessage(err?.message || "Error verifying passkey");
-    }
-  };
-
-  const handleRegistrationSuccess = async (registeredPasskey: string) => {
-    setPasskeyInput(registeredPasskey);
-    setIsLoading(true);
-    setErrorMessage("");
-
-    // Auto-login after registration
-    try {
-      const res = await loginWithPasskey(registeredPasskey);
-      setIsLoading(false);
-      if (!res.success) {
-        setErrorMessage(res.message || "Auto-login failed. Please enter your passkey manually.");
-      }
-    } catch (err: any) {
-      setIsLoading(false);
-      setErrorMessage("Auto-login failed. Please enter your passkey manually.");
     }
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#0B132B] text-white flex flex-col items-center justify-center p-4 py-8 sm:py-12 relative overflow-y-auto font-sans">
-      {/* Loading Overlay for Background Sync */}
-      {loadingPasskeys && (
-        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-[#1C2541] border border-white/10 px-3 py-1.5 rounded-full shadow-xl">
-          <div className="w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-          <span className="text-[10px] font-bold text-blue-200">Syncing System Data...</span>
-        </div>
-      )}
-      {/* Background Decorative Glow Effect */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#47A5FF]/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+    <main className="relative flex min-h-screen w-full flex-col items-center justify-center overflow-y-auto bg-[#0B132B] px-4 py-8 font-sans text-white sm:py-12">
+      <div className="pointer-events-none absolute left-1/2 top-1/4 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#47A5FF]/10 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-10 right-10 h-80 w-80 rounded-full bg-blue-600/10 blur-3xl" />
 
-      {/* Main Container */}
-      <div className="w-full max-w-md bg-[#1C2541]/90 backdrop-blur-xl border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl relative z-10 flex flex-col items-center my-auto">
-        {/* BIGsta Title Header */}
-        <div className="flex flex-col items-center text-center mb-6">
-          <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight">BIGsta</h1>
+      <section className="relative z-10 my-auto flex w-full max-w-md flex-col items-center rounded-2xl border border-white/10 bg-[#1C2541]/90 p-6 shadow-2xl backdrop-blur-xl sm:p-8">
+        <div className="mb-6 flex flex-col items-center text-center">
+          <span className="mb-3 rounded-2xl border border-[#47A5FF]/30 bg-[#47A5FF]/10 p-3 text-[#47A5FF]">
+            <Shield className="h-6 w-6" aria-hidden="true" />
+          </span>
+          <h1 className="text-4xl font-black tracking-tight sm:text-5xl">BIGsta</h1>
+          <p className="mt-2 text-sm text-slate-300">Sign in to your account</p>
         </div>
 
-        {/* Registration Success Banner */}
         {successNotice && (
-          <div className="w-full mb-4 p-3.5 bg-emerald-500/15 border border-emerald-500/30 rounded-xl flex items-start gap-2.5 text-emerald-200 text-xs">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+          <div
+            className="mb-4 flex w-full items-start gap-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/15 p-3.5 text-xs text-emerald-200"
+            role="status"
+            aria-live="polite"
+          >
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" aria-hidden="true" />
             <span className="font-medium leading-relaxed">{successNotice}</span>
           </div>
         )}
 
-        {/* Passkey Input Form */}
         <form onSubmit={handleSubmit} className="w-full space-y-4">
           <div className="space-y-1.5">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
-              Passkey / Security PIN
+            <label htmlFor="signin-email" className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+              Email address
             </label>
-
             <div className="relative flex items-center">
-              <div className="absolute left-3.5 text-slate-400">
-                <Key className="w-4 h-4" />
-              </div>
-
+              <Mail className="absolute left-3.5 h-4 w-4 text-slate-400" aria-hidden="true" />
               <input
-                type={showPasskey ? "text" : "password"}
-                value={passkeyInput}
-                onChange={(e) => {
-                  setPasskeyInput(e.target.value);
+                id="signin-email"
+                type="email"
+                value={email}
+                onChange={(event) => {
+                  setEmail(event.target.value);
                   if (errorMessage) setErrorMessage("");
                 }}
-                placeholder="Enter Passkey"
-                className="w-full pl-10 pr-11 py-3 bg-[#0B132B]/80 border border-white/15 rounded-xl text-white placeholder-slate-500 text-sm font-mono tracking-wide focus:outline-none focus:border-[#47A5FF] focus:ring-2 focus:ring-[#47A5FF]/20 transition-all"
-                autoFocus
+                placeholder="you@example.com"
+                autoComplete="username"
+                required
+                className="w-full rounded-xl border border-white/15 bg-[#0B132B]/80 py-3 pl-10 pr-4 text-sm text-white outline-none transition-all placeholder:text-slate-500 focus:border-[#47A5FF] focus:ring-2 focus:ring-[#47A5FF]/20"
               />
+            </div>
+          </div>
 
+          <div className="space-y-1.5">
+            <label htmlFor="signin-password" className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+              Password
+            </label>
+            <div className="relative flex items-center">
+              <LockKeyhole className="absolute left-3.5 h-4 w-4 text-slate-400" aria-hidden="true" />
+              <input
+                id="signin-password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  if (errorMessage) setErrorMessage("");
+                }}
+                placeholder="Enter your password"
+                autoComplete="current-password"
+                required
+                className="w-full rounded-xl border border-white/15 bg-[#0B132B]/80 py-3 pl-10 pr-11 text-sm text-white outline-none transition-all placeholder:text-slate-500 focus:border-[#47A5FF] focus:ring-2 focus:ring-[#47A5FF]/20"
+              />
               <button
                 type="button"
-                onClick={() => setShowPasskey(!showPasskey)}
-                className="absolute right-3.5 text-slate-400 hover:text-white transition-colors cursor-pointer p-1"
-                title={showPasskey ? "Hide Passkey" : "Show Passkey"}
+                onClick={() => setShowPassword((visible) => !visible)}
+                className="absolute right-3.5 rounded p-1 text-slate-400 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#47A5FF]"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPasskey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
           </div>
 
-          {/* Error Message Notice */}
           {errorMessage && (
-            <div className="p-3 bg-red-500/15 border border-red-500/30 rounded-xl flex items-start gap-2.5 text-red-200 text-xs animate-shake">
-              <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2.5 rounded-xl border border-red-500/30 bg-red-500/15 p-3 text-xs text-red-200" role="alert">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" aria-hidden="true" />
               <span className="font-medium leading-tight">{errorMessage}</span>
             </div>
           )}
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3.5 px-4 bg-gradient-to-r from-[#47A5FF] to-blue-600 hover:from-blue-500 hover:to-blue-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-blue-500/25 border border-white/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/20 bg-gradient-to-r from-[#47A5FF] to-blue-600 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition-all hover:from-blue-500 hover:to-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isLoading ? (
-              <span className="inline-flex items-center gap-2">
-                <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  />
-                </svg>
-                Verifying Passkey...
-              </span>
-            ) : (
-              <>
-                <span>Continue</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
+            {isLoading ? "Signing in…" : "Sign in"}
+            {!isLoading && <ArrowRight className="h-4 w-4" aria-hidden="true" />}
           </button>
 
-          {/* Forgot Passkey Link */}
           <div className="flex justify-end pt-1">
             <button
               type="button"
               onClick={() => setIsForgotOpen(true)}
               disabled={isLoading}
-              className="text-xs text-[#47A5FF] hover:underline font-medium cursor-pointer inline-flex items-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-1 text-xs font-medium text-[#47A5FF] hover:underline disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <HelpCircle className="w-3.5 h-3.5" />
-              <span>Forgot Passkey?</span>
+              <HelpCircle className="h-3.5 w-3.5" aria-hidden="true" />
+              Forgot password?
             </button>
           </div>
         </form>
 
-        {/* Register Now Button (Prompt 21) */}
-        <div className="pt-4 mt-2 flex flex-col items-center gap-2.5 border-t border-white/10 w-full">
-          <p className="text-xs text-slate-300 font-medium">Don't have an account?</p>
+        <div className="mt-6 flex w-full flex-col items-center gap-2.5 border-t border-white/10 pt-4">
+          <p className="text-xs font-medium text-slate-300">New to BIGsta?</p>
           <button
             type="button"
             onClick={() => setIsRegisterOpen(true)}
             disabled={isLoading}
-            className="w-full py-2.5 px-4 bg-white/5 hover:bg-white/10 text-[#47A5FF] font-bold text-xs sm:text-sm rounded-xl border border-[#47A5FF]/30 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-[#47A5FF]/30 bg-white/5 px-4 py-2.5 text-xs font-bold text-[#47A5FF] transition-all hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
           >
-            <UserPlus className="w-4 h-4 text-[#47A5FF]" />
-            <span>Register Now</span>
+            <UserPlus className="h-4 w-4" aria-hidden="true" />
+            Create account
           </button>
         </div>
-      </div>
+      </section>
 
-      {/* User Registration Modal */}
       <UserRegistrationModal
         isOpen={isRegisterOpen}
         onClose={() => setIsRegisterOpen(false)}
-        onSuccess={handleRegistrationSuccess}
+        onSuccess={(message) => setSuccessNotice(message)}
       />
 
-      {/* Forgot Passkey Modal */}
       <ForgotPasskeyModal
         isOpen={isForgotOpen}
         onClose={() => setIsForgotOpen(false)}
-        onSuccess={(newPk) => {
-          setPasskeyInput(newPk);
-          setSuccessNotice(
-            "Passkey updated successfully! You can now continue with your new passkey.",
-          );
-        }}
+        onSuccess={(message) => setSuccessNotice(message)}
       />
-    </div>
+    </main>
   );
 };

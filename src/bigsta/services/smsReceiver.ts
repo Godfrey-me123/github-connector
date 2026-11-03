@@ -551,9 +551,21 @@ CREATE INDEX IF NOT EXISTS sms_logs_sms_hash_idx ON public.sms_logs (sms_hash);
 CREATE INDEX IF NOT EXISTS sms_logs_reference_idx ON public.sms_logs (upper(reference));
 CREATE INDEX IF NOT EXISTS sms_logs_transaction_id_idx ON public.sms_logs (upper(transaction_id));
 ALTER TABLE public.sms_logs ENABLE ROW LEVEL SECURITY;
-GRANT SELECT, INSERT, UPDATE ON public.sms_logs TO anon, authenticated;
-DROP POLICY IF EXISTS "Allow public access sms_logs" ON public.sms_logs;
-CREATE POLICY "Allow public access sms_logs" ON public.sms_logs FOR ALL USING (true) WITH CHECK (true);
+REVOKE ALL ON public.sms_logs FROM anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.sms_logs TO authenticated;
+DO $$
+DECLARE
+  existing_policy record;
+BEGIN
+  FOR existing_policy IN
+    SELECT policyname FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'sms_logs'
+  LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.sms_logs', existing_policy.policyname);
+  END LOOP;
+END $$;
+CREATE POLICY sms_logs_admin_all ON public.sms_logs FOR ALL TO authenticated
+  USING (public.is_bigsta_admin()) WITH CHECK (public.is_bigsta_admin());
 DO $$
 BEGIN
   IF NOT EXISTS (

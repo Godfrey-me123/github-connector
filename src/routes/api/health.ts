@@ -14,14 +14,7 @@ async function databaseReachable(): Promise<"connected" | "down"> {
       headers: { apikey: key, ...(!key.startsWith("sb_") ? { Authorization: `Bearer ${key}` } : {}) },
       signal: ctrl.signal,
     });
-    if (res.ok || res.status === 404 || res.status === 400 || res.status === 401) {
-      return "connected";
-    }
-    const authRes = await fetch(`${url}/auth/v1/health`, {
-      headers: { apikey: key },
-      signal: ctrl.signal,
-    });
-    return authRes.ok ? "connected" : "down";
+    return res.ok ? "connected" : "down";
   } catch {
     return "down";
   } finally {
