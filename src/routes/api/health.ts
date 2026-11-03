@@ -10,18 +10,17 @@ async function databaseReachable(): Promise<"connected" | "down"> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 4000);
   try {
-    const res = await fetch(`${url}/rest/v1/system_settings?select=id&limit=1`, {
-      headers: { apikey: key, ...(!key.startsWith("sb_") ? { Authorization: `Bearer ${key}` } : {}) },
-      signal: ctrl.signal,
-    });
-    if (res.ok || res.status === 404 || res.status === 400 || res.status === 401) {
-      return "connected";
-    }
-    const authRes = await fetch(`${url}/auth/v1/health`, {
-      headers: { apikey: key },
-      signal: ctrl.signal,
-    });
-    return authRes.ok ? "connected" : "down";
+    const res = await fetch(
+      `${url}/rest/v1/system_settings?select=id&config_key=eq.payment_methods&limit=1`,
+      {
+        headers: {
+          apikey: key,
+          ...(!key.startsWith("sb_") ? { Authorization: `Bearer ${key}` } : {}),
+        },
+        signal: ctrl.signal,
+      },
+    );
+    return res.ok ? "connected" : "down";
   } catch {
     return "down";
   } finally {

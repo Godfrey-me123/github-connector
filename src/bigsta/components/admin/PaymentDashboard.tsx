@@ -35,6 +35,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { paymentService } from "../../services/paymentService";
+import { adminApiFetch } from "../../services/adminApi";
 import { PaymentRecord, PaymentStatus, VerificationLog } from "../../types";
 import { useTemplateStore } from "../../store/useTemplateStore";
 import { UniversalBackButton } from "../common/UniversalBackButton";
@@ -83,7 +84,7 @@ export const PaymentDashboard: React.FC = () => {
         alert("Please enter a valid app deployment URL.");
         return;
       }
-      const res = await fetch("/api/admin/webhook-settings", {
+      const res = await adminApiFetch("/api/admin/webhook-settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -91,7 +92,7 @@ export const PaymentDashboard: React.FC = () => {
           customAppUrl: trimmedUrl,
         }),
       });
-      const secRes = await fetch("/api/admin/webhook-secret/regenerate", { method: "POST" });
+      const secRes = await adminApiFetch("/api/admin/webhook-secret/regenerate", { method: "POST" });
       const secData = await secRes.json();
       setWebhookSecret(secData.secret);
 
@@ -181,7 +182,7 @@ export const PaymentDashboard: React.FC = () => {
     if (activeTab === "monitor") {
       const fetchMonitor = async () => {
         try {
-          const response = await fetch("/api/admin/sms-monitor");
+          const response = await adminApiFetch("/api/admin/sms-monitor");
           const data = await response.json();
           setMonitorData(data);
         } catch (e) {
@@ -200,7 +201,7 @@ export const PaymentDashboard: React.FC = () => {
     if (activeTab === "debug" || activeTab === "settings") {
       const fetchDebug = async () => {
         try {
-          const response = await fetch("/api/admin/webhook-debug");
+          const response = await adminApiFetch("/api/admin/webhook-debug");
           const data = await response.json();
           setDebugData(data);
         } catch (err) {
@@ -220,7 +221,7 @@ export const PaymentDashboard: React.FC = () => {
 
   const fetchWebhookSecret = async () => {
     try {
-      const response = await fetch("/api/admin/webhook-secret");
+      const response = await adminApiFetch("/api/admin/webhook-secret");
       if (!response.ok) throw new Error("HTTP " + response.status);
       const data = await response.json();
       if (data?.secret) setWebhookSecret(data.secret);
@@ -239,7 +240,7 @@ export const PaymentDashboard: React.FC = () => {
     )
       return;
     try {
-      const response = await fetch("/api/admin/webhook-secret/regenerate", { method: "POST" });
+      const response = await adminApiFetch("/api/admin/webhook-secret/regenerate", { method: "POST" });
       const data = await response.json();
       if (data?.secret) {
         setWebhookSecret(data.secret);

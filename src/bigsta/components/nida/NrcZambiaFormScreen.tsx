@@ -502,16 +502,6 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({
       };
       await saveNidaSubmissionRecord(submissionRecord as any);
 
-      // Persist the NRC submission to the cloud database (photo/signature stay on device)
-      const { photoUrl, photo, signatureUrl, signature, officerSignatureUrl, officerSignature, officer_signature, ...nrcCloudData } = mappedFormData as any;
-      const savedToCloud = await saveGeneratedCardSupabase({
-        id: submissionRecord.id,
-        serviceType: "nrc_zambia",
-        cardData: { ...nrcCloudData, submittedAt: submissionRecord.submittedAt },
-        userId: (useTemplateStore.getState() as any).currentUser?.id ?? null,
-      });
-      if (!savedToCloud) console.warn("NRC record saved on this device only; cloud save failed.");
-
       const populatedFront = frontRes.populatedTemplate || frontTemplate;
       const populatedBack = backRes.populatedTemplate || backTemplate;
 
@@ -534,13 +524,19 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({
         return;
       }
 
+      const savedToCloud = await saveGeneratedCardSupabase({
+        id: submissionRecord.id,
+        serviceType: "nrc_zambia",
+        cardData: { ...mappedFormData, submittedAt: submissionRecord.submittedAt },
+      });
+
       updateStep("step9_open", "completed");
       setIsWorkflowCompleted(true);
       setIsSubmitting(false);
 
       setNidaSuccessNotification({
         title: "NRC Card Populated",
-        message: "Front and back NRC card design compiled with sample credentials.",
+        message: `Front and back NRC card design compiled. ${savedToCloud ? "Record saved securely to your account." : "Cloud sync failed; this record remains on this device only."}`,
         populatedCount: (frontRes.populatedCount || 0) + (backRes.populatedCount || 0),
         isBackSide: false,
       });

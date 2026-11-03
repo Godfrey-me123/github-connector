@@ -14,11 +14,13 @@ import { Route as SplatRouteImport } from './routes/$'
 import { Route as ApiCleanTempRouteImport } from './routes/api/clean-temp'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiRemoveBgRouteImport } from './routes/api/remove-bg'
+import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
 import { Route as ApiAdminSmsGatewayRouteImport } from './routes/api/admin/sms-gateway'
 import { Route as ApiAdminSmsMonitorRouteImport } from './routes/api/admin/sms-monitor'
 import { Route as ApiAdminWebhookDebugRouteImport } from './routes/api/admin/webhook-debug'
 import { Route as ApiAdminWebhookSecretRouteImport } from './routes/api/admin/webhook-secret'
 import { Route as ApiAdminWebhookSettingsRouteImport } from './routes/api/admin/webhook-settings'
+import { Route as ApiAuthBootstrapRouteImport } from './routes/api/auth/bootstrap'
 import { Route as ApiPublicPaymentSmsRouteImport } from './routes/api/public/payment-sms'
 import { Route as ApiAdminWebhookSecretRegenerateRouteImport } from './routes/api/admin/webhook-secret.regenerate'
 
@@ -47,6 +49,11 @@ const ApiRemoveBgRoute = ApiRemoveBgRouteImport.update({
   path: '/api/remove-bg',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAdminSmsGatewayRoute = ApiAdminSmsGatewayRouteImport.update({
   id: '/api/admin/sms-gateway',
   path: '/api/admin/sms-gateway',
@@ -72,6 +79,11 @@ const ApiAdminWebhookSettingsRoute = ApiAdminWebhookSettingsRouteImport.update({
   path: '/api/admin/webhook-settings',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthBootstrapRoute = ApiAuthBootstrapRouteImport.update({
+  id: '/api/auth/bootstrap',
+  path: '/api/auth/bootstrap',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPaymentSmsRoute = ApiPublicPaymentSmsRouteImport.update({
   id: '/api/public/payment-sms',
   path: '/api/public/payment-sms',
@@ -90,11 +102,13 @@ export interface FileRoutesByFullPath {
   '/api/clean-temp': typeof ApiCleanTempRoute
   '/api/health': typeof ApiHealthRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/api/admin/sms-gateway': typeof ApiAdminSmsGatewayRoute
   '/api/admin/sms-monitor': typeof ApiAdminSmsMonitorRoute
   '/api/admin/webhook-debug': typeof ApiAdminWebhookDebugRoute
   '/api/admin/webhook-secret': typeof ApiAdminWebhookSecretRouteWithChildren
   '/api/admin/webhook-settings': typeof ApiAdminWebhookSettingsRoute
+  '/api/auth/bootstrap': typeof ApiAuthBootstrapRoute
   '/api/public/payment-sms': typeof ApiPublicPaymentSmsRoute
   '/api/admin/webhook-secret/regenerate': typeof ApiAdminWebhookSecretRegenerateRoute
 }
@@ -104,11 +118,13 @@ export interface FileRoutesByTo {
   '/api/clean-temp': typeof ApiCleanTempRoute
   '/api/health': typeof ApiHealthRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/api/admin/sms-gateway': typeof ApiAdminSmsGatewayRoute
   '/api/admin/sms-monitor': typeof ApiAdminSmsMonitorRoute
   '/api/admin/webhook-debug': typeof ApiAdminWebhookDebugRoute
   '/api/admin/webhook-secret': typeof ApiAdminWebhookSecretRouteWithChildren
   '/api/admin/webhook-settings': typeof ApiAdminWebhookSettingsRoute
+  '/api/auth/bootstrap': typeof ApiAuthBootstrapRoute
   '/api/public/payment-sms': typeof ApiPublicPaymentSmsRoute
   '/api/admin/webhook-secret/regenerate': typeof ApiAdminWebhookSecretRegenerateRoute
 }
@@ -119,11 +135,13 @@ export interface FileRoutesById {
   '/api/clean-temp': typeof ApiCleanTempRoute
   '/api/health': typeof ApiHealthRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/api/admin/sms-gateway': typeof ApiAdminSmsGatewayRoute
   '/api/admin/sms-monitor': typeof ApiAdminSmsMonitorRoute
   '/api/admin/webhook-debug': typeof ApiAdminWebhookDebugRoute
   '/api/admin/webhook-secret': typeof ApiAdminWebhookSecretRouteWithChildren
   '/api/admin/webhook-settings': typeof ApiAdminWebhookSettingsRoute
+  '/api/auth/bootstrap': typeof ApiAuthBootstrapRoute
   '/api/public/payment-sms': typeof ApiPublicPaymentSmsRoute
   '/api/admin/webhook-secret/regenerate': typeof ApiAdminWebhookSecretRegenerateRoute
 }
@@ -135,11 +153,13 @@ export interface FileRouteTypes {
     | '/api/clean-temp'
     | '/api/health'
     | '/api/remove-bg'
+    | '/auth/callback'
     | '/api/admin/sms-gateway'
     | '/api/admin/sms-monitor'
     | '/api/admin/webhook-debug'
     | '/api/admin/webhook-secret'
     | '/api/admin/webhook-settings'
+    | '/api/auth/bootstrap'
     | '/api/public/payment-sms'
     | '/api/admin/webhook-secret/regenerate'
   fileRoutesByTo: FileRoutesByTo
@@ -149,11 +169,13 @@ export interface FileRouteTypes {
     | '/api/clean-temp'
     | '/api/health'
     | '/api/remove-bg'
+    | '/auth/callback'
     | '/api/admin/sms-gateway'
     | '/api/admin/sms-monitor'
     | '/api/admin/webhook-debug'
     | '/api/admin/webhook-secret'
     | '/api/admin/webhook-settings'
+    | '/api/auth/bootstrap'
     | '/api/public/payment-sms'
     | '/api/admin/webhook-secret/regenerate'
   id:
@@ -163,11 +185,13 @@ export interface FileRouteTypes {
     | '/api/clean-temp'
     | '/api/health'
     | '/api/remove-bg'
+    | '/auth/callback'
     | '/api/admin/sms-gateway'
     | '/api/admin/sms-monitor'
     | '/api/admin/webhook-debug'
     | '/api/admin/webhook-secret'
     | '/api/admin/webhook-settings'
+    | '/api/auth/bootstrap'
     | '/api/public/payment-sms'
     | '/api/admin/webhook-secret/regenerate'
   fileRoutesById: FileRoutesById
@@ -178,11 +202,13 @@ export interface RootRouteChildren {
   ApiCleanTempRoute: typeof ApiCleanTempRoute
   ApiHealthRoute: typeof ApiHealthRoute
   ApiRemoveBgRoute: typeof ApiRemoveBgRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   ApiAdminSmsGatewayRoute: typeof ApiAdminSmsGatewayRoute
   ApiAdminSmsMonitorRoute: typeof ApiAdminSmsMonitorRoute
   ApiAdminWebhookDebugRoute: typeof ApiAdminWebhookDebugRoute
   ApiAdminWebhookSecretRoute: typeof ApiAdminWebhookSecretRouteWithChildren
   ApiAdminWebhookSettingsRoute: typeof ApiAdminWebhookSettingsRoute
+  ApiAuthBootstrapRoute: typeof ApiAuthBootstrapRoute
   ApiPublicPaymentSmsRoute: typeof ApiPublicPaymentSmsRoute
 }
 
@@ -223,6 +249,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiRemoveBgRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/admin/sms-gateway': {
       id: '/api/admin/sms-gateway'
       path: '/api/admin/sms-gateway'
@@ -256,6 +289,13 @@ declare module '@tanstack/react-router' {
       path: '/api/admin/webhook-settings'
       fullPath: '/api/admin/webhook-settings'
       preLoaderRoute: typeof ApiAdminWebhookSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/auth/bootstrap': {
+      id: '/api/auth/bootstrap'
+      path: '/api/auth/bootstrap'
+      fullPath: '/api/auth/bootstrap'
+      preLoaderRoute: typeof ApiAuthBootstrapRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/payment-sms': {
@@ -294,11 +334,13 @@ const rootRouteChildren: RootRouteChildren = {
   ApiCleanTempRoute: ApiCleanTempRoute,
   ApiHealthRoute: ApiHealthRoute,
   ApiRemoveBgRoute: ApiRemoveBgRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   ApiAdminSmsGatewayRoute: ApiAdminSmsGatewayRoute,
   ApiAdminSmsMonitorRoute: ApiAdminSmsMonitorRoute,
   ApiAdminWebhookDebugRoute: ApiAdminWebhookDebugRoute,
   ApiAdminWebhookSecretRoute: ApiAdminWebhookSecretRouteWithChildren,
   ApiAdminWebhookSettingsRoute: ApiAdminWebhookSettingsRoute,
+  ApiAuthBootstrapRoute: ApiAuthBootstrapRoute,
   ApiPublicPaymentSmsRoute: ApiPublicPaymentSmsRoute,
 }
 export const routeTree = rootRouteImport

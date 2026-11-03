@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  User,
-  Phone,
-  Key,
+  AlertCircle,
+  CheckCircle2,
   Eye,
   EyeOff,
-  CheckCircle2,
-  AlertCircle,
-  X,
+  Key,
+  Mail,
+  Phone,
   Shield,
-  ArrowRight,
+  User,
+  X,
 } from "lucide-react";
 import { useTemplateStore } from "../../store/useTemplateStore";
 
 interface UserRegistrationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (registeredPasskey: string) => void;
+  onSuccess: (message: string) => void;
 }
 
 export const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({
@@ -24,25 +24,21 @@ export const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  console.log("[Auth Debug] UserRegistrationModal Render:", { isOpen });
   const { registerUserAccount } = useTemplateStore();
-
   const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [passkey, setPasskey] = useState("");
-  const [confirmPasskey, setConfirmPasskey] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-
-  const [showPasskey, setShowPasskey] = useState(false);
-  const [showConfirmPasskey, setShowConfirmPasskey] = useState(false);
-
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Escape key listener
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -50,278 +46,244 @@ export const UserRegistrationModal: React.FC<UserRegistrationModalProps> = ({
 
   if (!isOpen) return null;
 
-  const validateTzPhone = (p: string) => {
-    const cleaned = p.trim().replace(/\s+/g, "");
-    return /^(?:\+255|255|0)[67]\d{8}$/.test(cleaned);
-  };
+  const validateTzPhone = (value: string) =>
+    /^(?:\+255|255|0)[67]\d{8}$/.test(value.trim().replace(/\s+/g, ""));
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setErrorMessage("");
 
     if (!fullName.trim()) {
-      setErrorMessage("Please enter your Full Name");
+      setErrorMessage("Please enter your full name.");
       return;
     }
-
-    if (!phone.trim()) {
-      setErrorMessage("Please enter your Phone Number");
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+      setErrorMessage("Enter a valid email address.");
       return;
     }
-
     if (!validateTzPhone(phone)) {
-      setErrorMessage("Invalid phone number format (e.g., 0712345678 or +255712345678)");
+      setErrorMessage("Enter a valid Tanzanian phone number, such as 0712345678.");
       return;
     }
-
-    if (!passkey.trim()) {
-      setErrorMessage("Please create your User Passkey");
+    if (password.length < 8) {
+      setErrorMessage("Choose a password with at least 8 characters.");
       return;
     }
-
-    if (passkey.length < 4) {
-      setErrorMessage("Passkey must be at least 4 characters long");
+    if (password !== confirmPassword) {
+      setErrorMessage("The passwords do not match.");
       return;
     }
-
-    if (passkey !== confirmPasskey) {
-      setErrorMessage("Passkeys do not match");
-      return;
-    }
-
     if (!acceptedTerms) {
-      setErrorMessage("Please accept the Terms and Conditions to continue");
+      setErrorMessage("Please accept the Terms and Conditions to continue.");
       return;
     }
 
     setIsSubmitting(true);
-
     try {
-      const res = await registerUserAccount({
+      const result = await registerUserAccount({
         fullName: fullName.trim(),
+        email: email.trim(),
         phone: phone.trim(),
-        passkey: passkey.trim(),
+        password,
       });
 
-      setIsSubmitting(false);
-
-      if (!res.success) {
-        setErrorMessage(res.message);
+      if (!result.success) {
+        setErrorMessage(result.message);
         return;
       }
 
-      onSuccess(passkey.trim());
+      onSuccess(result.message);
       onClose();
-    } catch (err: any) {
+    } catch {
+      setErrorMessage("Registration is temporarily unavailable. Please try again shortly.");
+    } finally {
       setIsSubmitting(false);
-      setErrorMessage(err.message || "Registration failed");
     }
   };
 
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in cursor-pointer"
+      className="fixed inset-0 z-50 flex cursor-pointer items-center justify-center bg-black/70 p-4 backdrop-blur-sm animate-in fade-in"
     >
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-lg bg-[#1C2541] border border-white/20 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] cursor-default"
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="registration-title"
+        onClick={(event) => event.stopPropagation()}
+        className="flex max-h-[90vh] w-full max-w-lg cursor-default flex-col overflow-hidden rounded-2xl border border-white/20 bg-[#1C2541] shadow-2xl"
       >
-        {/* Modal Header */}
-        <div className="p-5 bg-gradient-to-r from-blue-900 to-[#1C2541] border-b border-white/10 flex items-center justify-between">
+        <header className="flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-blue-900 to-[#1C2541] p-5">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-[#47A5FF]/20 border border-[#47A5FF]/40 text-[#47A5FF]">
-              <Shield className="w-5 h-5" />
-            </div>
+            <span className="rounded-xl border border-[#47A5FF]/40 bg-[#47A5FF]/20 p-2.5 text-[#47A5FF]">
+              <Shield className="h-5 w-5" aria-hidden="true" />
+            </span>
             <div>
-              <h2 className="text-lg font-extrabold text-white tracking-tight">
-                New User Registration
+              <h2 id="registration-title" className="text-lg font-extrabold tracking-tight text-white">
+                Create your account
               </h2>
-              <p className="text-xs text-slate-300">
-                Register your account to access BIGsta Services
-              </p>
+              <p className="text-xs text-slate-300">Register to access BIGsta services.</p>
             </div>
           </div>
-
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            aria-label="Close registration"
+            className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
-        </div>
+        </header>
 
-        {/* Modal Form Content */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto font-sans">
-          {/* Full Name */}
+        <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto p-6 font-sans">
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider">
-              Full Name <span className="text-red-400">*</span>
+            <label htmlFor="register-name" className="block text-xs font-bold uppercase tracking-wider text-slate-200">
+              Full name
             </label>
             <div className="relative flex items-center">
-              <User className="w-4 h-4 text-slate-400 absolute left-3.5" />
+              <User className="absolute left-3.5 h-4 w-4 text-slate-400" aria-hidden="true" />
               <input
+                id="register-name"
                 type="text"
                 value={fullName}
-                onChange={(e) => {
-                  setFullName(e.target.value);
-                  if (errorMessage) setErrorMessage("");
-                }}
-                placeholder="e.g. Godfrey Joseph Rashid"
-                className="w-full pl-10 pr-4 py-2.5 bg-[#0B132B] border border-white/15 rounded-xl text-white text-sm placeholder-slate-500 focus:outline-none focus:border-[#47A5FF] focus:ring-1 focus:ring-[#47A5FF]"
+                onChange={(event) => setFullName(event.target.value)}
+                placeholder="Your full name"
+                autoComplete="name"
+                maxLength={120}
                 required
+                className="w-full rounded-xl border border-white/15 bg-[#0B132B] py-2.5 pl-10 pr-4 text-sm text-white outline-none placeholder:text-slate-500 focus:border-[#47A5FF] focus:ring-1 focus:ring-[#47A5FF]"
               />
             </div>
           </div>
 
-          {/* Tanzanian Phone Number */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider">
-              Phone Number <span className="text-red-400">*</span>
+            <label htmlFor="register-email" className="block text-xs font-bold uppercase tracking-wider text-slate-200">
+              Email address
             </label>
             <div className="relative flex items-center">
-              <Phone className="w-4 h-4 text-slate-400 absolute left-3.5" />
+              <Mail className="absolute left-3.5 h-4 w-4 text-slate-400" aria-hidden="true" />
               <input
+                id="register-email"
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+                maxLength={254}
+                required
+                className="w-full rounded-xl border border-white/15 bg-[#0B132B] py-2.5 pl-10 pr-4 text-sm text-white outline-none placeholder:text-slate-500 focus:border-[#47A5FF] focus:ring-1 focus:ring-[#47A5FF]"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label htmlFor="register-phone" className="block text-xs font-bold uppercase tracking-wider text-slate-200">
+              Phone number
+            </label>
+            <div className="relative flex items-center">
+              <Phone className="absolute left-3.5 h-4 w-4 text-slate-400" aria-hidden="true" />
+              <input
+                id="register-phone"
                 type="tel"
                 value={phone}
-                onChange={(e) => {
-                  setPhone(e.target.value);
-                  if (errorMessage) setErrorMessage("");
-                }}
-                placeholder="e.g. 0712345678 or +255712345678"
-                className="w-full pl-10 pr-4 py-2.5 bg-[#0B132B] border border-white/15 rounded-xl text-white text-sm font-mono placeholder-slate-500 focus:outline-none focus:border-[#47A5FF] focus:ring-1 focus:ring-[#47A5FF]"
+                onChange={(event) => setPhone(event.target.value)}
+                placeholder="0712345678 or +255712345678"
+                autoComplete="tel"
+                inputMode="tel"
+                maxLength={24}
                 required
+                className="w-full rounded-xl border border-white/15 bg-[#0B132B] py-2.5 pl-10 pr-4 font-mono text-sm text-white outline-none placeholder:text-slate-500 focus:border-[#47A5FF] focus:ring-1 focus:ring-[#47A5FF]"
               />
             </div>
             <p className="text-[11px] text-slate-400">Format: 07XXXXXXXX or +2557XXXXXXXX</p>
           </div>
 
-          {/* Create User Passkey */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider">
-                Create User Passkey <span className="text-red-400">*</span>
+              <label htmlFor="register-password" className="block text-xs font-bold uppercase tracking-wider text-slate-200">
+                Password
               </label>
               <div className="relative flex items-center">
-                <Key className="w-4 h-4 text-slate-400 absolute left-3.5" />
+                <Key className="absolute left-3.5 h-4 w-4 text-slate-400" aria-hidden="true" />
                 <input
-                  type={showPasskey ? "text" : "password"}
-                  value={passkey}
-                  onChange={(e) => {
-                    setPasskey(e.target.value);
-                    if (errorMessage) setErrorMessage("");
-                  }}
-                  placeholder="Enter Passkey"
-                  className="w-full pl-10 pr-10 py-2.5 bg-[#0B132B] border border-white/15 rounded-xl text-white text-sm font-mono placeholder-slate-500 focus:outline-none focus:border-[#47A5FF]"
+                  id="register-password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="At least 8 characters"
+                  autoComplete="new-password"
+                  minLength={8}
                   required
+                  className="w-full rounded-xl border border-white/15 bg-[#0B132B] py-2.5 pl-10 pr-10 font-mono text-sm text-white outline-none placeholder:text-slate-500 focus:border-[#47A5FF]"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPasskey(!showPasskey)}
-                  className="absolute right-3 text-slate-400 hover:text-white"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  className="absolute right-3 rounded p-1 text-slate-400 hover:text-white"
                 >
-                  {showPasskey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider">
-                Confirm Passkey <span className="text-red-400">*</span>
+              <label htmlFor="register-confirm-password" className="block text-xs font-bold uppercase tracking-wider text-slate-200">
+                Confirm password
               </label>
               <div className="relative flex items-center">
-                <Key className="w-4 h-4 text-slate-400 absolute left-3.5" />
+                <Key className="absolute left-3.5 h-4 w-4 text-slate-400" aria-hidden="true" />
                 <input
-                  type={showConfirmPasskey ? "text" : "password"}
-                  value={confirmPasskey}
-                  onChange={(e) => {
-                    setConfirmPasskey(e.target.value);
-                    if (errorMessage) setErrorMessage("");
-                  }}
-                  placeholder="Confirm Passkey"
-                  className="w-full pl-10 pr-10 py-2.5 bg-[#0B132B] border border-white/15 rounded-xl text-white text-sm font-mono placeholder-slate-500 focus:outline-none focus:border-[#47A5FF]"
+                  id="register-confirm-password"
+                  type={showConfirmPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  placeholder="Re-enter password"
+                  autoComplete="new-password"
+                  minLength={8}
                   required
+                  className="w-full rounded-xl border border-white/15 bg-[#0B132B] py-2.5 pl-10 pr-10 font-mono text-sm text-white outline-none placeholder:text-slate-500 focus:border-[#47A5FF]"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowConfirmPasskey(!showConfirmPasskey)}
-                  className="absolute right-3 text-slate-400 hover:text-white"
+                  onClick={() => setShowConfirmPassword((visible) => !visible)}
+                  aria-label={showConfirmPassword ? "Hide confirmation" : "Show confirmation"}
+                  className="absolute right-3 rounded p-1 text-slate-400 hover:text-white"
                 >
-                  {showConfirmPasskey ? (
-                    <EyeOff className="w-4 h-4" />
-                  ) : (
-                    <Eye className="w-4 h-4" />
-                  )}
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Terms and Conditions Checkbox */}
-          <div className="pt-2">
-            <label className="flex items-start gap-2.5 cursor-pointer text-xs text-slate-300 select-none">
-              <input
-                type="checkbox"
-                checked={acceptedTerms}
-                onChange={(e) => {
-                  setAcceptedTerms(e.target.checked);
-                  if (errorMessage) setErrorMessage("");
-                }}
-                className="mt-0.5 rounded border-white/20 bg-[#0B132B] text-blue-600 focus:ring-[#47A5FF]"
-              />
-              <span>
-                I accept the BIGsta Terms & Conditions. All accounts are registered with the{" "}
-                <strong>USER</strong> role.
-              </span>
-            </label>
-          </div>
+          <label className="flex cursor-pointer items-start gap-2.5 pt-2 text-xs text-slate-300">
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(event) => setAcceptedTerms(event.target.checked)}
+              className="mt-0.5 rounded border-white/20 bg-[#0B132B] text-blue-600 focus:ring-[#47A5FF]"
+            />
+            <span>
+              I accept the BIGsta Terms &amp; Conditions. New accounts receive the standard user role.
+            </span>
+          </label>
 
-          {/* Error Message */}
           {errorMessage && (
-            <div className="p-3 bg-red-500/15 border border-red-500/30 rounded-xl flex items-start gap-2.5 text-red-200 text-xs">
-              <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2.5 rounded-xl border border-red-500/30 bg-red-500/15 p-3 text-xs text-red-200" role="alert">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" aria-hidden="true" />
               <span className="font-medium">{errorMessage}</span>
             </div>
           )}
 
-          {/* Submit Button */}
-          <div className="pt-3">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-3 px-4 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold text-sm rounded-xl shadow-lg border border-white/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-            >
-              {isSubmitting ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  Registering Account...
-                </span>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>Register Now</span>
-                </>
-              )}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/20 bg-gradient-to-r from-emerald-500 to-teal-600 px-4 py-3 text-sm font-bold text-white shadow-lg transition-all hover:from-emerald-400 hover:to-teal-500 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isSubmitting ? "Creating account…" : <><CheckCircle2 className="h-4 w-4" aria-hidden="true" /> Create account</>}
+          </button>
         </form>
-      </div>
+      </section>
     </div>
   );
 };

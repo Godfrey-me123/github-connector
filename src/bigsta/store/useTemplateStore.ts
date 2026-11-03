@@ -663,7 +663,8 @@ interface TemplateState {
   deleteService: (id: string) => void;
   toggleService: (id: string) => void;
 
-  // Passkey Gateway Auth System
+  // Supabase Auth session state
+  authLoading: boolean;
   authRole: AuthRole;
   currentAuthKey: string | null;
   activePasskeys: PasskeyItem[];
@@ -679,22 +680,21 @@ interface TemplateState {
   selectedManualService: { id: string; name: string } | null;
   setManualAppModalOpen: (open: boolean, service?: { id: string; name: string } | null) => void;
 
-  loginWithPasskey: (
-    inputKey: string,
-  ) => Promise<{ success: boolean; role?: AuthRole; message?: string }>;
+  loginWithEmailPassword: (
+    email: string,
+    password: string,
+  ) => Promise<{ success: boolean; message: string }>;
   fetchPasskeysFromSupabase: () => Promise<void>;
   logoutPasskey: () => void;
   setPasskeyManagerOpen: (open: boolean) => void;
   setRechargeModalOpen: (open: boolean, notice?: string | null) => void;
   registerUserAccount: (data: {
     fullName: string;
+    email: string;
     phone: string;
-    passkey: string;
-  }) => Promise<{ success: boolean; message: string; user?: RegisteredUser }>;
-  recoverPasskey: (
-    phone: string,
-    newPasskey: string,
-  ) => Promise<{ success: boolean; message: string }>;
+    password: string;
+  }) => Promise<{ success: boolean; message: string }>;
+  requestPasswordReset: (email: string) => Promise<{ success: boolean; message: string }>;
   updateUserActivity: (currentService?: string, currentActivity?: string) => void;
   submitPaymentRequest: (
     packageId: string,
@@ -2448,7 +2448,8 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       set({ services: updated });
     },
 
-    // Passkey Gateway Auth System State
+    // Supabase Auth session state
+    authLoading: true,
     authRole: initialAuthRole,
     currentAuthKey: initialAuthKey,
     activePasskeys: initialPasskeys,
@@ -2469,281 +2470,33 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       set({ isManualAppModalOpen: open, selectedManualService: service }),
 
     registerUserAccount: async (data) => {
-      const fullName = data.fullName.trim();
-      const rawPhone = data.phone.trim().replace(/\s+/g, "");
-      const passkey = data.passkey.trim();
+      const { registerWithEmailPassword } = await import("../services/auth");
+      const fullName = data.fullName.trim().slice(0, 120);
+      const email = data.email.trim().toLowerCase();
+      const phone = data.phone.trim().replace(/\s+/g, "");
 
-      // 1. REGISTER & VERIFY ACCOUNT
-      const isTz = /^(?:\+255|255|0)[67]\d{8}$/.test(rawPhone);
-      if (!isTz) {
-        return {
-          success: false,
-          message:
-            "Phone number does not match a valid Tanzanian format (e.g. 07XXXXXXXX or +2557XXXXXXXX).",
-        };
+      if (!fullName) return { success: false, message: "Please enter your full name." };
+      if (!/^\S+@\S+\.\S+$/.test(email)) {
+        return { success: false, message: "Enter a valid email address." };
+      }
+      if (!/^(?:\+255|255|0)[67]\d{8}$/.test(phone)) {
+        return { success: false, message: "Enter a valid Tanzanian phone number." };
+      }
+      if (data.password.length < 8) {
+        return { success: false, message: "Choose a password with at least 8 characters." };
       }
 
-      const users = get().registeredUsers;
-      const passkeys = get().activePasskeys;
-
-      const phoneExists = users.some((u) => u.phone.replace(/\s+/g, "") === rawPhone);
-      if (phoneExists) {
-        return { success: false, message: "This phone number is already registered." };
-      }
-
-      const passkeyExists =
-        passkeys.some((p) => p.key.toLowerCase() === passkey.toLowerCase()) ||
-        users.some((u) => u.passkey.toLowerCase() === passkey.toLowerCase());
-      if (passkeyExists) {
-        return {
-          success: false,
-          message:
-            "This passkey is already in use by another account. Please choose a different passkey.",
-        };
-      }
-
-      // 2. CHECK WELCOME-TOKEN ELIGIBILITY & DEVICE/IP RISK (SERVER-AUTHORITATIVE & 3-DAY DEVICE COOLDOWN)
-      let claimedPhones: string[] = [];
-      let recentSignups: number[] = [];
-      let deviceId = "";
-      let lastDeviceSignupTs = 0;
-      const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
-
-      try {
-        const rawClaimed =
-          typeof window !== "undefined"
-            ? localStorage.getItem("bigsta_claimed_welcome_tokens")
-            : null;
-        if (rawClaimed) claimedPhones = JSON.parse(rawClaimed);
-
-        const rawVelocity =
-          typeof window !== "undefined" ? localStorage.getItem("bigsta_signup_velocity") : null;
-        if (rawVelocity) recentSignups = JSON.parse(rawVelocity);
-
-        deviceId =
-          typeof window !== "undefined" ? localStorage.getItem("bigsta_device_id") || "" : "";
-        if (!deviceId) {
-          deviceId = `dev_${Math.random().toString(36).substring(2, 15)}_${Date.now()}`;
-          if (typeof window !== "undefined") localStorage.setItem("bigsta_device_id", deviceId);
-        }
-
-        const rawLastDeviceTs =
-          typeof window !== "undefined"
-            ? localStorage.getItem(`bigsta_device_last_signup_${deviceId}`)
-            : null;
-        if (rawLastDeviceTs) lastDeviceSignupTs = parseInt(rawLastDeviceTs, 10) || 0;
-      } catch (e) {}
-
-      // Anti-Abuse Signup Rate Limit (Max 3 signups per 60 seconds)
-      const nowTs = Date.now();
-      const sixtySecondsAgo = nowTs - 60000;
-      recentSignups = recentSignups.filter((ts) => ts > sixtySecondsAgo);
-      const isVelocitySuspicious = recentSignups.length >= 3;
-      recentSignups.push(nowTs);
-
-      // 3-Day Device Cooldown Check
-      const isDeviceInCooldown =
-        lastDeviceSignupTs > 0 && nowTs - lastDeviceSignupTs < THREE_DAYS_MS;
-
-      try {
-        if (typeof window !== "undefined") {
-          localStorage.setItem("bigsta_signup_velocity", JSON.stringify(recentSignups));
-          localStorage.setItem(`bigsta_device_last_signup_${deviceId}`, nowTs.toString());
-        }
-      } catch (e) {}
-
-      const phoneAlreadyClaimed = claimedPhones.includes(rawPhone);
-      const isEligible = !phoneAlreadyClaimed && !isVelocitySuspicious && !isDeviceInCooldown;
-
-      let suspiciousStatus = "Normal / Verified";
-      if (isVelocitySuspicious) {
-        suspiciousStatus = "Rate Limit Velocity Flagged (Suspicious Signup Speed)";
-      } else if (isDeviceInCooldown) {
-        suspiciousStatus = "Device Cooldown Flagged (< 3 Days Since Last Device Signup)";
-      } else if (phoneAlreadyClaimed) {
-        suspiciousStatus = "Phone Already Claimed Welcome Token";
-      }
-
-      // 3. IF ELIGIBLE: grant exactly 1 token and record permanently with immutable grant ID & transaction ledger
-      const grantedTokens = isEligible ? 1 : 0;
-      const grantId = isEligible
-        ? `grant_${nowTs}_${Math.random().toString(36).substring(2, 10)}`
-        : "";
-
-      if (isEligible) {
-        claimedPhones.push(rawPhone);
-        try {
-          if (typeof window !== "undefined") {
-            localStorage.setItem("bigsta_claimed_welcome_tokens", JSON.stringify(claimedPhones));
-          }
-        } catch (e) {}
-      }
-
-      const now = new Date();
-      const dateStr = now.toISOString().replace("T", " ").substring(0, 16);
-
-      const immutableTransactions = isEligible
-        ? [
-            {
-              id: `tx_${nowTs}`,
-              userId: `usr_${nowTs}`,
-              type: "welcome_bonus" as const,
-              amount: 1,
-              timestamp: dateStr,
-              timestampMs: nowTs,
-              reason: "Welcome Token Grant (Server Authorized)",
-              grantId: grantId,
-            },
-          ]
-        : [];
-
-      const newPasskeyItem: PasskeyItem = {
-        id: `pk_user_${nowTs}`,
-        key: passkey,
-        role: "user",
-        active: true,
-        createdDate: dateStr,
-        createdAtTimestamp: nowTs,
-        createdBy: fullName,
-        description: `Registered User: ${fullName} (${rawPhone}) [Welcome: ${isEligible ? "Granted" : "Denied"}]`,
-        totalUsages: grantedTokens,
-        usedUsages: 0,
-        remainingUsages: grantedTokens,
-        paymentStatus: grantedTokens > 0 ? "ACTIVE" : "EXHAUSTED",
-        packageName:
-          grantedTokens > 0
-            ? "1 Welcome Token Free Starter"
-            : "0 Tokens (Already Claimed or Rate Limited)",
-        packagePrice: "Free",
-        usageHistory: [],
-        welcomeTokenGranted: isEligible,
-        welcomeTokenGrantedAt: isEligible ? dateStr : undefined,
-        grantId: grantId || undefined,
-        tokenTransactions: immutableTransactions,
-        suspiciousStatus: suspiciousStatus,
-      };
-
-      const newUser: RegisteredUser = {
-        id: `usr_${nowTs}`,
+      return registerWithEmailPassword({
         fullName,
-        phone: rawPhone,
-        passkey,
-        passkeyId: newPasskeyItem.id,
-        role: "user",
-        tokens: grantedTokens,
-        status: "ACTIVE",
-        registeredDate: dateStr,
-        createdAtTimestamp: nowTs,
-        lastActive: "Just registered",
-        lastActiveTimestamp: nowTs,
-        isOnline: false,
-        currentService: "None",
-        currentActivity: isEligible
-          ? "Welcome Token Granted (1)"
-          : "No Welcome Token (Already Claimed)",
-        servicesUsed: [],
-      };
-
-      const updatedPasskeys = [newPasskeyItem, ...passkeys];
-      const updatedUsers = [newUser, ...users];
-
-      try {
-        localStorage.setItem("bigsta_registered_users", JSON.stringify(updatedUsers));
-      } catch (e) {}
-
-      try {
-        const { syncProfileSupabase, syncPasskeySupabase } = await import("../services/supabase");
-        await Promise.all([
-          syncProfileSupabase({
-            id: newUser.passkey,
-            name: newUser.fullName,
-            phone: newUser.phone,
-            email: "",
-            role: newUser.role,
-            tokens: grantedTokens,
-            passkey: newUser.passkey,
-          }),
-          syncPasskeySupabase(newPasskeyItem),
-        ]);
-      } catch (e) {
-        console.warn("Supabase immediate registration sync warning:", e);
-      }
-
-      if (grantedTokens > 0) {
-        get().addTokenHistoryItem(
-          grantedTokens,
-          `Welcome Token Granted (${fullName})`,
-          newPasskeyItem.id,
-        );
-      }
-
-      set({
-        activePasskeys: updatedPasskeys,
-        registeredUsers: updatedUsers,
-        rechargeNotice: isEligible
-          ? null
-          : isDeviceInCooldown
-            ? "Registration detected on this device within the last 3 days. Admin needs to review this user. Please proceed with service tokens or recharge."
-            : "Welcome token has already been claimed for this phone number/device. Please recharge to access services.",
+        email,
+        phone,
+        password: data.password,
       });
-
-      let message = "Registration complete! You have received 1 free welcome token.";
-      if (!isEligible) {
-        if (isDeviceInCooldown) {
-          message =
-            "Registration complete. An administrator needs to review this account due to a recent signup on this device (within 3 days). Please top up service tokens to continue.";
-        } else {
-          message =
-            "Registration complete. This phone number has already received a free welcome token previously.";
-        }
-      }
-
-      return { success: true, message, user: newUser };
     },
 
-    recoverPasskey: async (phone, newPasskey) => {
-      const rawPhone = phone.trim().replace(/\s+/g, "");
-      const trimmedKey = newPasskey.trim();
-      if (!rawPhone || !trimmedKey) {
-        return { success: false, message: "Please enter both your phone number and new passkey." };
-      }
-      if (trimmedKey.length < 4) {
-        return { success: false, message: "New passkey must be at least 4 characters long." };
-      }
-
-      try {
-        const { recoverPasskeyByPhoneSupabase } = await import("../services/supabase");
-        const res = await recoverPasskeyByPhoneSupabase(rawPhone, trimmedKey);
-        if (!res.success) {
-          return { success: false, message: res.message || "Recovery failed in backend." };
-        }
-
-        // Also update local store if user exists locally
-        const users = get().registeredUsers;
-        const passkeys = get().activePasskeys;
-
-        const updatedUsers = users.map((u) =>
-          u.phone.replace(/\s+/g, "") === rawPhone ? { ...u, passkey: trimmedKey } : u,
-        );
-        const updatedPasskeys = passkeys.map((p) =>
-          p.description?.includes(rawPhone) ? { ...p, key: trimmedKey } : p,
-        );
-
-        try {
-          localStorage.setItem("bigsta_registered_users", JSON.stringify(updatedUsers));
-        } catch (e) {}
-
-        set({ registeredUsers: updatedUsers, activePasskeys: updatedPasskeys });
-        return {
-          success: true,
-          message: "Passkey recovered successfully! You can now log in with your new passkey.",
-        };
-      } catch (e: any) {
-        return {
-          success: false,
-          message: e.message || "Failed to connect to backend for recovery.",
-        };
-      }
+    requestPasswordReset: async (email) => {
+      const { requestPasswordReset } = await import("../services/auth");
+      return requestPasswordReset(email);
     },
 
     updateUserActivity: (currentService, currentActivity) => {
@@ -3354,11 +3107,19 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       set({ loadingPasskeys: true });
       try {
         const {
+          supabase,
           fetchPasskeysSupabase,
           fetchAllProfilesSupabase,
           fetchPaymentMethodsSupabase,
           fetchAdminSettingsSupabase,
         } = await import("../services/supabase");
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session?.user) {
+          set({ activePasskeys: [], registeredUsers: [] });
+          return;
+        }
 
         // Parallel fetch for speed
         const [supabasePasskeys, supabaseProfiles, dbPaymentMethods, dbAdminSettings] =
@@ -3369,62 +3130,34 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
             fetchAdminSettingsSupabase().catch(() => null),
           ]);
 
-        // 1. Fetch Passkeys
-        if (supabasePasskeys && supabasePasskeys.length > 0) {
-          const currentLocal = get().activePasskeys;
-          const merged = [...currentLocal];
-          supabasePasskeys.forEach((sp) => {
-            const idx = merged.findIndex((m) => m.key.toLowerCase() === sp.key.toLowerCase());
-            if (idx === -1) {
-              merged.push(sp);
-            } else {
-              merged[idx] = { ...merged[idx], ...sp };
-            }
-          });
-          set({ activePasskeys: merged });
-        }
+        // RLS returns only this account's rows unless the session is an admin.
+        set({ activePasskeys: supabasePasskeys || [] });
 
-        // 2. Fetch Profiles (Registered Users)
-        if (supabaseProfiles && supabaseProfiles.length > 0) {
-          const currentLocalUsers = get().registeredUsers;
-          const mergedUsers = [...currentLocalUsers];
+        const mappedUsers: RegisteredUser[] = (supabaseProfiles || []).map((profile) => ({
+          id: profile.id,
+          fullName: profile.name || profile.fullName || "Account",
+          phone: profile.phone || "",
+          passkey: profile.auth_user_id || profile.passkey || profile.id,
+          passkeyId: profile.id,
+          role: "user",
+          tokens: typeof profile.tokens === "number" ? profile.tokens : 0,
+          status: (profile.status || "ACTIVE") as "ACTIVE" | "DISABLED" | "PENDING",
+          registeredDate: profile.created_at
+            ? new Date(profile.created_at).toISOString().replace("T", " ").substring(0, 16)
+            : new Date().toISOString().replace("T", " ").substring(0, 16),
+          createdAtTimestamp: profile.created_at ? new Date(profile.created_at).getTime() : Date.now(),
+          lastActive: "Recent activity",
+          lastActiveTimestamp: Date.now(),
+          isOnline: false,
+          currentService: "None",
+          currentActivity: "Active",
+          servicesUsed: [],
+        }));
 
-          supabaseProfiles.forEach((p) => {
-            const mappedUser: RegisteredUser = {
-              id: p.id,
-              fullName: p.name || p.fullName || "Anonymous User",
-              phone: p.phone || "",
-              passkey: p.passkey || "",
-              passkeyId: p.passkeyId || p.passkey_id || p.id,
-              role: (p.role || "user") as "user",
-              tokens: typeof p.tokens === "number" ? p.tokens : 0,
-              status: (p.status || "ACTIVE") as "ACTIVE" | "DISABLED" | "PENDING",
-              registeredDate:
-                p.created_at && !isNaN(new Date(p.created_at).getTime())
-                  ? new Date(p.created_at).toISOString().replace("T", " ").substring(0, 16)
-                  : new Date().toISOString().replace("T", " ").substring(0, 16),
-              createdAtTimestamp: p.created_at ? new Date(p.created_at).getTime() : Date.now(),
-              lastActive: p.last_active || "Recent activity",
-              lastActiveTimestamp: p.last_active_timestamp || Date.now(),
-              isOnline: p.is_online || false,
-              currentService: p.current_service || "None",
-              currentActivity: p.current_activity || "Active",
-              servicesUsed: p.services_used || [],
-            };
-
-            const idx = mergedUsers.findIndex((u) => u.id === p.id || u.phone === p.phone);
-            if (idx === -1) {
-              mergedUsers.push(mappedUser);
-            } else {
-              mergedUsers[idx] = { ...mergedUsers[idx], ...mappedUser };
-            }
-          });
-
-          set({ registeredUsers: mergedUsers });
-          try {
-            localStorage.setItem("bigsta_registered_users", JSON.stringify(mergedUsers));
-          } catch (e) {}
-        }
+        const currentUser = get().registeredUsers.find(
+          (user) => user.passkey === get().currentAuthKey,
+        );
+        set({ registeredUsers: mappedUsers.length ? mappedUsers : currentUser ? [currentUser] : [] });
 
         // 3. Fetch Payment Methods
         if (dbPaymentMethods && dbPaymentMethods.length > 0) {
@@ -3456,146 +3189,31 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       }
     },
 
-    loginWithPasskey: async (inputKey) => {
-      const trimmed = inputKey.trim();
-      if (!trimmed) {
-        return { success: false, message: "Please enter a valid passkey." };
-      }
-
-      let match: PasskeyItem | null = null;
-
-      // 1. Query Supabase canonical passkeys table / profiles table
-      try {
-        const { fetchPasskeyByKeySupabase } = await import("../services/supabase");
-        const supabaseMatch = await fetchPasskeyByKeySupabase(trimmed);
-        if (supabaseMatch) {
-          match = supabaseMatch;
-        }
-      } catch (e) {
-        console.warn("Supabase passkey lookup error:", e);
-      }
-
-      // 2. Fallback to in-memory activePasskeys state if backend call returned null (e.g. freshly created admin/user passkey pending sync)
-      if (!match) {
-        const list = get().activePasskeys;
-        const localMatch = list.find((p) => p.key.toLowerCase() === trimmed.toLowerCase());
-        if (localMatch) {
-          match = localMatch;
-          // Auto-sync to Supabase in background
-          import("../services/supabase")
-            .then(({ syncPasskeySupabase }) => {
-              syncPasskeySupabase(localMatch);
-            })
-            .catch(() => {});
-        }
-      }
-
-      // 3. Super Admin Root Passkey override guarantee (BIGSTA-ADM-ROOT or BIGSTA-ADM-*)
-      if (
-        !match &&
-        (trimmed.toUpperCase() === "BIGSTA-ADM-ROOT" ||
-          trimmed.toUpperCase().startsWith("BIGSTA-ADM-"))
-      ) {
-        match = {
-          id: `pk_admin_root_${Date.now()}`,
-          key: trimmed,
-          role: "admin",
-          active: true,
-          createdDate: new Date().toISOString().replace("T", " ").substring(0, 16),
-          createdAtTimestamp: Date.now(),
-          createdBy: "Super Administrator",
-          description: "Master Super Admin Root Passkey",
-          totalUsages: 99999,
-          usedUsages: 0,
-          remainingUsages: 99999,
-          paymentStatus: "ACTIVE",
-          packageName: "Unlimited Super Admin",
-          packagePrice: "Free",
-          usageHistory: [],
-        };
-        // Auto-sync root admin to Supabase
-        import("../services/supabase")
-          .then(({ syncPasskeySupabase }) => {
-            syncPasskeySupabase(match!);
-          })
-          .catch(() => {});
-      }
-
-      if (!match) {
-        return { success: false, message: "Invalid Passkey or account does not exist." };
-      }
-
-      if (!match.active || match.paymentStatus === "DISABLED") {
-        return {
-          success: false,
-          message: "Passkey is Disabled or account deleted. Please contact Administrator.",
-        };
-      }
-
-      const now = new Date();
-      const lastUsedStr = now.toISOString().replace("T", " ").substring(0, 16);
-
-      // Store session role & key convenience only in localStorage (authentication authority is Supabase / activePasskeys)
-      try {
-        localStorage.removeItem("bigsta_passkeys");
-        localStorage.setItem("bigsta_auth_role", match.role);
-        localStorage.setItem("bigsta_auth_key", match.key);
-      } catch (e) {}
-
-      const currentList = get().activePasskeys;
-      const exists = currentList.some(
-        (p) => p.id === match!.id || p.key.toLowerCase() === match!.key.toLowerCase(),
-      );
-      const updatedList = exists
-        ? currentList.map((p) =>
-            p.id === match!.id || p.key.toLowerCase() === match!.key.toLowerCase()
-              ? { ...p, ...match, lastUsed: lastUsedStr }
-              : p,
-          )
-        : [{ ...match, lastUsed: lastUsedStr }, ...currentList];
-
-      set({
-        authRole: match.role,
-        currentAuthKey: match.key,
-        activeScreen: "home",
-        activePasskeys: updatedList,
-      });
-
-      // Load this account's own profile from the database
-      try {
-        const { fetchProfileSupabase } = await import("../services/supabase");
-        const prof = await fetchProfileSupabase(match.key);
-        const reg = /Registered User:\s*(.+?)\s*\(([^)]+)\)/.exec(match.description || "");
-        const loaded = {
-          name: prof?.name || reg?.[1] || match.createdBy || "",
-          phone: prof?.phone || reg?.[2] || "",
-          email: prof?.email || "",
-          region: prof?.region || "",
-        };
-        safeLocalStorageSetItem("bigsta_user_profile", JSON.stringify(loaded));
-        set({ userProfile: loaded });
-      } catch (e) {}
-
-      // Sync lastUsed to Supabase backend
-      try {
-        const { syncPasskeySupabase } = await import("../services/supabase");
-        await syncPasskeySupabase({ ...match, lastUsed: lastUsedStr });
-      } catch (e) {}
-
-      return { success: true, role: match.role };
+    loginWithEmailPassword: async (email, password) => {
+      const { signInWithEmailPassword } = await import("../services/auth");
+      return signInWithEmailPassword(email, password);
     },
 
     logoutPasskey: () => {
+      import("../services/supabase")
+        .then(({ supabase }) => supabase.auth.signOut())
+        .catch(() => {});
+
       try {
         localStorage.removeItem("bigsta_auth_role");
         localStorage.removeItem("bigsta_auth_key");
-      } catch (e) {}
-      try {
         localStorage.removeItem("bigsta_user_profile");
-      } catch (e) {}
+        localStorage.removeItem("bigsta_passkeys");
+      } catch {}
+
       set({
+        authLoading: false,
         authRole: null,
         currentAuthKey: null,
+        activePasskeys: [],
+        registeredUsers: [],
+        paymentRequests: [],
+        manualRequests: [],
         activeScreen: "home",
         userProfile: { name: "", phone: "", email: "", region: "" },
       });

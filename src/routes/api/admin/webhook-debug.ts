@@ -1,10 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { smsStats } from "@/lib/sms-webhook.server";
+import { checkAdminSession } from "@/lib/admin-key.server";
 
 export const Route = createFileRoute("/api/admin/webhook-debug")({
   server: {
     handlers: {
-      GET: async () => {
+      GET: async ({ request }) => {
+        const denied = await checkAdminSession(request);
+        if (denied) return denied;
         const rows = await smsStats();
         const ok = rows.filter((r: any) => r.processing_state === "PARSED");
         const last = rows[0] ?? null;

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { adminApiFetch } from "../../services/adminApi";
 import { CheckCircle2, Copy, RefreshCw, Send, XCircle } from "lucide-react";
 
 type Check = { name: string; ok: boolean; detail: string };
@@ -56,7 +57,7 @@ export function SmsGatewayPanel() {
     setLoading(true);
     setError(null);
     try {
-      const r = await fetch("/api/admin/sms-gateway");
+      const r = await adminApiFetch("/api/admin/sms-gateway");
       const j = await r.json();
       if (!r.ok) throw new Error(j.error || `HTTP ${r.status}`);
       setStatus(j);
