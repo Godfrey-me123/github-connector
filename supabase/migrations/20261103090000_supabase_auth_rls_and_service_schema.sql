@@ -142,7 +142,7 @@ create or replace function public.bigsta_user_owns_key(p_key text)
 returns boolean
 language sql
 stable
-security definer
+security invoker
 set search_path = ''
 as $$
   select p_key is not null and (
@@ -437,6 +437,7 @@ $$;
 
 revoke all on function public.is_bigsta_admin() from public, anon;
 grant execute on function public.is_bigsta_admin() to authenticated, service_role;
+revoke all on function public.bigsta_handle_new_auth_user() from public, anon, authenticated;
 revoke all on function public.bigsta_user_owns_key(text) from public, anon;
 grant execute on function public.bigsta_user_owns_key(text) to authenticated, service_role;
 revoke all on function public.grant_bigsta_welcome_token(uuid) from public, anon, authenticated;
@@ -536,7 +537,8 @@ grant select, update on table public.user_profiles to authenticated;
 grant select, insert, update, delete on table public.users to authenticated;
 revoke all on table public.welcome_token_claims from public, anon, authenticated;
 
-grant select on table public.background_assets, public.templates, public.token_packages, public.weekly_offers to anon;
+grant select on table public.background_assets, public.system_settings, public.templates, public.token_packages, public.weekly_offers to anon;
+revoke insert, update, delete on table public.background_assets, public.system_settings, public.templates, public.token_packages, public.weekly_offers from anon;
 grant select, insert, update, delete on table public.background_assets, public.templates, public.token_packages, public.weekly_offers to authenticated;
 
 create policy audit_logs_admin_all on public.audit_logs for all to authenticated
@@ -664,17 +666,15 @@ on conflict (id) do update set
   file_size_limit = excluded.file_size_limit,
   allowed_mime_types = excluded.allowed_mime_types;
 
-do $$
-declare
-  existing_policy record;
-begin
-  for existing_policy in
-    select policyname from pg_policies where schemaname = 'storage' and tablename = 'objects'
-  loop
-    execute format('drop policy if exists %I on storage.objects', existing_policy.policyname);
-  end loop;
-end;
-$$;
+drop policy if exists backgrounds_public_read on storage.objects;
+drop policy if exists backgrounds_admin_write on storage.objects;
+drop policy if exists feedback_attachments_owner_read on storage.objects;
+drop policy if exists feedback_attachments_owner_insert on storage.objects;
+drop policy if exists feedback_attachments_owner_update on storage.objects;
+drop policy if exists feedback_attachments_owner_delete on storage.objects;
+drop policy if exists nida_responses_admin_all on storage.objects;
+drop policy if exists nida_responses_owner_read on storage.objects;
+drop policy if exists nida_responses_owner_delete on storage.objects;
 
 create policy backgrounds_public_read on storage.objects for select to anon, authenticated
   using (bucket_id = 'backgrounds');
