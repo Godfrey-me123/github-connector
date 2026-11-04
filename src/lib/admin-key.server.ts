@@ -19,7 +19,7 @@ export async function checkAdminSession(request: Request): Promise<Response | nu
       return Response.json({ success: false, error: "Invalid account session." }, { status: 401 });
     }
 
-    if (user.app_metadata?.role !== "admin") {
+    if (user.app_metadata?.['role'] !== "admin") {
       return Response.json({ success: false, error: "Admin access required." }, { status: 403 });
     }
 

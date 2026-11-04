@@ -27,9 +27,9 @@ export const Route = createFileRoute("/api/auth/bootstrap")({
           const isConfiguredAdmin = Boolean(
             configuredAdminEmail && user.email?.trim().toLowerCase() === configuredAdminEmail,
           );
-          let claimsUpdated = user.app_metadata?.role === "admin";
+          let claimsUpdated = user.app_metadata?.['role'] === "admin";
 
-          if (isConfiguredAdmin && user.app_metadata?.role !== "admin") {
+          if (isConfiguredAdmin && user.app_metadata?.['role'] !== "admin") {
             const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
               app_metadata: { ...user.app_metadata, role: "admin" },
             });
@@ -42,7 +42,7 @@ export const Route = createFileRoute("/api/auth/bootstrap")({
             claimsUpdated = true;
           }
 
-          const isAdmin = isConfiguredAdmin || user.app_metadata?.role === "admin";
+          const isAdmin = isConfiguredAdmin || user.app_metadata?.['role'] === "admin";
           if (isAdmin) {
             const db = supabaseAdmin as any;
             await Promise.all([
@@ -74,7 +74,7 @@ export const Route = createFileRoute("/api/auth/bootstrap")({
 
           return Response.json({
             claimsUpdated,
-            isAdmin: isConfiguredAdmin || user.app_metadata?.role === "admin",
+            isAdmin: isConfiguredAdmin || user.app_metadata?.['role'] === "admin",
             welcomeTokenGranted,
           });
         } catch (error) {
