@@ -1,5 +1,86 @@
+create table if not exists public.services (
+  id text primary key,
+  service_name text not null,
+  authority text not null default '',
+  description text,
+  category text not null default 'identity',
+  icon_name text not null default 'UserCheck',
+  is_active boolean not null default true,
+  token_cost integer not null default 1 check (token_cost between 1 and 1000),
+  features text[] not null default '{}'::text[],
+  processing_mode text not null default 'auto' check (processing_mode in ('auto', 'manual')),
+  created_at timestamptz not null default now()
+);
+
 alter table public.services
-  add column if not exists token_cost integer not null default 1;
+  add column if not exists authority text not null default '',
+  add column if not exists category text not null default 'identity',
+  add column if not exists icon_name text not null default 'UserCheck',
+  add column if not exists is_active boolean not null default true,
+  add column if not exists token_cost integer not null default 1,
+  add column if not exists features text[] not null default '{}'::text[],
+  add column if not exists processing_mode text not null default 'auto';
+
+insert into public.services (
+  id, service_name, authority, description, category, icon_name,
+  is_active, token_cost, features, processing_mode
+)
+values
+  ('nida', 'NIDA Services', 'National Identification Authority',
+   'Instant auto-fill, verification & CR80 card generation for Front & Back National IDs.',
+   'identity', 'UserCheck', true, 1,
+   array['20-Digit ID Verification', 'Biometric Photo Cropping', 'Digital Signature Pad', 'Barcode Sync'], 'auto'),
+  ('driving_license', 'Driving License Services', 'Traffic & Vehicle Inspection',
+   'Driver permit issuance, class endorsements & digital driver identification cards.',
+   'civil', 'Car', true, 1,
+   array['Class Endorsements (A, B, C, D, E)', 'Penalty Point Tracking', 'Digital QR Validation'], 'auto'),
+  ('birth_certificate', 'Birth Certificate Services', 'RITA Civil Registration',
+   'Unofficial birth certificate issuance, verification & digital civil registry documentation.',
+   'civil', 'ScrollText', false, 1,
+   array['Birth Certificate Archiving', 'Legal Certification', 'Unofficial Watermark Validation'], 'auto'),
+  ('passport', 'Passport Services', 'Immigration Services Department',
+   'East African e-Passport booklet formatting, bio-data pages & travel credentials.',
+   'identity', 'Globe', false, 1,
+   array['ICAO 9303 Compliant MRZ', 'Biometric Chip Layout', 'Diplomatic & Ordinary Profiles'], 'auto'),
+  ('tin', 'TIN Services', 'Tanzania Revenue Authority',
+   'Taxpayer Identification Number cards, tax compliance credentials & PIN certificates.',
+   'finance', 'Receipt', false, 1,
+   array['Taxpayer PIN Sync', 'QR Compliance Stamp', 'Corporate & Individual Formats'], 'auto'),
+  ('business_license', 'Business License Services', 'BRELA & Municipal Authorities',
+   'Commercial enterprise registration certificates, municipal trade permits & corporate IDs.',
+   'finance', 'Building2', false, 1,
+   array['BRELA Certificate Layout', 'Annual Renewal Badges', 'Sector Trade Validation'], 'auto'),
+  ('heslb', 'HESLB Student Loans Services', 'Higher Education Students’ Loans Board',
+   'Student beneficiary loan allocation cards, academic verification & repayment IDs.',
+   'education', 'GraduationCap', false, 1,
+   array['Index Number Verification', 'Institution Allocation Status', 'Beneficiary Smart Badges'], 'auto'),
+  ('nhif', 'NHIF Membership Card', 'National Health Insurance Fund',
+   'Healthcare membership smart cards, dependent coverage validation & biometric health passes.',
+   'health', 'HeartPulse', true, 1,
+   array['Principal & Dependent Mapping', 'Hospital Tier Endorsements', 'Smart Card Chip Specs'], 'auto'),
+  ('nrc_zambia', 'NRC card-zambia', 'National Registration Department',
+   'Official Zambia National Registration Card (NRC) issuance, verification and CR80 card generation.',
+   'identity', 'CreditCard', true, 1,
+   array['NRC Number Verification', 'Biometric Photo Cropping', 'Digital Signature Specimen', 'Barcode & QR Validation'], 'auto'),
+  ('ajira', 'Ajira Portal Services', 'Public Service Recruitment Secretariat',
+   'Government job application portfolios, civil service recruitment IDs & applicant profiles.',
+   'education', 'Briefcase', false, 1,
+   array['Civil Service Application Sync', 'Cadre Certificate Validation', 'Interview Pass Generation'], 'auto')
+on conflict (id) do nothing;
+
+alter table public.services enable row level security;
+revoke all on table public.services from public, anon, authenticated;
+grant select on table public.services to anon, authenticated;
+grant insert, update, delete on table public.services to authenticated;
+grant all on table public.services to service_role;
+
+ drop policy if exists services_public_read_active on public.services;
+drop policy if exists services_admin_all on public.services;
+create policy services_public_read_active on public.services
+  for select to anon, authenticated
+  using (is_active);
+create policy services_admin_all on public.services for all to authenticated
+  using (public.is_bigsta_admin()) with check (public.is_bigsta_admin());
 
 alter table public.user_payments
   add column if not exists package_id text,
