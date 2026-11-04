@@ -1,3 +1,6 @@
+drop trigger if exists bigsta_auth_user_created on auth.users;
+drop trigger if exists bigsta_auth_user_passkey_created on auth.users;
+
 create table if not exists public.services (
   id text primary key,
   service_name text not null,
@@ -91,6 +94,63 @@ alter table public.user_payments
 create index if not exists user_payments_normalized_reference_idx
   on public.user_payments (upper(regexp_replace(coalesce(reference, ''), '[^A-Z0-9]', '', 'g')));
 
+create or replace function public.bigsta_guard_profile_update()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if auth.role() <> 'service_role' then
+    if new.id is distinct from old.id
+      or new.auth_user_id is distinct from old.auth_user_id
+      or new.email is distinct from old.email
+      or new.role is distinct from old.role
+      or new.passkey is distinct from old.passkey
+      or new.tokens is distinct from old.tokens
+      or new.status is distinct from old.status then
+      raise exception 'Protected account fields can only be changed by trusted server operations';
+    end if;
+  end if;
+  new.updated_at := now();
+  return new;
+end;
+$$;
+
+create or replace function public.bigsta_guard_passkey_update()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if auth.role() <> 'service_role' then
+    if new.id is distinct from old.id
+      or new.key is distinct from old.key
+      or new.role is distinct from old.role
+      or new.active is distinct from old.active
+      or new.total_usages is distinct from old.total_usages
+      or new.used_usages is distinct from old.used_usages
+      or new.remaining_usages is distinct from old.remaining_usages
+      or new.payment_status is distinct from old.payment_status
+      or new.package_name is distinct from old.package_name
+      or new.package_price is distinct from old.package_price then
+      raise exception 'Wallet balances and access can only be changed by trusted server operations';
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+revoke insert, delete on table public.passkeys from authenticated;
+revoke insert, update, delete on table public.token_transactions from authenticated;
+grant select on table public.token_transactions to authenticated;
+revoke insert, update, delete on table public.user_payments from authenticated;
+grant select on table public.user_payments to authenticated;
+
+drop policy if exists token_transactions_owner_spend on public.token_transactions;
+drop policy if exists token_transactions_admin_update on public.token_transactions;
+drop policy if exists token_transactions_admin_delete on public.token_transactions;
+drop policy if exists user_payments_admin_all on public.user_payments;
+
 create or replace function public.bigsta_user_owns_key(p_key text)
 returns boolean
 language sql
@@ -137,7 +197,7 @@ as $$
   select candidate.price_amount, candidate.token_amount
   from (
     select
-      nullif(regexp_replace(o.price, '[^0-9]', '', 'g'), '')::numeric as price_amount,
+      nullif(regexp_replace(replace(o.price, ',', ''), '[^0-9.]', '', 'g'), '')::numeric as price_amount,
       o.tokens as token_amount,
       1 as priority
     from public.weekly_offers o
@@ -149,7 +209,7 @@ as $$
     union all
 
     select
-      nullif(regexp_replace(p.price, '[^0-9]', '', 'g'), '')::numeric as price_amount,
+      nullif(regexp_replace(replace(p.price, ',', ''), '[^0-9.]', '', 'g'), '')::numeric as price_amount,
       p.usages + coalesce(p.bonus, 0) as token_amount,
       2 as priority
     from public.token_packages p
@@ -269,6 +329,10 @@ begin
   if v_wallet_found then
     v_wallet_active := coalesce(v_wallet.active, true)
       and upper(coalesce(v_wallet.payment_status, 'ACTIVE')) <> 'DISABLED';
+  end if;
+
+  if p_mode = 'spend' and not v_wallet_active then
+    raise exception 'wallet_disabled' using errcode = '42501';
   end if;
 
   if not v_wallet_found then
@@ -400,6 +464,7 @@ begin
   set total_usages = v_new_total,
       used_usages = v_new_used,
       remaining_usages = v_new_balance,
+      active = upper(coalesce(v_profile.status, 'ACTIVE')) = 'ACTIVE' and v_new_balance > 0,
       payment_status = case
         when upper(coalesce(v_profile.status, 'ACTIVE')) <> 'ACTIVE' then 'DISABLED'
         when v_new_balance > 0 then 'ACTIVE'
@@ -486,7 +551,7 @@ as $$
 declare
   v_profile_id text;
   v_status text;
-  v_cost integer := 1;
+  v_cost integer;
 begin
   if auth.role() <> 'service_role' then
     raise exception 'service_role_required' using errcode = '42501';
@@ -511,10 +576,10 @@ begin
     into v_cost
   from public.services s
   where s.id = p_service_id
-    and s.is_active is not false;
+    and s.is_active is true;
 
   if v_cost is null then
-    v_cost := 1;
+    raise exception 'service_unavailable' using errcode = '22023';
   end if;
 
   return public.bigsta_apply_wallet_delta(
@@ -545,6 +610,7 @@ declare
   v_legacy_profile_count integer;
   v_other_account_count integer;
   v_wallet public.passkeys%rowtype;
+  v_legacy_wallet public.passkeys%rowtype;
   v_wallet_found boolean := false;
   v_wallet_active boolean := true;
   v_balance integer := 0;
@@ -662,6 +728,37 @@ begin
       limit 1
       for update;
       v_wallet_found := found;
+    end if;
+  end if;
+
+  if not v_linked_legacy
+     and v_wallet_found
+     and nullif(v_legacy_key, '') is not null
+     and lower(v_legacy_key) <> lower(p_user_id::text) then
+    select * into v_legacy_wallet
+    from public.passkeys pk
+    where lower(pk.key) = lower(v_legacy_key)
+    order by pk.active desc nulls last, pk.created_at desc nulls last
+    limit 1
+    for update;
+
+    if found then
+      if coalesce(v_wallet.active, true)
+         and upper(coalesce(v_wallet.payment_status, 'ACTIVE')) <> 'DISABLED'
+         and coalesce(v_legacy_wallet.active, true)
+         and upper(coalesce(v_legacy_wallet.payment_status, 'ACTIVE')) <> 'DISABLED'
+         and coalesce(v_wallet.remaining_usages, 0) > 0
+         and coalesce(v_legacy_wallet.remaining_usages, 0) > 0
+         and v_wallet.remaining_usages <> v_legacy_wallet.remaining_usages then
+        return jsonb_build_object('linked', false, 'reason', 'wallet_balance_conflict');
+      end if;
+
+      if coalesce(v_wallet.remaining_usages, 0) <= 0
+         and coalesce(v_legacy_wallet.remaining_usages, 0) > 0
+         and coalesce(v_legacy_wallet.active, true)
+         and upper(coalesce(v_legacy_wallet.payment_status, 'ACTIVE')) <> 'DISABLED' then
+        v_wallet := v_legacy_wallet;
+      end if;
     end if;
   end if;
 
@@ -1307,6 +1404,16 @@ begin
   set status = v_status, updated_at = now()
   where id = v_profile_id
      or (v_profile.auth_user_id is not null and auth_user_id = v_profile.auth_user_id);
+
+  update public.passkeys pk
+  set active = v_status = 'ACTIVE' and greatest(coalesce(pk.remaining_usages, 0), 0) > 0,
+      payment_status = case
+        when v_status = 'DISABLED' then 'DISABLED'
+        when greatest(coalesce(pk.remaining_usages, 0), 0) > 0 then 'ACTIVE'
+        else 'EXHAUSTED'
+      end
+  where (v_profile.auth_user_id is not null and lower(pk.key) = lower(v_profile.auth_user_id::text))
+     or (nullif(v_profile.passkey, '') is not null and lower(pk.key) = lower(v_profile.passkey));
 
   insert into public.audit_logs (user_id, action, details, created_at)
   values (
