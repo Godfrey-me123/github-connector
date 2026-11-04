@@ -1722,6 +1722,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         (targetScreen === "upload" || targetScreen === "editor" || targetScreen === "templates")
       ) {
         finalTarget = "home";
+        set({ completionBannerMessage: "Template building is available to admin accounts only." });
       }
 
       const performNav = () => {
