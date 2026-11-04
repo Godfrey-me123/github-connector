@@ -233,14 +233,15 @@ export default function App() {
 
         const fullName = profile?.name || user.user_metadata?.full_name || user.user_metadata?.name || "";
         const phone = profile?.phone || user.user_metadata?.phone || "";
-        const role = user.app_metadata?.role === "admin" ? "admin" : "user";
+        const role =
+          user.app_metadata?.role === "admin" || profile?.role === "admin" ? "admin" : "user";
         const registeredUser = {
           id: profile?.id || user.id,
           fullName,
           phone,
           passkey: user.id,
           passkeyId: profile?.id || user.id,
-          role: "user" as const,
+          role,
           tokens: Number(profile?.tokens) || 0,
           status: (profile?.status || "ACTIVE") as "ACTIVE" | "DISABLED" | "PENDING",
           registeredDate: profile?.created_at || user.created_at || new Date().toISOString(),

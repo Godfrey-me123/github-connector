@@ -25,6 +25,7 @@ export const SaveTemplateModal: React.FC = () => {
   const [existingTemplates, setExistingTemplates] = useState<CardTemplate[]>([]);
   const [conflictTemplate, setConflictTemplate] = useState<CardTemplate | null>(null);
   const [isSavedSuccess, setIsSavedSuccess] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState("Template Saved");
 
   useEffect(() => {
@@ -40,6 +41,7 @@ export const SaveTemplateModal: React.FC = () => {
       setMode("options");
       setConflictTemplate(null);
       setIsSavedSuccess(false);
+      setSaveError(null);
       setSuccessMessage("Template Saved");
 
       loadSavedTemplates().then(setExistingTemplates);
@@ -81,29 +83,40 @@ export const SaveTemplateModal: React.FC = () => {
   };
 
   const handleQuickSave = async () => {
-    updateTemplateMeta({ cardType, side });
-    await saveCurrentTemplate();
-    handlePostSaveTransition("Template Saved");
+    setSaveError(null);
+    try {
+      updateTemplateMeta({ cardType, side });
+      await saveCurrentTemplate();
+      handlePostSaveTransition("Template Saved");
+    } catch (error) {
+      console.error("[v0] Template save failed:", error);
+      setSaveError("Template could not be saved. Your design is still open; please try again.");
+    }
   };
 
   const handleUniversalSave = async () => {
-    updateTemplateMeta({ cardType, side, serviceId: activeServiceId });
+    setSaveError(null);
+    try {
+      updateTemplateMeta({ cardType, side, serviceId: activeServiceId });
 
-    const tplToSave = {
-      ...currentTemplate,
-      cardType,
-      side,
-      serviceId: activeServiceId,
-      templateName: templateName.trim() || currentTemplate.templateName,
-    };
+      const tplToSave = {
+        ...currentTemplate,
+        cardType,
+        side,
+        serviceId: activeServiceId,
+        templateName: templateName.trim() || currentTemplate.templateName,
+      };
 
-    const isBack = side === "Back Side" || (side as string) === "back";
-    if (isBack) {
-      await saveUniversalBackTemplate(activeServiceId, tplToSave);
+      const isBack = side === "Back Side" || (side as string) === "back";
+      if (isBack) {
+        await saveUniversalBackTemplate(activeServiceId, tplToSave);
+      } else {
+        await saveUniversalFrontTemplate(activeServiceId, tplToSave);
+      }
       handlePostSaveTransition("Universal Saved");
-    } else {
-      await saveUniversalFrontTemplate(activeServiceId, tplToSave);
-      handlePostSaveTransition("Universal Saved");
+    } catch (error) {
+      console.error("[v0] Universal template save failed:", error);
+      setSaveError("Universal template could not be saved. Your design is still open; please try again.");
     }
   };
 
@@ -117,31 +130,50 @@ export const SaveTemplateModal: React.FC = () => {
 
     if (existingMatch) {
       setConflictTemplate(existingMatch);
-    } else {
+      return;
+    }
+
+    setSaveError(null);
+    try {
       await saveAsNewTemplate(trimmed, cardType, side);
       handlePostSaveTransition("Template Created");
+    } catch (error) {
+      console.error("[v0] New template save failed:", error);
+      setSaveError("Template could not be created. Your design is still open; please try again.");
     }
   };
 
   const handleReplaceExisting = async () => {
     if (!conflictTemplate) return;
-    const updated = {
-      ...currentTemplate,
-      id: conflictTemplate.id,
-      templateName: templateName.trim(),
-      cardType,
-      side,
-      updatedAt: new Date().toISOString(),
-    };
-    useTemplateStore.getState().loadTemplate(updated);
-    await saveCurrentTemplate();
-    handlePostSaveTransition("Template Replaced");
+    setSaveError(null);
+    try {
+      const updated = {
+        ...currentTemplate,
+        id: conflictTemplate.id,
+        templateName: templateName.trim(),
+        cardType,
+        side,
+        updatedAt: new Date().toISOString(),
+      };
+      useTemplateStore.getState().loadTemplate(updated);
+      await saveCurrentTemplate();
+      handlePostSaveTransition("Template Replaced");
+    } catch (error) {
+      console.error("[v0] Template replacement failed:", error);
+      setSaveError("Template could not be replaced. Your design is still open; please try again.");
+    }
   };
 
   const handleCreateNewCopy = async () => {
-    const copyName = `${templateName.trim()} (Copy)`;
-    await saveAsNewTemplate(copyName, cardType, side);
-    handlePostSaveTransition("Copy Created");
+    setSaveError(null);
+    try {
+      const copyName = `${templateName.trim()} (Copy)`;
+      await saveAsNewTemplate(copyName, cardType, side);
+      handlePostSaveTransition("Copy Created");
+    } catch (error) {
+      console.error("[v0] Template copy failed:", error);
+      setSaveError("Template copy could not be created. Your design is still open; please try again.");
+    }
   };
 
   return (
@@ -175,6 +207,11 @@ export const SaveTemplateModal: React.FC = () => {
 
         {/* Content */}
         <div className="p-6 space-y-5 bg-[#FFFFFF]">
+          {saveError ? (
+            <div role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-semibold text-red-700">
+              {saveError}
+            </div>
+          ) : null}
           {isSavedSuccess ? (
             <div className="py-8 flex flex-col items-center justify-center text-center space-y-2">
               <CheckCircle className="w-12 h-12 text-[#000000] animate-bounce" />
