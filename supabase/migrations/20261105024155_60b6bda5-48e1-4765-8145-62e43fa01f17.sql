@@ -1,0 +1,1 @@
+ALTER FUNCTION public.is_bigsta_admin() SECURITY INVOKER;

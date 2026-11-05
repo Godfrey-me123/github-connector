@@ -13,6 +13,9 @@
 
 ## Architecture
 
+- Administrator authorization uses protected `user_roles` read with the caller's session; Auth metadata mirrors that source for legacy UI compatibility, never profile roles or email allowlists.
+- Email registration profiles are created by the Auth lifecycle trigger; existing accounts link only by confirmed email, never by a shared phone number.
+
 - BIGsta shares the generated Supabase browser client; server connectivity probes use configured server environment values only, so missing configuration never selects another database.
 
 - BIGsta app lives in `src/bigsta/` and is mounted client-only on `/` — it is a canvas-heavy SPA ported from the "New-age" Vite/Express repo.

@@ -13,25 +13,19 @@ export const Route = createFileRoute("/api/auth/bootstrap")({
         }
 
         try {
-          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const {
-            data: { user },
-            error: userError,
-          } = await supabaseAdmin.auth.getUser(accessToken);
-
-          if (userError || !user) {
+          const { readAccountRole } = await import("@/lib/account-role.server");
+          const account = await readAccountRole(accessToken);
+          if (!account) {
             return Response.json({ error: "Invalid account session." }, { status: 401 });
           }
 
-          const configuredAdminEmail = process.env["BIGSTA_ADMIN_EMAIL"]?.trim().toLowerCase();
-          const isConfiguredAdmin = Boolean(
-            configuredAdminEmail && user.email?.trim().toLowerCase() === configuredAdminEmail,
-          );
-          let claimsUpdated = user.app_metadata?.['role'] === "admin";
-
-          if (isConfiguredAdmin && user.app_metadata?.['role'] !== "admin") {
+          const { user, isAdmin } = account;
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const expectedRole = isAdmin ? "admin" : "user";
+          let claimsUpdated = false;
+          if (user.app_metadata?.['role'] !== expectedRole) {
             const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
-              app_metadata: { ...user.app_metadata, role: "admin" },
+              app_metadata: { ...user.app_metadata, role: expectedRole },
             });
 
             if (updateError) {
@@ -40,19 +34,6 @@ export const Route = createFileRoute("/api/auth/bootstrap")({
             }
 
             claimsUpdated = true;
-          }
-
-          const isAdmin = isConfiguredAdmin || user.app_metadata?.['role'] === "admin";
-          if (isAdmin) {
-            const db = supabaseAdmin as any;
-            await Promise.all([
-              db.from("profiles").update({ role: "admin" }).eq("auth_user_id", user.id),
-              db.from("user_profiles").update({ role: "admin" }).eq("auth_user_id", user.id),
-              db
-                .from("passkeys")
-                .update({ role: "admin", total_usages: 99999, remaining_usages: 99999 })
-                .eq("key", user.id),
-            ]);
           }
 
           let welcomeTokenGranted = false;
@@ -74,7 +55,7 @@ export const Route = createFileRoute("/api/auth/bootstrap")({
 
           return Response.json({
             claimsUpdated,
-            isAdmin: isConfiguredAdmin || user.app_metadata?.['role'] === "admin",
+            isAdmin,
             welcomeTokenGranted,
           });
         } catch (error) {

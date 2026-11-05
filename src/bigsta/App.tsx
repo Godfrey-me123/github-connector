@@ -204,6 +204,7 @@ export default function App() {
         const { supabase } = await import("./services/supabase");
         let activeSession = session;
         let welcomeTokenGranted = false;
+        let verifiedAdmin = false;
 
         if (needsBootstrap) {
           try {
@@ -211,6 +212,7 @@ export default function App() {
             const bootstrap = await bootstrapAuthenticatedSession(session);
             activeSession = bootstrap.session;
             welcomeTokenGranted = bootstrap.welcomeTokenGranted;
+            verifiedAdmin = bootstrap.isAdmin;
           } catch (error) {
             initializedUserId = null;
             console.warn("Supabase session bootstrap was unavailable:", error);
@@ -233,8 +235,10 @@ export default function App() {
 
         const fullName = profile?.name || user.user_metadata?.full_name || user.user_metadata?.name || "";
         const phone = profile?.phone || user.user_metadata?.phone || "";
-        const role =
-          user.app_metadata?.role === "admin" || profile?.role === "admin" ? "admin" : "user";
+        const { data: roleRow, error: roleError } = await supabase.from("user_roles")
+          .select("role").eq("user_id", user.id).maybeSingle();
+        if (roleError) throw new Error("Account permissions could not be loaded.");
+        const role = verifiedAdmin || roleRow?.role === "admin" ? "admin" : "user";
         const registeredUser = {
           id: profile?.id || user.id,
           fullName,
@@ -270,7 +274,7 @@ export default function App() {
         if (!active || currentSequence !== sequence) return;
         console.warn("Could not fully load the signed-in account:", error);
         const user = session.user;
-        const role = user.app_metadata?.role === "admin" ? "admin" : "user";
+        const role = "user";
         useTemplateStore.setState({
           authLoading: false,
           authRole: role,

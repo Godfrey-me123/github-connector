@@ -9,17 +9,13 @@ export async function checkAdminSession(request: Request): Promise<Response | nu
   }
 
   try {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const {
-      data: { user },
-      error,
-    } = await supabaseAdmin.auth.getUser(accessToken);
-
-    if (error || !user) {
+    const { readAccountRole } = await import("./account-role.server");
+    const account = await readAccountRole(accessToken);
+    if (!account) {
       return Response.json({ success: false, error: "Invalid account session." }, { status: 401 });
     }
 
-    if (user.app_metadata?.['role'] !== "admin") {
+    if (!account.isAdmin) {
       return Response.json({ success: false, error: "Admin access required." }, { status: 403 });
     }
 

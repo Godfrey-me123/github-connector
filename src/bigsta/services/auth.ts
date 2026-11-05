@@ -104,6 +104,7 @@ export async function requestPasswordReset(email: string): Promise<AuthActionRes
 export async function bootstrapAuthenticatedSession(session: Session): Promise<{
   session: Session;
   welcomeTokenGranted: boolean;
+  isAdmin: boolean;
 }> {
   const response = await fetch("/api/auth/bootstrap", {
     method: "POST",
@@ -117,10 +118,11 @@ export async function bootstrapAuthenticatedSession(session: Session): Promise<{
   const result = (await response.json()) as {
     claimsUpdated?: boolean;
     welcomeTokenGranted?: boolean;
+    isAdmin?: boolean;
   };
 
   if (!result.claimsUpdated) {
-    return { session, welcomeTokenGranted: result.welcomeTokenGranted === true };
+    return { session, welcomeTokenGranted: result.welcomeTokenGranted === true, isAdmin: result.isAdmin === true };
   }
 
   const refreshed = await supabase.auth.refreshSession();
@@ -131,5 +133,6 @@ export async function bootstrapAuthenticatedSession(session: Session): Promise<{
   return {
     session: refreshed.data.session,
     welcomeTokenGranted: result.welcomeTokenGranted === true,
+    isAdmin: result.isAdmin === true,
   };
 }

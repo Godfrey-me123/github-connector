@@ -313,6 +313,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          auth_user_id: string | null
           created_at: string | null
           email: string | null
           id: string
@@ -326,6 +327,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          auth_user_id?: string | null
           created_at?: string | null
           email?: string | null
           id: string
@@ -339,6 +341,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          auth_user_id?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
@@ -842,6 +845,7 @@ export type Database = {
       }
       user_profiles: {
         Row: {
+          auth_user_id: string | null
           created_at: string | null
           email: string | null
           id: string
@@ -854,6 +858,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          auth_user_id?: string | null
           created_at?: string | null
           email?: string | null
           id: string
@@ -866,6 +871,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          auth_user_id?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
@@ -989,7 +995,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_bigsta_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
