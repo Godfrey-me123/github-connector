@@ -1,5 +1,6 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import React, { useState, useEffect } from "react";
+import { toast } from "sonner";
 import {
   Upload,
   Check,
@@ -101,9 +102,17 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
 
     setIsSaving(true);
     const reader = new FileReader();
+    reader.onerror = () => {
+      setIsSaving(false);
+      toast.error("Failed to read selected image file.");
+    };
     reader.onload = async (event) => {
       const src = event.target?.result as string;
       const img = new Image();
+      img.onerror = () => {
+        setIsSaving(false);
+        toast.error("Failed to parse selected image element.");
+      };
       img.onload = async () => {
         try {
           const orientation = img.height > img.width ? "portrait" : "landscape";
@@ -130,6 +139,8 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
           }
 
           onBackgroundSelected?.();
+        } catch (err: any) {
+          toast.error(err?.message || "Failed to upload background image.");
         } finally {
           setIsSaving(false);
         }
@@ -146,9 +157,17 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
 
     setIsSaving(true);
     const reader = new FileReader();
+    reader.onerror = () => {
+      setIsSaving(false);
+      toast.error("Failed to read image file for replacement.");
+    };
     reader.onload = async (event) => {
       const src = event.target?.result as string;
       const img = new Image();
+      img.onerror = () => {
+        setIsSaving(false);
+        toast.error("Failed to load image file for replacement.");
+      };
       img.onload = async () => {
         try {
           const orientation = img.height > img.width ? "portrait" : "landscape";
@@ -171,6 +190,8 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
           if (isCurrentlyActive) {
             await activateBackground(id, currentCategory, templateId, selectedSideTab);
           }
+        } catch (err: any) {
+          toast.error(err?.message || "Failed to replace background.");
         } finally {
           setIsSaving(false);
         }
@@ -191,6 +212,8 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
 
       await activateBackground(bg.id, currentCategory, templateId, selectedSideTab);
       onBackgroundSelected?.();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to apply background.");
     } finally {
       setIsSaving(false);
     }
@@ -202,9 +225,17 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
 
     setIsSaving(true);
     const reader = new FileReader();
+    reader.onerror = () => {
+      setIsSaving(false);
+      toast.error("Failed to read image file.");
+    };
     reader.onload = async (event) => {
       const src = event.target?.result as string;
       const img = new Image();
+      img.onerror = () => {
+        setIsSaving(false);
+        toast.error("Failed to parse image file.");
+      };
       img.onload = async () => {
         try {
           const orientation = img.height > img.width ? "portrait" : "landscape";
@@ -252,6 +283,8 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
           }
 
           onBackgroundSelected?.();
+        } catch (err: any) {
+          toast.error(err?.message || "Failed to replace current active photo.");
         } finally {
           setIsSaving(false);
         }

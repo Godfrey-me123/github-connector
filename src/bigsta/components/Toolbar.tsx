@@ -35,6 +35,7 @@ import { Unit } from "../types";
 import { ServiceMenuDrawer } from "./navigation/ServiceMenuDrawer";
 import { HorizontalActionRow } from "./common/HorizontalActionRow";
 
+import { SaveUniversalModal } from "./SaveUniversalModal";
 import { UserUsageBadge } from "./auth/UserUsageBadge";
 import { SampleDataPreviewModal } from "./SampleDataPreviewModal";
 import { UniversalBackButton } from "./common/UniversalBackButton";
@@ -98,8 +99,10 @@ export const Toolbar: React.FC = () => {
     features: string[];
   } | null>(null);
 
-  const [isSavedNotice, setIsSavedNotice] = useState(false);
+
   const [showSaveDropdown, setShowSaveDropdown] = useState(false);
+  const [isSaveUniversalModalOpen, setIsSaveUniversalModalOpen] = useState(false);
+  const [pendingUniversalSide, setPendingUniversalSide] = useState<"front" | "back" | null>(null);
   const saveButtonRef = React.useRef<HTMLButtonElement>(null);
   const [dropdownCoords, setDropdownCoords] = useState<{ top: number; left: number } | null>(null);
 
@@ -543,18 +546,9 @@ export const Toolbar: React.FC = () => {
                     }}
                   >
                     <button
-                      onClick={async () => {
-                        await saveUniversalFrontTemplate(activeServiceId, currentTemplate);
-                        setIsSavedNotice(true);
-                        setShowSaveDropdown(false);
-                        if (lastEditingContext?.sourceScreen === "preview") {
-                          setTimeout(() => {
-                            setIsSavedNotice(false);
-                            returnToEditingContext();
-                          }, 1000);
-                        } else {
-                          setTimeout(() => setIsSavedNotice(false), 2000);
-                        }
+                      onClick={() => {
+                        setPendingUniversalSide("front");
+                        setIsSaveUniversalModalOpen(true);
                       }}
                       className="w-full text-left px-3 py-2 bg-[#F0FDF4] hover:bg-[#DCFCE7] rounded-lg text-[#000000] font-bold transition-colors cursor-pointer flex items-center justify-between border border-[#BBF7D0]"
                     >
@@ -564,18 +558,9 @@ export const Toolbar: React.FC = () => {
                       </span>
                     </button>
                     <button
-                      onClick={async () => {
-                        await saveUniversalBackTemplate(activeServiceId, currentTemplate);
-                        setIsSavedNotice(true);
-                        setShowSaveDropdown(false);
-                        if (lastEditingContext?.sourceScreen === "preview") {
-                          setTimeout(() => {
-                            setIsSavedNotice(false);
-                            returnToEditingContext();
-                          }, 1000);
-                        } else {
-                          setTimeout(() => setIsSavedNotice(false), 2000);
-                        }
+                      onClick={() => {
+                        setPendingUniversalSide("back");
+                        setIsSaveUniversalModalOpen(true);
                       }}
                       className="w-full text-left px-3 py-2 bg-[#FAF5FF] hover:bg-[#F3E8FF] rounded-lg text-[#000000] font-bold transition-colors cursor-pointer flex items-center justify-between border border-[#E9D5FF]"
                     >
@@ -935,6 +920,29 @@ export const Toolbar: React.FC = () => {
       <SampleDataPreviewModal
         isOpen={isSamplePreviewOpen}
         onClose={() => setIsSamplePreviewOpen(false)}
+      />
+      <SaveUniversalModal
+        isOpen={isSaveUniversalModalOpen}
+        onClose={() => setIsSaveUniversalModalOpen(false)}
+        onConfirm={async (categoryId) => {
+          setIsSaveUniversalModalOpen(false);
+          setShowSaveDropdown(false);
+          setIsSaving(true);
+          try {
+            if (pendingUniversalSide === "front") {
+              await saveUniversalFrontTemplate(categoryId, currentTemplate);
+            } else {
+              await saveUniversalBackTemplate(categoryId, currentTemplate);
+            }
+            setIsSavedNotice(true);
+            setTimeout(() => setIsSavedNotice(false), 2000);
+          } catch (e: any) {
+            notifySaveIssue(e?.message || "Failed to save universal template.");
+          } finally {
+            setIsSaving(false);
+          }
+        }}
+        defaultCategoryId={activeServiceId}
       />
     </>
   );
