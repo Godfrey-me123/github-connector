@@ -52,6 +52,25 @@ import {
   deleteStudioDraftDB,
 } from "../utils/idb";
 
+// Save guards: a stalled network call must never leave the Save spinner stuck.
+const SAVE_TIMEOUT_MS = 45000;
+const withSaveTimeout = <T,>(p: Promise<T>, label: string): Promise<T | null> =>
+  Promise.race([
+    p,
+    new Promise<null>((resolve) =>
+      setTimeout(() => {
+        console.warn(`[Save] ${label} timed out after ${SAVE_TIMEOUT_MS}ms`);
+        resolve(null);
+      }, SAVE_TIMEOUT_MS),
+    ),
+  ]);
+
+const notifySaveIssue = (msg: string) => {
+  import("sonner")
+    .then(({ toast }) => toast.error(msg))
+    .catch(() => {});
+};
+
 export interface DynamicElementRegistration {
   id: string;
   name: string;
@@ -2160,7 +2179,11 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         let sanitized = sanitizeTemplateForSaving(updatedTpl);
         try {
           const { sanitizeAndUploadTemplateBackground } = await import("../services/supabase");
-          sanitized = await sanitizeAndUploadTemplateBackground(sanitized);
+          sanitized =
+            (await withSaveTimeout(
+              sanitizeAndUploadTemplateBackground(sanitized),
+              "Front background upload",
+            )) || sanitized;
         } catch {}
         await saveTemplateDB(sanitized);
 
@@ -2180,9 +2203,20 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         try {
           const { saveUniversalTemplateSupabase } = await import("../services/supabase");
           // Note: saveUniversalTemplateSupabase already handles server-side auto-deactivation
-          await saveUniversalTemplateSupabase(serviceId, sanitized, true, false);
+          const ok = await withSaveTimeout(
+            saveUniversalTemplateSupabase(serviceId, sanitized, true, false),
+            "Front template cloud save",
+          );
+          if (!ok) {
+            notifySaveIssue(
+              "Saved on this device, but the cloud save did not complete. Check your connection and Save again.",
+            );
+          }
         } catch (e) {
           console.warn("Supabase sync for universal front template skipped:", e);
+          notifySaveIssue(
+            "Saved on this device, but the cloud save did not complete. Check your connection and Save again.",
+          );
         }
 
         set({
@@ -2246,7 +2280,11 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         let sanitized = sanitizeTemplateForSaving(updatedTpl);
         try {
           const { sanitizeAndUploadTemplateBackground } = await import("../services/supabase");
-          sanitized = await sanitizeAndUploadTemplateBackground(sanitized);
+          sanitized =
+            (await withSaveTimeout(
+              sanitizeAndUploadTemplateBackground(sanitized),
+              "Back background upload",
+            )) || sanitized;
         } catch {}
         await saveTemplateDB(sanitized);
 
@@ -2266,9 +2304,20 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         try {
           const { saveUniversalTemplateSupabase } = await import("../services/supabase");
           // Note: saveUniversalTemplateSupabase already handles server-side auto-deactivation
-          await saveUniversalTemplateSupabase(serviceId, sanitized, false, true);
+          const ok = await withSaveTimeout(
+            saveUniversalTemplateSupabase(serviceId, sanitized, false, true),
+            "Back template cloud save",
+          );
+          if (!ok) {
+            notifySaveIssue(
+              "Saved on this device, but the cloud save did not complete. Check your connection and Save again.",
+            );
+          }
         } catch (e) {
           console.warn("Supabase sync for universal back template skipped:", e);
+          notifySaveIssue(
+            "Saved on this device, but the cloud save did not complete. Check your connection and Save again.",
+          );
         }
 
         set({

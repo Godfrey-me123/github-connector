@@ -63,6 +63,54 @@ export const isSupabaseConfigured = Boolean(
 export const supabase = connectedSupabase;
 
 
+// Downscale large photos before upload so saves complete on slow/mobile connections.
+async function compressImageForUpload(
+  file: File | Blob,
+  maxDim = 1600,
+  quality = 0.85,
+): Promise<Blob> {
+  if (typeof document === "undefined") return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+    if (scale >= 1 && file.type === "image/jpeg") {
+      bitmap.close();
+      return file;
+    }
+    const w = Math.max(1, Math.round(bitmap.width * scale));
+    const h = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      bitmap.close();
+      return file;
+    }
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((res) =>
+      canvas.toBlob(res, "image/jpeg", quality),
+    );
+    return blob || file;
+  } catch {
+    return file;
+  }
+}
+
+// Race a promise against a timeout so a stalled network call can never hang a save.
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T | null> {
+  return Promise.race([
+    p,
+    new Promise<null>((res) =>
+      setTimeout(() => {
+        console.warn(`[Supabase] ${label} timed out after ${ms}ms`);
+        res(null);
+      }, ms),
+    ),
+  ]);
+}
+
 // Helper: Upload Background to Supabase Storage
 export async function uploadBackgroundToSupabase(
   file: File | Blob,
@@ -73,10 +121,18 @@ export async function uploadBackgroundToSupabase(
   try {
     const { folder } = getTemplateCategoryConfig(serviceType);
     const cleanFilename = `${folder}/${Date.now()}_${filename.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-    const { data, error } = await supabase.storage.from("backgrounds").upload(cleanFilename, file, {
-      cacheControl: "3600",
-      upsert: true,
-    });
+    const uploadBlob = await compressImageForUpload(file);
+    const result = await withTimeout(
+      supabase.storage.from("backgrounds").upload(cleanFilename, uploadBlob, {
+        cacheControl: "3600",
+        upsert: true,
+        contentType: uploadBlob.type || "image/jpeg",
+      }),
+      30000,
+      "Background upload",
+    );
+    if (!result) return null;
+    const { error } = result;
     if (error) {
       console.warn("Supabase storage upload warning:", error.message);
       return null;
