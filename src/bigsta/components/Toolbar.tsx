@@ -40,6 +40,7 @@ import { UserUsageBadge } from "./auth/UserUsageBadge";
 import { SampleDataPreviewModal } from "./SampleDataPreviewModal";
 import { UniversalBackButton } from "./common/UniversalBackButton";
 import { normalizeSide, checkTemplateCompletion } from "../utils/templateCategoryEngine";
+import { toast } from "sonner";
 
 export const Toolbar: React.FC = () => {
   const {
@@ -99,6 +100,10 @@ export const Toolbar: React.FC = () => {
     features: string[];
   } | null>(null);
 
+
+  const [isSavedNotice, setIsSavedNotice] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const notifySaveIssue = (msg: string) => toast.error(msg);
 
   const [showSaveDropdown, setShowSaveDropdown] = useState(false);
   const [isSaveUniversalModalOpen, setIsSaveUniversalModalOpen] = useState(false);

@@ -19,6 +19,7 @@ import {
 import { toast } from "sonner";
 import { convertDocxToPdf, DocxConversionResult } from "../utils/docxToPdf";
 import { saveDownloadRecordDB, getAllDownloadRecordsDB, deleteDownloadRecordDB, DownloadRecord } from "../utils/idb";
+import { triggerUniversalDownload } from "../utils/downloadHelper";
 import { useTemplateStore } from "../store/useTemplateStore";
 
 export interface DocxToPdfScreenProps {
@@ -156,16 +157,13 @@ export const DocxToPdfScreen: React.FC<DocxToPdfScreenProps> = ({ onBack }) => {
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!result) return;
-    const url = URL.createObjectURL(result.blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = result.fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    await triggerUniversalDownload({
+      fileName: result.fileName,
+      content: result.blob,
+      mimeType: "application/pdf",
+    });
     toast.success(`Downloaded: ${result.fileName}`);
   };
 
@@ -457,14 +455,22 @@ export const DocxToPdfScreen: React.FC<DocxToPdfScreenProps> = ({ onBack }) => {
                       <Eye className="w-3.5 h-3.5" />
                       <span className="hidden sm:inline">Open</span>
                     </button>
-                    <a
-                      href={rec.dataUrl}
-                      download={rec.fileName}
-                      className="p-1 text-slate-400 hover:text-emerald-600 rounded-lg"
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (rec.dataUrl) {
+                          triggerUniversalDownload({
+                            fileName: rec.fileName,
+                            content: rec.dataUrl,
+                            mimeType: "application/pdf",
+                          });
+                        }
+                      }}
+                      className="p-1 text-slate-400 hover:text-emerald-600 rounded-lg cursor-pointer"
                       title="Download"
                     >
                       <Download className="w-3.5 h-3.5" />
-                    </a>
+                    </button>
                   </div>
                 </div>
               ))}

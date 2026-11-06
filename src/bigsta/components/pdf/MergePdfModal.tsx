@@ -1,4 +1,3 @@
-// @ts-nocheck -- PDF library typings are stricter than runtime; behaviour unchanged.
 import React, { useState, useRef, useEffect } from "react";
 import { PDFDocument } from "pdf-lib";
 import {
@@ -16,6 +15,7 @@ import {
   Download,
 } from "lucide-react";
 import { toast } from "sonner";
+import { triggerUniversalDownload } from "../../utils/downloadHelper";
 
 export interface MergePdfModalProps {
   isOpen: boolean;
@@ -170,14 +170,11 @@ export const MergePdfModal: React.FC<MergePdfModalProps> = ({
         : `${outputFileName.trim()}.pdf`;
 
       if (triggerDownload) {
-        const url = URL.createObjectURL(mergedBlob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = finalName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        await triggerUniversalDownload({
+          fileName: finalName,
+          content: mergedBlob,
+          mimeType: "application/pdf",
+        });
       }
 
       if (onMerged) {

@@ -1,4 +1,3 @@
-// @ts-nocheck -- PDF library typings are stricter than runtime; behaviour unchanged.
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 import {

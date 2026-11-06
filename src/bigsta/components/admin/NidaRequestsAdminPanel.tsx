@@ -4,6 +4,7 @@ import { useAutoRefresh } from "../../hooks/useAutoRefresh";
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../services/supabase";
 import { Eye, Download, Send, RotateCcw, RefreshCw, X, MessageCircle } from "lucide-react";
+import { triggerUniversalDownload } from "../../utils/downloadHelper";
 
 const BUCKET = "nida_responses";
 
@@ -71,14 +72,14 @@ export const NidaRequestsAdminPanel: React.FC = () => {
     fetchRequests();
   }, []);
 
-  const download = (r: any) => {
+  const download = async (r: any) => {
     const text = FIELDS.map(([k, l]) => `${l}: ${fmt(k, r[k])}`).join("\n");
     const blob = new Blob([text], { type: "text/plain" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `nida-request-${r.nida_no || r.id}.txt`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    await triggerUniversalDownload({
+      fileName: `nida-request-${r.nida_no || r.id}.txt`,
+      content: blob,
+      mimeType: "text/plain",
+    });
   };
 
   const requestInfoAgain = async (r: any) => {

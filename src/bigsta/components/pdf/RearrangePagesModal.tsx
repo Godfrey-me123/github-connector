@@ -1,4 +1,3 @@
-// @ts-nocheck -- PDF library typings are stricter than runtime; behaviour unchanged.
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { PDFDocument } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
@@ -19,6 +18,7 @@ import {
   Download,
 } from "lucide-react";
 import { toast } from "sonner";
+import { triggerUniversalDownload } from "../../utils/downloadHelper";
 
 export interface RearrangePagesModalProps {
   isOpen: boolean;
@@ -313,14 +313,11 @@ export const RearrangePagesModal: React.FC<RearrangePagesModalProps> = ({
       const finalName = activeFileName.replace(/\.pdf$/i, "") + suffix;
 
       if (triggerDownload) {
-        const url = URL.createObjectURL(newBlob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = finalName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        await triggerUniversalDownload({
+          fileName: finalName,
+          content: newBlob,
+          mimeType: "application/pdf",
+        });
       }
 
       if (onSaved) {

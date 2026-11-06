@@ -1,4 +1,3 @@
-// @ts-nocheck -- PDF library typings are stricter than runtime; behaviour unchanged.
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { PDFDocument, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";
@@ -28,6 +27,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
+import { triggerUniversalDownload } from "../../utils/downloadHelper";
 
 export interface PdfGridViewProps {
   pdfDoc: pdfjsLib.PDFDocumentProxy;
@@ -350,14 +350,11 @@ export const PdfGridView: React.FC<PdfGridViewProps> = ({
       await onSaveDocument(newBlob, updatedFileName, newBytes.buffer);
 
       if (downloadImmediately) {
-        const url = URL.createObjectURL(newBlob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = updatedFileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        await triggerUniversalDownload({
+          fileName: updatedFileName,
+          content: newBlob,
+          mimeType: "application/pdf",
+        });
         toast.success(`Saved and downloaded: ${updatedFileName}`);
       } else {
         toast.success("Document updated successfully!");

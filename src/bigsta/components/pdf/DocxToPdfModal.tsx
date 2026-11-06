@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import { convertDocxToPdf, DocxConversionResult } from "../../utils/docxToPdf";
 import { saveDownloadRecordDB, DownloadRecord } from "../../utils/idb";
+import { triggerUniversalDownload } from "../../utils/downloadHelper";
 
 export interface DocxToPdfModalProps {
   isOpen: boolean;
@@ -96,17 +97,13 @@ export const DocxToPdfModal: React.FC<DocxToPdfModalProps> = ({
     }
   };
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!result) return;
-    const url = URL.createObjectURL(result.blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = result.fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    // Give mobile browsers time to start the download before releasing the blob.
-    window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+    await triggerUniversalDownload({
+      fileName: result.fileName,
+      content: result.blob,
+      mimeType: "application/pdf",
+    });
     toast.success(`Downloaded: ${result.fileName}`);
   };
 

@@ -13,9 +13,6 @@ export type ActiveScreen =
   | "admin-payments"
   | "billing"
   | "settings"
-  | "pdf_viewer"
-  | "pdf_library"
-  | "docx_to_pdf"
   | "passport_studio"
   | "image_edit_studio";
 
@@ -30,7 +27,6 @@ export type CardType =
   | "Access Badge"
   | "Driving License"
   | "National Registration Card (NRC)"
-  | "NRC Zambia"
   | "Other";
 export type CardSide = "Front Side" | "Back Side" | "Full Card" | "Single Side";
 

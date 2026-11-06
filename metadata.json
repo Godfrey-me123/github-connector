@@ -1,0 +1,8 @@
+{
+  "name": "BIGsta",
+  "description": "BIGsta ID card template designer and renderer.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
