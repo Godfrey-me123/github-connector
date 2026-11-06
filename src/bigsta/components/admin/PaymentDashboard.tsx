@@ -44,6 +44,7 @@ import { SmsGatewayPanel } from "./SmsGatewayPanel";
 import { SmsDiagnosticsPanel } from "./SmsDiagnosticsPanel";
 import { NidaRequestsAdminPanel } from "./NidaRequestsAdminPanel";
 import { UserFeedbackAdminPanel } from "./UserFeedbackAdminPanel";
+import { TemplatesAdminPanel } from "./TemplatesAdminPanel";
 import { useUnreviewedSmsCount } from "../../hooks/useUnreviewedSmsCount";
 
 export const PaymentDashboard: React.FC = () => {
@@ -1824,6 +1825,7 @@ export const PaymentDashboard: React.FC = () => {
                     icon: Smartphone,
                   },
                   { id: "sms_diagnostics", label: "Diagnostics", icon: Activity },
+                  { id: "templates", label: "Templates", icon: Sparkles },
                   { id: "nida", label: "NIDA Requests", icon: Receipt },
                   { id: "feedback", label: "User Feedback", icon: MessageSquare },
                   { id: "settings", label: "Settings", icon: Settings },
@@ -1860,6 +1862,8 @@ export const PaymentDashboard: React.FC = () => {
             renderSmsLogs()
           ) : activeTab === "sms_diagnostics" ? (
             renderSmsDiagnostics()
+          ) : activeTab === "templates" ? (
+            <TemplatesAdminPanel />
           ) : activeTab === "nida" ? (
             <NidaRequestsAdminPanel />
           ) : activeTab === "feedback" ? (

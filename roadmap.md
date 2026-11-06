@@ -2,7 +2,7 @@
 
 - [ ] Restore the specified email administrator through protected account roles.
 - [ ] Save email registrations to profiles and show real normal accounts in the administrator list.
-- [ ] Add administrator template setup and category reassignment with independent front/back saves.
+- [x] Add administrator template setup and category reassignment with independent front/back saves.
 - [ ] Verify requested flows and commit completed steps; direct pushes are handled by the platform.
 
 - [x] Remove embedded database credentials and legacy project fallbacks; configured database probe passes and browser requests reach only the configured project.
