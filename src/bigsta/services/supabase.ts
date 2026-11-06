@@ -63,43 +63,10 @@ export const isSupabaseConfigured = Boolean(
 export const supabase = connectedSupabase;
 
 
-// Downscale large photos before upload so saves complete on slow/mobile connections.
-async function compressImageForUpload(
-  file: File | Blob,
-  maxDim = 1600,
-  quality = 0.85,
-): Promise<Blob> {
-  if (typeof document === "undefined") return file;
-  try {
-    const bitmap = await createImageBitmap(file);
-    const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
-    if (scale >= 1 && file.type === "image/jpeg") {
-      bitmap.close();
-      return file;
-    }
-    const w = Math.max(1, Math.round(bitmap.width * scale));
-    const h = Math.max(1, Math.round(bitmap.height * scale));
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      bitmap.close();
-      return file;
-    }
-    ctx.drawImage(bitmap, 0, 0, w, h);
-    bitmap.close();
-    const blob = await new Promise<Blob | null>((res) =>
-      canvas.toBlob(res, "image/jpeg", quality),
-    );
-    return blob || file;
-  } catch {
-    return file;
-  }
-}
+
 
 // Race a promise against a timeout so a stalled network call can never hang a save.
-function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T | null> {
+function withTimeoutOrNull<T>(p: Promise<T>, ms: number, label: string): Promise<T | null> {
   return Promise.race([
     p,
     new Promise<null>((res) =>
@@ -121,12 +88,11 @@ export async function uploadBackgroundToSupabase(
   try {
     const { folder } = getTemplateCategoryConfig(serviceType);
     const cleanFilename = `${folder}/${Date.now()}_${filename.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-    const uploadBlob = await compressImageForUpload(file);
-    const result = await withTimeout(
-      supabase.storage.from("backgrounds").upload(cleanFilename, uploadBlob, {
+    const result = await withTimeoutOrNull(
+      supabase.storage.from("backgrounds").upload(cleanFilename, file, {
         cacheControl: "3600",
         upsert: true,
-        contentType: uploadBlob.type || "image/jpeg",
+        contentType: file.type || "image/jpeg",
       }),
       30000,
       "Background upload",
@@ -1250,7 +1216,7 @@ export interface TokenHistoryRecord {
 export async function insertTokenHistorySupabase(record: TokenHistoryRecord): Promise<boolean> {
   if (!supabase) return false;
   try {
-    const { error } = await withTimeout(
+    const { error } = await withTimeoutOrNull(
       supabase.from("token_transactions").upsert(
         {
           id: record.id,
@@ -1262,6 +1228,8 @@ export async function insertTokenHistorySupabase(record: TokenHistoryRecord): Pr
         },
         { onConflict: "id", ignoreDuplicates: true },
       ) as unknown as Promise<{ error: any }>,
+      10000,
+      "Token history insert",
     );
     if (error) {
       console.warn("Token history insert failed:", error.message);
@@ -1288,8 +1256,10 @@ export async function fetchTokenHistorySupabase(
     if (ownerIds && ownerIds.length > 0) {
       query = query.in("user_email", ownerIds);
     }
-    const { data, error } = await withTimeout(
+    const { data, error } = await withTimeoutOrNull(
       query as unknown as Promise<{ data: any[] | null; error: any }>,
+      10000,
+      "Token history fetch",
     );
     if (error || !data) {
       if (error) console.warn("Token history fetch failed:", error.message);
@@ -1380,13 +1350,15 @@ export async function saveGeneratedCardSupabase(card: {
       );
     };
 
-    const { error } = await withTimeout(
+    const { error } = await withTimeoutOrNull(
       supabase.from("user_generated_cards").upsert({
         id: card.id.trim().slice(0, 128),
         user_id: user.id,
         service_type: normalizeTemplateCategory(card.serviceType).slice(0, 80),
         card_data: removeMedia(card.cardData),
       }),
+      10000,
+      "saveGeneratedCard"
     );
     if (error) {
       console.error("[Supabase] saveGeneratedCard failed:", error.message);
