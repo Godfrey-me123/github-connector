@@ -1,7 +1,15 @@
 import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { lazy, Suspense } from "react";
 
-const BigstaApp = lazy(() => import("@/bigsta/App"));
+const BigstaApp = lazy(async () => {
+  try {
+    return await import("@/bigsta/App");
+  } catch (err) {
+    console.warn("Retrying BigstaApp import...", err);
+    await new Promise((r) => setTimeout(r, 400));
+    return await import("@/bigsta/App");
+  }
+});
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,6 +31,22 @@ export const Route = createFileRoute("/")({
     ],
   }),
   component: Index,
+  errorComponent: () => (
+    <main className="flex min-h-screen items-center justify-center bg-background text-foreground p-4">
+      <div className="flex flex-col items-center gap-3 text-center max-w-sm">
+        <span className="text-base font-bold">Workspace Updating</span>
+        <p className="text-xs text-muted-foreground">The application workspace is reconnecting. Please reload to continue.</p>
+        <button
+          onClick={() => {
+            window.location.reload();
+          }}
+          className="px-4 py-2 bg-primary text-primary-foreground text-xs font-bold rounded-lg cursor-pointer shadow-sm hover:opacity-90"
+        >
+          Reload Workspace
+        </button>
+      </div>
+    </main>
+  ),
 });
 
 function Loading() {

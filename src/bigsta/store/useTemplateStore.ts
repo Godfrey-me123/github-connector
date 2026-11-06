@@ -827,6 +827,8 @@ interface TemplateState {
   isMergeModalOpen: boolean;
   isSaveModalOpen: boolean;
   activeMobileSheet: "elements" | "layers" | "backgrounds" | "properties" | "settings" | null;
+  activeStudioLeftTab: "elements" | "layers" | "backgrounds";
+  setActiveStudioLeftTab: (tab: "elements" | "layers" | "backgrounds") => void;
 
   // NIDA Success Notification Toast
   nidaSuccessNotification: {
@@ -874,7 +876,13 @@ interface TemplateState {
     back: CardTemplate | null,
     formData?: any,
   ) => void;
-  createNewTemplate: (background: BackgroundConfig, name?: string) => void;
+  createNewTemplate: (
+    background: BackgroundConfig,
+    name?: string,
+    serviceId?: string,
+    side?: "front" | "back",
+    templateId?: string,
+  ) => void;
   loadTemplate: (template: CardTemplate) => void;
   setCurrentTemplate: (template: CardTemplate) => void;
   updateTemplateMeta: (meta: Partial<CardTemplate>) => void;
@@ -1278,6 +1286,8 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     setActivePdf: (pdf: any | null) => set({ activePdf: pdf }),
     currentTemplate: DEFAULT_TEMPLATE,
     activeEditorSide: "front",
+    activeStudioLeftTab: "elements",
+    setActiveStudioLeftTab: (tab) => set({ activeStudioLeftTab: tab }),
     completionBannerMessage: null,
     setCompletionBannerMessage: (msg: string | null) => set({ completionBannerMessage: msg }),
     frontPopulatedTemplate: null,
@@ -4111,7 +4121,13 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       }
     },
 
-    createNewTemplate: (background, name, serviceId = "nida") => {
+    createNewTemplate: (
+      background: BackgroundConfig,
+      name?: string,
+      serviceId: string = "nida",
+      side: "front" | "back" = "front",
+      templateId?: string,
+    ) => {
       let cardWidth = CR80_WIDTH_MM;
       let cardHeight = CR80_HEIGHT_MM;
       let orientation: "landscape" | "portrait" = "landscape";
@@ -4128,16 +4144,25 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         }
       }
 
+      const canonicalSide = normalizeSide(side);
+      const isBack = canonicalSide === "back";
+      const resolvedDocType = resolveDocumentTypeId(serviceId, false) || serviceId || "nida";
+
       const newTpl: CardTemplate = {
-        id: "template_" + Date.now(),
-        templateName: name || "New Card Template",
-        serviceId,
+        id: templateId || ("template_" + Date.now()),
+        templateName: name || `${resolvedDocType.toUpperCase()} ${isBack ? "Back" : "Front"} Template`,
+        serviceId: resolvedDocType,
         cardWidth,
         cardHeight,
         unit: "mm",
         dpi: 300,
         orientation,
         background,
+        side: isBack ? "Back Side" : "Front Side",
+        isBackSide: isBack,
+        ...(isBack
+          ? { back_background: background, back_status: "configured" as const }
+          : { front_background: background, front_status: "configured" as const }),
         layers: [],
         guides: [],
         createdAt: new Date().toISOString(),
@@ -4146,9 +4171,12 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
 
       set({
         currentTemplate: newTpl,
-        activeServiceId: serviceId,
-        activeEditorSide: "front",
-        frontPopulatedTemplate: newTpl,
+        activeServiceId: resolvedDocType,
+        activeEditorSide: canonicalSide,
+        activeStudioLeftTab: "backgrounds",
+        ...(isBack
+          ? { backPopulatedTemplate: newTpl }
+          : { frontPopulatedTemplate: newTpl }),
         selectedLayerIds: [],
         activeScreen: "editor",
         studioMode: true,
@@ -4156,7 +4184,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         history: [newTpl],
         historyIndex: 0,
       });
-      get().loadUploadedBackgrounds(serviceId, newTpl.id, "front");
+      get().loadUploadedBackgrounds(resolvedDocType, newTpl.id, canonicalSide);
     },
 
     loadTemplate: (template: CardTemplate) => {
@@ -5083,21 +5111,39 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         let sanitized = sanitizeTemplateForSaving(template);
         try {
           const { sanitizeAndUploadTemplateBackground } = await import("../services/supabase");
-          sanitized = await sanitizeAndUploadTemplateBackground(sanitized);
-        } catch {}
+          sanitized =
+            (await withSaveTimeout(
+              sanitizeAndUploadTemplateBackground(sanitized),
+              "Background asset upload",
+            )) || sanitized;
+        } catch (e: any) {
+          console.warn("Background upload error during saveCurrentTemplate:", e);
+        }
         await saveTemplateDB(sanitized);
 
         // Sync to Supabase
         try {
           const { saveTemplateSupabase } = await import("../services/supabase");
-          await saveTemplateSupabase(sanitized);
-        } catch (e) {
+          const ok = await withSaveTimeout(
+            saveTemplateSupabase(sanitized),
+            "Draft template cloud save",
+          );
+          if (!ok) {
+            notifySaveIssue(
+              "Template saved locally, but cloud sync did not complete. Check your connection.",
+            );
+          }
+        } catch (e: any) {
           console.warn("Failed to sync current draft template to Supabase:", e);
+          notifySaveIssue("Cloud save encountered a network issue. Local draft preserved.");
         }
 
         set({ currentTemplate: sanitized, hasUnsavedChanges: false });
         get().saveStudioDraft();
         await get().loadSavedTemplates();
+      } catch (err: any) {
+        console.error("saveCurrentTemplate error:", err);
+        notifySaveIssue(err?.message || "Failed to save template. Please try again.");
       } finally {
         set({ isSaving: false });
       }
@@ -5119,22 +5165,40 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         };
         try {
           const { sanitizeAndUploadTemplateBackground } = await import("../services/supabase");
-          newTpl = await sanitizeAndUploadTemplateBackground(newTpl);
-        } catch {}
+          newTpl =
+            (await withSaveTimeout(
+              sanitizeAndUploadTemplateBackground(newTpl),
+              "New template background asset upload",
+            )) || newTpl;
+        } catch (e: any) {
+          console.warn("Background upload error during saveAsNewTemplate:", e);
+        }
         await saveTemplateDB(newTpl);
 
         // Sync to Supabase
         try {
           const { saveTemplateSupabase } = await import("../services/supabase");
-          await saveTemplateSupabase(newTpl);
-        } catch (e) {
+          const ok = await withSaveTimeout(
+            saveTemplateSupabase(newTpl),
+            "New template cloud save",
+          );
+          if (!ok) {
+            notifySaveIssue(
+              "Template saved locally, but cloud sync did not complete. Check your connection.",
+            );
+          }
+        } catch (e: any) {
           console.warn("Failed to sync new template to Supabase:", e);
+          notifySaveIssue("Cloud save encountered a network issue. Local copy preserved.");
         }
 
         set({ currentTemplate: newTpl, hasUnsavedChanges: false });
         get().saveStudioDraft();
         await get().loadSavedTemplates();
         return newTpl;
+      } catch (err: any) {
+        console.error("saveAsNewTemplate error:", err);
+        notifySaveIssue(err?.message || "Failed to save template copy. Please try again.");
       } finally {
         set({ isSaving: false });
       }

@@ -266,7 +266,6 @@ export default function App() {
           currentAuthKey: user.id,
           userProfile: { name: fullName, phone, email: user.email || "", region: profile?.region || "" },
           registeredUsers: [registeredUser],
-          activeScreen: "home",
           ...(welcomeTokenGranted ? { rechargeNotice: "A verified welcome token was added to your account." } : {}),
         });
         await fetchPasskeysFromSupabase();
@@ -285,7 +284,6 @@ export default function App() {
             email: user.email || "",
             region: "",
           },
-          activeScreen: "home",
         });
       }
     };
@@ -328,13 +326,15 @@ export default function App() {
 
   // Guard Custom Studio access for non-admin users
   useEffect(() => {
+    if (authLoading) return;
     if (
+      authRole &&
       authRole !== "admin" &&
       (activeScreen === "upload" || activeScreen === "templates" || activeScreen === "editor")
     ) {
       setActiveScreen("home");
     }
-  }, [authRole, activeScreen, setActiveScreen]);
+  }, [authRole, authLoading, activeScreen, setActiveScreen]);
 
   // Native Android APK JS Bridges
   useEffect(() => {

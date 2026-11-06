@@ -203,6 +203,17 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
   };
 
   const handleApplyBackground = async (bg: any) => {
+    const currentActiveBgId =
+      selectedSideTab === "front"
+        ? currentTemplate.active_front_bg_id
+        : currentTemplate.active_back_bg_id;
+    if (currentActiveBgId && currentActiveBgId !== bg.id) {
+      const confirmed = window.confirm(
+        `An active ${selectedSideTab.toUpperCase()} background is already configured for this template. Do you want to replace it with "${bg.name}"?`
+      );
+      if (!confirmed) return;
+    }
+
     setIsSaving(true);
     try {
       // Ensure canvas is on the corresponding side
@@ -211,6 +222,7 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
       }
 
       await activateBackground(bg.id, currentCategory, templateId, selectedSideTab);
+      toast.success(`Active ${selectedSideTab.toUpperCase()} background updated.`);
       onBackgroundSelected?.();
     } catch (err: any) {
       toast.error(err?.message || "Failed to apply background.");

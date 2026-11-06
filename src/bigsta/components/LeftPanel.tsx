@@ -6,8 +6,11 @@ import { LayersList } from "./LayersList";
 import { BackgroundsPanel } from "./BackgroundsPanel";
 
 export const LeftPanel: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<"elements" | "layers" | "backgrounds">("elements");
-  const { currentTemplate } = useTemplateStore();
+  const { currentTemplate, activeStudioLeftTab, setActiveStudioLeftTab } = useTemplateStore();
+  const activeTab = activeStudioLeftTab || "elements";
+  const setActiveTab = (tab: "elements" | "layers" | "backgrounds") => {
+    setActiveStudioLeftTab(tab);
+  };
 
   return (
     <aside className="hidden lg:flex lg:w-72 bg-slate-900 border-r border-slate-800 flex-col h-[calc(100vh-3.5rem)] select-none text-slate-200 shrink-0">

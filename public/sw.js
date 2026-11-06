@@ -2,7 +2,7 @@
 // Bump CACHE_VERSION when the precache list changes. Only caches whose name
 // starts with "bigsta-" are ever deleted; user documents live in IndexedDB and
 // are never touched here.
-const CACHE_VERSION = "bigsta-v2";
+const CACHE_VERSION = "bigsta-v3";
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 // Template backgrounds / uploaded images from Supabase Storage. Kept across
@@ -102,6 +102,16 @@ self.addEventListener("fetch", (event) => {
   }
   // Never cache live data: API, payments, health probes.
   if (url.pathname.startsWith("/api/")) return;
+
+  // Never cache dev server transforms, HMR, or raw source files
+  if (
+    url.pathname.startsWith("/src/") ||
+    url.pathname.startsWith("/@") ||
+    url.pathname.startsWith("/node_modules/") ||
+    /\.(tsx?|jsx|map)$/.test(url.pathname)
+  ) {
+    return;
+  }
 
   if (request.mode === "navigate") {
     event.respondWith(
