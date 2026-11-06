@@ -1,0 +1,367 @@
+# BIGsta — Background Upload Workflow, Category Selection & Editing Studio Navigation Repair
+
+## OBJECTIVE
+
+Inspect, repair, and upgrade the entire BIGsta Admin Template Background Upload workflow.
+
+The current problem occurs on the Upload Card Background screen:
+
+1. An administrator uploads a background image.
+2. The application sometimes only provides a rename option.
+3. The application may immediately navigate back to the home screen.
+4. In some cases, it opens the editing studio but immediately redirects the administrator back home.
+5. The administrator cannot properly select the document category, card side, configure the background, or complete editing.
+
+This is a critical workflow problem.
+
+Implement a reliable, controlled workflow that gives the administrator full control over every uploaded background.
+
+IMPORTANT: Do not rebuild the application or unnecessarily redesign unrelated features. Inspect the existing implementation, identify the actual causes, and repair the existing architecture.
+
+---
+
+## 1. INTRODUCE A PROPER UPLOAD CONFIGURATION STEP
+
+After selecting an image, DO NOT immediately save it, activate it, navigate away, or redirect the administrator.
+
+Instead:
+
+- Keep the administrator on the current upload workflow.
+- Display the uploaded image as a preview.
+- Display its filename.
+- Display detected image dimensions.
+- Display detected orientation (Portrait or Landscape).
+- Provide image replacement and removal options.
+- Allow the administrator to configure the uploaded background before proceeding.
+
+Add the following configuration fields:
+
+### A. Document Category
+
+Provide a category selector populated dynamically from the existing BIGsta document/template categories.
+
+Examples, depending on the categories already supported:
+- NIDA
+- Driving Licence
+- Voter ID
+- Passport
+- Other existing document categories.
+
+Do not create duplicate categories or hardcode a separate category list that conflicts with the existing database.
+
+### B. Card Side
+
+Provide an explicit side selector:
+
+- Front
+- Back
+
+The administrator must select which side the uploaded image belongs to.
+
+Never automatically assume Front or Back.
+
+### C. Template/Card Selection
+
+Where multiple cards or templates exist under a category, allow the administrator to select the intended card/template.
+
+Ensure the selected category, card and side remain associated throughout the entire process.
+
+### D. Background Name
+
+Allow the administrator to enter or edit the background name.
+
+The filename must not be the only configuration option.
+
+---
+
+## 2. ADD A CONTROLLED CONTINUE BUTTON
+
+After uploading and configuring the image, provide:
+
+**Continue to Editing Studio →**
+
+This button must:
+
+- Validate the uploaded image.
+- Validate the selected category.
+- Validate the selected side.
+- Validate the selected card/template where required.
+- Preserve all selected information.
+- Open the correct editing studio.
+
+Do not navigate anywhere before the administrator deliberately presses Continue.
+
+If required information is missing, display a clear validation message.
+
+---
+
+## 3. ROUTE TO THE CORRECT CATEGORY AND SIDE-SPECIFIC STUDIO
+
+This is extremely important.
+
+The application must route the uploaded background to the correct editing studio based on three independent identifiers:
+
+1. Document category.
+2. Card/template identifier.
+3. Side (Front or Back).
+
+Use this exact relationship throughout the upload, editing, saving and activation processes.
+
+Examples:
+
+NIDA + Selected NIDA Card + Front → NIDA Front Studio.
+
+NIDA + Selected NIDA Card + Back → NIDA Back Studio.
+
+Driving Licence + Selected Licence Card + Front → Driving Licence Front Studio.
+
+Driving Licence + Selected Licence Card + Back → Driving Licence Back Studio.
+
+Never allow a NIDA upload to open the Driving Licence studio or vice versa.
+
+Never allow Front and Back backgrounds to overwrite each other.
+
+Reuse the existing studio components and routing architecture wherever possible.
+
+---
+
+## 4. FIX THE AUTOMATIC REDIRECTION BUG
+
+This is a priority repair.
+
+Investigate why uploading an image or opening the editing studio causes the administrator to return to the home screen.
+
+Inspect:
+
+- Upload completion callbacks.
+- React state updates.
+- useEffect dependencies.
+- Navigation and redirect logic.
+- Route guards.
+- Authentication/session checks.
+- Component mounting and unmounting.
+- Database upload responses.
+- Supabase subscriptions and realtime updates, if involved.
+- Background save callbacks.
+- Error handling.
+- Any automatic navigation after successful uploads.
+
+Identify the actual cause rather than hiding the problem with a timeout.
+
+IMPLEMENT THESE RULES:
+
+A. Uploading an image must never automatically navigate home.
+
+B. Opening an editing studio must never trigger an automatic home redirect.
+
+C. Saving a background must not automatically reset the administrator's workflow.
+
+D. Database updates and realtime events must not accidentally trigger navigation.
+
+E. Preserve the administrator's current category, selected card, side, uploaded image and editing state during navigation and component updates.
+
+F. Only perform navigation when the administrator explicitly requests it or when a deliberate, clearly defined workflow transition occurs.
+
+G. If an upload or save fails, keep the administrator on the current screen and display the actual error.
+
+H. Do not lose the uploaded image or configuration because of an unnecessary component remount.
+
+The administrator must have enough time and control to complete every operation.
+
+---
+
+## 5. IMPROVE THE EDITING STUDIO
+
+When the administrator enters the correct editing studio, display the uploaded background immediately.
+
+Provide:
+
+- Large background preview.
+- Zoom controls.
+- Fit-to-screen option.
+- Replace image.
+- Remove image.
+- Rename background.
+- Image dimensions.
+- Orientation information.
+- Save changes.
+- Cancel/back navigation.
+
+Where supported by the existing studio architecture, also provide image positioning, scaling and cropping controls.
+
+Do not force the administrator to upload the same image again.
+
+The editing studio must receive the actual uploaded image and its configuration.
+
+---
+
+## 6. SEPARATE FRONT AND BACK ACTIVATION
+
+Preserve and enforce the existing BIGsta background activation architecture.
+
+Use the independent identifiers:
+
+- document_category_id
+- template_card_id
+- side
+
+Activation must be independent for each side of each card.
+
+Rules:
+
+1. Activating a Front background must not deactivate the Back background.
+2. Activating a Back background must not deactivate the Front background.
+3. Activating one category must not modify another category.
+4. Each card may have at most one active Front background and one active Back background.
+5. Saving a new background must not automatically activate it.
+6. Warn the administrator before replacing an existing active background.
+7. Never silently overwrite another card's background.
+
+Maintain database-level consistency, not just frontend restrictions.
+
+---
+
+## 7. IMPROVE THE ADMIN WORKFLOW
+
+Implement this sequence:
+
+STEP 1 — Upload Background
+Administrator selects an image.
+
+STEP 2 — Preview
+Image appears immediately without navigation.
+
+STEP 3 — Configure Background
+Administrator selects category, card/template, side and name.
+
+STEP 4 — Continue
+Administrator deliberately proceeds.
+
+STEP 5 — Editing Studio
+Correct category-specific and side-specific studio opens with the uploaded image.
+
+STEP 6 — Save
+Background is saved to the correct database location and associated with the correct card and side.
+
+STEP 7 — Activation
+Administrator can activate it independently for Front or Back.
+
+STEP 8 — Confirmation
+Show a clear success message and allow the administrator to remain in the studio, return to the category, or continue managing backgrounds.
+
+Never automatically send the administrator to the home screen.
+
+---
+
+## 8. DATABASE AND STORAGE INTEGRITY
+
+Inspect the existing Supabase database schema, storage buckets, upload functions and background records.
+
+Do not introduce unnecessary duplicate tables or storage buckets.
+
+Ensure:
+
+- Category-specific storage paths remain isolated.
+- Front and Back records remain independent.
+- Existing saved backgrounds are preserved.
+- Existing template relationships are preserved.
+- Background metadata is stored correctly.
+- Uploaded image URLs remain valid.
+- Updating one background does not corrupt another.
+- Failed uploads do not create incomplete active records.
+
+Use the existing database structure wherever possible.
+
+If a schema change is necessary, implement it safely with backward compatibility.
+
+---
+
+## 9. USER INTERFACE IMPROVEMENT
+
+Maintain BIGsta's existing clean, light-theme visual identity.
+
+The interface should be:
+
+- Clean and professional.
+- White/light background.
+- Black primary buttons.
+- Clearly separated configuration sections.
+- Properly sized image previews.
+- Responsive on mobile and desktop.
+- Easy to operate on touchscreens.
+
+Keep the existing BIGSTA branding and overall design language.
+
+Do not introduce unnecessary AI icons, decorative badges, dark themes or excessive visual elements.
+
+Make the upload configuration screen feel like a proper professional administration tool.
+
+---
+
+## 10. REQUIRED TESTING
+
+Do not declare the repair complete until these scenarios have been tested.
+
+TEST A:
+Upload NIDA Front. Configure it. Continue. Confirm NIDA Front Studio opens and the image is displayed.
+
+TEST B:
+Upload NIDA Back. Confirm it opens NIDA Back Studio without modifying Front.
+
+TEST C:
+Upload Driving Licence Front. Confirm it opens Driving Licence Front Studio, not NIDA.
+
+TEST D:
+Upload Driving Licence Back. Confirm Front remains intact.
+
+TEST E:
+Upload an image, wait on the configuration screen, rename it and replace it before continuing.
+
+TEST F:
+Save a background and confirm the administrator remains in the correct studio.
+
+TEST G:
+Activate Front and Back independently and verify both can remain active.
+
+TEST H:
+Refresh the editing studio and confirm the correct category, card, side and saved background are restored.
+
+TEST I:
+Simulate an upload failure and a database failure. Confirm that the administrator is not redirected home and receives a useful error.
+
+TEST J:
+Test the complete workflow on mobile, desktop, deployed Vercel and the APK/WebView environment where supported.
+
+---
+
+## FINAL IMPLEMENTATION REQUIREMENTS
+
+Before making changes, inspect the existing source code and identify the exact components responsible for:
+
+- Background uploads.
+- Category selection.
+- Card selection.
+- Front/Back selection.
+- Studio navigation.
+- Background saving.
+- Background activation.
+
+Fix the underlying causes and integrate the improvements into the existing BIGsta architecture.
+
+Do not break existing saved templates, background records, admin authentication, template management or unrelated application features.
+
+Do not replace working functionality with mock data or placeholder implementations.
+
+Do not report success based only on the Google AI Studio preview.
+
+Verify the actual deployed workflow and report:
+
+1. Root cause of the automatic home-screen redirect.
+2. Files/components modified.
+3. Database/storage changes, if any.
+4. How category and side isolation is enforced.
+5. Results of the required tests.
+6. Any remaining limitations.
+
+EXPECTED RESULT:
+The administrator uploads an image, sees it, selects its document category and card side, configures it, deliberately opens the correct editing studio, edits the background and saves or activates it without unexpected navigation or loss of data.
