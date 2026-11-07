@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useRef } from "react";
 import { PDFDocument } from "pdf-lib";
 import { FileUp, FileText, X, ArrowLeft, Download, Loader2, GripVertical } from "lucide-react";

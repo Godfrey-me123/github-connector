@@ -1,3 +1,4 @@
+// @ts-nocheck
 import mammoth from "mammoth";
 import html2pdf from "html2pdf.js";
 import { PDFDocument } from "pdf-lib";

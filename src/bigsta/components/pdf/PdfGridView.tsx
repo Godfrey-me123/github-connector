@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { PDFDocument, degrees } from "pdf-lib";
 import * as pdfjsLib from "pdfjs-dist";

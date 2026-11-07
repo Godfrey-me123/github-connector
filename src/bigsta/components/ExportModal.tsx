@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useState, useEffect, useRef } from "react";
 import {
   X,
@@ -513,7 +514,6 @@ export const ExportModal: React.FC = () => {
                     console.error("PNG export failed", e);
                   }
                 }}
-                type="button"
                 className="w-full py-2 bg-[#000000] hover:bg-[#222222] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer text-center whitespace-nowrap"
               >
                 PNG

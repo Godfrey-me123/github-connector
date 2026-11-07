@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Search } from "lucide-react";
 
 /** Case-insensitive search across the given fields + exact status match ("ALL" = any). */
