@@ -2,7 +2,7 @@
 // Bump CACHE_VERSION when the precache list changes. Only caches whose name
 // starts with "bigsta-" are ever deleted; user documents live in IndexedDB and
 // are never touched here.
-const CACHE_VERSION = "bigsta-v3";
+const CACHE_VERSION = "bigsta-v4";
 const APP_SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 // Template backgrounds / uploaded images from Supabase Storage. Kept across

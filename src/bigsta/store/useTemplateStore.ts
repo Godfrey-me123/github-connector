@@ -1337,7 +1337,15 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
             bonus: p.bonus ?? 0,
             promotion: p.promotion || "",
           }));
-          set({ tokenPackages: mapped });
+          set({
+            tokenPackages: mapped.length
+              ? mapped
+              : [
+                  { id: "default_starter", name: "Starter Pack", usages: 3, price: 2000, description: "3 Tokens", visibility: "public", active: true, sortOrder: 1, bonus: 0, promotion: "" },
+                  { id: "default_standard", name: "Standard Pack", usages: 7, price: 5000, description: "7 Tokens", visibility: "public", active: true, sortOrder: 2, bonus: 0, promotion: "Popular" },
+                  { id: "default_pro", name: "Pro Creator Pack", usages: 18, price: 10000, description: "18 Tokens", visibility: "public", active: true, sortOrder: 3, bonus: 0, promotion: "Best Value" },
+                ],
+          });
         }
       } catch (e) {
         console.error("Error loading token packages from Supabase:", e);
@@ -1360,7 +1368,23 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
             endDate: o.end_date,
             active: o.is_active,
           }));
-          set({ weeklyOffers: mapped });
+          set({
+            weeklyOffers: mapped.length
+              ? mapped
+              : [
+                  {
+                    id: "default_creator_pass",
+                    title: "Special Creator Pass",
+                    description: "Get 10 Tokens for only 6,000 TZS — 25% OFF this week",
+                    tokens: 10,
+                    price: 6000,
+                    services: [],
+                    startDate: new Date().toISOString(),
+                    endDate: new Date(Date.now() + 7 * 86400000).toISOString(),
+                    active: true,
+                  },
+                ],
+          });
         }
       } catch (e) {
         console.error("Error loading weekly offers from Supabase:", e);

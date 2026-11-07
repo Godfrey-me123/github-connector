@@ -1000,6 +1000,13 @@ export async function deletePasskeySupabase(id?: string, key?: string): Promise<
   }
 }
 
+// Rewrites stored image links that point at a different Supabase host to the currently connected one.
+export function rewriteLegacyStorageUrl(url: string): string {
+  const current = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+  if (!url || !current) return url;
+  return url.replace(/^https:\/\/[a-z0-9]{20}\.supabase\.co(?=\/storage\/)/, current.replace(/\/$/, ""));
+}
+
 // Helper: Fetch all token packages from Supabase
 // Returns null on failure so callers can tell "cloud unreachable" apart from "admin removed every package".
 export async function fetchTokenPackagesSupabase(): Promise<any[] | null> {
@@ -1419,7 +1426,7 @@ export async function fetchActiveTemplatesForService(
         isActive: d.is_active !== undefined ? d.is_active : true,
         background:
           parsed.background ||
-          (d.background_url ? { type: "image", src: d.background_url } : undefined),
+          (d.background_url ? { type: "image", src: rewriteLegacyStorageUrl(d.background_url) } : undefined),
       };
     };
 
