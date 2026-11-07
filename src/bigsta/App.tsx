@@ -238,8 +238,14 @@ export default function App() {
         const phone = profile?.phone || user.user_metadata?.phone || "";
         const { data: roleRow, error: roleError } = await supabase.from("user_roles")
           .select("role").eq("user_id", user.id).maybeSingle();
-        if (roleError) throw new Error("Account permissions could not be loaded.");
-        const role = verifiedAdmin || roleRow?.role === "admin" ? "admin" : "user";
+        if (roleError) console.warn("Could not load user role:", roleError.message);
+        const isUserAdmin =
+          verifiedAdmin ||
+          roleRow?.role === "admin" ||
+          profile?.role === "admin" ||
+          user.app_metadata?.role === "admin";
+
+        const role = isUserAdmin ? "admin" : "user";
         const registeredUser = {
           id: profile?.id || user.id,
           fullName,
