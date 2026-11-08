@@ -466,6 +466,7 @@ export interface RegisteredUser {
   phone: string;
   passkey: string;
   passkeyId: string;
+  authUserId?: string;
   role: "user";
   tokens: number;
   status: "ACTIVE" | "DISABLED" | "PENDING";
@@ -565,6 +566,7 @@ interface TemplateState {
   adminSettings: AdminSystemSettings;
   userPaymentSubmissions: UserPaymentSubmission[];
   tokenHistory: TokenTransaction[];
+  processedDeductionIds: string[];
   weeklyOffers: any[];
   loadTokenPackages: () => Promise<void>;
   loadWeeklyOffers: () => Promise<void>;
@@ -772,6 +774,7 @@ interface TemplateState {
   toggleUserStatus: (userId: string) => void;
   deleteRegisteredUser: (userId: string) => void;
   refreshUserStatus: () => void;
+  refreshCurrentWallet: () => Promise<void>;
 
   addPasskey: (item: Partial<PasskeyItem> & { key: string; role: "admin" | "user" }) => PasskeyItem;
   generateUserPasskey: (
@@ -800,7 +803,8 @@ interface TemplateState {
     serviceName?: string,
     details?: string,
     tokenCost?: number,
-  ) => { success: boolean; remainingUsages: number; message?: string };
+    transactionId?: string,
+  ) => Promise<{ success: boolean; remainingUsages: number; message?: string; alreadyDeducted?: boolean }>;
   confirmPaymentAndActivatePasskey: (id: string) => void;
   addUsagesToPasskey: (
     id: string,
@@ -1329,6 +1333,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     adminSettings: initialAdminSettings,
     userPaymentSubmissions: initialUserPayments,
     tokenHistory: initialTokenHistory,
+    processedDeductionIds: [],
     weeklyOffers: [],
     successActivationMessage: null,
 
@@ -1620,7 +1625,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
           if (!own) return;
           ownerIds = [own.id];
         }
-        const remote = await fetchTokenHistorySupabase(ownerIds);
+        const remote = await fetchTokenHistorySupabase(ownerIds, get().authRole === "admin" ? 2000 : 200);
         if (!remote) return;
 
         const merged = new Map<string, TokenTransaction>();
@@ -3253,9 +3258,68 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       set({ registeredUsers: updatedUsers, activePasskeys: updatedPasskeys });
     },
 
-    refreshUserStatus: () => {
+    refreshCurrentWallet: async () => {
+      const key = get().currentAuthKey;
+      if (!key) return;
+      try {
+        const { supabase } = await import("../services/supabase");
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("id, auth_user_id, email, tokens, status")
+          .eq("auth_user_id", key)
+          .maybeSingle();
+        if (error || !profile) return;
+        const balance = Math.max(0, Number(profile.tokens) || 0);
+        set({
+          registeredUsers: get().registeredUsers.map((user) =>
+            user.authUserId?.toLowerCase() === key.toLowerCase() || user.id === profile.id
+              ? { ...user, tokens: balance, status: profile.status || user.status }
+              : user,
+          ),
+          activePasskeys: get().activePasskeys.map((passkey) =>
+            passkey.key.toLowerCase() === key.toLowerCase() || passkey.id === profile.id
+              ? {
+                  ...passkey,
+                  remainingUsages: balance,
+                  totalUsages: Math.max(passkey.totalUsages || 0, balance + (passkey.usedUsages || 0)),
+                  paymentStatus: balance > 0 ? "ACTIVE" : "EXHAUSTED",
+                }
+              : passkey,
+          ),
+        });
+      } catch (error) {
+        console.warn("Failed to refresh current wallet:", error);
+      }
+    },
+
+    refreshUserStatus: async () => {
       get().fetchPaymentRequestsFromSupabase();
-      get().fetchPasskeysFromSupabase();
+      await get().fetchPasskeysFromSupabase();
+      try {
+        const { fetchAllProfilesSupabase } = await import("../services/supabase");
+        const profiles = await fetchAllProfilesSupabase();
+        if (!profiles?.length) return;
+        const key = (get().currentAuthKey || "").toLowerCase();
+        const email = (get().userProfile.email || "").toLowerCase();
+        const me = profiles.find((p) =>
+          p.auth_user_id?.toLowerCase() === key || p.id?.toLowerCase() === key ||
+          p.email?.toLowerCase() === key || p.email?.toLowerCase() === email || p.passkey?.toLowerCase() === key
+        );
+        if (me && typeof me.tokens === "number") {
+          set({ registeredUsers: profiles.map((p) => ({
+            id: p.id, fullName: p.name || p.fullName || "Account", email: p.email || "", phone: p.phone || "",
+            passkey: p.email || p.auth_user_id || p.passkey || p.id, passkeyId: p.id, authUserId: p.auth_user_id || undefined,
+            role: "user" as const, tokens: Number(p.tokens) || 0, status: (p.status || "ACTIVE") as "ACTIVE" | "DISABLED" | "PENDING",
+            registeredDate: p.created_at || new Date().toISOString(), createdAtTimestamp: p.created_at ? new Date(p.created_at).getTime() : Date.now(),
+            lastActive: "Recent activity", lastActiveTimestamp: Date.now(), isOnline: false, currentService: "None", currentActivity: "Active", servicesUsed: [],
+          })) });
+          set({ activePasskeys: get().activePasskeys.map((pk) =>
+            pk.key.toLowerCase() === key || pk.id.toLowerCase() === me.id.toLowerCase()
+              ? { ...pk, remainingUsages: Number(me.tokens), totalUsages: Math.max(pk.totalUsages || 0, Number(me.tokens)), paymentStatus: Number(me.tokens) > 0 ? "ACTIVE" : "EXHAUSTED" }
+              : pk
+          ) });
+        }
+      } catch (e) { console.warn("Failed to refresh wallet balance:", e); }
     },
 
     syncApprovedRequestsToState: (requests: PaymentRequest[]) => {
@@ -3359,6 +3423,13 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
                 localStorage.setItem("bigsta_payment_requests", JSON.stringify(merged));
               } catch (e) {}
               get().syncApprovedRequestsToState(merged);
+              const key = (get().currentAuthKey || "").toLowerCase();
+              const email = (get().userProfile.email || "").toLowerCase();
+              if (merged.some((request) => request.status === "APPROVED" && (
+                (key && (request.userId || "").toLowerCase() === key) ||
+                (key && (request.userPasskey || "").toLowerCase() === key) ||
+                (email && (request.userEmail || "").toLowerCase() === email)
+              ))) void get().refreshCurrentWallet();
             }
           });
         }
@@ -3402,6 +3473,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
           phone: profile.phone || "",
           passkey: profile.email || profile.auth_user_id || profile.passkey || profile.id,
           passkeyId: profile.id,
+          authUserId: profile.auth_user_id || undefined,
           role: "user",
           tokens: typeof profile.tokens === "number" ? profile.tokens : 0,
           status: (profile.status || "ACTIVE") as "ACTIVE" | "DISABLED" | "PENDING",
@@ -3688,110 +3760,33 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       return newItem;
     },
 
-    consumeUsage: (serviceName = "NIDA Service Completion", details, tokenCost) => {
-      const authKey =
-        get().currentAuthKey ||
-        (typeof window !== "undefined" ? localStorage.getItem("bigsta_auth_key") : null);
-      const role = get().authRole;
-
-      if (role === "admin") {
-        return { success: true, remainingUsages: 99999 };
+    consumeUsage: async (serviceName = "NIDA Service Completion", details, tokenCost, transactionId) => {
+      const state = get();
+      const authKey = state.currentAuthKey || (typeof window !== "undefined" ? localStorage.getItem("bigsta_auth_key") : null);
+      if (state.authRole === "admin") return { success: true, remainingUsages: 99999 };
+      const id = transactionId || `usage:${Date.now()}:${Math.random().toString(36).slice(2)}`;
+      if (state.processedDeductionIds.includes(id)) {
+        const existing = state.registeredUsers.find((u) => u.passkey.toLowerCase() === (authKey || "").toLowerCase() || u.authUserId?.toLowerCase() === (authKey || "").toLowerCase());
+        return { success: true, remainingUsages: existing?.tokens || 0, alreadyDeducted: true };
       }
-
-      const list = get().activePasskeys;
-      const match = list.find((p) => p.key.toLowerCase() === (authKey || "").toLowerCase());
-
-      if (!match) {
-        return { success: false, remainingUsages: 0, message: "No valid active passkey session." };
-      }
-
-      if (!match.active || match.paymentStatus === "DISABLED") {
-        return { success: false, remainingUsages: 0, message: "Passkey has been disabled." };
-      }
-
-      let cost = typeof tokenCost === "number" ? tokenCost : 1;
-      if (typeof tokenCost !== "number" && get().currentTemplate) {
-        const activeTpl = get().currentTemplate;
-        const name = (activeTpl?.templateName || "").toLowerCase();
-        const cardType = (activeTpl?.cardType || "").toLowerCase();
-
-        if (
-          cardType === "driving license" ||
-          name.includes("driving") ||
-          name.includes("driver") ||
-          name.includes("license") ||
-          name.includes("licence") ||
-          name.includes("permit")
-        ) {
-          const service = get().services.find((s) => s.id === "driving_license");
-          cost = service ? (service.tokenCost ?? 1) : 1;
-        } else {
-          const service = get().services.find((s) => s.id === "nida");
-          cost = service ? (service.tokenCost ?? 1) : 1;
-        }
-      }
-
-      const currentRemaining = match.remainingUsages ?? 0;
-
-      // Only block pending payments if the user does NOT have enough remaining usages
-      if (match.paymentStatus === "PENDING" && currentRemaining < cost) {
-        return {
-          success: false,
-          remainingUsages: currentRemaining,
-          message: "Payment pending confirmation by Administrator.",
-        };
-      }
-
-      if (currentRemaining < cost || match.paymentStatus === "EXHAUSTED") {
-        return {
-          success: false,
-          remainingUsages: currentRemaining,
-          message: `Insufficient tokens. This service requires ${cost} tokens, but you only have ${currentRemaining} tokens.`,
-        };
-      }
-
-      const newUsed = (match.usedUsages ?? 0) + cost;
-      const newRemaining = Math.max(0, (match.totalUsages ?? 1) - newUsed);
-      // Keep PENDING status if it was already pending and they still have remaining usages
-      const newPaymentStatus: PaymentStatus =
-        newRemaining === 0 ? "EXHAUSTED" : match.paymentStatus === "PENDING" ? "PENDING" : "ACTIVE";
-
-      const historyItem: PasskeyUsageHistoryItem = {
-        id: `hist_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-        timestamp: new Date().toISOString().replace("T", " ").substring(0, 16),
-        serviceName,
-        details,
-      };
-
-      const updatedItem: PasskeyItem = {
-        ...match,
-        usedUsages: newUsed,
-        remainingUsages: newRemaining,
-        paymentStatus: newPaymentStatus,
-        usageHistory: [historyItem, ...(match.usageHistory || [])],
-      };
-
-      const updatedList = list.map((p) => (p.id === match.id ? updatedItem : p));
-
-      try {
-        localStorage.removeItem("bigsta_passkeys");
-      } catch (e) {}
-
-      set({ activePasskeys: updatedList });
-
-      try {
-        import("../services/supabase").then(({ syncPasskeySupabase }) => {
-          syncPasskeySupabase(updatedItem);
-        });
-      } catch (e) {}
-
-      get().addTokenHistoryItem(
-        -cost,
-        details ? `${serviceName} (${details})` : serviceName,
-        match.id,
-      );
-
-      return { success: true, remainingUsages: newRemaining };
+      const email = (state.userProfile.email || "").toLowerCase();
+      const user = state.registeredUsers.find((u) => u.passkey.toLowerCase() === (authKey || "").toLowerCase() || u.id.toLowerCase() === (authKey || "").toLowerCase() || u.authUserId?.toLowerCase() === (authKey || "").toLowerCase() || (!!email && u.email?.toLowerCase() === email));
+      const pk = state.activePasskeys.find((p) => p.key.toLowerCase() === (authKey || "").toLowerCase() || p.id.toLowerCase() === (authKey || "").toLowerCase() || (!!email && p.key.toLowerCase() === email));
+      if (!authKey || (!user && !pk)) return { success: false, remainingUsages: 0, message: "No valid active user session." };
+      if (pk && (!pk.active || pk.paymentStatus === "DISABLED")) return { success: false, remainingUsages: 0, message: "Account has been disabled." };
+      let serviceId = /driving|license|licence|permit/i.test(serviceName) ? "driving_license" : /nhif/i.test(serviceName) ? "nhif" : /nrc/i.test(serviceName) ? "nrc_zambia" : /nida/i.test(serviceName) ? "nida" : state.activeServiceId || "nida";
+      const cost = typeof tokenCost === "number" ? tokenCost : (state.services.find((s) => s.id === serviceId)?.tokenCost ?? 1);
+      const available = typeof user?.tokens === "number" ? user.tokens : (pk?.remainingUsages || 0);
+      if (available < cost) return { success: false, remainingUsages: available, message: `Insufficient tokens. Requires ${cost}, available ${available}.` };
+      const { deductUserTokensSupabase } = await import("../services/supabase");
+      const result = await deductUserTokensSupabase(serviceId, serviceName, id, id.startsWith("export:") ? "export" : "generation");
+      if (!result.success) return { success: false, remainingUsages: available, message: "Token transaction could not be completed." };
+      const balance = typeof result.newTokens === "number" ? result.newTokens : Math.max(0, available - cost);
+      const chargedTokens = Number(result.chargedTokens) > 0 ? Number(result.chargedTokens) : cost;
+      const ids = [...state.processedDeductionIds, id].slice(-500);
+      set({ processedDeductionIds: ids, registeredUsers: state.registeredUsers.map((u) => user && u.id === user.id ? { ...u, tokens: balance } : u), activePasskeys: state.activePasskeys.map((p) => pk && p.id === pk.id ? { ...p, remainingUsages: balance, usedUsages: (p.usedUsages || 0) + (result.alreadyDeducted ? 0 : chargedTokens), paymentStatus: balance > 0 ? "ACTIVE" : "EXHAUSTED" } : p) });
+      if (!result.alreadyDeducted) get().addTokenHistoryItem(-chargedTokens, details ? `${serviceName} (${details})` : serviceName, authKey);
+      return { success: true, remainingUsages: balance, alreadyDeducted: result.alreadyDeducted };
     },
 
     confirmPaymentAndActivatePasskey: (id: string) => {
@@ -3920,7 +3915,8 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
 
       const service = services.find((s) => s.id === targetServiceId);
       const cost = service ? (service.tokenCost ?? 1) : 1;
-      const remaining = currentPasskey.remainingUsages ?? 0;
+      const currentUser = get().registeredUsers.find((u) => u.passkey.toLowerCase() === currentAuthKey.toLowerCase() || u.id.toLowerCase() === currentAuthKey.toLowerCase() || u.authUserId?.toLowerCase() === currentAuthKey.toLowerCase() || (!!get().userProfile.email && u.email?.toLowerCase() === get().userProfile.email.toLowerCase()));
+      const remaining = typeof currentUser?.tokens === "number" ? currentUser.tokens : (currentPasskey.remainingUsages ?? 0);
       const pStatus = currentPasskey.paymentStatus;
 
       console.log("[SERVICE VALIDATION DEBUG] Passkey status:", {
@@ -3930,63 +3926,11 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         cost,
       });
 
-      // 3b. 1-Week Offer Token Expiry Verification
-      const isTrialOfferPackage =
-        !currentPasskey.packageName ||
-        currentPasskey.packageName.toLowerCase().includes("welcome") ||
-        currentPasskey.packageName.toLowerCase().includes("offer") ||
-        currentPasskey.packageName.toLowerCase().includes("trial");
-
-      const passkeyCreationTime =
-        currentPasskey.createdAtTimestamp ||
-        (currentPasskey.createdDate ? new Date(currentPasskey.createdDate).getTime() : 0);
-      const isOfferWeekOver =
-        passkeyCreationTime > 0 && Date.now() - passkeyCreationTime > 7 * 24 * 60 * 60 * 1000;
-
-      if (isTrialOfferPackage && isOfferWeekOver) {
-        const msg =
-          "Offer Concluded: Your 1-week offer token period has concluded. To continue using services, please select an active Basic or Premium package from the Super Admin panel.";
-        get().setRechargeModalOpen(true, msg);
-        return {
-          allowed: false,
-          reason: "PAYMENT_REQUIRED",
-          message: msg,
-          paymentStatus: pStatus,
-          remainingUsages: remaining,
-          cost,
-        };
-      }
-
-      // 4. Payment Approval Check
-      if (pStatus === "PENDING" && remaining < cost) {
-        const msg = "Access Required: This service requires an approved token package.";
-        get().setRechargeModalOpen(true, msg);
-        return {
-          allowed: false,
-          reason: "PAYMENT_REQUIRED",
-          message: msg,
-          paymentStatus: pStatus,
-          remainingUsages: remaining,
-          cost,
-        };
-      }
-
-      if ((pStatus as string) === "REJECTED") {
-        const msg =
-          "Payment Rejected: Your previous payment request was rejected. Please submit a new package order.";
-        get().setRechargeModalOpen(true, msg);
-        return {
-          allowed: false,
-          reason: "PAYMENT_REQUIRED",
-          message: msg,
-          paymentStatus: pStatus,
-          remainingUsages: remaining,
-          cost,
-        };
-      }
+      // Token availability is the access gate. An old or pending package status must not
+      // redirect users who already have enough tokens in their wallet.
 
       // 5. Available Tokens / Usages Check
-      if (remaining < cost || (pStatus === "EXHAUSTED" && remaining <= 0) || remaining <= 0) {
+      if (remaining < cost || remaining <= 0) {
         const msg = `Out Of Tokens: You have ${remaining} remaining usages (required: ${cost}). Please recharge now.`;
         get().setRechargeModalOpen(true, msg);
         return {

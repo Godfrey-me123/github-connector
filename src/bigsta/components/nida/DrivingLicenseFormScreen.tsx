@@ -562,6 +562,14 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
       cardData: { ...normalizedFormData, submittedAt: record.submittedAt },
     });
 
+    // Deduct tokens according to pricing rules only after successful generation
+    await useTemplateStore.getState().consumeUsage(
+      "Driving License Generation",
+      undefined,
+      accessVal.cost,
+      `gen:dl:${record.id}`,
+    );
+
     updateStep("step9_open", "completed");
 
     setIsWorkflowCompleted(true);

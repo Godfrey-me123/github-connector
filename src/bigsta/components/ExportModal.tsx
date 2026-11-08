@@ -38,6 +38,7 @@ export const ExportModal: React.FC = () => {
 
   const [previewSrc, setPreviewSrc] = useState<string>("");
   const [isDragging, setIsDragging] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
 
   // Sync crop when template changes
@@ -368,21 +369,26 @@ export const ExportModal: React.FC = () => {
               </div>
               <button
                 type="button"
+                disabled={isExporting}
                 onClick={async () => {
+                  if (isExporting) return;
                   const store = useTemplateStore.getState();
                   const val = store.validateExportAccess("json");
                   if (!val.allowed) return;
+                  setIsExporting(true);
                   try {
                     await downloadJSON(currentTemplate);
-                    store.consumeUsage("JSON Template Export", undefined, 1);
+                    await store.consumeUsage("JSON Template Export", undefined, 1, `export:json:${currentTemplate.id}:${Date.now()}`);
                     playNotificationSound();
                   } catch (e) {
                     console.error("JSON export failed", e);
+                  } finally {
+                    setIsExporting(false);
                   }
                 }}
-                className="w-full py-2 bg-[#000000] hover:bg-[#222222] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer text-center whitespace-nowrap"
+                className="w-full py-2 bg-[#000000] hover:bg-[#222222] disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer text-center whitespace-nowrap"
               >
-                JSON
+                {isExporting ? "Exporting..." : "JSON"}
               </button>
             </div>
 
@@ -436,21 +442,26 @@ export const ExportModal: React.FC = () => {
                           ? store.lastNrcFormData
                           : store.lastNidaFormData) || {};
 
+                  setIsExporting(true);
                   try {
                     await downloadPDF(currentTemplate, formData, undefined, cropPayload);
-                    store.consumeUsage(
+                    await store.consumeUsage(
                       `${currentTemplate.templateName || "Card"} PDF Export`,
                       undefined,
                       1,
+                      `export:pdf:${currentTemplate.id}:${Date.now()}`,
                     );
                     playNotificationSound();
                   } catch (e) {
                     console.error("PDF export failed", e);
+                  } finally {
+                    setIsExporting(false);
                   }
                 }}
-                className="w-full py-2 bg-[#000000] hover:bg-[#222222] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer text-center whitespace-nowrap"
+                disabled={isExporting}
+                className="w-full py-2 bg-[#000000] hover:bg-[#222222] disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer text-center whitespace-nowrap"
               >
-                PDF
+                {isExporting ? "Exporting..." : "PDF"}
               </button>
             </div>
 
@@ -502,21 +513,26 @@ export const ExportModal: React.FC = () => {
                           ? store.lastNrcFormData
                           : store.lastNidaFormData) || {};
 
+                  setIsExporting(true);
                   try {
                     await downloadPNG(currentTemplate, formData, undefined, cropPayload);
-                    store.consumeUsage(
+                    await store.consumeUsage(
                       `${currentTemplate.templateName || "Card"} PNG Export`,
                       undefined,
                       1,
+                      `export:png:${currentTemplate.id}:${Date.now()}`,
                     );
                     playNotificationSound();
                   } catch (e) {
                     console.error("PNG export failed", e);
+                  } finally {
+                    setIsExporting(false);
                   }
                 }}
-                className="w-full py-2 bg-[#000000] hover:bg-[#222222] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer text-center whitespace-nowrap"
+                disabled={isExporting}
+                className="w-full py-2 bg-[#000000] hover:bg-[#222222] disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer text-center whitespace-nowrap"
               >
-                PNG
+                {isExporting ? "Exporting..." : "PNG"}
               </button>
             </div>
 
@@ -568,21 +584,26 @@ export const ExportModal: React.FC = () => {
                           ? store.lastNrcFormData
                           : store.lastNidaFormData) || {};
 
+                  setIsExporting(true);
                   try {
                     await downloadJPG(currentTemplate, formData, undefined, cropPayload);
-                    store.consumeUsage(
+                    await store.consumeUsage(
                       `${currentTemplate.templateName || "Card"} JPG Export`,
                       undefined,
                       1,
+                      `export:jpg:${currentTemplate.id}:${Date.now()}`,
                     );
                     playNotificationSound();
                   } catch (e) {
                     console.error("JPG export failed", e);
+                  } finally {
+                    setIsExporting(false);
                   }
                 }}
-                className="w-full py-2 bg-[#000000] hover:bg-[#222222] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer text-center whitespace-nowrap"
+                disabled={isExporting}
+                className="w-full py-2 bg-[#000000] hover:bg-[#222222] disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer text-center whitespace-nowrap"
               >
-                JPG
+                {isExporting ? "Exporting..." : "JPG"}
               </button>
             </div>
 
@@ -599,21 +620,26 @@ export const ExportModal: React.FC = () => {
               </div>
               <button
                 type="button"
+                disabled={isExporting}
                 onClick={async () => {
+                  if (isExporting) return;
                   const store = useTemplateStore.getState();
                   const val = store.validateExportAccess("svg");
                   if (!val.allowed) return;
+                  setIsExporting(true);
                   try {
                     await downloadSVG(currentTemplate);
-                    store.consumeUsage("SVG Vector Export", undefined, 1);
+                    await store.consumeUsage("SVG Vector Export", undefined, 1, `export:svg:${currentTemplate.id}:${Date.now()}`);
                     playNotificationSound();
                   } catch (e) {
                     console.error("SVG export failed", e);
+                  } finally {
+                    setIsExporting(false);
                   }
                 }}
-                className="w-full py-2 bg-[#000000] hover:bg-[#222222] text-white text-xs font-bold rounded-lg transition-colors cursor-pointer text-center whitespace-nowrap"
+                className="w-full py-2 bg-[#000000] hover:bg-[#222222] disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer text-center whitespace-nowrap"
               >
-                SVG
+                {isExporting ? "Exporting..." : "SVG"}
               </button>
             </div>
           </div>

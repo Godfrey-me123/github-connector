@@ -22,6 +22,7 @@ import { Route as ApiAdminWebhookSecretRouteImport } from './routes/api/admin/we
 import { Route as ApiAdminWebhookSettingsRouteImport } from './routes/api/admin/webhook-settings'
 import { Route as ApiAuthBootstrapRouteImport } from './routes/api/auth/bootstrap'
 import { Route as ApiPublicPaymentSmsRouteImport } from './routes/api/public/payment-sms'
+import { Route as ApiTokensSpendRouteImport } from './routes/api/tokens/spend'
 import { Route as ApiAdminWebhookSecretRegenerateRouteImport } from './routes/api/admin/webhook-secret.regenerate'
 
 const IndexRoute = IndexRouteImport.update({
@@ -89,6 +90,11 @@ const ApiPublicPaymentSmsRoute = ApiPublicPaymentSmsRouteImport.update({
   path: '/api/public/payment-sms',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTokensSpendRoute = ApiTokensSpendRouteImport.update({
+  id: '/api/tokens/spend',
+  path: '/api/tokens/spend',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAdminWebhookSecretRegenerateRoute =
   ApiAdminWebhookSecretRegenerateRouteImport.update({
     id: '/regenerate',
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/api/admin/webhook-settings': typeof ApiAdminWebhookSettingsRoute
   '/api/auth/bootstrap': typeof ApiAuthBootstrapRoute
   '/api/public/payment-sms': typeof ApiPublicPaymentSmsRoute
+  '/api/tokens/spend': typeof ApiTokensSpendRoute
   '/api/admin/webhook-secret/regenerate': typeof ApiAdminWebhookSecretRegenerateRoute
 }
 export interface FileRoutesByTo {
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/api/admin/webhook-settings': typeof ApiAdminWebhookSettingsRoute
   '/api/auth/bootstrap': typeof ApiAuthBootstrapRoute
   '/api/public/payment-sms': typeof ApiPublicPaymentSmsRoute
+  '/api/tokens/spend': typeof ApiTokensSpendRoute
   '/api/admin/webhook-secret/regenerate': typeof ApiAdminWebhookSecretRegenerateRoute
 }
 export interface FileRoutesById {
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/api/admin/webhook-settings': typeof ApiAdminWebhookSettingsRoute
   '/api/auth/bootstrap': typeof ApiAuthBootstrapRoute
   '/api/public/payment-sms': typeof ApiPublicPaymentSmsRoute
+  '/api/tokens/spend': typeof ApiTokensSpendRoute
   '/api/admin/webhook-secret/regenerate': typeof ApiAdminWebhookSecretRegenerateRoute
 }
 export interface FileRouteTypes {
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/api/admin/webhook-settings'
     | '/api/auth/bootstrap'
     | '/api/public/payment-sms'
+    | '/api/tokens/spend'
     | '/api/admin/webhook-secret/regenerate'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/api/admin/webhook-settings'
     | '/api/auth/bootstrap'
     | '/api/public/payment-sms'
+    | '/api/tokens/spend'
     | '/api/admin/webhook-secret/regenerate'
   id:
     | '__root__'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/api/admin/webhook-settings'
     | '/api/auth/bootstrap'
     | '/api/public/payment-sms'
+    | '/api/tokens/spend'
     | '/api/admin/webhook-secret/regenerate'
   fileRoutesById: FileRoutesById
 }
@@ -210,6 +222,7 @@ export interface RootRouteChildren {
   ApiAdminWebhookSettingsRoute: typeof ApiAdminWebhookSettingsRoute
   ApiAuthBootstrapRoute: typeof ApiAuthBootstrapRoute
   ApiPublicPaymentSmsRoute: typeof ApiPublicPaymentSmsRoute
+  ApiTokensSpendRoute: typeof ApiTokensSpendRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -305,6 +318,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentSmsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/tokens/spend': {
+      id: '/api/tokens/spend'
+      path: '/api/tokens/spend'
+      fullPath: '/api/tokens/spend'
+      preLoaderRoute: typeof ApiTokensSpendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/admin/webhook-secret/regenerate': {
       id: '/api/admin/webhook-secret/regenerate'
       path: '/regenerate'
@@ -342,6 +362,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAdminWebhookSettingsRoute: ApiAdminWebhookSettingsRoute,
   ApiAuthBootstrapRoute: ApiAuthBootstrapRoute,
   ApiPublicPaymentSmsRoute: ApiPublicPaymentSmsRoute,
+  ApiTokensSpendRoute: ApiTokensSpendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

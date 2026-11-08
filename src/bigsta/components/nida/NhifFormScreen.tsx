@@ -367,6 +367,14 @@ export const NhifFormScreen: React.FC<NhifFormScreenProps> = ({ onCancel, onSucc
         cardData: { ...mappedFormData, submittedAt: submissionRecord.submittedAt },
       });
 
+      // Deduct tokens according to pricing rules only after successful generation
+      await useTemplateStore.getState().consumeUsage(
+        "NHIF Card Generation",
+        mappedFormData.membershipNo,
+        accessVal.cost,
+        `gen:nhif:${submissionRecord.id}`,
+      );
+
       updateStep("step9_open", "completed");
       setIsWorkflowCompleted(true);
       setIsSubmitting(false);

@@ -284,7 +284,7 @@ export const MergeCardModal: React.FC = () => {
     setIsExporting(true);
     try {
       await download2In1PDF(frontTemplate, backTemplate || undefined, formData);
-      storeState.consumeUsage("2-in-1 Sheet PDF Export", undefined, 1);
+      await storeState.consumeUsage("2-in-1 Sheet PDF Export", undefined, 1, `export:merge:${frontTemplate.id}:${Date.now()}`);
     } catch (e) {
       console.error(e);
       alert("Error generating 2-in-1 PDF.");

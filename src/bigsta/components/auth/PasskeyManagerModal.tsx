@@ -89,14 +89,19 @@ export const PasskeyManagerModal: React.FC = () => {
     paymentMethods,
     fetchPaymentRequestsFromSupabase,
     fetchPasskeysFromSupabase,
+    tokenHistory,
+    loadTokenHistory,
   } = useTemplateStore();
+
+  const [expandedUserHistory, setExpandedUserHistory] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (isPasskeyManagerOpen) {
       fetchPaymentRequestsFromSupabase?.();
       fetchPasskeysFromSupabase?.();
+      loadTokenHistory?.();
     }
-  }, [isPasskeyManagerOpen, fetchPaymentRequestsFromSupabase, fetchPasskeysFromSupabase]);
+  }, [isPasskeyManagerOpen, fetchPaymentRequestsFromSupabase, fetchPasskeysFromSupabase, loadTokenHistory]);
 
   // Admin Top Navigation Tab State
   const [activeAdminTab, setActiveAdminTab] = useState<
@@ -1340,6 +1345,143 @@ export const PasskeyManagerModal: React.FC = () => {
                             Security: {passkeyItem?.suspiciousStatus || "Normal / Verified"}
                           </span>
                         </div>
+
+                        {/* Token Ledger & Balance Monitoring (Requirement 6) */}
+                        {(() => {
+                          const userApprovedPayments = paymentRequests.filter(
+                            (r) =>
+                              r.status === "APPROVED" &&
+                              ((u.id && r.userId && r.userId.toLowerCase() === u.id.toLowerCase()) ||
+                                (u.authUserId && r.userId && r.userId.toLowerCase() === u.authUserId.toLowerCase()) ||
+                                (u.email && r.userEmail && r.userEmail.toLowerCase() === u.email.toLowerCase()) ||
+                                (u.email && r.userPasskey && r.userPasskey.toLowerCase() === u.email.toLowerCase()) ||
+                                (u.passkey && r.userPasskey && r.userPasskey.toLowerCase() === u.passkey.toLowerCase()) ||
+                                (u.passkeyId && r.passkeyId === u.passkeyId))
+                          );
+                          const totalCredited = userApprovedPayments.reduce((sum, r) => sum + (r.requestedUsages || 0), 0);
+
+                          const userTxHistory = (tokenHistory || []).filter((t) => {
+                            const tUser = (t.userId || "").toLowerCase();
+                            return (
+                              (u.id && tUser === u.id.toLowerCase()) ||
+                              (u.authUserId && tUser === u.authUserId.toLowerCase()) ||
+                              (u.email && tUser === u.email.toLowerCase()) ||
+                              (u.passkey && tUser === u.passkey.toLowerCase()) ||
+                              (u.passkeyId && tUser === u.passkeyId.toLowerCase())
+                            );
+                          });
+
+                          const totalConsumedFromTx = userTxHistory
+                            .filter((t) => t.amount < 0)
+                            .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+                          const totalConsumed = totalConsumedFromTx;
+                          const currentBalance = typeof u.tokens === "number" ? u.tokens : (passkeyItem?.remainingUsages ?? 0);
+
+                          return (
+                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2.5 text-xs mt-1">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                                  <Wallet className="w-3.5 h-3.5 text-blue-600" />
+                                  <span>Token Balance & Ledger Monitoring</span>
+                                </div>
+                                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-bold">
+                                  Ledger
+                                </span>
+                              </div>
+
+                              <div className="grid grid-cols-3 gap-2 text-center">
+                                <div className="bg-white p-2 rounded-lg border border-slate-200">
+                                  <span className="text-[10px] text-slate-500 font-bold uppercase block">Total Credited</span>
+                                  <span className="text-sm font-extrabold font-mono text-emerald-600">+{totalCredited}</span>
+                                </div>
+                                <div className="bg-white p-2 rounded-lg border border-slate-200">
+                                  <span className="text-[10px] text-slate-500 font-bold uppercase block">Total Consumed</span>
+                                  <span className="text-sm font-extrabold font-mono text-rose-600">-{totalConsumed}</span>
+                                </div>
+                                <div className="bg-white p-2 rounded-lg border border-slate-200">
+                                  <span className="text-[10px] text-slate-500 font-bold uppercase block">Remaining Balance</span>
+                                  <span className="text-sm font-extrabold font-mono text-slate-900">{currentBalance}</span>
+                                </div>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setExpandedUserHistory((prev) => ({
+                                    ...prev,
+                                    [u.id]: !prev[u.id],
+                                  }))
+                                }
+                                className="w-full flex items-center justify-between px-2.5 py-1.5 bg-white hover:bg-slate-100 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
+                              >
+                                <div className="flex items-center gap-1.5">
+                                  <ScrollText className="w-3.5 h-3.5 text-slate-500" />
+                                  <span>Recharge & Usage History ({userApprovedPayments.length + userTxHistory.length})</span>
+                                </div>
+                                <span className="text-[11px] text-blue-600 font-bold">
+                                  {expandedUserHistory[u.id] ? "Hide Details" : "Show Details"}
+                                </span>
+                              </button>
+
+                              {expandedUserHistory[u.id] && (
+                                <div className="space-y-1.5 pt-1 text-xs max-h-48 overflow-y-auto pr-1">
+                                  {userApprovedPayments.length === 0 && userTxHistory.length === 0 ? (
+                                    <p className="text-[11px] text-slate-400 italic text-center py-2">
+                                      No recharge or usage transactions recorded yet.
+                                    </p>
+                                  ) : (
+                                    <>
+                                      {userApprovedPayments.map((p) => (
+                                        <div
+                                          key={`pay_${p.id}`}
+                                          className="flex items-center justify-between p-1.5 rounded bg-emerald-50/60 border border-emerald-200/60 text-[11px]"
+                                        >
+                                          <div className="flex items-center gap-1.5 min-w-0">
+                                            <PlusCircle className="w-3 h-3 text-emerald-600 shrink-0" />
+                                            <span className="font-semibold text-emerald-900 truncate">
+                                              Approved Recharge: {p.packageName || "Token Pack"}
+                                            </span>
+                                            <span className="text-slate-400 font-mono text-[10px]">
+                                              {p.date ? new Date(p.date).toLocaleDateString() : ""}
+                                            </span>
+                                          </div>
+                                          <span className="font-mono font-bold text-emerald-700 shrink-0">
+                                            +{p.requestedUsages}
+                                          </span>
+                                        </div>
+                                      ))}
+                                      {userTxHistory.map((t) => (
+                                        <div
+                                          key={`tx_${t.id}`}
+                                          className={`flex items-center justify-between p-1.5 rounded border text-[11px] ${
+                                            t.amount < 0
+                                              ? "bg-rose-50/60 border-rose-200/60 text-rose-900"
+                                              : "bg-emerald-50/60 border-emerald-200/60 text-emerald-900"
+                                          }`}
+                                        >
+                                          <div className="flex items-center gap-1.5 min-w-0">
+                                            <Receipt className="w-3 h-3 shrink-0 opacity-70" />
+                                            <span className="font-semibold truncate">{t.reason || "Token Usage"}</span>
+                                            <span className="text-slate-400 font-mono text-[10px]">
+                                              {t.timestamp ? new Date(t.timestamp).toLocaleDateString() : ""}
+                                            </span>
+                                          </div>
+                                          <span
+                                            className={`font-mono font-bold shrink-0 ${
+                                              t.amount < 0 ? "text-rose-700" : "text-emerald-700"
+                                            }`}
+                                          >
+                                            {t.amount > 0 ? `+${t.amount}` : t.amount}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })

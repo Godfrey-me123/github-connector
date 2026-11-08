@@ -19,6 +19,7 @@ export const UserUsageBadge: React.FC<{ className?: string }> = ({ className = "
     (u) =>
       (currentAuthKey && u.passkey.toLowerCase() === currentAuthKey.toLowerCase()) ||
       (currentAuthKey && u.id === currentAuthKey) ||
+      (currentAuthKey && u.authUserId?.toLowerCase() === currentAuthKey.toLowerCase()) ||
       (userProfile?.email && u.email && u.email.toLowerCase() === userProfile.email.toLowerCase()),
   );
 
@@ -33,7 +34,7 @@ export const UserUsageBadge: React.FC<{ className?: string }> = ({ className = "
         (userProfile?.email && r.userPasskey.toLowerCase() === userProfile.email.toLowerCase())),
   );
 
-  const status = myPending ? "PENDING" : remaining > 0 ? "ACTIVE" : "EXHAUSTED";
+  const status = remaining > 0 ? "ACTIVE" : myPending ? "PENDING" : "EXHAUSTED";
   const packageName = userKey?.packageName || "Standard";
 
   let badgeColor =

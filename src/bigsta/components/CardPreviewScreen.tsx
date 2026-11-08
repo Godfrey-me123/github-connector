@@ -318,7 +318,7 @@ export const CardPreviewScreen: React.FC = () => {
         activeFormData,
         `${activeTemplate.templateName || "card"}.pdf`,
       );
-      store.consumeUsage("Single Card PDF Download", undefined, 1);
+      await store.consumeUsage("Single Card PDF Download", undefined, 1, `export:single_pdf:${activeTemplate.id}:${Date.now()}`);
     } catch (e) {
       console.error("Download failed", e);
     } finally {
@@ -334,7 +334,7 @@ export const CardPreviewScreen: React.FC = () => {
     setIsDownloadingPdf(true);
     try {
       await download2In1PDF(fTpl, bTpl, activeFormData);
-      store.consumeUsage("2-in-1 Sheet PDF Download", undefined, 1);
+      await store.consumeUsage("2-in-1 Sheet PDF Download", undefined, 1, `export:merge_pdf:${fTpl?.id || "f"}:${bTpl?.id || "b"}:${Date.now()}`);
     } catch (e) {
       console.error("2-in-1 download failed", e);
     } finally {
@@ -359,7 +359,7 @@ export const CardPreviewScreen: React.FC = () => {
           `${activeTemplate.templateName || "card"}.pdf`,
         );
       }
-      store.consumeUsage(`${activeTemplate.templateName || "Card"} Quick Print`, undefined, 1);
+      await store.consumeUsage(`${activeTemplate.templateName || "Card"} Quick Print`, undefined, 1, `export:quick_print:${activeTemplate.id}:${Date.now()}`);
     } catch (e) {
       console.error("Print failed", e);
     } finally {

@@ -186,6 +186,7 @@ export const RechargeModal: React.FC = () => {
         (u) =>
           (currentAuthKey && u.passkey.toLowerCase() === currentAuthKey.toLowerCase()) ||
           (currentAuthKey && u.id === currentAuthKey) ||
+          (currentAuthKey && u.authUserId?.toLowerCase() === currentAuthKey.toLowerCase()) ||
           (userProfile?.email && u.email && u.email.toLowerCase() === userProfile.email.toLowerCase()),
       ),
     [registeredUsers, currentAuthKey, userProfile?.email],

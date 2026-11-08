@@ -237,7 +237,7 @@ export const CardGeneratorModal: React.FC = () => {
       setDownloadState("COMPLETED");
 
       // 7. Only then consume token
-      store.consumeUsage(description, undefined, 1);
+      await store.consumeUsage(description, undefined, 1, `export:modal:${selectedFormat}:${exportPaperSize}:${Date.now()}`);
       toast.success(`${description} completed!`);
     } catch (e: any) {
       console.error("Export failed:", e);

@@ -519,6 +519,14 @@ export const NidaFormScreen: React.FC<NidaFormScreenProps> = ({ onSuccess, onCan
       cardData: { ...normalizedFormData, submittedAt: submissionRecord.submittedAt },
     });
 
+    // Deduct tokens according to pricing rules only after successful generation
+    await useTemplateStore.getState().consumeUsage(
+      "NIDA Card Generation",
+      undefined,
+      accessVal.cost,
+      `gen:nida:${submissionRecord.id}`,
+    );
+
     updateStep("step9_open", "completed");
     setIsWorkflowCompleted(true);
     setIsProcessing(false);

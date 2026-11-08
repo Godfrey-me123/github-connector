@@ -1633,9 +1633,9 @@ export async function creditUserTokensSupabase(
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userIdOrPasskey);
     let query = supabase.from("profiles").select("id, tokens, auth_user_id");
     if (isUuid) {
-      query = query.or(`id.eq.${userIdOrPasskey},auth_user_id.eq.${userIdOrPasskey}`);
+      query = query.or(`id.eq.${userIdOrPasskey},auth_user_id.eq.${userIdOrPasskey},passkey.eq.${userIdOrPasskey}`);
     } else {
-      query = query.or(`id.eq.${userIdOrPasskey},passkey.eq.${userIdOrPasskey}`);
+      query = query.or(`id.eq.${userIdOrPasskey},passkey.eq.${userIdOrPasskey},email.eq.${userIdOrPasskey}`);
     }
 
     const { data: pData, error: pError } = await query.maybeSingle();
@@ -1669,5 +1669,47 @@ export async function creditUserTokensSupabase(
   } catch (err) {
     console.error("[Supabase] creditUserTokensSupabase error:", err);
     return false;
+  }
+}
+
+/** Deduct through the authenticated server route, which uses the existing atomic wallet RPC. */
+export async function deductUserTokensSupabase(
+  serviceId: string,
+  serviceName: string,
+  operationId: string,
+  mode: "generation" | "export" = "generation",
+): Promise<{ success: boolean; newTokens?: number; chargedTokens?: number; alreadyDeducted?: boolean }> {
+  if (!supabase || !serviceId || !operationId) return { success: false };
+  try {
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
+    if (error || !session?.access_token) return { success: false };
+
+    const response = await fetch("/api/tokens/spend", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ serviceId, serviceName, operationId, mode }),
+    });
+
+    const result = await response.json().catch(() => null);
+    if (!response.ok) {
+      console.warn("[Supabase] Token spend rejected:", result?.error || response.statusText);
+      return { success: false };
+    }
+
+    return {
+      success: true,
+      newTokens: Number(result?.balance),
+      chargedTokens: Number(result?.chargedTokens),
+      alreadyDeducted: Boolean(result?.alreadyApplied),
+    };
+  } catch (error) {
+    console.error("[Supabase] Token spend request failed:", error);
+    return { success: false };
   }
 }

@@ -20,6 +20,7 @@ export const UsageExhaustedBanner: React.FC = () => {
     (u) =>
       (currentAuthKey && u.passkey.toLowerCase() === currentAuthKey.toLowerCase()) ||
       (currentAuthKey && u.id === currentAuthKey) ||
+      (currentAuthKey && u.authUserId?.toLowerCase() === currentAuthKey.toLowerCase()) ||
       (userProfile?.email && u.email && u.email.toLowerCase() === userProfile.email.toLowerCase()),
   );
 

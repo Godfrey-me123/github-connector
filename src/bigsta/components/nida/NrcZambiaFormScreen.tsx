@@ -530,6 +530,14 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({
         cardData: { ...mappedFormData, submittedAt: submissionRecord.submittedAt },
       });
 
+      // Deduct tokens according to pricing rules only after successful generation
+      await useTemplateStore.getState().consumeUsage(
+        "NRC Zambia Card Generation",
+        mappedFormData.nrcNumber,
+        accessVal.cost,
+        `gen:nrc:${submissionRecord.id}`,
+      );
+
       updateStep("step9_open", "completed");
       setIsWorkflowCompleted(true);
       setIsSubmitting(false);
