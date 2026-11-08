@@ -275,12 +275,32 @@ export default function App() {
           servicesUsed: [],
         };
 
+        const tokens = typeof profile?.tokens === "number" ? profile.tokens : 0;
+        const initialPasskeyItem = {
+          id: profile?.id || user.id,
+          key: user.id,
+          role,
+          active: profile?.status !== "DISABLED",
+          createdDate: profile?.created_at || new Date().toISOString(),
+          createdAtTimestamp: Date.now(),
+          createdBy: fullName,
+          description: `${fullName} (${user.email || ""})`,
+          totalUsages: Math.max(1, tokens),
+          usedUsages: 0,
+          remainingUsages: tokens,
+          paymentStatus: tokens > 0 ? ("ACTIVE" as const) : ("EXHAUSTED" as const),
+          packageName: "Standard",
+          packagePrice: "Free",
+          usageHistory: [],
+        };
+
         useTemplateStore.setState({
           authLoading: false,
           authRole: role,
           currentAuthKey: user.id,
           userProfile: { name: fullName, phone, email: user.email || "", region: profile?.region || "" },
           registeredUsers: [registeredUser],
+          activePasskeys: [initialPasskeyItem],
           ...(welcomeTokenGranted ? { rechargeNotice: "A verified welcome token was added to your account." } : {}),
         });
         await fetchPasskeysFromSupabase();

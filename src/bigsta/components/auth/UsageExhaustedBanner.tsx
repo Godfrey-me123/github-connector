@@ -3,16 +3,30 @@ import { ShieldAlert, CreditCard } from "lucide-react";
 import { useTemplateStore } from "../../store/useTemplateStore";
 
 export const UsageExhaustedBanner: React.FC = () => {
-  const { authRole, currentAuthKey, activePasskeys, setRechargeModalOpen } = useTemplateStore();
+  const { authRole, currentAuthKey, activePasskeys, registeredUsers, userProfile, setRechargeModalOpen } = useTemplateStore();
 
-  // Find active user passkey
+  if (authRole !== "user") return null;
+
+  // Find active user passkey / profile tokens
   const userKey = activePasskeys.find(
-    (p) => p.role === "user" && p.key.toLowerCase() === (currentAuthKey || "").toLowerCase(),
+    (p) =>
+      p.role === "user" &&
+      (p.key.toLowerCase() === (currentAuthKey || "").toLowerCase() ||
+        p.id.toLowerCase() === (currentAuthKey || "").toLowerCase() ||
+        (userProfile?.email && p.description?.toLowerCase().includes(userProfile.email.toLowerCase()))),
   );
 
-  const isExhausted = authRole === "user" && userKey && (userKey.remainingUsages ?? 0) <= 0;
+  const currentUser = registeredUsers.find(
+    (u) =>
+      (currentAuthKey && u.passkey.toLowerCase() === currentAuthKey.toLowerCase()) ||
+      (currentAuthKey && u.id === currentAuthKey) ||
+      (userProfile?.email && u.email && u.email.toLowerCase() === userProfile.email.toLowerCase()),
+  );
 
-  if (!isExhausted || !userKey) return null;
+  const remaining = currentUser?.tokens ?? userKey?.remainingUsages ?? 0;
+  const isExhausted = remaining <= 0;
+
+  if (!isExhausted) return null;
 
   return (
     <div

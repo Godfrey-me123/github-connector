@@ -3,16 +3,37 @@ import { Ticket, AlertCircle, Wallet, PlusCircle, CheckCircle } from "lucide-rea
 import { useTemplateStore } from "../../store/useTemplateStore";
 
 export const UserUsageBadge: React.FC<{ className?: string }> = ({ className = "" }) => {
-  const { authRole, currentAuthKey, activePasskeys, setRechargeModalOpen } = useTemplateStore();
+  const { authRole, currentAuthKey, activePasskeys, registeredUsers, userProfile, paymentRequests, setRechargeModalOpen } = useTemplateStore();
 
   if (authRole !== "user") return null;
 
   const userKey = activePasskeys.find(
-    (p) => p.role === "user" && p.key.toLowerCase() === (currentAuthKey || "").toLowerCase(),
+    (p) =>
+      p.role === "user" &&
+      (p.key.toLowerCase() === (currentAuthKey || "").toLowerCase() ||
+        p.id.toLowerCase() === (currentAuthKey || "").toLowerCase() ||
+        (userProfile?.email && p.description?.toLowerCase().includes(userProfile.email.toLowerCase()))),
   );
 
-  const remaining = userKey ? (userKey.remainingUsages ?? 0) : 0;
-  const status = userKey?.paymentStatus || "ACTIVE";
+  const currentUser = registeredUsers.find(
+    (u) =>
+      (currentAuthKey && u.passkey.toLowerCase() === currentAuthKey.toLowerCase()) ||
+      (currentAuthKey && u.id === currentAuthKey) ||
+      (userProfile?.email && u.email && u.email.toLowerCase() === userProfile.email.toLowerCase()),
+  );
+
+  const remaining = currentUser?.tokens ?? userKey?.remainingUsages ?? 0;
+
+  const myPending = paymentRequests.some(
+    (r) =>
+      r.status === "PENDING" &&
+      ((currentAuthKey && r.userPasskey.toLowerCase() === currentAuthKey.toLowerCase()) ||
+        (currentAuthKey && r.userId && r.userId.toLowerCase() === currentAuthKey.toLowerCase()) ||
+        (userProfile?.email && r.userEmail && r.userEmail.toLowerCase() === userProfile.email.toLowerCase()) ||
+        (userProfile?.email && r.userPasskey.toLowerCase() === userProfile.email.toLowerCase())),
+  );
+
+  const status = myPending ? "PENDING" : remaining > 0 ? "ACTIVE" : "EXHAUSTED";
   const packageName = userKey?.packageName || "Standard";
 
   let badgeColor =

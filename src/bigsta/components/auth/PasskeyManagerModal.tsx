@@ -404,6 +404,8 @@ export const PasskeyManagerModal: React.FC = () => {
     if (res.success) {
       setAdminActionNotice("Payment approved successfully! Usages activated.");
       setTimeout(() => setAdminActionNotice(null), 3500);
+      fetchPaymentRequestsFromSupabase?.();
+      fetchPasskeysFromSupabase?.();
     }
   };
 
@@ -1161,8 +1163,8 @@ export const PasskeyManagerModal: React.FC = () => {
                       (p) =>
                         p.id === u.passkeyId || p.key.toLowerCase() === u.passkey.toLowerCase(),
                     );
-                    const remaining = passkeyItem ? passkeyItem.remainingUsages : 0;
-                    const total = passkeyItem ? passkeyItem.totalUsages : 0;
+                    const remaining = typeof u.tokens === "number" ? u.tokens : (passkeyItem ? passkeyItem.remainingUsages : 0);
+                    const total = passkeyItem ? passkeyItem.totalUsages : remaining;
 
                     return (
                       <div
@@ -1200,9 +1202,9 @@ export const PasskeyManagerModal: React.FC = () => {
                                 </span>
                                 <span>•</span>
                                 <span>
-                                  Passkey:{" "}
+                                  Email / Account:{" "}
                                   <code className="font-mono font-bold text-gray-900 bg-gray-100 px-1.5 py-0.2 rounded">
-                                    {u.passkey}
+                                    {u.email || u.passkey}
                                   </code>
                                 </span>
                               </div>
@@ -1450,8 +1452,15 @@ export const PasskeyManagerModal: React.FC = () => {
                           </span>
                         </div>
 
-                        <div className="text-[11px] text-gray-500 flex items-center gap-3">
+                        <div className="text-[11px] text-gray-500 flex items-center gap-3 flex-wrap">
                           <span>Requested Date: {req.date}</span>
+                          <span>•</span>
+                          <span>
+                            Account:{" "}
+                            <code className="font-mono font-bold text-gray-800">
+                              {req.userEmail || req.userPasskey || "N/A"}
+                            </code>
+                          </span>
                           <span>•</span>
                           <span>
                             Lipa No:{" "}

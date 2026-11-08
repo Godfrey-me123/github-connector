@@ -28,6 +28,8 @@ export const RechargeModal: React.FC = () => {
     authRole,
     currentAuthKey,
     activePasskeys,
+    registeredUsers,
+    userProfile,
     paymentRequests,
     submitPaymentRequest,
     cancelPaymentRequest,
@@ -169,13 +171,56 @@ export const RechargeModal: React.FC = () => {
   const currentPasskey = useMemo(
     () =>
       activePasskeys.find(
-        (p) => p.role === "user" && p.key.toLowerCase() === (currentAuthKey || "").toLowerCase(),
+        (p) =>
+          p.role === "user" &&
+          (p.key.toLowerCase() === (currentAuthKey || "").toLowerCase() ||
+            p.id.toLowerCase() === (currentAuthKey || "").toLowerCase() ||
+            (userProfile?.email && p.description?.toLowerCase().includes(userProfile.email.toLowerCase()))),
       ),
-    [activePasskeys, currentAuthKey],
+    [activePasskeys, currentAuthKey, userProfile?.email],
   );
 
-  const remainingUsages = currentPasskey?.remainingUsages ?? 0;
-  const paymentStatus = currentPasskey?.paymentStatus || "ACTIVE";
+  const currentUser = useMemo(
+    () =>
+      registeredUsers.find(
+        (u) =>
+          (currentAuthKey && u.passkey.toLowerCase() === currentAuthKey.toLowerCase()) ||
+          (currentAuthKey && u.id === currentAuthKey) ||
+          (userProfile?.email && u.email && u.email.toLowerCase() === userProfile.email.toLowerCase()),
+      ),
+    [registeredUsers, currentAuthKey, userProfile?.email],
+  );
+
+  const remainingUsages = currentUser?.tokens ?? currentPasskey?.remainingUsages ?? 0;
+
+  // Find user payment requests by AuthKey, Email, or UserId
+  const userRequests = useMemo(
+    () =>
+      paymentRequests.filter((r) => {
+        const key = (currentAuthKey || "").toLowerCase();
+        const email = (userProfile?.email || "").toLowerCase();
+        return (
+          (key && r.userPasskey.toLowerCase() === key) ||
+          (key && r.userId && r.userId.toLowerCase() === key) ||
+          (email && r.userEmail && r.userEmail.toLowerCase() === email) ||
+          (email && r.userPasskey.toLowerCase() === email)
+        );
+      }),
+    [paymentRequests, currentAuthKey, userProfile?.email],
+  );
+
+  const latestRequest = useMemo(() => {
+    if (userRequests.length === 0) return null;
+    return userRequests[userRequests.length - 1];
+  }, [userRequests]);
+
+  const pendingRequest = userRequests.find((r) => r.status === "PENDING") || null;
+  const hasPendingRequest = !!pendingRequest;
+  const paymentStatus = hasPendingRequest
+    ? "PENDING"
+    : remainingUsages > 0
+      ? "ACTIVE"
+      : "EXHAUSTED";
 
   // Check if 1-week free offer token has ended
   const isOfferWeekOver = useMemo(() => {
@@ -189,23 +234,6 @@ export const RechargeModal: React.FC = () => {
     const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
     return Date.now() - grantTime >= ONE_WEEK_MS;
   }, [currentPasskey]);
-
-  // Find latest user payment request if any
-  const userRequests = useMemo(
-    () =>
-      paymentRequests.filter(
-        (r) => r.userPasskey.toLowerCase() === (currentAuthKey || "").toLowerCase(),
-      ),
-    [paymentRequests, currentAuthKey],
-  );
-
-  const latestRequest = useMemo(() => {
-    if (userRequests.length === 0) return null;
-    return userRequests[userRequests.length - 1];
-  }, [userRequests]);
-
-  const pendingRequest = userRequests.find((r) => r.status === "PENDING") || null;
-  const hasPendingRequest = !!pendingRequest || paymentStatus === "PENDING";
 
   const selectedPkg = useMemo(() => {
     const offerMatch = activeWeeklyOffers.find((o) => o.id === selectedPkgId);
@@ -443,6 +471,20 @@ export const RechargeModal: React.FC = () => {
             <div className="p-3 bg-blue-50 border border-blue-300 rounded-xl text-xs text-blue-900 flex items-center gap-2 font-bold animate-fadeIn">
               <Check className="w-4 h-4 text-blue-600 shrink-0" />
               <span>{actionNotice}</span>
+            </div>
+          )}
+
+          {/* Approved payment banner if latest was approved */}
+          {latestRequest && latestRequest.status === "APPROVED" && !hasPendingRequest && (
+            <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-xl text-xs space-y-1 text-left animate-fadeIn">
+              <div className="flex items-center gap-1.5 font-extrabold text-emerald-950">
+                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Malipo Yamethibitishwa! (Payment Approved)</span>
+              </div>
+              <p className="text-emerald-900 leading-relaxed text-[11px]">
+                Ombi lako la kifurushi cha <strong>{latestRequest.packageName}</strong> limethibitishwa na usages{" "}
+                <strong>{latestRequest.requestedUsages}</strong> zimeongezwa kwenye akaunti yako.
+              </p>
             </div>
           )}
 

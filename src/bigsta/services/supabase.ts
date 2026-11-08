@@ -811,11 +811,13 @@ export async function fetchPasskeysSupabase(): Promise<any[]> {
       const { data: profileData } = await supabase.from("profiles").select("*");
       if (profileData && Array.isArray(profileData)) {
         profileData.forEach((p) => {
-          if (p.passkey && !seenKeys.has(p.passkey.toLowerCase())) {
-            seenKeys.add(p.passkey.toLowerCase());
+          const passkeyIdentifier = p.auth_user_id || p.passkey || p.id;
+          if (passkeyIdentifier && !seenKeys.has(passkeyIdentifier.toLowerCase())) {
+            seenKeys.add(passkeyIdentifier.toLowerCase());
+            const userTokens = typeof p.tokens === "number" ? p.tokens : 0;
             list.push({
-              id: p.id || "pk_" + (p.auth_user_id || p.passkey),
-              key: p.auth_user_id || p.passkey,
+              id: p.id || "pk_" + passkeyIdentifier,
+              key: passkeyIdentifier,
               role: p.role || "user",
               active: p.status !== "DISABLED",
               createdDate:
@@ -828,10 +830,10 @@ export async function fetchPasskeysSupabase(): Promise<any[]> {
                   : Date.now(),
               createdBy: "User Self-Registration",
               description: `${p.name || "Registered User"} (${p.phone || "No Phone"})`,
-              totalUsages: typeof p.tokens === "number" ? p.tokens : 1,
+              totalUsages: Math.max(1, userTokens),
               usedUsages: 0,
-              remainingUsages: typeof p.tokens === "number" ? p.tokens : 1,
-              paymentStatus: "ACTIVE",
+              remainingUsages: userTokens,
+              paymentStatus: userTokens > 0 ? "ACTIVE" : "EXHAUSTED",
               packageName: "Registered User",
               packagePrice: "Free",
               usageHistory: [],
@@ -1478,8 +1480,9 @@ export async function syncPaymentRequestSupabase(request: any): Promise<boolean>
       user_id: resolvedUserId,
       user_name: request.userName || "",
       user_phone: request.userPhone || "",
+      user_email: request.userEmail || "",
       passkey_id: request.passkeyId || "",
-      user_passkey: request.userPasskey || "",
+      user_passkey: request.userPasskey || request.userEmail || "",
       package_id: request.packageId,
       package_name: request.packageName,
       amount: request.amount,
@@ -1520,10 +1523,11 @@ export async function fetchPaymentRequestsSupabase(): Promise<any[]> {
     return data.map((row) => ({
       id: row.id,
       userId: row.user_id || undefined,
+      userEmail: row.user_email || row.user_passkey || "",
       userName: row.user_name || "Registered User",
       userPhone: row.user_phone || "N/A",
       passkeyId: row.passkey_id || "",
-      userPasskey: row.user_passkey || "",
+      userPasskey: row.user_passkey || row.user_email || "",
       packageId: row.package_id,
       packageName: row.package_name,
       amount: row.amount,
@@ -1596,6 +1600,29 @@ export function subscribePaymentRequestsRealtime(
 
 
 
+/** Atomic admin approval via RPC with fallback */
+export async function approvePaymentRequestSupabase(requestId: string): Promise<boolean> {
+  if (!supabase || !requestId) return false;
+  try {
+    const { data: rpcData, error: rpcError } = await (supabase as any).rpc(
+      "admin_approve_payment_request",
+      { p_request_id: requestId },
+    );
+    if (!rpcError && rpcData?.success) {
+      return true;
+    }
+    if (rpcError) {
+      console.warn("[Supabase] RPC admin_approve_payment_request fallback:", rpcError.message);
+    }
+  } catch (e) {
+    console.warn("[Supabase] RPC approval call error, falling back to direct update:", e);
+  }
+
+  // Fallback to table updates
+  const reviewedDate = new Date().toISOString().replace("T", " ").substring(0, 16);
+  return updatePaymentRequestStatusSupabase(requestId, "APPROVED", reviewedDate);
+}
+
 /** Increment user tokens in public.profiles and public.user_profiles upon admin approval */
 export async function creditUserTokensSupabase(
   userIdOrPasskey: string,
@@ -1621,13 +1648,20 @@ export async function creditUserTokensSupabase(
     const newTokens = currentTokens + tokensToAdd;
     const updatedAt = new Date().toISOString();
 
-    const [{ error: e1 }, { error: e2 }] = await Promise.all([
-      supabase.from("profiles").update({ tokens: newTokens, status: "ACTIVE", updated_at: updatedAt }).eq("id", pData.id),
-      supabase.from("user_profiles").update({ tokens: newTokens, status: "ACTIVE", updated_at: updatedAt }).eq("id", pData.id),
-    ]);
+    const { error: e1 } = await supabase
+      .from("profiles")
+      .update({ tokens: newTokens, status: "ACTIVE", updated_at: updatedAt })
+      .eq("id", pData.id);
 
-    if (e1 || e2) {
-      console.warn("[Supabase] Token credit update warning:", e1?.message || e2?.message);
+    try {
+      await supabase
+        .from("user_profiles")
+        .update({ tokens: newTokens, status: "ACTIVE", updated_at: updatedAt })
+        .eq("id", pData.id);
+    } catch {}
+
+    if (e1) {
+      console.warn("[Supabase] Token credit update warning:", e1.message);
       return false;
     }
 

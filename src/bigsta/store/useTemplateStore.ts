@@ -462,6 +462,7 @@ export const DEFAULT_PASSKEYS: PasskeyItem[] = [];
 export interface RegisteredUser {
   id: string;
   fullName: string;
+  email?: string;
   phone: string;
   passkey: string;
   passkeyId: string;
@@ -481,6 +482,7 @@ export interface RegisteredUser {
 export interface PaymentRequest {
   id: string;
   userId?: string;
+  userEmail?: string;
   userName: string;
   userPhone: string;
   passkeyId: string;
@@ -731,6 +733,7 @@ interface TemplateState {
   updateUserActivity: (currentService?: string, currentActivity?: string) => void;
   fetchPaymentRequestsFromSupabase: () => Promise<void>;
   unsubscribePaymentRequestsFromSupabase: () => void;
+  syncApprovedRequestsToState: (requests: PaymentRequest[]) => void;
   submitPaymentRequest: (
     packageId: string,
     packageName: string,
@@ -2641,11 +2644,15 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       const passkeys = get().activePasskeys;
       const users = get().registeredUsers;
 
-      // Prevent multiple pending requests for the same user/passkey
+      const userProfile = get().userProfile;
+      // Prevent multiple pending requests for the same user account
       const existingPending = get().paymentRequests.find(
         (r) =>
           r.status === "PENDING" &&
-          r.userPasskey.toLowerCase() === (currentAuthKey || "").toLowerCase(),
+          ((currentAuthKey && r.userPasskey.toLowerCase() === currentAuthKey.toLowerCase()) ||
+            (currentAuthKey && r.userId && r.userId === currentAuthKey) ||
+            (userProfile?.email && r.userEmail && r.userEmail.toLowerCase() === userProfile.email.toLowerCase()) ||
+            (userProfile?.email && r.userPasskey.toLowerCase() === userProfile.email.toLowerCase())),
       );
       if (existingPending) {
         return {
@@ -2655,10 +2662,16 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       }
 
       const userPasskeyItem = passkeys.find(
-        (p) => p.role === "user" && p.key.toLowerCase() === (currentAuthKey || "").toLowerCase(),
+        (p) =>
+          p.role === "user" &&
+          ((currentAuthKey && p.key.toLowerCase() === currentAuthKey.toLowerCase()) ||
+            (userProfile?.email && p.description?.toLowerCase().includes(userProfile.email.toLowerCase()))),
       );
       const userRecord = users.find(
-        (u) => u.passkey.toLowerCase() === (currentAuthKey || "").toLowerCase(),
+        (u) =>
+          (currentAuthKey && u.passkey.toLowerCase() === currentAuthKey.toLowerCase()) ||
+          (currentAuthKey && u.id === currentAuthKey) ||
+          (userProfile?.email && u.email && u.email.toLowerCase() === userProfile.email.toLowerCase()),
       );
 
       const now = new Date();
@@ -2667,11 +2680,12 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
 
       const newRequest: PaymentRequest = {
         id: `pay_${nowTs}`,
-        userId: userRecord?.id,
-        userName: userRecord?.fullName || userPasskeyItem?.createdBy || "Registered User",
-        userPhone: userRecord?.phone || "N/A",
-        passkeyId: userPasskeyItem?.id || "",
-        userPasskey: userPasskeyItem?.key || currentAuthKey || "",
+        userId: userRecord?.id || currentAuthKey,
+        userEmail: userProfile?.email || (userRecord?.email ?? ""),
+        userName: userProfile?.name || userRecord?.fullName || userPasskeyItem?.createdBy || "Registered User",
+        userPhone: userProfile?.phone || userRecord?.phone || "N/A",
+        passkeyId: userPasskeyItem?.id || userRecord?.id || currentAuthKey || "",
+        userPasskey: userProfile?.email || currentAuthKey || "",
         packageId,
         packageName,
         amount,
@@ -2798,13 +2812,16 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         registeredUsers: updatedUsers,
       });
 
-      // Sync approved status and credit tokens to Supabase
+      // Sync approved status and credit tokens to Supabase (Atomic RPC with fallback)
       import("../services/supabase")
-        .then(({ updatePaymentRequestStatusSupabase, creditUserTokensSupabase }) => {
-          updatePaymentRequestStatusSupabase(requestId, "APPROVED", dateStr);
-          const targetKey = targetReq.userId || targetReq.userPasskey;
-          if (targetKey) {
-            creditUserTokensSupabase(targetKey, targetReq.requestedUsages);
+        .then(async ({ approvePaymentRequestSupabase, updatePaymentRequestStatusSupabase, creditUserTokensSupabase }) => {
+          const rpcSuccess = await approvePaymentRequestSupabase(requestId);
+          if (!rpcSuccess) {
+            await updatePaymentRequestStatusSupabase(requestId, "APPROVED", dateStr);
+            const targetKey = targetReq.userId || targetReq.userEmail || targetReq.userPasskey;
+            if (targetKey) {
+              await creditUserTokensSupabase(targetKey, targetReq.requestedUsages);
+            }
           }
         })
         .catch(() => {});
@@ -3237,24 +3254,78 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     },
 
     refreshUserStatus: () => {
-      try {
-        const rawReqs = localStorage.getItem("bigsta_payment_requests");
-        const rawUsers = localStorage.getItem("bigsta_registered_users");
+      get().fetchPaymentRequestsFromSupabase();
+      get().fetchPasskeysFromSupabase();
+    },
 
-        let updatedReqs = get().paymentRequests;
-        let updatedUsers = get().registeredUsers;
+    syncApprovedRequestsToState: (requests: PaymentRequest[]) => {
+      const currentKey = (get().currentAuthKey || "").toLowerCase();
+      const currentEmail = (get().userProfile?.email || "").toLowerCase();
+      if (!currentKey && !currentEmail) return;
 
-        if (rawReqs) updatedReqs = JSON.parse(rawReqs);
-        if (rawUsers) updatedUsers = JSON.parse(rawUsers);
+      const myRequests = requests.filter(
+        (r) =>
+          (currentKey && r.userPasskey.toLowerCase() === currentKey) ||
+          (currentKey && r.userId && r.userId.toLowerCase() === currentKey) ||
+          (currentEmail && r.userEmail && r.userEmail.toLowerCase() === currentEmail) ||
+          (currentEmail && r.userPasskey.toLowerCase() === currentEmail),
+      );
 
-        // Ensure passkeys are never cached in phone storage
-        localStorage.removeItem("bigsta_passkeys");
+      const hasPending = myRequests.some((r) => r.status === "PENDING");
+      const latestApproved = myRequests
+        .filter((r) => r.status === "APPROVED")
+        .sort((a, b) => b.timestamp - a.timestamp)[0];
+
+      if (latestApproved && !hasPending) {
+        const passkeys = get().activePasskeys;
+        const updatedPasskeys = passkeys.map((p) => {
+          if (
+            (currentKey && p.key.toLowerCase() === currentKey) ||
+            p.id === latestApproved.passkeyId ||
+            (currentEmail && p.description?.toLowerCase().includes(currentEmail))
+          ) {
+            const newRemaining = Math.max(
+              p.remainingUsages ?? 0,
+              latestApproved.requestedUsages,
+            );
+            return {
+              ...p,
+              paymentStatus: "ACTIVE" as PaymentStatus,
+              active: true,
+              remainingUsages: newRemaining,
+              totalUsages: Math.max(p.totalUsages ?? 0, newRemaining),
+              packageName: latestApproved.packageName || p.packageName,
+            };
+          }
+          return p;
+        });
+
+        const users = get().registeredUsers;
+        const updatedUsers = users.map((u) => {
+          if (
+            (currentKey && u.passkey.toLowerCase() === currentKey) ||
+            (latestApproved.userId && u.id.toLowerCase() === latestApproved.userId.toLowerCase()) ||
+            (currentEmail && u.passkey.toLowerCase() === currentEmail) ||
+            (currentEmail && u.email && u.email.toLowerCase() === currentEmail)
+          ) {
+            return {
+              ...u,
+              status: "ACTIVE" as const,
+              tokens: Math.max(u.tokens || 0, latestApproved.requestedUsages),
+            };
+          }
+          return u;
+        });
 
         set({
-          paymentRequests: updatedReqs,
+          activePasskeys: updatedPasskeys,
           registeredUsers: updatedUsers,
         });
-      } catch (e) {}
+
+        try {
+          localStorage.setItem("bigsta_registered_users", JSON.stringify(updatedUsers));
+        } catch (e) {}
+      }
     },
 
     unsubscribePaymentRequestsFromSupabase: () => {
@@ -3274,6 +3345,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
           try {
             localStorage.setItem("bigsta_payment_requests", JSON.stringify(combined));
           } catch (e) {}
+          get().syncApprovedRequestsToState(combined);
         }
         if (!isPaymentRequestsSubscribed) {
           isPaymentRequestsSubscribed = true;
@@ -3286,6 +3358,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
               try {
                 localStorage.setItem("bigsta_payment_requests", JSON.stringify(merged));
               } catch (e) {}
+              get().syncApprovedRequestsToState(merged);
             }
           });
         }
@@ -3322,14 +3395,12 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
             fetchAdminSettingsSupabase().catch(() => null),
           ]);
 
-        // RLS returns only this account's rows unless the session is an admin.
-        set({ activePasskeys: supabasePasskeys || [] });
-
         const mappedUsers: RegisteredUser[] = (supabaseProfiles || []).map((profile) => ({
           id: profile.id,
           fullName: profile.name || profile.fullName || "Account",
+          email: profile.email || "",
           phone: profile.phone || "",
-          passkey: profile.auth_user_id || profile.passkey || profile.id,
+          passkey: profile.email || profile.auth_user_id || profile.passkey || profile.id,
           passkeyId: profile.id,
           role: "user",
           tokens: typeof profile.tokens === "number" ? profile.tokens : 0,
@@ -3345,6 +3416,60 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
           currentActivity: "Active",
           servicesUsed: [],
         }));
+
+        const currentAuthKey = (get().currentAuthKey || session.user.id).toLowerCase();
+        let finalPasskeys = supabasePasskeys || [];
+        const hasMyPasskey = finalPasskeys.some((p) => p.key.toLowerCase() === currentAuthKey);
+
+        const myProfile = (supabaseProfiles || []).find(
+          (p) =>
+            (p.auth_user_id && p.auth_user_id.toLowerCase() === currentAuthKey) ||
+            (p.id && p.id.toLowerCase() === currentAuthKey) ||
+            (p.email && p.email.toLowerCase() === currentAuthKey) ||
+            (p.passkey && p.passkey.toLowerCase() === currentAuthKey),
+        );
+        const myTokens = typeof myProfile?.tokens === "number" ? myProfile.tokens : 0;
+
+        if (!hasMyPasskey) {
+          finalPasskeys = [
+            ...finalPasskeys,
+            {
+              id: myProfile?.id || session.user.id,
+              key: session.user.id,
+              role: "user",
+              active: myProfile?.status !== "DISABLED",
+              createdDate: myProfile?.created_at
+                ? new Date(myProfile.created_at).toISOString().replace("T", " ").substring(0, 16)
+                : new Date().toISOString().replace("T", " ").substring(0, 16),
+              createdAtTimestamp: myProfile?.created_at
+                ? new Date(myProfile.created_at).getTime()
+                : Date.now(),
+              createdBy: myProfile?.name || session.user.email || "Registered User",
+              description: `${myProfile?.name || "Registered User"} (${session.user.email})`,
+              totalUsages: Math.max(1, myTokens),
+              usedUsages: 0,
+              remainingUsages: myTokens,
+              paymentStatus: myTokens > 0 ? ("ACTIVE" as PaymentStatus) : ("EXHAUSTED" as PaymentStatus),
+              packageName: "Standard",
+              packagePrice: "Free",
+              usageHistory: [],
+            },
+          ];
+        } else if (myProfile && typeof myProfile.tokens === "number") {
+          finalPasskeys = finalPasskeys.map((p) => {
+            if (p.key.toLowerCase() === currentAuthKey) {
+              return {
+                ...p,
+                remainingUsages: myProfile.tokens,
+                totalUsages: Math.max(p.totalUsages ?? 0, myProfile.tokens),
+                paymentStatus: myProfile.tokens > 0 ? ("ACTIVE" as PaymentStatus) : p.paymentStatus,
+              };
+            }
+            return p;
+          });
+        }
+
+        set({ activePasskeys: finalPasskeys });
 
         const currentUser = get().registeredUsers.find(
           (user) => user.passkey === get().currentAuthKey,
