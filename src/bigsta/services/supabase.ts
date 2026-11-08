@@ -1594,3 +1594,46 @@ export function subscribePaymentRequestsRealtime(
   }
 }
 
+
+
+/** Increment user tokens in public.profiles and public.user_profiles upon admin approval */
+export async function creditUserTokensSupabase(
+  userIdOrPasskey: string,
+  tokensToAdd: number,
+): Promise<boolean> {
+  if (!supabase || !userIdOrPasskey || tokensToAdd <= 0) return false;
+  try {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userIdOrPasskey);
+    let query = supabase.from("profiles").select("id, tokens, auth_user_id");
+    if (isUuid) {
+      query = query.or(`id.eq.${userIdOrPasskey},auth_user_id.eq.${userIdOrPasskey}`);
+    } else {
+      query = query.or(`id.eq.${userIdOrPasskey},passkey.eq.${userIdOrPasskey}`);
+    }
+
+    const { data: pData, error: pError } = await query.maybeSingle();
+    if (pError || !pData) {
+      console.warn("[Supabase] Could not find profile to credit tokens:", pError?.message || "User not found");
+      return false;
+    }
+
+    const currentTokens = Number(pData.tokens) || 0;
+    const newTokens = currentTokens + tokensToAdd;
+    const updatedAt = new Date().toISOString();
+
+    const [{ error: e1 }, { error: e2 }] = await Promise.all([
+      supabase.from("profiles").update({ tokens: newTokens, status: "ACTIVE", updated_at: updatedAt }).eq("id", pData.id),
+      supabase.from("user_profiles").update({ tokens: newTokens, status: "ACTIVE", updated_at: updatedAt }).eq("id", pData.id),
+    ]);
+
+    if (e1 || e2) {
+      console.warn("[Supabase] Token credit update warning:", e1?.message || e2?.message);
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error("[Supabase] creditUserTokensSupabase error:", err);
+    return false;
+  }
+}

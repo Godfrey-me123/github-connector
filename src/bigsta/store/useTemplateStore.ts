@@ -1,3 +1,4 @@
+// @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 let isPaymentRequestsSubscribed = false;
 let unsubscribePaymentRequests: (() => void) | null = null;
 
@@ -12,7 +13,6 @@ export function unsubscribePaymentRequestsListener() {
   }
   isPaymentRequestsSubscribed = false;
 }
-// @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import { create } from "zustand";
 import {
   CardTemplate,
@@ -2761,7 +2761,11 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
           u.passkey.toLowerCase() === targetReq.userPasskey.toLowerCase() ||
           u.id === targetReq.userId
         ) {
-          return { ...u, status: "ACTIVE" as const };
+          return {
+            ...u,
+            status: "ACTIVE" as const,
+            tokens: (u.tokens || 0) + targetReq.requestedUsages,
+          };
         }
         return u;
       });
@@ -2794,10 +2798,14 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         registeredUsers: updatedUsers,
       });
 
-      // Sync approved status to Supabase
+      // Sync approved status and credit tokens to Supabase
       import("../services/supabase")
-        .then(({ updatePaymentRequestStatusSupabase }) => {
+        .then(({ updatePaymentRequestStatusSupabase, creditUserTokensSupabase }) => {
           updatePaymentRequestStatusSupabase(requestId, "APPROVED", dateStr);
+          const targetKey = targetReq.userId || targetReq.userPasskey;
+          if (targetKey) {
+            creditUserTokensSupabase(targetKey, targetReq.requestedUsages);
+          }
         })
         .catch(() => {});
 

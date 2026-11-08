@@ -8,9 +8,13 @@ export interface AuthActionResult {
 
 export function getAuthRedirectUrl(): string {
   const configuredRedirect = import.meta.env["NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL"];
-  return typeof configuredRedirect === "string" && configuredRedirect.trim()
-    ? configuredRedirect.trim()
-    : `${window.location.origin}/auth/callback`;
+  if (typeof configuredRedirect === "string" && configuredRedirect.trim()) {
+    return configuredRedirect.trim();
+  }
+  const origin = typeof window !== "undefined" && window.location?.origin
+    ? window.location.origin
+    : "https://commit-love-hub.lovable.app";
+  return `${origin}/auth/callback`;
 }
 
 function safeAuthErrorMessage(error: unknown, action: "sign-in" | "sign-up" | "reset") {
