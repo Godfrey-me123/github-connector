@@ -7,7 +7,7 @@ END $$;
 
 INSERT INTO public.token_packages (id, name, usages, tokens, price, description, is_active, visibility, sort_order, display_order, tag, bonus)
 VALUES
- ('pkg_starter','Starter',3,3,'2000','Basic pack for quick single-card generation',true,'public',1,1,null,0),
+ ('pkg-starter','Starter',3,3,'2000','Basic pack for quick single-card generation',true,'public',1,1,null,0),
  ('pkg-standard','Standard',7,7,'5000','Best for active creators and small print shops',true,'public',2,2,'Most Popular',0),
  ('pkg-pro','Pro Creator',18,18,'10000','Maximum value with priority processing',true,'public',3,3,'Best Value',0)
 ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, usages=EXCLUDED.usages, tokens=EXCLUDED.tokens, price=EXCLUDED.price,
