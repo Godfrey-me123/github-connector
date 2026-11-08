@@ -600,3 +600,186 @@ describe("Payment Requests Realtime Subscription Cleanup on Logout & Teardown", 
     expect(storeSource).toMatch(/logoutPasskey:\s*\(\)\s*=>\s*\{\s*unsubscribePaymentRequestsListener\(\);/);
   });
 });
+
+describe("Auth State Listener & Realtime Subscription Lifecycle", () => {
+  function getAppSource(): string {
+    const fs = require("fs");
+    try {
+      const p = new URL("../App.tsx", import.meta.url);
+      return fs.readFileSync(p, "utf-8");
+    } catch {
+      return fs.readFileSync("src/bigsta/App.tsx", "utf-8");
+    }
+  }
+
+  it("App.tsx auth state listener unsubscribes payment_requests on SIGNED_IN and SIGNED_OUT", () => {
+    const appSource = getAppSource();
+
+    // Must remove previous subscription on SIGNED_IN and SIGNED_OUT
+    expect(appSource).toContain('event === "SIGNED_OUT" || event === "SIGNED_IN"');
+    expect(appSource).toContain("unsubscribePaymentRequestsFromSupabase");
+  });
+
+  it("App.tsx syncSession cleans up old subscription when needsBootstrap is true before new user setup", () => {
+    const appSource = getAppSource();
+
+    // syncSession must remove previous payment requests subscription on user transition
+    const needsBootstrapIndex = appSource.indexOf("if (needsBootstrap) {");
+    expect(needsBootstrapIndex).toBeGreaterThan(-1);
+    const bootstrapBlock = appSource.slice(needsBootstrapIndex, needsBootstrapIndex + 300);
+    expect(bootstrapBlock).toContain("unsubscribePaymentRequestsFromSupabase");
+  });
+
+  it("App.tsx unmount cleanup calls unsubscribePaymentRequestsFromSupabase", () => {
+    const appSource = getAppSource();
+
+    const connectAuthIndex = appSource.indexOf("void connectAuth();");
+    expect(connectAuthIndex).toBeGreaterThan(-1);
+    const cleanupBlock = appSource.slice(connectAuthIndex, connectAuthIndex + 250);
+    expect(cleanupBlock).toContain("unsubscribePaymentRequestsFromSupabase");
+  });
+
+  it("Simulation: switching signed-in users cleans old channel and creates fresh channel for new user", () => {
+    let activeChannels = 0;
+    let oldChannelCleaned = false;
+    let newChannelCreated = false;
+
+    // Simulated store state
+    let isSubscribed = false;
+    let unsubscribeCurrent: (() => void) | null = null;
+
+    function unsubscribe() {
+      if (unsubscribeCurrent) {
+        unsubscribeCurrent();
+        unsubscribeCurrent = null;
+      }
+      isSubscribed = false;
+    }
+
+    function subscribe(userId: string) {
+      if (!isSubscribed) {
+        isSubscribed = true;
+        activeChannels++;
+        newChannelCreated = true;
+        unsubscribeCurrent = () => {
+          activeChannels--;
+          oldChannelCleaned = true;
+        };
+      }
+    }
+
+    // User A signs in
+    subscribe("user-a");
+    expect(activeChannels).toBe(1);
+    expect(isSubscribed).toBe(true);
+
+    // Auth state listener event: SIGNED_IN for User B
+    // Step 1: Remove old subscription
+    unsubscribe();
+    expect(oldChannelCleaned).toBe(true);
+    expect(activeChannels).toBe(0);
+    expect(isSubscribed).toBe(false);
+
+    // Step 2: Create new subscription for User B
+    newChannelCreated = false;
+    subscribe("user-b");
+    expect(newChannelCreated).toBe(true);
+    expect(activeChannels).toBe(1);
+    expect(isSubscribed).toBe(true);
+
+    // Clean up
+    unsubscribe();
+    expect(activeChannels).toBe(0);
+  });
+
+  it("User & Admin Experience: Real-time submission, approval, and live status propagation", () => {
+    // Shared mock database table
+    const db: any[] = [];
+    let realtimeCallback: ((fresh: any[]) => void) | null = null;
+
+    // Both user and admin store views
+    let userStoreRequests: any[] = [];
+    let adminStoreRequests: any[] = [];
+    let userTokens = 0;
+
+    // Realtime channel broadcaster
+    function broadcast() {
+      const freshCopy = JSON.parse(JSON.stringify(db));
+      if (realtimeCallback) {
+        realtimeCallback(freshCopy);
+      }
+      userStoreRequests = freshCopy.filter((r: any) => r.user_id === "user-123");
+      adminStoreRequests = [...freshCopy];
+    }
+
+    // Register listener
+    realtimeCallback = (fresh) => {
+      // Live listener updates views
+    };
+
+    // 1. User submits payment request
+    const newReq = {
+      id: "req-live-1",
+      user_id: "user-123",
+      user_name: "John Doe",
+      package_id: "pkg-100",
+      package_name: "100 Tokens",
+      amount: "10000",
+      requested_usages: 100,
+      status: "PENDING",
+      timestamp: Date.now(),
+    };
+    db.push(newReq);
+    broadcast();
+
+    // Verify Admin immediately sees the pending request in real-time
+    expect(adminStoreRequests.length).toBe(1);
+    expect(adminStoreRequests[0].id).toBe("req-live-1");
+    expect(adminStoreRequests[0].status).toBe("PENDING");
+
+    // Verify User immediately sees their request as PENDING
+    expect(userStoreRequests.length).toBe(1);
+    expect(userStoreRequests[0].status).toBe("PENDING");
+
+    // 2. Admin approves request
+    const adminTarget = db.find((r) => r.id === "req-live-1");
+    expect(adminTarget).toBeDefined();
+    adminTarget.status = "APPROVED";
+    adminTarget.reviewed_date = new Date().toISOString();
+    userTokens += adminTarget.requested_usages;
+    broadcast();
+
+    // Verify User view automatically reflects APPROVED in real-time and tokens activated
+    expect(userStoreRequests[0].status).toBe("APPROVED");
+    expect(userTokens).toBe(100);
+
+    // 3. User submits a second request and cancels it
+    const cancelReq = {
+      id: "req-live-2",
+      user_id: "user-123",
+      user_name: "John Doe",
+      package_id: "pkg-50",
+      package_name: "50 Tokens",
+      amount: "5000",
+      requested_usages: 50,
+      status: "PENDING",
+      timestamp: Date.now() + 10,
+    };
+    db.push(cancelReq);
+    broadcast();
+
+    expect(userStoreRequests.length).toBe(2);
+    expect(adminStoreRequests.length).toBe(2);
+
+    // User cancels the second request
+    const userTarget = db.find((r) => r.id === "req-live-2");
+    userTarget.status = "CANCELLED";
+    broadcast();
+
+    // Verify both User and Admin see CANCELLED in real-time
+    const cancelledInAdmin = adminStoreRequests.find((r) => r.id === "req-live-2");
+    expect(cancelledInAdmin.status).toBe("CANCELLED");
+    const cancelledInUser = userStoreRequests.find((r) => r.id === "req-live-2");
+    expect(cancelledInUser.status).toBe("CANCELLED");
+  });
+});

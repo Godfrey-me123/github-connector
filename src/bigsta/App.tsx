@@ -182,6 +182,9 @@ export default function App() {
           localStorage.removeItem("bigsta_user_profile");
           localStorage.removeItem("bigsta_passkeys");
         } catch {}
+        try {
+          useTemplateStore.getState().unsubscribePaymentRequestsFromSupabase?.();
+        } catch {}
         useTemplateStore.setState({
           authLoading: false,
           authRole: null,
@@ -195,7 +198,12 @@ export default function App() {
 
       const requestedUserId = session.user.id;
       const needsBootstrap = shouldBootstrap || initializedUserId !== requestedUserId;
-      if (needsBootstrap) initializedUserId = requestedUserId;
+      if (needsBootstrap) {
+        try {
+          useTemplateStore.getState().unsubscribePaymentRequestsFromSupabase?.();
+        } catch {}
+        initializedUserId = requestedUserId;
+      }
       const currentState = useTemplateStore.getState();
       if (currentState.currentAuthKey !== requestedUserId || !currentState.authRole) {
         useTemplateStore.setState({ authLoading: true });
@@ -301,6 +309,13 @@ export default function App() {
         if (!active) return;
 
         const { data } = supabase.auth.onAuthStateChange((event, session) => {
+          if (event === "SIGNED_OUT" || event === "SIGNED_IN") {
+            // Remove previous payment_requests subscription before creating one for newly signed-in user
+            try {
+              useTemplateStore.getState().unsubscribePaymentRequestsFromSupabase?.();
+            } catch {}
+          }
+
           if (
             event === "INITIAL_SESSION" ||
             event === "SIGNED_IN" ||
@@ -328,6 +343,9 @@ export default function App() {
     return () => {
       active = false;
       unsubscribe?.();
+      try {
+        useTemplateStore.getState().unsubscribePaymentRequestsFromSupabase?.();
+      } catch {}
     };
   }, [fetchPasskeysFromSupabase]);
 
