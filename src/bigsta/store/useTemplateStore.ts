@@ -1,3 +1,4 @@
+let isPaymentRequestsSubscribed = false;
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import { create } from "zustand";
 import {
@@ -715,6 +716,7 @@ interface TemplateState {
   }) => Promise<{ success: boolean; message: string }>;
   requestPasswordReset: (email: string) => Promise<{ success: boolean; message: string }>;
   updateUserActivity: (currentService?: string, currentActivity?: string) => void;
+  fetchPaymentRequestsFromSupabase: () => Promise<void>;
   submitPaymentRequest: (
     packageId: string,
     packageName: string,
@@ -2690,6 +2692,13 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
 
       set({ paymentRequests: updatedRequests, activePasskeys: updatedPasskeys });
 
+      // Sync payment request to Supabase for cross-device visibility
+      import("../services/supabase")
+        .then(({ syncPaymentRequestSupabase }) => {
+          syncPaymentRequestSupabase(newRequest);
+        })
+        .catch(() => {});
+
       return {
         success: true,
         message: "Payment submitted. Please wait for Admin approval.",
@@ -2771,6 +2780,13 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         registeredUsers: updatedUsers,
       });
 
+      // Sync approved status to Supabase
+      import("../services/supabase")
+        .then(({ updatePaymentRequestStatusSupabase }) => {
+          updatePaymentRequestStatusSupabase(requestId, "APPROVED", dateStr);
+        })
+        .catch(() => {});
+
       return { success: true, message: "Payment request approved successfully. Usages activated!" };
     },
 
@@ -2822,6 +2838,13 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       }
 
       set({ paymentRequests: updatedRequests, activePasskeys: updatedPasskeys });
+
+      // Sync rejected status to Supabase
+      import("../services/supabase")
+        .then(({ updatePaymentRequestStatusSupabase }) => {
+          updatePaymentRequestStatusSupabase(requestId, "REJECTED", dateStr);
+        })
+        .catch(() => {});
 
       return { success: true, message: "Payment request rejected." };
     },
@@ -2891,6 +2914,14 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       }
 
       set({ paymentRequests: updatedRequests, activePasskeys: updatedPasskeys });
+
+      // Sync cancelled status to Supabase
+      import("../services/supabase")
+        .then(({ updatePaymentRequestStatusSupabase }) => {
+          updatePaymentRequestStatusSupabase(targetReq.id, "CANCELLED", dateStr);
+        })
+        .catch(() => {});
+
       return { success: true, message: "Token request cancelled successfully." };
     },
 
@@ -2953,6 +2984,16 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       }
 
       set({ paymentRequests: updatedRequests, activePasskeys: updatedPasskeys });
+
+      const updatedReqItem = updatedRequests.find((r) => r.id === requestId);
+      if (updatedReqItem) {
+        import("../services/supabase")
+          .then(({ syncPaymentRequestSupabase }) => {
+            syncPaymentRequestSupabase(updatedReqItem);
+          })
+          .catch(() => {});
+      }
+
       return {
         success: true,
         message: `Token request updated to ${packageName} (${amount}) successfully!`,
@@ -2981,6 +3022,13 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         localStorage.setItem("bigsta_payment_requests", JSON.stringify(updated));
       } catch (e) {}
       set({ paymentRequests: updated });
+
+      import("../services/supabase")
+        .then(({ updatePaymentRequestStatusSupabase }) => {
+          updatePaymentRequestStatusSupabase(requestId, "PENDING");
+        })
+        .catch(() => {});
+
       return { success: true, message: "Payment reactivated to PENDING" };
     },
 
@@ -3187,7 +3235,41 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       } catch (e) {}
     },
 
+    fetchPaymentRequestsFromSupabase: async () => {
+      try {
+        const { fetchPaymentRequestsSupabase, subscribePaymentRequestsRealtime } =
+          await import("../services/supabase");
+        const dbReqs = await fetchPaymentRequestsSupabase();
+        if (dbReqs && Array.isArray(dbReqs)) {
+          const remoteIds = new Set(dbReqs.map((r: PaymentRequest) => r.id));
+          const localOnly = get().paymentRequests.filter((r) => !remoteIds.has(r.id));
+          const combined = [...dbReqs, ...localOnly];
+          set({ paymentRequests: combined });
+          try {
+            localStorage.setItem("bigsta_payment_requests", JSON.stringify(combined));
+          } catch (e) {}
+        }
+        if (!isPaymentRequestsSubscribed) {
+          isPaymentRequestsSubscribed = true;
+          subscribePaymentRequestsRealtime((fresh) => {
+            if (fresh && Array.isArray(fresh)) {
+              const remoteIds = new Set(fresh.map((r: PaymentRequest) => r.id));
+              const localOnly = get().paymentRequests.filter((r) => !remoteIds.has(r.id));
+              const merged = [...fresh, ...localOnly];
+              set({ paymentRequests: merged });
+              try {
+                localStorage.setItem("bigsta_payment_requests", JSON.stringify(merged));
+              } catch (e) {}
+            }
+          });
+        }
+      } catch (e) {
+        console.warn("Failed to fetch payment requests from Supabase:", e);
+      }
+    },
+
     fetchPasskeysFromSupabase: async () => {
+      get().fetchPaymentRequestsFromSupabase();
       set({ loadingPasskeys: true });
       try {
         const {

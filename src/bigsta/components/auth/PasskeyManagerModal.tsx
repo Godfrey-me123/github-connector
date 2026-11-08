@@ -87,7 +87,16 @@ export const PasskeyManagerModal: React.FC = () => {
     toggleService,
     manualRequests,
     paymentMethods,
+    fetchPaymentRequestsFromSupabase,
+    fetchPasskeysFromSupabase,
   } = useTemplateStore();
+
+  useEffect(() => {
+    if (isPasskeyManagerOpen) {
+      fetchPaymentRequestsFromSupabase?.();
+      fetchPasskeysFromSupabase?.();
+    }
+  }, [isPasskeyManagerOpen, fetchPaymentRequestsFromSupabase, fetchPasskeysFromSupabase]);
 
   // Admin Top Navigation Tab State
   const [activeAdminTab, setActiveAdminTab] = useState<

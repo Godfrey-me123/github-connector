@@ -36,7 +36,14 @@ export const RechargeModal: React.FC = () => {
     tokenPackages,
     weeklyOffers,
     paymentMethods,
+    fetchPaymentRequestsFromSupabase,
   } = useTemplateStore();
+
+  useEffect(() => {
+    if (isRechargeModalOpen) {
+      fetchPaymentRequestsFromSupabase?.();
+    }
+  }, [isRechargeModalOpen, fetchPaymentRequestsFromSupabase]);
 
   const activeMethods = useMemo(() => {
     const list = (paymentMethods || []).filter((pm) => pm.status === "active");

@@ -1457,3 +1457,140 @@ export async function fetchActiveTemplatesForService(
 }
 
 
+// ==========================================
+// PAYMENT REQUESTS (Cross-device token top-ups)
+// ==========================================
+
+export async function syncPaymentRequestSupabase(request: any): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const resolvedUserId =
+      session?.user?.id ||
+      (request.userId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(request.userId)
+        ? request.userId
+        : null);
+
+    const { error } = await supabase.from("payment_requests").upsert({
+      id: request.id,
+      user_id: resolvedUserId,
+      user_name: request.userName || "",
+      user_phone: request.userPhone || "",
+      passkey_id: request.passkeyId || "",
+      user_passkey: request.userPasskey || "",
+      package_id: request.packageId,
+      package_name: request.packageName,
+      amount: request.amount,
+      requested_usages: request.requestedUsages || 1,
+      lipa_number: request.lipaNumber || "1234678",
+      date: request.date,
+      timestamp: request.timestamp,
+      status: request.status || "PENDING",
+      reviewed_date: request.reviewedDate || null,
+      updated_at: new Date().toISOString(),
+    });
+
+    if (error) {
+      console.warn("[Supabase] syncPaymentRequest warning:", error.message);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("[Supabase] Failed payment request sync:", e);
+    return false;
+  }
+}
+
+export async function fetchPaymentRequestsSupabase(): Promise<any[]> {
+  if (!supabase) return [];
+  try {
+    const { data, error } = await supabase
+      .from("payment_requests")
+      .select("*")
+      .order("timestamp", { ascending: false });
+
+    if (error) {
+      console.warn("[Supabase] fetchPaymentRequests warning:", error.message);
+      return [];
+    }
+    if (!data || !Array.isArray(data)) return [];
+
+    return data.map((row) => ({
+      id: row.id,
+      userId: row.user_id || undefined,
+      userName: row.user_name || "Registered User",
+      userPhone: row.user_phone || "N/A",
+      passkeyId: row.passkey_id || "",
+      userPasskey: row.user_passkey || "",
+      packageId: row.package_id,
+      packageName: row.package_name,
+      amount: row.amount,
+      requestedUsages: row.requested_usages || 1,
+      lipaNumber: row.lipa_number || "1234678",
+      date: row.date,
+      timestamp: Number(row.timestamp),
+      status: row.status,
+      reviewedDate: row.reviewed_date || undefined,
+    }));
+  } catch (e) {
+    console.error("[Supabase] Failed to fetch payment requests:", e);
+    return [];
+  }
+}
+
+export async function updatePaymentRequestStatusSupabase(
+  requestId: string,
+  status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED",
+  reviewedDate?: string,
+): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase
+      .from("payment_requests")
+      .update({
+        status,
+        reviewed_date: reviewedDate || new Date().toISOString().replace("T", " ").substring(0, 16),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", requestId);
+
+    if (error) {
+      console.warn("[Supabase] updatePaymentRequestStatus warning:", error.message);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("[Supabase] Failed to update payment request status:", e);
+    return false;
+  }
+}
+
+export function subscribePaymentRequestsRealtime(
+  callback: (requests: any[]) => void,
+): () => void {
+  if (!supabase) return () => {};
+  try {
+    const channelId = `realtime_payment_requests_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const channel = supabase
+      .channel(channelId)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "payment_requests" },
+        async () => {
+          const fresh = await fetchPaymentRequestsSupabase();
+          if (fresh) callback(fresh);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  } catch (e) {
+    console.error("[Supabase] Realtime payment_requests subscription error:", e);
+    return () => {};
+  }
+}
+
