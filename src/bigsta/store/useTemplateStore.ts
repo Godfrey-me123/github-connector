@@ -1,4 +1,17 @@
 let isPaymentRequestsSubscribed = false;
+let unsubscribePaymentRequests: (() => void) | null = null;
+
+export function unsubscribePaymentRequestsListener() {
+  if (unsubscribePaymentRequests) {
+    try {
+      unsubscribePaymentRequests();
+    } catch (e) {
+      console.warn("[Supabase] Failed to remove payment_requests channel:", e);
+    }
+    unsubscribePaymentRequests = null;
+  }
+  isPaymentRequestsSubscribed = false;
+}
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import { create } from "zustand";
 import {
@@ -717,6 +730,7 @@ interface TemplateState {
   requestPasswordReset: (email: string) => Promise<{ success: boolean; message: string }>;
   updateUserActivity: (currentService?: string, currentActivity?: string) => void;
   fetchPaymentRequestsFromSupabase: () => Promise<void>;
+  unsubscribePaymentRequestsFromSupabase: () => void;
   submitPaymentRequest: (
     packageId: string,
     packageName: string,
@@ -3235,6 +3249,10 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       } catch (e) {}
     },
 
+    unsubscribePaymentRequestsFromSupabase: () => {
+      unsubscribePaymentRequestsListener();
+    },
+
     fetchPaymentRequestsFromSupabase: async () => {
       try {
         const { fetchPaymentRequestsSupabase, subscribePaymentRequestsRealtime } =
@@ -3251,7 +3269,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         }
         if (!isPaymentRequestsSubscribed) {
           isPaymentRequestsSubscribed = true;
-          subscribePaymentRequestsRealtime((fresh) => {
+          unsubscribePaymentRequests = subscribePaymentRequestsRealtime((fresh) => {
             if (fresh && Array.isArray(fresh)) {
               const remoteIds = new Set(fresh.map((r: PaymentRequest) => r.id));
               const localOnly = get().paymentRequests.filter((r) => !remoteIds.has(r.id));
@@ -3361,6 +3379,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     },
 
     logoutPasskey: () => {
+      unsubscribePaymentRequestsListener();
       import("../services/supabase")
         .then(({ supabase }) => supabase.auth.signOut())
         .catch(() => {});
