@@ -102,6 +102,39 @@ const notifySaveIssue = (msg: string) => {
     .catch(() => {});
 };
 
+// One place announces every change to the signed-in user's token balance.
+let lastBalanceOwner = "";
+export const notifyBalanceChange = (
+  role: string | null | undefined,
+  ownerKey: string,
+  previous: number | null | undefined,
+  next: number,
+  openRecharge: () => void,
+) => {
+  const sameOwner = ownerKey && ownerKey === lastBalanceOwner;
+  lastBalanceOwner = ownerKey;
+  if (role !== "user" || !sameOwner || typeof previous !== "number" || previous === next) return;
+  const diff = next - previous;
+  import("sonner")
+    .then(({ toast }) => {
+      if (diff > 0) {
+        toast.success(`Recharge approved: +${diff} token${diff === 1 ? "" : "s"}`, {
+          description: `Your balance is now ${next} token${next === 1 ? "" : "s"}.`,
+        });
+      } else if (next === 0) {
+        toast.warning(`${-diff} token${diff === -1 ? "" : "s"} used — no tokens remaining`, {
+          description: "Recharge to keep generating cards.",
+          action: { label: "Recharge", onClick: openRecharge },
+        });
+      } else {
+        toast.info(`${-diff} token${diff === -1 ? "" : "s"} used`, {
+          description: `Remaining balance: ${next} token${next === 1 ? "" : "s"}.`,
+        });
+      }
+    })
+    .catch(() => {});
+};
+
 export interface DynamicElementRegistration {
   id: string;
   name: string;
@@ -729,6 +762,8 @@ interface TemplateState {
   // Registered Users & Recharge Management
   userTokens: number;
   setUserTokens: (tokens: number) => void;
+  /** Single writer for the signed-in user's wallet balance (profiles.tokens). Syncs every token display. */
+  applyWalletBalance: (tokens: number, status?: string | null) => void;
   registeredUsers: RegisteredUser[];
   paymentRequests: PaymentRequest[];
   manualRequests: ManualRequestItem[];
@@ -1371,7 +1406,35 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     userPreferences: initialUserPreferences,
     adminSettings: initialAdminSettings,
     userTokens: 0,
-    setUserTokens: (tokens: number) => set({ userTokens: tokens }),
+    setUserTokens: (tokens: number) => get().applyWalletBalance(tokens),
+    applyWalletBalance: (tokens: number, status?: string | null) => {
+      const balance = Math.max(0, Math.floor(Number(tokens) || 0));
+      const key = (get().currentAuthKey || "").toLowerCase();
+      notifyBalanceChange(get().authRole, key, get().userTokens, balance, () =>
+        get().setRechargeModalOpen(true),
+      );
+      const email = (get().userProfile?.email || "").toLowerCase();
+      const isMe = (...ids: Array<string | undefined | null>) =>
+        ids.some((id) => !!id && ((key && id.toLowerCase() === key) || (email && id.toLowerCase() === email)));
+      set({
+        userTokens: balance,
+        registeredUsers: get().registeredUsers.map((u) =>
+          isMe(u.authUserId, u.passkey, u.id, u.email)
+            ? { ...u, tokens: balance, ...(status ? { status: status as typeof u.status } : {}) }
+            : u,
+        ),
+        activePasskeys: get().activePasskeys.map((pk) =>
+          pk.role === "user" && isMe(pk.key, pk.id)
+            ? {
+                ...pk,
+                remainingUsages: balance,
+                totalUsages: Math.max(pk.totalUsages || 0, balance + (pk.usedUsages || 0)),
+                paymentStatus: balance > 0 ? ("ACTIVE" as PaymentStatus) : ("EXHAUSTED" as PaymentStatus),
+              }
+            : pk,
+        ),
+      });
+    },
     userPaymentSubmissions: initialUserPayments,
     tokenHistory: initialTokenHistory,
     processedDeductionIds: [],
@@ -3315,24 +3378,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
           .eq("auth_user_id", key)
           .maybeSingle();
         if (error || !profile) return;
-        const balance = Math.max(0, Number(profile.tokens) || 0);
-        set({
-          registeredUsers: get().registeredUsers.map((user) =>
-            user.authUserId?.toLowerCase() === key.toLowerCase() || user.id === profile.id
-              ? { ...user, tokens: balance, status: profile.status || user.status }
-              : user,
-          ),
-          activePasskeys: get().activePasskeys.map((passkey) =>
-            passkey.key.toLowerCase() === key.toLowerCase() || passkey.id === profile.id
-              ? {
-                  ...passkey,
-                  remainingUsages: balance,
-                  totalUsages: Math.max(passkey.totalUsages || 0, balance + (passkey.usedUsages || 0)),
-                  paymentStatus: balance > 0 ? "ACTIVE" : "EXHAUSTED",
-                }
-              : passkey,
-          ),
-        });
+        get().applyWalletBalance(Number(profile.tokens) || 0, profile.status);
       } catch (error) {
         console.warn("Failed to refresh current wallet:", error);
       }
@@ -3359,13 +3405,10 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
             registeredDate: p.created_at || new Date().toISOString(), createdAtTimestamp: p.created_at ? new Date(p.created_at).getTime() : Date.now(),
             lastActive: "Recent activity", lastActiveTimestamp: Date.now(), isOnline: false, currentService: "None", currentActivity: "Active", servicesUsed: [],
           })) });
-          set({ activePasskeys: get().activePasskeys.map((pk) =>
-            pk.key.toLowerCase() === key || pk.id.toLowerCase() === me.id.toLowerCase()
-              ? { ...pk, remainingUsages: Number(me.tokens), totalUsages: Math.max(pk.totalUsages || 0, Number(me.tokens)), paymentStatus: Number(me.tokens) > 0 ? "ACTIVE" : "EXHAUSTED" }
-              : pk
-          ) });
         }
       } catch (e) { console.warn("Failed to refresh wallet balance:", e); }
+      // Always finish with the signed-in account's own profiles row (auth_user_id match).
+      await get().refreshCurrentWallet();
     },
 
     syncApprovedRequestsToState: (requests: PaymentRequest[]) => {
@@ -3387,56 +3430,8 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         .sort((a, b) => b.timestamp - a.timestamp)[0];
 
       if (latestApproved && !hasPending) {
-        const passkeys = get().activePasskeys;
-        const updatedPasskeys = passkeys.map((p) => {
-          if (
-            (currentKey && p.key.toLowerCase() === currentKey) ||
-            p.id === latestApproved.passkeyId ||
-            (currentEmail && p.description?.toLowerCase().includes(currentEmail))
-          ) {
-            const newRemaining = Math.max(
-              p.remainingUsages ?? 0,
-              latestApproved.requestedUsages,
-            );
-            return {
-              ...p,
-              paymentStatus: "ACTIVE" as PaymentStatus,
-              active: true,
-              remainingUsages: newRemaining,
-              totalUsages: Math.max(p.totalUsages ?? 0, newRemaining),
-              packageName: latestApproved.packageName || p.packageName,
-            };
-          }
-          return p;
-        });
-
-        const users = get().registeredUsers;
-        const updatedUsers = users.map((u) => {
-          if (
-            (currentKey && u.passkey.toLowerCase() === currentKey) ||
-            (latestApproved.userId && u.id.toLowerCase() === latestApproved.userId.toLowerCase()) ||
-            (currentEmail && u.passkey.toLowerCase() === currentEmail) ||
-            (currentEmail && u.email && u.email.toLowerCase() === currentEmail)
-          ) {
-            return {
-              ...u,
-              status: "ACTIVE" as const,
-              tokens: Math.max(u.tokens || 0, latestApproved.requestedUsages),
-            };
-          }
-          return u;
-        });
-
-        const updatedTokens = Math.max(get().userTokens || 0, latestApproved.requestedUsages);
-        set({
-          activePasskeys: updatedPasskeys,
-          registeredUsers: updatedUsers,
-          userTokens: updatedTokens,
-        });
-
-        try {
-          localStorage.setItem("bigsta_registered_users", JSON.stringify(updatedUsers));
-        } catch (e) {}
+        // The approved amount is already credited server-side; read the real balance instead of guessing.
+        void get().refreshCurrentWallet();
       }
     },
 
@@ -3595,6 +3590,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
           (user) => user.passkey === get().currentAuthKey,
         );
         set({ registeredUsers: mappedUsers.length ? mappedUsers : currentUser ? [currentUser] : [] });
+        if (get().authRole === "user") void get().refreshCurrentWallet();
 
         // 3. Fetch Payment Methods
         if (dbPaymentMethods && dbPaymentMethods.length > 0) {
@@ -3836,7 +3832,8 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
           return { success: false, remainingUsages: available, message: "Token transaction failed." };
         }
         const newBalance = typeof result.newTokens === "number" ? result.newTokens : Math.max(0, available - cost);
-        set({ userTokens: newBalance });
+        get().applyWalletBalance(newBalance);
+        void get().refreshCurrentWallet();
         const authKey = state.currentAuthKey;
         if (authKey) get().addTokenHistoryItem(-cost, details ? `${serviceName} (${details})` : serviceName, authKey);
         return { success: true, remainingUsages: newBalance, cost: result.chargedTokens ?? cost };
