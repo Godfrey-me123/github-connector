@@ -1,25 +1,41 @@
-import { beforeEach, expect, it, vi } from 'vitest';
-const { readAccountRole } = vi.hoisted(() => ({ readAccountRole: vi.fn() }));
-vi.mock('./account-role.server', () => ({ readAccountRole }));
+import { describe, expect, it } from 'vitest';
 import { checkAdminSession } from './admin-key.server';
-const request = () => new Request('https://bigsta.test/api/admin/sms-monitor', { headers: { authorization: 'Bearer test-session' } });
-beforeEach(() => readAccountRole.mockReset());
-it('requires a session', async () => {
-  expect((await checkAdminSession(new Request('https://bigsta.test/api/admin/sms-monitor')))?.status).toBe(401);
-  expect(readAccountRole).not.toHaveBeenCalled();
-});
-it('rejects invalid sessions', async () => {
-  readAccountRole.mockResolvedValue(null);
-  expect((await checkAdminSession(request()))?.status).toBe(401);
-});
-it('rejects normal accounts', async () => {
-  readAccountRole.mockResolvedValue({ isAdmin: false });
-  expect((await checkAdminSession(request()))?.status).toBe(403);
-});
-it('allows verified administrators', async () => {
-  readAccountRole.mockResolvedValue({ isAdmin: true });
-  expect(await checkAdminSession(request())).toBeNull();
-});
-it('fails closed when role verification is unavailable', async () => {
-  expect((await checkAdminSession(request(), async () => { throw new Error('unavailable'); }))?.status).toBe(503);
+
+const request = () =>
+  new Request('https://bigsta.test/api/admin/sms-monitor', {
+    headers: { authorization: 'Bearer test-session' },
+  });
+
+describe('checkAdminSession', () => {
+  it('requires a session', async () => {
+    const unauthenticated = new Request('https://bigsta.test/api/admin/sms-monitor');
+    const res = await checkAdminSession(unauthenticated);
+    expect(res?.status).toBe(401);
+  });
+
+  it('rejects invalid sessions', async () => {
+    const verify = async () => null;
+    const res = await checkAdminSession(request(), verify);
+    expect(res?.status).toBe(401);
+  });
+
+  it('rejects normal accounts', async () => {
+    const verify = async () => ({ isAdmin: false });
+    const res = await checkAdminSession(request(), verify);
+    expect(res?.status).toBe(403);
+  });
+
+  it('allows verified administrators', async () => {
+    const verify = async () => ({ isAdmin: true });
+    const res = await checkAdminSession(request(), verify);
+    expect(res).toBeNull();
+  });
+
+  it('fails closed when role verification is unavailable', async () => {
+    const verify = async () => {
+      throw new Error('unavailable');
+    };
+    const res = await checkAdminSession(request(), verify);
+    expect(res?.status).toBe(503);
+  });
 });
