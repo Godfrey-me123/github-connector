@@ -13,6 +13,8 @@
 
 ## Architecture
 
+- Payment-request submission awaits the existing payment_requests writer before local success; payment verification and token credit remain separate.
+
 - Administrator authorization uses protected `user_roles` read with the caller's session; Auth metadata mirrors that source for legacy UI compatibility, never profile roles or email allowlists.
 - Email registration profiles are created by the Auth lifecycle trigger; existing accounts link only by confirmed email, never by a shared phone number.
 

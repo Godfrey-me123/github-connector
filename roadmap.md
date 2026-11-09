@@ -19,3 +19,8 @@
 - [x] Silent offline template prefetch (only for users with tokens)
 - [x] Recent requests not showing — audit all user & admin request sections so every user request appears
 - [x] Search + status filters on user and admin request lists; live user↔admin round-trip verified
+
+- [x] Verify protected admin authorization and await payment-request saving (priority follow-up); eight tests pass and signed-out admin endpoints return 401.
+- [ ] Upload verified payment repair to the latest github-connector branch without replacing newer work.
+- [ ] Live database, template counts, payment persistence and cross-device conversations — blocked by expired Supabase workspace authorization; reconnect Supabase in project settings.
+- [ ] Vercel and APK production verification — deployment and APK test environments are not available here.

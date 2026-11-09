@@ -741,7 +741,7 @@ interface TemplateState {
     packageName: string,
     amount: string,
     requestedUsages: number,
-  ) => { success: boolean; message: string; request?: PaymentRequest };
+  ) => Promise<{ success: boolean; message: string; request?: PaymentRequest }>;
   cancelPaymentRequest: (requestId?: string) => { success: boolean; message: string };
   updateUserPaymentRequest: (
     requestId: string,
@@ -2644,7 +2644,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       set({ registeredUsers: updatedUsers });
     },
 
-    submitPaymentRequest: (packageId, packageName, amount, requestedUsages) => {
+    submitPaymentRequest: async (packageId, packageName, amount, requestedUsages) => {
       const currentAuthKey = get().currentAuthKey;
       const passkeys = get().activePasskeys;
       const users = get().registeredUsers;
@@ -2701,6 +2701,14 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         status: "PENDING",
       };
 
+      const { confirmPaymentRequestSave } = await import('../services/payment-request-save');
+      const { syncPaymentRequestSupabase } = await import('../services/supabase');
+      const saved = await confirmPaymentRequestSave(
+        () => syncPaymentRequestSupabase(newRequest),
+        () => {},
+      );
+      if (!saved.success) return saved;
+
       const updatedRequests = [...get().paymentRequests, newRequest];
 
       const updatedPasskeys = passkeys.map((p) =>
@@ -2724,13 +2732,6 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       }
 
       set({ paymentRequests: updatedRequests, activePasskeys: updatedPasskeys });
-
-      // Sync payment request to Supabase for cross-device visibility
-      import("../services/supabase")
-        .then(({ syncPaymentRequestSupabase }) => {
-          syncPaymentRequestSupabase(newRequest);
-        })
-        .catch(() => {});
 
       return {
         success: true,

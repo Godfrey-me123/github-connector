@@ -1,4 +1,7 @@
-export async function checkAdminSession(request: Request): Promise<Response | null> {
+export async function checkAdminSession(
+  request: Request,
+  verify?: (accessToken: string) => Promise<{ isAdmin: boolean } | null>,
+): Promise<Response | null> {
   const accessToken = request.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1];
 
   if (!accessToken) {
@@ -9,8 +12,8 @@ export async function checkAdminSession(request: Request): Promise<Response | nu
   }
 
   try {
-    const { readAccountRole } = await import("./account-role.server");
-    const account = await readAccountRole(accessToken);
+    const readRole = verify ?? (await import("./account-role.server")).readAccountRole;
+    const account = await readRole(accessToken);
     if (!account) {
       return Response.json({ success: false, error: "Invalid account session." }, { status: 401 });
     }
@@ -21,7 +24,6 @@ export async function checkAdminSession(request: Request): Promise<Response | nu
 
     return null;
   } catch (error) {
-    console.error("[Admin API] Session validation failed:", error);
     return Response.json(
       { success: false, error: "Admin service is temporarily unavailable." },
       { status: 503 },

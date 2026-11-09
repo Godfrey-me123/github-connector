@@ -320,26 +320,32 @@ export const RechargeModal: React.FC = () => {
     }
   };
 
-  const handlePaymentSubmit = () => {
+  const handlePaymentSubmit = async () => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     setSubmittedMessage("");
+    setActionNotice("");
 
-    setTimeout(() => {
-      const res = submitPaymentRequest(
+    try {
+      const res = await submitPaymentRequest(
         selectedPkg.id,
         selectedPkg.name,
         selectedPkg.price,
         selectedPkg.usages,
       );
 
-      setIsSubmitting(false);
-
       if (res.success) {
         setSubmittedMessage(
           "Payment request submitted. You can wait for admin verification or enter your reference below for instant auto-verify.",
         );
+      } else {
+        setActionNotice(res.message);
       }
-    }, 300);
+    } catch {
+      setActionNotice("Payment request could not be saved. Your selection has been kept; please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCancelPendingRequest = () => {

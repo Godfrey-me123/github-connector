@@ -237,7 +237,7 @@ export const CardGeneratorModal: React.FC = () => {
       setDownloadState("COMPLETED");
 
       // 7. Only then consume token
-      await store.consumeUsage(description, undefined, 1, `export:modal:${selectedFormat}:${exportPaperSize}:${Date.now()}`);
+      await store.consumeUsage(description, undefined, 1, `export:modal:${crypto.randomUUID()}`);
       toast.success(`${description} completed!`);
     } catch (e: any) {
       console.error("Export failed:", e);
