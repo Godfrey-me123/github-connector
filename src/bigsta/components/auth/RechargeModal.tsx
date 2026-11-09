@@ -192,7 +192,7 @@ export const RechargeModal: React.FC = () => {
     [registeredUsers, currentAuthKey, userProfile?.email],
   );
 
-  const remainingUsages = currentUser?.tokens ?? currentPasskey?.remainingUsages ?? 0;
+  const remainingUsages = useTemplateStore((st) => st.userTokens) ?? 0;
 
   // Find user payment requests by AuthKey, Email, or UserId
   const userRequests = useMemo(

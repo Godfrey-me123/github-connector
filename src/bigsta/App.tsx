@@ -259,6 +259,8 @@ export default function App() {
           phone,
           passkey: user.id,
           passkeyId: profile?.id || user.id,
+          authUserId: user.id,
+          email: user.email || "",
           role,
           tokens: Number(profile?.tokens) || 0,
           status: (profile?.status || "ACTIVE") as "ACTIVE" | "DISABLED" | "PENDING",
@@ -318,7 +320,7 @@ export default function App() {
             },
             (payload) => {
               if (typeof payload.new?.tokens === "number") {
-                useTemplateStore.setState({ userTokens: payload.new.tokens });
+                useTemplateStore.getState().applyWalletBalance(payload.new.tokens, payload.new.status);
               }
             }
           )

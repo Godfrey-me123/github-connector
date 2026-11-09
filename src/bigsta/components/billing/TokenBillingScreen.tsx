@@ -67,7 +67,9 @@ export const TokenBillingScreen: React.FC = () => {
 
   const currentPasskeyObj =
     activePasskeys.find((p) => p.key === currentAuthKey) || activePasskeys[0];
-  const availableTokens = currentPasskeyObj ? currentPasskeyObj.remainingUsages : 0;
+  const storeUserTokens = useTemplateStore((st) => st.userTokens);
+  const availableTokens =
+    authRole === "user" ? storeUserTokens ?? 0 : currentPasskeyObj ? currentPasskeyObj.remainingUsages : 0;
 
   // Active packages created by admin
   const activePackages = useMemo(() => {
