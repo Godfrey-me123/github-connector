@@ -359,7 +359,7 @@ export const SettingsScreen: React.FC = () => {
                     : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
                 }`}
               >
-                <Shield className="w-4 h-4" /> Security & Account
+                <Shield className="w-4 h-4" /> Account & Security
               </button>
 
               <button
@@ -605,7 +605,7 @@ export const SettingsScreen: React.FC = () => {
               <div className="bg-white dark:bg-[#1E2328] rounded-2xl border border-slate-200 dark:border-white/10 p-6 shadow-xs space-y-5">
                 <div className="border-b border-slate-100 dark:border-white/10 pb-3">
                   <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                    Security & Account Management
+                    Account & Security Management
                   </h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
                     Manage active sessions, account security & password updates
@@ -615,10 +615,10 @@ export const SettingsScreen: React.FC = () => {
                 <div className="p-4 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50/60 dark:bg-blue-950/40 flex items-center justify-between">
                   <div>
                     <span className="text-xs font-bold text-blue-900 dark:text-blue-300 block">
-                      Account Auth ID (UUID)
+                      User UUID / Email
                     </span>
                     <span className="text-xs font-mono font-bold text-blue-700 dark:text-blue-400">
-                      {currentAuthKey || "Default Active Key"}
+                      {currentAuthKey || userProfile?.email || "Signed-in account"}
                     </span>
                   </div>
                   <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-blue-200 dark:bg-blue-900 text-blue-800 dark:text-blue-300">

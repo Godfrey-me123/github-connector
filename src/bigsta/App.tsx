@@ -25,7 +25,7 @@ import { NidaSuccessToast } from "./components/nida/NidaSuccessToast";
 import { HomeScreen } from "./components/HomeScreen";
 import { CardPreviewScreen } from "./components/CardPreviewScreen";
 import { PasskeyScreen } from "./components/auth/PasskeyScreen";
-import { PasskeyManagerModal } from "./components/auth/PasskeyManagerModal";
+import { AdminConsoleModal } from "./components/auth/AdminConsoleModal";
 import { ManualApplicationModal } from "./components/auth/ManualApplicationModal";
 import { RechargeModal } from "./components/auth/RechargeModal";
 import { UsageExhaustedBanner } from "./components/auth/UsageExhaustedBanner";
@@ -37,7 +37,6 @@ import { PDFViewerScreen } from "./components/PDFViewerScreen";
 import { PdfLibraryScreen } from "./components/PdfLibraryScreen";
 import { DocxToPdfScreen } from "./components/DocxToPdfScreen";
 import { ImageEditStudioScreen } from "./components/ImageEditStudioScreen";
-import { PaymentDashboard } from "./components/admin/PaymentDashboard";
 import { UnsavedChangesModal } from "./components/common/UnsavedChangesModal";
 import { StartupDisclaimerModal } from "./components/common/StartupDisclaimerModal";
 import { SuccessActivationModal } from "./components/common/SuccessActivationModal";
@@ -576,7 +575,7 @@ export default function App() {
       <>
         <UsageExhaustedBanner />
         <HomeScreen />
-        <PasskeyManagerModal />
+        <AdminConsoleModal />
         <RechargeModal />
         <ExportModal />
         <SaveTemplateModal />
@@ -592,7 +591,7 @@ export default function App() {
       <>
         <UsageExhaustedBanner />
         <DownloadsScreen />
-        <PasskeyManagerModal />
+        <AdminConsoleModal />
         <RechargeModal />
       </>
     );
@@ -603,7 +602,7 @@ export default function App() {
       <>
         <UsageExhaustedBanner />
         <TokenBillingScreen />
-        <PasskeyManagerModal />
+        <AdminConsoleModal />
         <RechargeModal />
       </>
     );
@@ -614,7 +613,7 @@ export default function App() {
       <>
         <UsageExhaustedBanner />
         <SettingsScreen />
-        <PasskeyManagerModal />
+        <AdminConsoleModal />
         <RechargeModal />
       </>
     );
@@ -625,7 +624,7 @@ export default function App() {
       <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
         <HomeScreen />
-        <PasskeyManagerModal />
+        <AdminConsoleModal />
         <ManualApplicationModal />
         <RechargeModal />
         <ExportModal />
@@ -642,7 +641,7 @@ export default function App() {
       <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
         <UploadScreen />
-        <PasskeyManagerModal />
+        <AdminConsoleModal />
         <RechargeModal />
         <ExportModal />
         <SaveTemplateModal />
@@ -658,7 +657,7 @@ export default function App() {
       <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
         <TemplatesScreen />
-        <PasskeyManagerModal />
+        <AdminConsoleModal />
         <RechargeModal />
         <ExportModal />
         <SaveTemplateModal />
@@ -674,7 +673,7 @@ export default function App() {
       <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
         <NidaRequestFormScreen />
-        <PasskeyManagerModal />
+        <AdminConsoleModal />
         <RechargeModal />
         <ExportModal />
         <SaveTemplateModal />
@@ -695,7 +694,7 @@ export default function App() {
             // Handled in workflow -> transitions to preview screen
           }}
         />
-        <PasskeyManagerModal />
+        <AdminConsoleModal />
         <RechargeModal />
         <ExportModal />
         <SaveTemplateModal />
@@ -716,7 +715,7 @@ export default function App() {
             // Handled in workflow -> transitions to preview screen
           }}
         />
-        <PasskeyManagerModal />
+        <AdminConsoleModal />
         <RechargeModal />
         <ExportModal />
         <SaveTemplateModal />
@@ -737,7 +736,7 @@ export default function App() {
             // Handled in workflow -> transitions to preview screen
           }}
         />
-        <PasskeyManagerModal />
+        <AdminConsoleModal />
         <RechargeModal />
         <ExportModal />
         <SaveTemplateModal />
@@ -770,7 +769,7 @@ export default function App() {
             // Handled in workflow -> transitions to preview screen
           }}
         />
-        <PasskeyManagerModal />
+        <AdminConsoleModal />
         <RechargeModal />
         <ExportModal />
         <SaveTemplateModal />
@@ -786,7 +785,7 @@ export default function App() {
       <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
         <CardPreviewScreen />
-        <PasskeyManagerModal />
+        <AdminConsoleModal />
         <RechargeModal />
         <ExportModal />
         <SaveTemplateModal />
@@ -802,7 +801,7 @@ export default function App() {
       <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
         <PassportStudioScreen />
-        <PasskeyManagerModal />
+        <AdminConsoleModal />
         <RechargeModal />
       </div>
     );
@@ -813,18 +812,7 @@ export default function App() {
       <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
         <UsageExhaustedBanner />
         <ImageEditStudioScreen />
-        <PasskeyManagerModal />
-        <RechargeModal />
-      </div>
-    );
-  }
-
-  if (activeScreen === "admin-payments" && authRole === "admin") {
-    return (
-      <div className="animate-in fade-in duration-200 flex flex-col min-h-screen">
-        <UsageExhaustedBanner />
-        <PaymentDashboard />
-        <PasskeyManagerModal />
+        <AdminConsoleModal />
         <RechargeModal />
       </div>
     );
@@ -871,7 +859,7 @@ export default function App() {
       {/* Modals & Passkey Manager */}
       <SuccessActivationModal />
       <UnsavedChangesModal />
-      <PasskeyManagerModal />
+      <AdminConsoleModal />
       <ManualApplicationModal />
       <RechargeModal />
       <TemplateLibraryModal />

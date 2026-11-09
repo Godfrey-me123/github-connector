@@ -25,7 +25,6 @@ import {
   Shield,
   ShieldCheck,
   LogOut,
-  Key,
   Eye,
   Sparkles,
   Upload,
@@ -661,7 +660,7 @@ export const Toolbar: React.FC = () => {
               <span className="text-xs whitespace-nowrap">Export</span>
             </button>
 
-            {/* Passkey Gateway Role Badge & Logout */}
+            {/* Account Role Badge & Logout */}
             <div className="flex items-center gap-1.5 border-l border-[#E7E9EB] pl-2 ml-1 shrink-0">
               {authRole === "user" && <UserUsageBadge />}
 
@@ -669,9 +668,9 @@ export const Toolbar: React.FC = () => {
                 <button
                   onClick={() => setPasskeyManagerOpen(true)}
                   className="h-8 p-1.5 bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] rounded-lg text-[#000000] transition-colors flex items-center justify-center cursor-pointer shrink-0"
-                  title="Admin Console & User Management"
+                  title="Admin Management Console"
                 >
-                  <Key className="w-3.5 h-3.5" />
+                  <ShieldCheck className="w-3.5 h-3.5" />
                 </button>
               )}
 

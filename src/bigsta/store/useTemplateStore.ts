@@ -484,7 +484,7 @@ export interface RegisteredUser {
   passkey: string;
   passkeyId: string;
   authUserId?: string;
-  role: "user";
+  role: "user" | "admin";
   tokens: number;
   status: "ACTIVE" | "DISABLED" | "PENDING";
   registeredDate: string;
@@ -3503,7 +3503,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
           passkey: profile.email || profile.auth_user_id || profile.passkey || profile.id,
           passkeyId: profile.id,
           authUserId: profile.auth_user_id || undefined,
-          role: "user",
+          role: profile.role === "admin" ? "admin" : "user",
           tokens: typeof profile.tokens === "number" ? profile.tokens : 0,
           status: (profile.status || "ACTIVE") as "ACTIVE" | "DISABLED" | "PENDING",
           registeredDate: profile.created_at
@@ -3805,40 +3805,26 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         };
       }
 
-      const { supabase } = await import("../services/supabase");
-      if (!supabase) return { success: false, remainingUsages: available };
-
-      const { data, error } = await supabase.rpc("consume_user_tokens", {
-        p_cost: cost,
-        p_service_name: serviceName,
-        p_details: details || null,
-      });
-
-      if (error || !data || (data as any).success === false) {
-        try {
-          const { deductUserTokensSupabase } = await import("../services/supabase");
-          const res = await deductUserTokensSupabase("nida", serviceName, transactionId || `spend:${Date.now()}`);
-          if (res.success) {
-            const newBal = typeof res.newTokens === "number" ? res.newTokens : Math.max(0, available - cost);
-            set({ userTokens: newBal });
-            return { success: true, remainingUsages: newBal, cost };
-          }
-        } catch {}
-
-        const msg = (data as any)?.message || error?.message || "Token transaction failed.";
-        return { success: false, remainingUsages: available, message: msg };
+      try {
+        const { deductUserTokensSupabase } = await import("../services/supabase");
+        const result = await deductUserTokensSupabase(
+          "nida",
+          serviceName,
+          transactionId || `spend:${Date.now()}`,
+          "generation",
+        );
+        if (!result.success) {
+          return { success: false, remainingUsages: available, message: "Token transaction failed." };
+        }
+        const newBalance = typeof result.newTokens === "number" ? result.newTokens : Math.max(0, available - cost);
+        set({ userTokens: newBalance });
+        const authKey = state.currentAuthKey;
+        if (authKey) get().addTokenHistoryItem(-cost, details ? `${serviceName} (${details})` : serviceName, authKey);
+        return { success: true, remainingUsages: newBalance, cost: result.chargedTokens ?? cost };
+      } catch (error) {
+        console.error("Secure token spend failed:", error);
+        return { success: false, remainingUsages: available, message: "Token transaction failed." };
       }
-
-      const newBalance = Number((data as any).remaining_tokens ?? (data as any).new_tokens) ?? Math.max(0, available - cost);
-      set({ userTokens: newBalance });
-
-      // Maintain backward compatibility for any legacy listeners
-      const authKey = state.currentAuthKey;
-      if (authKey) {
-        get().addTokenHistoryItem(-cost, details ? `${serviceName} (${details})` : serviceName, authKey);
-      }
-
-      return { success: true, remainingUsages: newBalance, cost };
     },
 
     confirmPaymentAndActivatePasskey: (id: string) => {

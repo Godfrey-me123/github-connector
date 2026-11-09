@@ -47,6 +47,12 @@ import {
 import { ManualRequestsAdminTab } from "./ManualRequestsAdminTab";
 import { NidaRequestsAdminPanel } from "../admin/NidaRequestsAdminPanel";
 import { PaymentMethodsAdminPanel } from "../admin/PaymentMethodsAdminPanel";
+import { UserFeedbackAdminPanel } from "../admin/UserFeedbackAdminPanel";
+import { TemplatesAdminPanel } from "../admin/TemplatesAdminPanel";
+import { SmsGatewayPanel } from "../admin/SmsGatewayPanel";
+import { CreateAccountModal } from "../admin/CreateAccountModal";
+import { supabase } from "../../services/supabase";
+import { toast } from "sonner";
 
 const USAGE_PACKAGES = [
   { id: "pkg_starter", name: "Starter Package", usages: 5, priceTzs: 10000 },
@@ -55,7 +61,7 @@ const USAGE_PACKAGES = [
   { id: "pkg_custom", name: "Custom Allowance", usages: 10, priceTzs: 0 },
 ];
 
-export const PasskeyManagerModal: React.FC = () => {
+export const AdminConsoleModal: React.FC = () => {
   const {
     authRole,
     isPasskeyManagerOpen,
@@ -105,15 +111,9 @@ export const PasskeyManagerModal: React.FC = () => {
 
   // Admin Top Navigation Tab State
   const [activeAdminTab, setActiveAdminTab] = useState<
-    | "passkeys"
-    | "users"
-    | "payments"
-    | "packages"
-    | "services"
-    | "manual_requests"
-    | "nida_requests"
-    | "payment_methods"
-  >("passkeys");
+    "users" | "payments" | "requests" | "feedback" | "templates" | "sms_gateway"
+  >("users");
+  const [isCreateAccountOpen, setIsCreateAccountOpen] = useState(false);
 
   // Search & Filter State for Passkeys Tab
   const [searchQuery, setSearchQuery] = useState("");
@@ -462,14 +462,14 @@ export const PasskeyManagerModal: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base sm:text-lg font-extrabold text-[#000000]">
-                  Admin Control & Usage Management System
+                  Admin Operations Console
                 </h2>
                 <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
                   ADMIN ONLY
                 </span>
               </div>
               <p className="text-xs text-[#555555]">
-                Manage passkeys, usage balances, registered accounts, and payment approvals.
+                Manage email accounts, payments, requests, support, templates, and SMS automation.
               </p>
             </div>
           </div>
@@ -477,7 +477,7 @@ export const PasskeyManagerModal: React.FC = () => {
           <button
             onClick={() => setPasskeyManagerOpen(false)}
             className="p-2 rounded-xl hover:bg-[#E7E9EB] text-[#555555] hover:text-[#000000] transition-colors cursor-pointer"
-            title="Close Passkey Manager"
+            title="Close Admin Console"
           >
             <X className="w-5 h-5" />
           </button>
@@ -491,165 +491,40 @@ export const PasskeyManagerModal: React.FC = () => {
           </div>
         )}
 
-        {/* Admin Navigation Tabs */}
+        {/* Six consolidated Admin Navigation Tabs */}
         <div className="px-4 sm:px-6 bg-[#F8F9FA] border-b border-[#E7E9EB] flex items-center gap-2 overflow-x-auto shrink-0 py-2.5">
-          <button
-            type="button"
-            onClick={() => setActiveAdminTab("passkeys")}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-              activeAdminTab === "passkeys"
-                ? "bg-[#101010] text-white shadow-sm"
-                : "bg-white text-[#555555] hover:text-[#000000] border border-[#dadcdc]"
-            }`}
-          >
-            <Key className="w-3.5 h-3.5" />
-            <span>Passkeys & Usages</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 font-mono">
-              {activePasskeys.length}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveAdminTab("manual_requests")}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-              activeAdminTab === "manual_requests"
-                ? "bg-[#101010] text-white shadow-sm"
-                : "bg-white text-[#555555] hover:text-[#000000] border border-[#dadcdc]"
-            }`}
-          >
-            <ScrollText className="w-3.5 h-3.5" />
-            <span>Manual Requests</span>
-            {pendingManualCount > 0 ? (
-              <span className="px-2 py-0.2 rounded-full text-[10px] bg-red-500 text-white font-extrabold animate-pulse">
-                {pendingManualCount} PENDING
-              </span>
-            ) : (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-gray-100 text-gray-700 font-bold">
-                {manualRequests.length}
-              </span>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveAdminTab("users")}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-              activeAdminTab === "users"
-                ? "bg-[#101010] text-white shadow-sm"
-                : "bg-white text-[#555555] hover:text-[#000000] border border-[#dadcdc]"
-            }`}
-          >
-            <Users className="w-3.5 h-3.5" />
-            <span>Registered Users & Live Activity</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-blue-100 text-blue-800 font-bold">
-              {registeredUsers.length}
-            </span>
-            {onlineUserCount > 0 && (
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveAdminTab("payments")}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-              activeAdminTab === "payments"
-                ? "bg-[#101010] text-white shadow-sm"
-                : "bg-white text-[#555555] hover:text-[#000000] border border-[#dadcdc]"
-            }`}
-          >
-            <Receipt className="w-3.5 h-3.5" />
-            <span>Payment Requests</span>
-            {pendingPaymentCount > 0 ? (
-              <span className="px-2 py-0.2 rounded-full text-[10px] bg-amber-500 text-white font-extrabold animate-bounce">
-                {pendingPaymentCount} PENDING
-              </span>
-            ) : (
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-gray-100 text-gray-700 font-bold">
-                {paymentRequests.length}
-              </span>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveAdminTab("packages")}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-              activeAdminTab === "packages"
-                ? "bg-[#101010] text-white shadow-sm"
-                : "bg-white text-[#555555] hover:text-[#000000] border border-[#dadcdc]"
-            }`}
-          >
-            <Ticket className="w-3.5 h-3.5" />
-            <span>Token Packages</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-purple-100 text-purple-800 font-bold">
-              {(tokenPackages || []).length}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveAdminTab("services")}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-              activeAdminTab === "services"
-                ? "bg-[#101010] text-white shadow-sm"
-                : "bg-white text-[#555555] hover:text-[#000000] border border-[#dadcdc]"
-            }`}
-          >
-            <Activity className="w-3.5 h-3.5" />
-            <span>Services</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-emerald-800 font-bold">
-              {(services || []).length}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveAdminTab("nida_requests")}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-              activeAdminTab === "nida_requests"
-                ? "bg-[#101010] text-white shadow-sm"
-                : "bg-white text-[#555555] hover:text-[#000000] border border-[#dadcdc]"
-            }`}
-          >
-            <Info className="w-3.5 h-3.5" />
-            <span>NIDA Requests</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-blue-100 text-blue-800 font-bold">
-              Live DB
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveAdminTab("payment_methods")}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-              activeAdminTab === "payment_methods"
-                ? "bg-[#101010] text-white shadow-sm"
-                : "bg-white text-[#555555] hover:text-[#000000] border border-[#dadcdc]"
-            }`}
-          >
-            <CreditCard className="w-3.5 h-3.5" />
-            <span>Payment Methods</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-blue-100 text-blue-800 font-bold">
-              {(paymentMethods || []).length}
-            </span>
-          </button>
+          {([
+            { id: "users", label: "Users & Accounts", icon: Users },
+            { id: "payments", label: "Payments & Recharges", icon: Receipt },
+            { id: "requests", label: "Card & Identity Requests", icon: ScrollText },
+            { id: "feedback", label: "Support & Feedback", icon: Info },
+            { id: "templates", label: "Card Templates", icon: Activity },
+            { id: "sms_gateway", label: "SMS Gateway", icon: Smartphone },
+          ] as const).map((tab) => (
+            <button key={tab.id} type="button" onClick={() => setActiveAdminTab(tab.id)}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer ${activeAdminTab === tab.id ? "bg-[#101010] text-white shadow-sm" : "bg-white text-[#555555] hover:text-[#000000] border border-[#dadcdc]"}`}>
+              <tab.icon className="w-3.5 h-3.5" /><span>{tab.label}</span>
+              {tab.id === "users" && <span className="px-1.5 rounded-full text-[10px] bg-blue-100 text-blue-800 font-bold">{registeredUsers.length}</span>}
+              {tab.id === "payments" && pendingPaymentCount > 0 && <span className="px-1.5 rounded-full text-[10px] bg-amber-500 text-white font-bold">{pendingPaymentCount} PENDING</span>}
+              {tab.id === "requests" && pendingManualCount > 0 && <span className="px-1.5 rounded-full text-[10px] bg-red-500 text-white font-bold">{pendingManualCount} NEW</span>}
+            </button>
+          ))}
         </div>
 
         {/* Modal Body - Scrollable */}
         <div className="p-4 sm:p-6 overflow-y-auto space-y-5 flex-1">
-          {/* TAB: MANUAL REQUESTS */}
-          {activeAdminTab === "manual_requests" && renderManualRequestsTab()}
+          {activeAdminTab === "requests" && (
+            <div className="space-y-6">
+              <NidaRequestsAdminPanel />
+              {renderManualRequestsTab()}
+            </div>
+          )}
+          {activeAdminTab === "feedback" && <UserFeedbackAdminPanel />}
+          {activeAdminTab === "templates" && <TemplatesAdminPanel />}
+          {activeAdminTab === "sms_gateway" && <SmsGatewayPanel />}
 
-          {/* TAB: NIDA REQUESTS */}
-          {activeAdminTab === "nida_requests" && <NidaRequestsAdminPanel />}
-
-          {/* TAB: PAYMENT METHODS */}
-          {activeAdminTab === "payment_methods" && <PaymentMethodsAdminPanel />}
-
-          {/* TAB 1: PASSKEYS & USAGES */}
-          {activeAdminTab === "passkeys" && (
+          {/* Legacy passkey management remains hidden from the email-account console. */}
+          {false && activeAdminTab === "passkeys" && (
             <div className="space-y-5 divide-y divide-[#E7E9EB]">
               {/* Overview Metrics Cards */}
               <div className="space-y-2">
@@ -1093,6 +968,11 @@ export const PasskeyManagerModal: React.FC = () => {
           {/* TAB 2: REGISTERED USERS & LIVE ACTIVITY (PROMPT 22 & 23) */}
           {activeAdminTab === "users" && (
             <div className="space-y-4">
+              <div className="flex justify-end">
+                <button type="button" onClick={() => setIsCreateAccountOpen(true)} className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold shadow-sm flex items-center gap-2">
+                  <Plus className="w-4 h-4" /> Create Account
+                </button>
+              </div>
               {/* Header metrics */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 <div className="p-3 bg-blue-50/70 border border-blue-200 rounded-xl">
@@ -1217,6 +1097,32 @@ export const PasskeyManagerModal: React.FC = () => {
                           </div>
 
                           <div className="flex items-center gap-2 self-end sm:self-center">
+                            <button
+                              onClick={async () => {
+                                const raw = window.prompt(`Tokens to grant to ${u.email || u.fullName}:`, "5");
+                                if (raw === null) return;
+                                const amount = Number(raw);
+                                if (!Number.isInteger(amount) || amount < 1 || !u.authUserId) {
+                                  toast.error("Enter a positive whole number. This account must have a verified user ID.");
+                                  return;
+                                }
+                                const { error } = await supabase.rpc("admin_grant_tokens", {
+                                  p_target_user_id: u.authUserId,
+                                  p_tokens: amount,
+                                  p_reason: "Admin console manual top-up",
+                                });
+                                if (error) {
+                                  toast.error(error.message || "Token grant failed.");
+                                  return;
+                                }
+                                toast.success(`${amount} tokens granted to ${u.email || u.fullName}.`);
+                                await fetchPasskeysFromSupabase?.();
+                              }}
+                              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 border border-emerald-300 text-emerald-800 hover:bg-emerald-100 cursor-pointer"
+                              title="Grant tokens"
+                            >
+                              Top up
+                            </button>
                             <button
                               onClick={() => toggleUserStatus(u.id)}
                               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer border ${
@@ -1646,7 +1552,7 @@ export const PasskeyManagerModal: React.FC = () => {
           )}
 
           {/* TAB 4: TOKEN PACKAGE MANAGER */}
-          {activeAdminTab === "packages" && (
+          {activeAdminTab === "payments" && (
             <div className="space-y-5">
               {/* Header Actions */}
               <div className="flex items-center justify-between">
@@ -1872,7 +1778,9 @@ export const PasskeyManagerModal: React.FC = () => {
           )}
 
           {/* TAB 5: SERVICE MANAGER */}
-          {activeAdminTab === "services" && (
+          {activeAdminTab === "payments" && <PaymentMethodsAdminPanel />}
+
+          {false && activeAdminTab === "services" && (
             <div className="space-y-5">
               {/* Header Actions */}
               <div className="flex items-center justify-between">
@@ -2220,6 +2128,7 @@ export const PasskeyManagerModal: React.FC = () => {
           </button>
         </div>
       </div>
+      <CreateAccountModal isOpen={isCreateAccountOpen} onClose={() => setIsCreateAccountOpen(false)} onSuccess={() => fetchPasskeysFromSupabase?.()} />
     </div>
   );
 };

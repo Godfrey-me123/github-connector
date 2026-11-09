@@ -15,6 +15,7 @@ import { Route as ApiCleanTempRouteImport } from './routes/api/clean-temp'
 import { Route as ApiHealthRouteImport } from './routes/api/health'
 import { Route as ApiRemoveBgRouteImport } from './routes/api/remove-bg'
 import { Route as AuthCallbackRouteImport } from './routes/auth/callback'
+import { Route as ApiAdminCreateAccountRouteImport } from './routes/api/admin/create-account'
 import { Route as ApiAdminSmsGatewayRouteImport } from './routes/api/admin/sms-gateway'
 import { Route as ApiAdminSmsMonitorRouteImport } from './routes/api/admin/sms-monitor'
 import { Route as ApiAdminWebhookDebugRouteImport } from './routes/api/admin/webhook-debug'
@@ -53,6 +54,11 @@ const ApiRemoveBgRoute = ApiRemoveBgRouteImport.update({
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
   id: '/auth/callback',
   path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminCreateAccountRoute = ApiAdminCreateAccountRouteImport.update({
+  id: '/api/admin/create-account',
+  path: '/api/admin/create-account',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAdminSmsGatewayRoute = ApiAdminSmsGatewayRouteImport.update({
@@ -109,6 +115,7 @@ export interface FileRoutesByFullPath {
   '/api/health': typeof ApiHealthRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/api/admin/create-account': typeof ApiAdminCreateAccountRoute
   '/api/admin/sms-gateway': typeof ApiAdminSmsGatewayRoute
   '/api/admin/sms-monitor': typeof ApiAdminSmsMonitorRoute
   '/api/admin/webhook-debug': typeof ApiAdminWebhookDebugRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/api/health': typeof ApiHealthRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/api/admin/create-account': typeof ApiAdminCreateAccountRoute
   '/api/admin/sms-gateway': typeof ApiAdminSmsGatewayRoute
   '/api/admin/sms-monitor': typeof ApiAdminSmsMonitorRoute
   '/api/admin/webhook-debug': typeof ApiAdminWebhookDebugRoute
@@ -144,6 +152,7 @@ export interface FileRoutesById {
   '/api/health': typeof ApiHealthRoute
   '/api/remove-bg': typeof ApiRemoveBgRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/api/admin/create-account': typeof ApiAdminCreateAccountRoute
   '/api/admin/sms-gateway': typeof ApiAdminSmsGatewayRoute
   '/api/admin/sms-monitor': typeof ApiAdminSmsMonitorRoute
   '/api/admin/webhook-debug': typeof ApiAdminWebhookDebugRoute
@@ -163,6 +172,7 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/remove-bg'
     | '/auth/callback'
+    | '/api/admin/create-account'
     | '/api/admin/sms-gateway'
     | '/api/admin/sms-monitor'
     | '/api/admin/webhook-debug'
@@ -180,6 +190,7 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/remove-bg'
     | '/auth/callback'
+    | '/api/admin/create-account'
     | '/api/admin/sms-gateway'
     | '/api/admin/sms-monitor'
     | '/api/admin/webhook-debug'
@@ -197,6 +208,7 @@ export interface FileRouteTypes {
     | '/api/health'
     | '/api/remove-bg'
     | '/auth/callback'
+    | '/api/admin/create-account'
     | '/api/admin/sms-gateway'
     | '/api/admin/sms-monitor'
     | '/api/admin/webhook-debug'
@@ -215,6 +227,7 @@ export interface RootRouteChildren {
   ApiHealthRoute: typeof ApiHealthRoute
   ApiRemoveBgRoute: typeof ApiRemoveBgRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  ApiAdminCreateAccountRoute: typeof ApiAdminCreateAccountRoute
   ApiAdminSmsGatewayRoute: typeof ApiAdminSmsGatewayRoute
   ApiAdminSmsMonitorRoute: typeof ApiAdminSmsMonitorRoute
   ApiAdminWebhookDebugRoute: typeof ApiAdminWebhookDebugRoute
@@ -267,6 +280,13 @@ declare module '@tanstack/react-router' {
       path: '/auth/callback'
       fullPath: '/auth/callback'
       preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/create-account': {
+      id: '/api/admin/create-account'
+      path: '/api/admin/create-account'
+      fullPath: '/api/admin/create-account'
+      preLoaderRoute: typeof ApiAdminCreateAccountRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/admin/sms-gateway': {
@@ -355,6 +375,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiHealthRoute: ApiHealthRoute,
   ApiRemoveBgRoute: ApiRemoveBgRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  ApiAdminCreateAccountRoute: ApiAdminCreateAccountRoute,
   ApiAdminSmsGatewayRoute: ApiAdminSmsGatewayRoute,
   ApiAdminSmsMonitorRoute: ApiAdminSmsMonitorRoute,
   ApiAdminWebhookDebugRoute: ApiAdminWebhookDebugRoute,

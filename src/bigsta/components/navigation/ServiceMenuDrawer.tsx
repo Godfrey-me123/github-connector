@@ -274,12 +274,14 @@ export const ServiceMenuDrawer: React.FC<ServiceMenuDrawerProps> = ({
                         <div className="ml-4 pl-2 border-l border-slate-200 my-1 space-y-1">
                           <button
                             onClick={() => {
-                              setActiveScreen("admin-payments");
+                              setActiveScreen("editor");
+                              setPasskeyManagerOpen(true);
+                              window.dispatchEvent(new CustomEvent("open-admin-tab", { detail: "payments" }));
                               onClose();
                             }}
                             className="w-full text-left px-2.5 py-1.5 rounded-md text-[11px] font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors cursor-pointer"
                           >
-                            Payments & Transactions
+                            Payments & Recharges
                           </button>
                           <button
                             onClick={() => {
