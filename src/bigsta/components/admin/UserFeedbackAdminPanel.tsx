@@ -81,9 +81,53 @@ export const UserFeedbackAdminPanel: React.FC = () => {
 
   useAutoRefresh(() => fetchFeedbacks());
 
+  const [replyTextMap, setReplyTextMap] = useState<Record<string, string>>({});
+
   useEffect(() => {
     fetchFeedbacks();
+    const channel = supabase
+      .channel("admin_user_feedback_realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "user_feedback" },
+        () => {
+          fetchFeedbacks();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      try {
+        supabase.removeChannel(channel);
+      } catch {}
+    };
   }, []);
+
+  const handleSendReply = async (id: string) => {
+    const reply = (replyTextMap[id] || "").trim();
+    if (!reply) return alert("Please type a reply message.");
+    setBusyId(id);
+    try {
+      const { error: err } = await supabase
+        .from("user_feedback")
+        .update({
+          admin_reply: reply,
+          replied_at: new Date().toISOString(),
+          status: "RESOLVED",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+      if (err) alert("Could not send reply: " + err.message);
+      else {
+        setReplyTextMap({ ...replyTextMap, [id]: "" });
+        fetchFeedbacks();
+      }
+    } catch (e: any) {
+      alert("Error sending reply: " + (e?.message || e));
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   const handleUpdateStatus = async (id: string, newStatus: string) => {
     setBusyId(id);
@@ -297,6 +341,35 @@ export const UserFeedbackAdminPanel: React.FC = () => {
                   </button>
                 </div>
               )}
+
+              {/* Admin Reply display if already answered */}
+              {f.admin_reply && (
+                <div className="bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl text-xs text-emerald-900 space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-emerald-800">
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> Admin Reply:
+                  </div>
+                  <p className="whitespace-pre-wrap">{f.admin_reply}</p>
+                </div>
+              )}
+
+              {/* Reply Input Box */}
+              <div className="flex gap-2 pt-1">
+                <input
+                  type="text"
+                  placeholder="Type reply to user..."
+                  value={replyTextMap[f.id] || ""}
+                  onChange={(e) => setReplyTextMap({ ...replyTextMap, [f.id]: e.target.value })}
+                  className="flex-1 text-xs border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+                <button
+                  type="button"
+                  disabled={busyId === f.id}
+                  onClick={() => handleSendReply(f.id)}
+                  className="text-xs font-bold px-3 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 shrink-0"
+                >
+                  Reply & Resolve
+                </button>
+              </div>
 
               {/* Status Actions */}
               <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-gray-100">

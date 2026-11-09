@@ -1,41 +1,23 @@
 import React from "react";
-import { Ticket, AlertCircle, Wallet, PlusCircle, CheckCircle } from "lucide-react";
+import { Ticket, AlertCircle, PlusCircle, CheckCircle } from "lucide-react";
 import { useTemplateStore } from "../../store/useTemplateStore";
 
 export const UserUsageBadge: React.FC<{ className?: string }> = ({ className = "" }) => {
-  const { authRole, currentAuthKey, activePasskeys, registeredUsers, userProfile, paymentRequests, setRechargeModalOpen } = useTemplateStore();
+  const { authRole, userTokens, paymentRequests, setRechargeModalOpen, userProfile } =
+    useTemplateStore();
 
   if (authRole !== "user") return null;
 
-  const userKey = activePasskeys.find(
-    (p) =>
-      p.role === "user" &&
-      (p.key.toLowerCase() === (currentAuthKey || "").toLowerCase() ||
-        p.id.toLowerCase() === (currentAuthKey || "").toLowerCase() ||
-        (userProfile?.email && p.description?.toLowerCase().includes(userProfile.email.toLowerCase()))),
-  );
-
-  const currentUser = registeredUsers.find(
-    (u) =>
-      (currentAuthKey && u.passkey.toLowerCase() === currentAuthKey.toLowerCase()) ||
-      (currentAuthKey && u.id === currentAuthKey) ||
-      (currentAuthKey && u.authUserId?.toLowerCase() === currentAuthKey.toLowerCase()) ||
-      (userProfile?.email && u.email && u.email.toLowerCase() === userProfile.email.toLowerCase()),
-  );
-
-  const remaining = currentUser?.tokens ?? userKey?.remainingUsages ?? 0;
+  const remaining = userTokens ?? 0;
 
   const myPending = paymentRequests.some(
     (r) =>
       r.status === "PENDING" &&
-      ((currentAuthKey && r.userPasskey.toLowerCase() === currentAuthKey.toLowerCase()) ||
-        (currentAuthKey && r.userId && r.userId.toLowerCase() === currentAuthKey.toLowerCase()) ||
-        (userProfile?.email && r.userEmail && r.userEmail.toLowerCase() === userProfile.email.toLowerCase()) ||
+      ((userProfile?.email && r.userEmail && r.userEmail.toLowerCase() === userProfile.email.toLowerCase()) ||
         (userProfile?.email && r.userPasskey.toLowerCase() === userProfile.email.toLowerCase())),
   );
 
   const status = remaining > 0 ? "ACTIVE" : myPending ? "PENDING" : "EXHAUSTED";
-  const packageName = userKey?.packageName || "Standard";
 
   let badgeColor =
     "bg-emerald-500/15 border-emerald-400/40 text-emerald-300 hover:bg-emerald-500/25";
@@ -47,22 +29,17 @@ export const UserUsageBadge: React.FC<{ className?: string }> = ({ className = "
 
   return (
     <div className={`inline-flex items-center gap-1.5 ${className}`}>
-      {/* Account Dashboard Pills */}
       <button
         type="button"
         onClick={() => setRechargeModalOpen(true)}
         className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-semibold tracking-wide shadow-sm font-sans backdrop-blur-md transition-all cursor-pointer ${badgeColor}`}
-        title={`Package: ${packageName} | Remaining Usages: ${remaining} | Status: ${status}`}
+        title={`Remaining Tokens: ${remaining} | Status: ${status}`}
       >
         <Ticket className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
 
         <div className="flex items-center gap-2 text-[11px]">
-          <span className="hidden md:inline-block text-slate-300 font-medium border-r border-white/20 pr-2">
-            Pkg: <strong className="text-white font-semibold">{packageName}</strong>
-          </span>
-
           <span>
-            Usages:{" "}
+            Tokens:{" "}
             <strong className="font-extrabold font-mono text-white text-xs">{remaining}</strong>
           </span>
 

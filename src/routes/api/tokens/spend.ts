@@ -42,8 +42,8 @@ export const Route = createFileRoute("/api/tokens/spend")({
           }
 
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-          const { data: service, error: serviceError } = await supabaseAdmin
-            .from("services")
+          const { data: service, error: serviceError } = await (supabaseAdmin
+            .from("services") as any)
             .select("token_cost, is_active")
             .eq("id", serviceId)
             .maybeSingle();

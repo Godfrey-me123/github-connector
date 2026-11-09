@@ -1,7 +1,7 @@
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import React, { useEffect } from "react";
 import { CheckCircle2 } from "lucide-react";
-import { useTemplateStore } from "./store/useTemplateStore";
+import { useTemplateStore, unsubscribeProfileRealtimeListener, setProfileRealtimeUnsubscriber } from "./store/useTemplateStore";
 import { UploadScreen } from "./components/UploadScreen";
 import { TemplatesScreen } from "./components/TemplatesScreen";
 import { Toolbar } from "./components/Toolbar";
@@ -298,11 +298,39 @@ export default function App() {
           authLoading: false,
           authRole: role,
           currentAuthKey: user.id,
+          userTokens: typeof profile?.tokens === "number" ? profile.tokens : 0,
           userProfile: { name: fullName, phone, email: user.email || "", region: profile?.region || "" },
           registeredUsers: [registeredUser],
           activePasskeys: [initialPasskeyItem],
           ...(welcomeTokenGranted ? { rechargeNotice: "A verified welcome token was added to your account." } : {}),
         });
+
+        // Set up Realtime listener on profiles table for instant token updates across devices
+        unsubscribeProfileRealtimeListener();
+        const profileChannel = supabase
+          .channel(`profile_tokens_${user.id}`)
+          .on(
+            "postgres_changes",
+            {
+              event: "UPDATE",
+              schema: "public",
+              table: "profiles",
+              filter: `auth_user_id=eq.${user.id}`,
+            },
+            (payload) => {
+              if (typeof payload.new?.tokens === "number") {
+                useTemplateStore.setState({ userTokens: payload.new.tokens });
+              }
+            }
+          )
+          .subscribe();
+
+        setProfileRealtimeUnsubscriber(() => {
+          try {
+            supabase.removeChannel(profileChannel);
+          } catch {}
+        });
+
         await fetchPasskeysFromSupabase();
       } catch (error) {
         if (!active || currentSequence !== sequence) return;
@@ -330,9 +358,12 @@ export default function App() {
 
         const { data } = supabase.auth.onAuthStateChange((event, session) => {
           if (event === "SIGNED_OUT" || event === "SIGNED_IN") {
-            // Remove previous payment_requests subscription before creating one for newly signed-in user
+            // Remove previous payment_requests and profile subscription before creating one for newly signed-in user
             try {
               useTemplateStore.getState().unsubscribePaymentRequestsFromSupabase?.();
+            } catch {}
+            try {
+              unsubscribeProfileRealtimeListener();
             } catch {}
           }
 
@@ -365,6 +396,9 @@ export default function App() {
       unsubscribe?.();
       try {
         useTemplateStore.getState().unsubscribePaymentRequestsFromSupabase?.();
+      } catch {}
+      try {
+        unsubscribeProfileRealtimeListener();
       } catch {}
     };
   }, [fetchPasskeysFromSupabase]);

@@ -22,6 +22,24 @@ export const ManualRequestsAdminTab: React.FC = () => {
   const refresh = () => useTemplateStore.getState().loadSavedTemplates(true);
   React.useEffect(() => {
     void refresh();
+    let channel: any = null;
+    import("../../services/supabase").then(({ supabase }) => {
+      if (!supabase) return;
+      channel = supabase
+        .channel("admin_manual_requests_realtime")
+        .on("postgres_changes", { event: "*", schema: "public", table: "manual_requests" }, () => {
+          void refresh();
+        })
+        .subscribe();
+    });
+
+    return () => {
+      if (channel) {
+        import("../../services/supabase").then(({ supabase }) => {
+          try { supabase?.removeChannel(channel); } catch {}
+        });
+      }
+    };
   }, []);
   useAutoRefresh(refresh);
   const [filterStatus, setFilterStatus] = useState<string>("all");

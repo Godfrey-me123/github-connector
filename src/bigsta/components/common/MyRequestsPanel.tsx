@@ -62,22 +62,35 @@ export function MyRequestsPanel({ authKey }: { authKey?: string | null }) {
     if (!authKey || !supabase) return;
     setLoading(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const uid = user?.id || authKey;
+      const email = user?.email;
+
+      let nidaQuery = supabase.from("nida_requests").select("*");
+      if (uid && email) {
+        nidaQuery = nidaQuery.or(`user_id.eq.${uid},requester_key.eq.${uid},user_email.eq.${email}`);
+      } else if (uid) {
+        nidaQuery = nidaQuery.or(`user_id.eq.${uid},requester_key.eq.${uid}`);
+      }
+
+      let manualQuery = supabase.from("manual_requests").select("*");
+      if (uid && email) {
+        manualQuery = manualQuery.or(`user_id.eq.${uid},user_passkey.eq.${uid},user_email.eq.${email}`);
+      } else if (uid) {
+        manualQuery = manualQuery.or(`user_id.eq.${uid},user_passkey.eq.${uid}`);
+      }
+
+      let feedbackQuery = supabase.from("user_feedback").select("*");
+      if (uid && email) {
+        feedbackQuery = feedbackQuery.or(`user_id.eq.${uid},user_email.eq.${email}`);
+      } else if (uid) {
+        feedbackQuery = feedbackQuery.eq("user_id", uid);
+      }
+
       const [nida, manual, feedback] = await Promise.all([
-        supabase
-          .from("nida_requests")
-          .select("*")
-          .eq("requester_key", authKey)
-          .order("created_at", { ascending: false }),
-        supabase
-          .from("manual_requests")
-          .select("*")
-          .eq("user_passkey", authKey)
-          .order("submitted_at", { ascending: false }),
-        supabase
-          .from("user_feedback")
-          .select("*")
-          .eq("user_id", authKey)
-          .order("created_at", { ascending: false }),
+        nidaQuery.order("created_at", { ascending: false }),
+        manualQuery.order("submitted_at", { ascending: false }),
+        feedbackQuery.order("created_at", { ascending: false }),
       ]);
       const firstErr = nida.error || manual.error || feedback.error;
       setError(firstErr ? "Some requests couldn't load. Pull to retry." : null);
@@ -93,6 +106,20 @@ export function MyRequestsPanel({ authKey }: { authKey?: string | null }) {
 
   useEffect(() => {
     void load();
+
+    if (!supabase) return;
+    const channel = supabase
+      .channel("my_requests_realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "nida_requests" }, () => void load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "manual_requests" }, () => void load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "user_feedback" }, () => void load())
+      .subscribe();
+
+    return () => {
+      try {
+        supabase.removeChannel(channel);
+      } catch {}
+    };
   }, [load]);
   useAutoRefresh(load);
 

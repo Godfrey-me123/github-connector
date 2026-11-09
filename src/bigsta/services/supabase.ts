@@ -153,6 +153,8 @@ export async function syncManualRequestSupabase(req: any): Promise<boolean> {
       normal_call_number: req.normalCallNumber || req.normalNumber || "",
       service_name: req.serviceName,
       service_id: req.serviceId || null,
+      user_id: req.userId || null,
+      user_email: req.userEmail || null,
       user_passkey: req.userPasskey || req.accountKey || null,
       submitted_at: new Date(req.submittedAt || req.timestamp || Date.now()).toISOString(),
       status: req.status,

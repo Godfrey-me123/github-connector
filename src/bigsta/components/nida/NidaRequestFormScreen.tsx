@@ -100,13 +100,22 @@ export const NidaRequestFormScreen: React.FC = () => {
   };
 
   const loadMine = async () => {
-    if (!currentAuthKey) return;
     try {
-      const { data } = await supabase
-        .from("nida_requests")
-        .select("*")
-        .eq("requester_key", currentAuthKey)
-        .order("created_at", { ascending: false });
+      const { data: { user } } = await supabase.auth.getUser();
+      const currentId = user?.id || currentAuthKey;
+      const currentEmail = user?.email || (useTemplateStore.getState().userProfile?.email);
+      if (!currentId && !currentEmail) return;
+
+      let query = supabase.from("nida_requests").select("*");
+      if (currentId && currentEmail) {
+        query = query.or(`user_id.eq.${currentId},requester_key.eq.${currentId},user_email.eq.${currentEmail}`);
+      } else if (currentId) {
+        query = query.or(`user_id.eq.${currentId},requester_key.eq.${currentId}`);
+      } else {
+        query = query.eq("user_email", currentEmail);
+      }
+
+      const { data } = await query.order("created_at", { ascending: false });
       setMyRequests(data || []);
     } catch {
       // Ignore network errors on background fetch
@@ -115,6 +124,34 @@ export const NidaRequestFormScreen: React.FC = () => {
 
   useEffect(() => {
     loadMine();
+
+    let channel: any = null;
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const currentId = user?.id || currentAuthKey;
+      if (!currentId) return;
+
+      channel = supabase
+        .channel(`user_nida_requests_${currentId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "nida_requests",
+          },
+          () => {
+            loadMine();
+          }
+        )
+        .subscribe();
+    })();
+
+    return () => {
+      if (channel) {
+        try { supabase.removeChannel(channel); } catch {}
+      }
+    };
   }, [currentAuthKey]);
   useAutoRefresh(() => loadMine());
 
@@ -158,6 +195,8 @@ export const NidaRequestFormScreen: React.FC = () => {
     showToast("info", "Sending request to database...");
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const userProfile = useTemplateStore.getState().userProfile;
       const pk = activePasskeys.find((p) => p.key === currentAuthKey);
       const payload = {
         nida_no: nidaNo.trim(),
@@ -167,8 +206,10 @@ export const NidaRequestFormScreen: React.FC = () => {
         district_of_birth: isGeneralNida ? district.trim() : null,
         street_village: isGeneralNida ? place.trim() : null,
         request_type: isGeneralNida ? type : manualRequestService,
-        requester_key: currentAuthKey || null,
-        requester_name: pk?.description || null,
+        user_id: user?.id || currentAuthKey || null,
+        user_email: user?.email || userProfile?.email || null,
+        requester_key: currentAuthKey || user?.id || null,
+        requester_name: userProfile?.name || pk?.description || user?.email || null,
         status: "PENDING",
         updated_at: new Date().toISOString(),
       };

@@ -70,6 +70,22 @@ export const NidaRequestsAdminPanel: React.FC = () => {
 
   useEffect(() => {
     fetchRequests();
+    const channel = supabase
+      .channel("admin_nida_requests_realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "nida_requests" },
+        () => {
+          fetchRequests();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      try {
+        supabase.removeChannel(channel);
+      } catch {}
+    };
   }, []);
 
   const download = async (r: any) => {

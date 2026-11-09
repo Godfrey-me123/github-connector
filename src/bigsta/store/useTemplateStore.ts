@@ -13,6 +13,23 @@ export function unsubscribePaymentRequestsListener() {
   }
   isPaymentRequestsSubscribed = false;
 }
+
+let unsubscribeProfile: (() => void) | null = null;
+
+export function setProfileRealtimeUnsubscriber(unsub: (() => void) | null) {
+  unsubscribeProfile = unsub;
+}
+
+export function unsubscribeProfileRealtimeListener() {
+  if (unsubscribeProfile) {
+    try {
+      unsubscribeProfile();
+    } catch (e) {
+      console.warn("[Supabase] Failed to remove profiles channel:", e);
+    }
+    unsubscribeProfile = null;
+  }
+}
 import { create } from "zustand";
 import {
   CardTemplate,
@@ -512,6 +529,8 @@ export interface ManualRequestItem {
   accountKey?: string;
   accountUser?: string;
   userPasskey?: string;
+  userId?: string;
+  userEmail?: string;
   status: "PENDING" | "PROCESSING" | "APPROVED" | "COMPLETED" | "REJECTED";
   adminNotes?: string;
   submittedAt?: number;
@@ -708,6 +727,8 @@ interface TemplateState {
   isPasskeyManagerOpen: boolean;
 
   // Registered Users & Recharge Management
+  userTokens: number;
+  setUserTokens: (tokens: number) => void;
   registeredUsers: RegisteredUser[];
   paymentRequests: PaymentRequest[];
   manualRequests: ManualRequestItem[];
@@ -1331,6 +1352,8 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     userProfile: initialUserProfile,
     userPreferences: initialUserPreferences,
     adminSettings: initialAdminSettings,
+    userTokens: 0,
+    setUserTokens: (tokens: number) => set({ userTokens: tokens }),
     userPaymentSubmissions: initialUserPayments,
     tokenHistory: initialTokenHistory,
     processedDeductionIds: [],
@@ -3095,6 +3118,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
 
       const normalNum = data.normalNumber || data.normalCallNumber || "";
 
+      const userEmail = get().userProfile?.email || null;
       const newRequest: ManualRequestItem = {
         id: `req_${nowTs}`,
         timestamp: nowTs,
@@ -3109,6 +3133,8 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         accountKey: userPasskeyItem?.key || currentAuthKey || "Guest",
         accountUser: userRecord?.fullName || userPasskeyItem?.createdBy || "System User",
         userPasskey: userPasskeyItem?.key || currentAuthKey || "Guest",
+        userId: currentAuthKey || undefined,
+        userEmail: userEmail || undefined,
         status: "PENDING",
       };
 
@@ -3382,9 +3408,11 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
           return u;
         });
 
+        const updatedTokens = Math.max(get().userTokens || 0, latestApproved.requestedUsages);
         set({
           activePasskeys: updatedPasskeys,
           registeredUsers: updatedUsers,
+          userTokens: updatedTokens,
         });
 
         try {
@@ -3761,33 +3789,56 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       return newItem;
     },
 
-    consumeUsage: async (serviceName = "NIDA Service Completion", details, tokenCost, transactionId) => {
+    consumeUsage: async (serviceName = "Card Generation", details, tokenCost, transactionId) => {
       const state = get();
-      const authKey = state.currentAuthKey || (typeof window !== "undefined" ? localStorage.getItem("bigsta_auth_key") : null);
-      if (state.authRole === "admin") return { success: true, remainingUsages: 99999 };
-      const id = transactionId || `usage:${Date.now()}:${Math.random().toString(36).slice(2)}`;
-      if (state.processedDeductionIds.includes(id)) {
-        const existing = state.registeredUsers.find((u) => u.passkey.toLowerCase() === (authKey || "").toLowerCase() || u.authUserId?.toLowerCase() === (authKey || "").toLowerCase());
-        return { success: true, remainingUsages: existing?.tokens || 0, alreadyDeducted: true };
+      if (state.authRole === "admin") {
+        return { success: true, remainingUsages: 99999, is_admin: true };
       }
-      const email = (state.userProfile.email || "").toLowerCase();
-      const user = state.registeredUsers.find((u) => u.passkey.toLowerCase() === (authKey || "").toLowerCase() || u.id.toLowerCase() === (authKey || "").toLowerCase() || u.authUserId?.toLowerCase() === (authKey || "").toLowerCase() || (!!email && u.email?.toLowerCase() === email));
-      const pk = state.activePasskeys.find((p) => p.key.toLowerCase() === (authKey || "").toLowerCase() || p.id.toLowerCase() === (authKey || "").toLowerCase() || (!!email && p.key.toLowerCase() === email));
-      if (!authKey || (!user && !pk)) return { success: false, remainingUsages: 0, message: "No valid active user session." };
-      if (pk && (!pk.active || pk.paymentStatus === "DISABLED")) return { success: false, remainingUsages: 0, message: "Account has been disabled." };
-      let serviceId = /driving|license|licence|permit/i.test(serviceName) ? "driving_license" : /nhif/i.test(serviceName) ? "nhif" : /nrc/i.test(serviceName) ? "nrc_zambia" : /nida/i.test(serviceName) ? "nida" : state.activeServiceId || "nida";
-      const cost = typeof tokenCost === "number" ? tokenCost : (state.services.find((s) => s.id === serviceId)?.tokenCost ?? 1);
-      const available = typeof user?.tokens === "number" ? user.tokens : (pk?.remainingUsages || 0);
-      if (available < cost) return { success: false, remainingUsages: available, message: `Insufficient tokens. Requires ${cost}, available ${available}.` };
-      const { deductUserTokensSupabase } = await import("../services/supabase");
-      const result = await deductUserTokensSupabase(serviceId, serviceName, id, id.startsWith("export:") ? "export" : "generation");
-      if (!result.success) return { success: false, remainingUsages: available, message: "Token transaction could not be completed." };
-      const balance = typeof result.newTokens === "number" ? result.newTokens : Math.max(0, available - cost);
-      const chargedTokens = Number(result.chargedTokens) > 0 ? Number(result.chargedTokens) : cost;
-      const ids = [...state.processedDeductionIds, id].slice(-500);
-      set({ processedDeductionIds: ids, registeredUsers: state.registeredUsers.map((u) => user && u.id === user.id ? { ...u, tokens: balance } : u), activePasskeys: state.activePasskeys.map((p) => pk && p.id === pk.id ? { ...p, remainingUsages: balance, usedUsages: (p.usedUsages || 0) + (result.alreadyDeducted ? 0 : chargedTokens), paymentStatus: balance > 0 ? "ACTIVE" : "EXHAUSTED" } : p) });
-      if (!result.alreadyDeducted) get().addTokenHistoryItem(-chargedTokens, details ? `${serviceName} (${details})` : serviceName, authKey);
-      return { success: true, remainingUsages: balance, alreadyDeducted: result.alreadyDeducted };
+
+      const cost = typeof tokenCost === "number" ? tokenCost : 1;
+      const available = state.userTokens ?? 0;
+      if (available < cost) {
+        return {
+          success: false,
+          remainingUsages: available,
+          message: `Insufficient tokens. Requires ${cost}, available ${available}. Please recharge.`,
+        };
+      }
+
+      const { supabase } = await import("../services/supabase");
+      if (!supabase) return { success: false, remainingUsages: available };
+
+      const { data, error } = await supabase.rpc("consume_user_tokens", {
+        p_cost: cost,
+        p_service_name: serviceName,
+        p_details: details || null,
+      });
+
+      if (error || !data || (data as any).success === false) {
+        try {
+          const { deductUserTokensSupabase } = await import("../services/supabase");
+          const res = await deductUserTokensSupabase("nida", serviceName, transactionId || `spend:${Date.now()}`);
+          if (res.success) {
+            const newBal = typeof res.newTokens === "number" ? res.newTokens : Math.max(0, available - cost);
+            set({ userTokens: newBal });
+            return { success: true, remainingUsages: newBal, cost };
+          }
+        } catch {}
+
+        const msg = (data as any)?.message || error?.message || "Token transaction failed.";
+        return { success: false, remainingUsages: available, message: msg };
+      }
+
+      const newBalance = Number((data as any).remaining_tokens ?? (data as any).new_tokens) ?? Math.max(0, available - cost);
+      set({ userTokens: newBalance });
+
+      // Maintain backward compatibility for any legacy listeners
+      const authKey = state.currentAuthKey;
+      if (authKey) {
+        get().addTokenHistoryItem(-cost, details ? `${serviceName} (${details})` : serviceName, authKey);
+      }
+
+      return { success: true, remainingUsages: newBalance, cost };
     },
 
     confirmPaymentAndActivatePasskey: (id: string) => {

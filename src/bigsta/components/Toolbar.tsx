@@ -669,7 +669,7 @@ export const Toolbar: React.FC = () => {
                 <button
                   onClick={() => setPasskeyManagerOpen(true)}
                   className="h-8 p-1.5 bg-[#E7E9EB] hover:bg-[#dadcdc] border border-[#dadcdc] rounded-lg text-[#000000] transition-colors flex items-center justify-center cursor-pointer shrink-0"
-                  title="Manage Passkeys"
+                  title="Admin Console & User Management"
                 >
                   <Key className="w-3.5 h-3.5" />
                 </button>

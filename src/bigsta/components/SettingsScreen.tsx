@@ -243,9 +243,14 @@ export const SettingsScreen: React.FC = () => {
       };
 
       // Try inserting into Supabase
+      const { data: { user } } = await supabase.auth.getUser();
       const { error: insErr } = await supabase
         .from("user_feedback")
-        .insert([{ ...newFeedback, user_id: currentAuthKey || null }]);
+        .insert([{
+          ...newFeedback,
+          user_id: user?.id || currentAuthKey || null,
+          user_email: user?.email || userProfile?.email || null,
+        }]);
       if (insErr) {
         setFeedbackBanner("Could not send: " + insErr.message);
         triggerToast("Feedback not sent, please try again");
@@ -354,7 +359,7 @@ export const SettingsScreen: React.FC = () => {
                     : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
                 }`}
               >
-                <Shield className="w-4 h-4" /> Security & Passkey
+                <Shield className="w-4 h-4" /> Security & Account
               </button>
 
               <button
@@ -600,17 +605,17 @@ export const SettingsScreen: React.FC = () => {
               <div className="bg-white dark:bg-[#1E2328] rounded-2xl border border-slate-200 dark:border-white/10 p-6 shadow-xs space-y-5">
                 <div className="border-b border-slate-100 dark:border-white/10 pb-3">
                   <h2 className="text-base font-bold text-slate-900 dark:text-white">
-                    Security & Passkey Gateway
+                    Security & Account Management
                   </h2>
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Manage active sessions, passkey authorization & password updates
+                    Manage active sessions, account security & password updates
                   </p>
                 </div>
 
                 <div className="p-4 rounded-xl border border-blue-200 dark:border-blue-800 bg-blue-50/60 dark:bg-blue-950/40 flex items-center justify-between">
                   <div>
                     <span className="text-xs font-bold text-blue-900 dark:text-blue-300 block">
-                      Current Active Passkey
+                      Account Auth ID (UUID)
                     </span>
                     <span className="text-xs font-mono font-bold text-blue-700 dark:text-blue-400">
                       {currentAuthKey || "Default Active Key"}
