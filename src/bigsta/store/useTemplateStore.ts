@@ -1159,6 +1159,24 @@ export function safeLocalStorageSetItem(key: string, value: string): boolean {
   }
 }
 
+const getInitialActiveScreen = (): string => {
+  if (typeof window !== "undefined") {
+    try {
+      const saved = window.sessionStorage?.getItem("bigsta_active_screen");
+      if (saved && typeof saved === "string") return saved;
+    } catch {}
+  }
+  return "home";
+};
+
+const persistActiveScreen = (screen: string) => {
+  if (typeof window !== "undefined") {
+    try {
+      window.sessionStorage?.setItem("bigsta_active_screen", screen);
+    } catch {}
+  }
+};
+
 export const useTemplateStore = create<TemplateState>((set, get) => {
   const savedDefaultFrontId = null;
   const savedDefaultBackId = null;
@@ -1325,7 +1343,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
   ];
 
   return {
-    activeScreen: "home",
+    activeScreen: getInitialActiveScreen() as any,
     activePdf: null,
     setActivePdf: (pdf: any | null) => set({ activePdf: pdf }),
     currentTemplate: DEFAULT_TEMPLATE,
@@ -1850,6 +1868,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
           }
         }
 
+        persistActiveScreen(finalTarget);
         set({
           activeScreen: finalTarget as any,
           studioMode: finalTarget === "editor",

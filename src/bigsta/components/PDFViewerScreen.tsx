@@ -545,30 +545,57 @@ export const PDFViewerScreen: React.FC = () => {
     }
   };
 
-  // Handle native print
+  // Handle native print safely without opening new tabs or causing screen reset
   const handleTriggerPrint = () => {
-    if (!pdfUrl) {
+    if (!pdfUrl && !rawPdfBytes) {
       toast.error("No document available to print.");
       return;
     }
 
+    setShowPrintModal(false);
+
+    // Switch to continuous reader view so all canvas pages are in the DOM for media print
+    if (viewMode === "grid") {
+      setViewMode("continuous");
+    }
+
+    toast.success("Opening system print dialog...");
+
     try {
-      const printWindow = window.open(pdfUrl, "_blank");
-      if (printWindow) {
-        printWindow.focus();
-        setTimeout(() => {
-          try {
-            printWindow.print();
-          } catch (e) {}
-        }, 600);
-        toast.success("Opening system print dialog...");
-      } else {
-        window.print();
-      }
+      // Use hidden iframe targeting the PDF to preserve app state and prevent tab unload
+      const iframe = document.createElement("iframe");
+      iframe.setAttribute("style", "position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;visibility:hidden;");
+      iframe.src = pdfUrl || "";
+      document.body.appendChild(iframe);
+
+      let printed = false;
+      const doPrint = () => {
+        if (printed) return;
+        printed = true;
+        try {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+        } catch {
+          window.print();
+        } finally {
+          setTimeout(() => {
+            if (document.body.contains(iframe)) {
+              document.body.removeChild(iframe);
+            }
+          }, 3000);
+        }
+      };
+
+      iframe.onload = () => {
+        setTimeout(doPrint, 250);
+      };
+
+      setTimeout(() => {
+        if (!printed) doPrint();
+      }, 1000);
     } catch (err) {
       window.print();
     }
-    setShowPrintModal(false);
   };
 
   // Filter recents

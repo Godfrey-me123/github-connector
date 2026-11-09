@@ -61,9 +61,9 @@ export async function saveWebhookSettings(value: Record<string, unknown>) {
 
 const json = (body: unknown, status = 200) => Response.json(body, { status });
 
-async function logWebhookFailure(error: string, sender: string, request: Request) {
+async function logWebhookFailure(error: string, sender: string, request: Request, dbOverride?: any) {
   try {
-    const db = await admin();
+    const db = dbOverride || (await admin());
     const ip =
       request.headers.get("cf-connecting-ip") ||
       request.headers.get("x-forwarded-for") ||
@@ -166,7 +166,7 @@ export async function gatewayStatus(origin: string) {
   };
 }
 
-export async function handleIncomingSms(request: Request): Promise<Response> {
+export async function handleIncomingSms(request: Request, dbOverride?: any): Promise<Response> {
   let payload: any = {};
   try {
     const ct = request.headers.get("content-type") || "";
@@ -190,13 +190,13 @@ export async function handleIncomingSms(request: Request): Promise<Response> {
     new URL(request.url).searchParams.get("secret");
   if (!provided || provided !== secret) {
     const error = !provided ? "Missing Secret" : "Invalid Secret";
-    await logWebhookFailure(error, sender, request);
+    await logWebhookFailure(error, sender, request, dbOverride);
     return json({ success: false, received: true, status: "FAILED", error }, 401);
   }
   if (!rawSms.trim())
     return json({ success: false, received: true, status: "FAILED", error: "Empty SMS body" }, 400);
 
-  const db = await admin();
+  const db = dbOverride || (await admin());
   const fields = extractPaymentFields(sender, rawSms);
   const parsed = isParsedPayment(fields);
   const smsHash = await computeSmsHash(sender, rawSms, receivedAt);
