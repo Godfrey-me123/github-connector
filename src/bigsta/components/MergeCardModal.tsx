@@ -1,3 +1,4 @@
+import { bigstaAlert, bigstaConfirm } from "./common/BigstaConfirmModal";
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import React, { useState, useEffect } from "react";
 import {
@@ -39,10 +40,36 @@ export const MergeCardModal: React.FC = () => {
     if (initializationRef.current) return;
     initializationRef.current = true;
 
-    const list = await loadSavedTemplates();
-    setTemplates(list);
-
     const store = useTemplateStore.getState();
+    const list = await loadSavedTemplates();
+
+    const activeList: CardTemplate[] = [];
+    if (store.frontPopulatedTemplate) {
+      activeList.push({
+        ...store.frontPopulatedTemplate,
+        templateName: `[Current Card] ${store.frontPopulatedTemplate.templateName || "Front Side"}`,
+      });
+    }
+    if (store.backPopulatedTemplate) {
+      activeList.push({
+        ...store.backPopulatedTemplate,
+        templateName: `[Current Card] ${store.backPopulatedTemplate.templateName || "Back Side"}`,
+      });
+    }
+    if (store.currentTemplate && !activeList.some((t) => t.id === store.currentTemplate?.id)) {
+      activeList.push({
+        ...store.currentTemplate,
+        templateName: `[Active Editor] ${store.currentTemplate.templateName || "Card"}`,
+      });
+    }
+
+    const combined = [...activeList];
+    for (const item of list) {
+      if (!combined.some((t) => t.id === item.id)) {
+        combined.push(item);
+      }
+    }
+    setTemplates(combined);
     const isDL =
       store.activeServiceId === "driving_license" ||
       store.currentTemplate?.cardType === "Driving License" ||
@@ -251,7 +278,7 @@ export const MergeCardModal: React.FC = () => {
     if (!val.allowed) return;
 
     if (!frontTemplate) {
-      alert("Please select a Front template.");
+      await bigstaAlert("Please select a Front template.");
       return;
     }
 
@@ -287,7 +314,7 @@ export const MergeCardModal: React.FC = () => {
       await storeState.consumeUsage("2-in-1 Sheet PDF Export", undefined, 1, `export:merge:${frontTemplate.id}:${Date.now()}`);
     } catch (e) {
       console.error(e);
-      alert("Error generating 2-in-1 PDF.");
+      await bigstaAlert("Error generating 2-in-1 PDF.");
     } finally {
       setIsExporting(false);
     }

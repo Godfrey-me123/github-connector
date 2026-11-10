@@ -1,3 +1,4 @@
+import { bigstaAlert } from "../common/BigstaConfirmModal";
 import React, { useState, useEffect } from "react";
 import {
   X,
@@ -51,10 +52,10 @@ export const ManualApplicationModal: React.FC = () => {
 
   if (!isManualAppModalOpen) return null;
 
-  const handleInitialFormSubmit = (e: React.FormEvent) => {
+  const handleInitialFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName.trim() || !whatsappNumber.trim()) {
-      alert("Please provide your real full names and your WhatsApp or active contact number.");
+      await bigstaAlert("Please provide your real full names and your WhatsApp or active contact number.");
       return;
     }
     // Prompt if user is ready for communication

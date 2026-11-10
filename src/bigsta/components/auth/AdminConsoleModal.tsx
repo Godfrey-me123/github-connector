@@ -1,3 +1,4 @@
+import { bigstaAlert, bigstaConfirm } from "../common/BigstaConfirmModal";
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import React, { useState, useMemo, useEffect } from "react";
 import {
@@ -1753,12 +1754,8 @@ export const AdminConsoleModal: React.FC = () => {
                           </button>
                           <button
                             type="button"
-                            onClick={() => {
-                              if (
-                                confirm(
-                                  `Are you sure you want to delete token package "${pkg.name}"?`,
-                                )
-                              ) {
+                            onClick={async () => {
+                              if (await bigstaConfirm(`Are you sure you want to delete token package "${pkg.name}"?`)) {
                                 deleteTokenPackage(pkg.id);
                                 setAdminActionNotice("Token package deleted.");
                                 setTimeout(() => setAdminActionNotice(null), 3000);
@@ -2088,16 +2085,12 @@ export const AdminConsoleModal: React.FC = () => {
                           </button>
                           <button
                             type="button"
-                            onClick={() => {
+                            onClick={async () => {
                               if (srv.id === "nida" || srv.id === "driving_license") {
-                                alert(
-                                  'Core system services ("nida", "driving_license") are protected and cannot be deleted.',
-                                );
+                                await bigstaAlert('Core system services ("nida", "driving_license") are protected and cannot be deleted.');
                                 return;
                               }
-                              if (
-                                confirm(`Are you sure you want to delete service "${srv.name}"?`)
-                              ) {
+                              if (await bigstaConfirm(`Are you sure you want to delete service "${srv.name}"?`)) {
                                 deleteService(srv.id);
                                 setAdminActionNotice("Service deleted.");
                                 setTimeout(() => setAdminActionNotice(null), 3000);

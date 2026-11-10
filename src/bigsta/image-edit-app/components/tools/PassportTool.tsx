@@ -1,3 +1,4 @@
+import { bigstaAlert } from "../../../components/common/BigstaConfirmModal";
 // @ts-nocheck
 import React, { useState, useRef, useEffect } from "react";
 import {
@@ -276,7 +277,7 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
           .catch((err) => console.warn("Fabric image load error:", err));
       }
     } catch (err: any) {
-      alert(err.message || "Error processing background removal");
+      await bigstaAlert(err.message || "Error processing background removal");
     } finally {
       setIsProcessing(false);
     }
@@ -401,7 +402,7 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
           <div className="p-4 space-y-6">
             <div className="grid grid-cols-4 gap-2.5">
               <div
-                onClick={() => alert("Custom")}
+                onClick={async () => await bigstaAlert("Custom")}
                 className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 transition-all"
               >
                 <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 mb-1.5">
@@ -410,7 +411,7 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
                 <span className="text-xs font-bold text-slate-800">Custom</span>
               </div>
               <div
-                onClick={() => alert("Annotation")}
+                onClick={async () => await bigstaAlert("Annotation")}
                 className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 transition-all"
               >
                 <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 mb-1.5">
@@ -419,7 +420,7 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
                 <span className="text-xs font-bold text-slate-800">Annotation</span>
               </div>
               <div
-                onClick={() => alert("Signature")}
+                onClick={async () => await bigstaAlert("Signature")}
                 className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 transition-all"
               >
                 <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 mb-1.5">
@@ -428,7 +429,7 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
                 <span className="text-xs font-bold text-slate-800">Signature</span>
               </div>
               <div
-                onClick={() => alert("Sign Photo")}
+                onClick={async () => await bigstaAlert("Sign Photo")}
                 className="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 transition-all"
               >
                 <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-700 mb-1.5">
@@ -468,7 +469,7 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
               </label>
 
               <button
-                onClick={() => {
+                onClick={async () => {
                   const cached = localStorage.getItem("bigsta_active_photo");
                   if (cached) {
                     fetch(cached)
@@ -482,7 +483,7 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
                         setStep("edit");
                       });
                   } else {
-                    alert("No recent photo in phone storage. Please upload one.");
+                    await bigstaAlert("No recent photo in phone storage. Please upload one.");
                   }
                 }}
                 className="bg-blue-600 hover:bg-blue-700 text-white p-5 rounded-2xl shadow-md flex flex-col items-center justify-center text-center cursor-pointer transition-all active:scale-98"

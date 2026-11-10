@@ -1,3 +1,4 @@
+import { bigstaAlert, bigstaConfirm } from "../common/BigstaConfirmModal";
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import React, { useState, useEffect, useMemo } from "react";
 import {
@@ -82,7 +83,7 @@ export const PaymentDashboard: React.FC = () => {
     try {
       const trimmedUrl = customAppUrl.trim().replace(/\/+$/, "");
       if (!trimmedUrl) {
-        alert("Please enter a valid app deployment URL.");
+        await bigstaAlert("Please enter a valid app deployment URL.");
         return;
       }
       const res = await adminApiFetch("/api/admin/webhook-settings", {
@@ -97,11 +98,11 @@ export const PaymentDashboard: React.FC = () => {
       const secData = await secRes.json();
       setWebhookSecret(secData.secret);
 
-      alert(
+      await bigstaAlert(
         `App URL saved and connected successfully!\n\nWebhook Endpoint:\n${trimmedUrl}/api/public/payment-sms\n\nNew Secret Key generated and saved.`,
       );
     } catch (err) {
-      alert("Failed to save and generate webhook settings.");
+      await bigstaAlert("Failed to save and generate webhook settings.");
     }
   };
 
@@ -154,7 +155,7 @@ export const PaymentDashboard: React.FC = () => {
   const handleSaveMatchWords = async () => {
     updateAdminSettings({ matchWords });
     await publishAdminSettingsToSupabase();
-    alert("SMS Match Words updated successfully!");
+    await bigstaAlert("SMS Match Words updated successfully!");
   };
 
   const [isVerifying, setIsVerifying] = useState(false);
@@ -235,9 +236,7 @@ export const PaymentDashboard: React.FC = () => {
 
   const regenerateSecret = async () => {
     if (
-      !confirm(
-        "Are you sure you want to regenerate the secret key? All existing connections will be broken immediately.",
-      )
+      !(await bigstaConfirm("Are you sure you want to regenerate the secret key? All existing connections will be broken immediately."))
     )
       return;
     try {
@@ -245,12 +244,12 @@ export const PaymentDashboard: React.FC = () => {
       const data = await response.json();
       if (data?.secret) {
         setWebhookSecret(data.secret);
-        alert("Secret key regenerated successfully!");
+        await bigstaAlert("Secret key regenerated successfully!");
       } else {
         throw new Error("No secret returned");
       }
     } catch (err) {
-      alert("Failed to regenerate secret: " + (err as Error).message);
+      await bigstaAlert("Failed to regenerate secret: " + (err as Error).message);
     }
   };
 
@@ -379,7 +378,7 @@ export const PaymentDashboard: React.FC = () => {
   };
 
   const handleApprove = async (paymentId: string) => {
-    if (!confirm("Manually approve this payment?")) return;
+    if (!(await bigstaConfirm("Manually approve this payment?"))) return;
     try {
       if (!selectedPayment) throw new Error("No payment selected");
       await paymentService.verifyPaymentManually(
@@ -388,32 +387,32 @@ export const PaymentDashboard: React.FC = () => {
         selectedPayment.tokensGranted || 0,
         selectedPayment.passkeyId,
       );
-      alert("Payment verified and tokens granted!");
+      await bigstaAlert("Payment verified and tokens granted!");
       loadData();
     } catch (e) {
-      alert("Failed to verify: " + (e instanceof Error ? e.message : "Unknown error"));
+      await bigstaAlert("Failed to verify: " + (e instanceof Error ? e.message : "Unknown error"));
     }
   };
 
   const handleReject = async (paymentId: string) => {
-    if (!confirm("Reject this payment?")) return;
+    if (!(await bigstaConfirm("Reject this payment?"))) return;
     try {
       await paymentService.rejectPayment(paymentId, "admin", "Rejected by admin");
-      alert("Payment rejected");
+      await bigstaAlert("Payment rejected");
       loadData();
     } catch (e) {
-      alert("Failed to reject");
+      await bigstaAlert("Failed to reject");
     }
   };
 
   const handleReactivate = async (paymentId: string) => {
-    if (!confirm("Reactivate this payment to ACTIVE/VERIFIED status?")) return;
+    if (!(await bigstaConfirm("Reactivate this payment to ACTIVE/VERIFIED status?"))) return;
     try {
       await paymentService.reactivatePayment(paymentId, "admin");
-      alert("Payment reactivated!");
+      await bigstaAlert("Payment reactivated!");
       loadData();
     } catch (e) {
-      alert("Failed to reactivate");
+      await bigstaAlert("Failed to reactivate");
     }
   };
 
@@ -426,7 +425,7 @@ export const PaymentDashboard: React.FC = () => {
       setSelectedPayment((prev) => (prev ? { ...prev, ...editForm } : null));
       loadData();
     } catch (e) {
-      alert("Update failed");
+      await bigstaAlert("Update failed");
     }
   };
 
@@ -1345,7 +1344,7 @@ export const PaymentDashboard: React.FC = () => {
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(webhookSecret);
-                        alert("Secret key copied to clipboard!");
+                        await bigstaAlert("Secret key copied to clipboard!");
                       }}
                       className="p-3 bg-gray-900 hover:bg-black text-white rounded-xl transition-all shadow-md flex items-center justify-center shrink-0"
                       title="Copy Secret"

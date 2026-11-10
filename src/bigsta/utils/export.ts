@@ -59,6 +59,11 @@ export async function renderTemplateToCanvas(
     store.activeServiceId === "driving_license" ||
     template.serviceId === "driving_license";
   const isNhif = template.serviceId === "nhif" || store.activeServiceId === "nhif";
+  const isNrc =
+    template.serviceId === "nrc_zambia" ||
+    store.activeServiceId === "nrc_zambia" ||
+    template.cardType === "National Registration Card (NRC)" ||
+    template.cardType === "NRC Zambia";
 
   // ELIMINATE DATA LEAKAGE: When specific cardData is provided (e.g. from a saved record in Downloads),
   // we MUST NOT merge it with the last filled form in the store.
@@ -73,9 +78,11 @@ export async function renderTemplateToCanvas(
     storeFormData =
       (isNhif
         ? store.lastNhifFormData
-        : isDrivingLicense
-          ? store.lastDrivingLicenseFormData
-          : store.lastNidaFormData) || {};
+        : isNrc
+          ? store.lastNrcFormData
+          : isDrivingLicense
+            ? store.lastDrivingLicenseFormData
+            : store.lastNidaFormData) || {};
   }
 
   const effectiveCardData: CardData = {
@@ -96,15 +103,20 @@ export async function renderTemplateToCanvas(
       effectiveCardData.card_no ||
       effectiveCardData.fullName ||
       effectiveCardData.dateOfBirth
-    : isDrivingLicense
-      ? effectiveCardData.licenceNumber ||
-        effectiveCardData.firstName ||
-        effectiveCardData.lastName ||
-        (effectiveCardData.classes && effectiveCardData.classes.length > 0)
-      : effectiveCardData.nidaNumber ||
-        effectiveCardData.firstName ||
-        effectiveCardData.lastName ||
-        effectiveCardData.dob;
+    : isNrc
+      ? effectiveCardData.nrcNumber ||
+        effectiveCardData.nrc_number ||
+        effectiveCardData.fullName ||
+        effectiveCardData.firstName
+      : isDrivingLicense
+        ? effectiveCardData.licenceNumber ||
+          effectiveCardData.firstName ||
+          effectiveCardData.lastName ||
+          (effectiveCardData.classes && effectiveCardData.classes.length > 0)
+        : effectiveCardData.nidaNumber ||
+          effectiveCardData.firstName ||
+          effectiveCardData.lastName ||
+          effectiveCardData.dob;
 
   if (effectiveCardData && hasFormData) {
     const mappedRes = applyTemplateMapping(template, effectiveCardData as unknown as NidaFormData);

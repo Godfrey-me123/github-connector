@@ -1,3 +1,4 @@
+import { bigstaAlert } from "./BigstaConfirmModal";
 import React from "react";
 import { Wrench, X, Mail } from "lucide-react";
 
@@ -53,7 +54,7 @@ export const UnderDevelopmentModal: React.FC<UnderDevelopmentModalProps> = ({
           <button
             type="button"
             onClick={() => {
-              alert("Contact Administrator: admin@bigsta.portal / support@bigsta.portal");
+              await bigstaAlert("Contact Administrator: admin@bigsta.portal / support@bigsta.portal");
             }}
             className="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
           >

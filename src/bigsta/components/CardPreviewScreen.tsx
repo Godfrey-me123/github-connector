@@ -250,8 +250,13 @@ export const CardPreviewScreen: React.FC = () => {
   const bTpl = React.useMemo(() => {
     if (backPopulatedTemplate) return backPopulatedTemplate;
     const { getUniversalBackTemplate } = useTemplateStore.getState();
-    return getUniversalBackTemplate(activeServiceId);
-  }, [backPopulatedTemplate, activeServiceId]);
+    const defaultBack = getUniversalBackTemplate(activeServiceId);
+    if (defaultBack && activeFormData && Object.keys(activeFormData).length > 0) {
+      const res = applyTemplateMapping(defaultBack, activeFormData);
+      return res.populatedTemplate || defaultBack;
+    }
+    return defaultBack;
+  }, [backPopulatedTemplate, activeServiceId, activeFormData]);
 
   // Render high-res card canvas to data URL for smooth interactive display
   useEffect(() => {

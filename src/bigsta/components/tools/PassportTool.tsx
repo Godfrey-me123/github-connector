@@ -1,3 +1,4 @@
+import { bigstaAlert } from "../common/BigstaConfirmModal";
 // @ts-nocheck
 import React, { useState, useRef, useEffect } from "react";
 import {
@@ -469,7 +470,7 @@ export const PassportTool: React.FC<PassportToolProps> = ({ initialFile, onBack 
 
             <div className="w-full grid grid-cols-2 gap-3">
               <button
-                onClick={() => alert("Annotation tool")}
+                onClick={async () => await bigstaAlert("Annotation tool")}
                 className="bg-slate-200 hover:bg-slate-300 text-slate-800 py-3 rounded-2xl font-bold text-xs flex items-center justify-center gap-2 shadow-2xs cursor-pointer"
               >
                 <Edit3 className="w-4 h-4" /> Annotation

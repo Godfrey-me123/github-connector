@@ -1,3 +1,4 @@
+import { bigstaAlert } from "../components/common/BigstaConfirmModal";
 import { bigstaConfirm } from "../components/common/BigstaConfirmModal";
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 /**
@@ -172,7 +173,7 @@ export async function checkAndRequestAndroidStoragePermission(): Promise<boolean
         w.requestStoragePermissions();
       }
 
-      alert(
+      await bigstaAlert(
         "Android Storage Permission is required to save files natively. Please grant storage access in your app permissions or device settings.",
       );
       return false;

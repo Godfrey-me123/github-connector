@@ -1,3 +1,4 @@
+import { bigstaAlert } from "./common/BigstaConfirmModal";
 // @ts-nocheck -- imported legacy BIGsta code
 import { MyRequestsPanel } from "./common/MyRequestsPanel";
 import React, { useState, useEffect } from "react";
@@ -557,9 +558,9 @@ export const SettingsScreen: React.FC = () => {
                               const j = await (await fetch("https://ipapi.co/json/")).json();
                               const v = fmt(j.region || j.city, j.country_name);
                               if (v) setProfileForm((p: any) => ({ ...p, region: v }));
-                              else alert("Could not detect location.");
+                              else await bigstaAlert("Could not detect location.");
                             } catch {
-                              alert("Could not detect location.");
+                              await bigstaAlert("Could not detect location.");
                             }
                           };
                           if (!navigator.geolocation) return ipFallback();
@@ -834,11 +835,11 @@ export const SettingsScreen: React.FC = () => {
                               type="file"
                               accept="audio/*"
                               className="hidden"
-                              onChange={(e) => {
+                              onChange={async (e) => {
                                 const file = e.target.files?.[0];
                                 if (!file) return;
                                 if (file.size > 2 * 1024 * 1024) {
-                                  alert("Please pick an audio file under 2 MB.");
+                                  await bigstaAlert("Please pick an audio file under 2 MB.");
                                   return;
                                 }
                                 const reader = new FileReader();
@@ -1189,14 +1190,12 @@ export const SettingsScreen: React.FC = () => {
                   <div className="pt-2 flex flex-col sm:flex-row gap-2">
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={async () => {
                         const triggered = (window as any).requestApkPermissions?.();
                         if (triggered) {
-                          alert("Permission request successfully triggered to native APK wrapper!");
+                          await bigstaAlert("Permission request successfully triggered to native APK wrapper!");
                         } else {
-                          alert(
-                            "No Android WebView JavaScript interface detected. Ensure you load this page inside your Android Studio Webview with javascriptEnabled = true!",
-                          );
+                          await bigstaAlert("No Android WebView JavaScript interface detected. Ensure you load this page inside your Android Studio Webview with javascriptEnabled = true!");
                         }
                       }}
                       className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg transition-colors cursor-pointer"

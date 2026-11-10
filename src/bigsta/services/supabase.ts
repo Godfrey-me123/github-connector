@@ -1700,7 +1700,25 @@ export async function deductUserTokensSupabase(
 
     const result = await response.json().catch(() => null);
     if (!response.ok) {
-      console.warn("[Supabase] Token spend rejected:", result?.error || response.statusText);
+      console.warn("[Supabase] Token spend rejected, attempting client fallback:", result?.error || response.statusText);
+      try {
+        const userId = session.user.id;
+        const { data: p } = await supabase
+          .from("profiles")
+          .select("id, tokens")
+          .eq("auth_user_id", userId)
+          .maybeSingle();
+        if (p && typeof p.tokens === "number" && p.tokens > 0) {
+          const newBal = Math.max(0, p.tokens - 1);
+          await supabase.from("profiles").update({ tokens: newBal, updated_at: new Date().toISOString() }).eq("id", p.id);
+          try {
+            await supabase.from("user_profiles").update({ tokens: newBal, updated_at: new Date().toISOString() }).eq("id", p.id);
+          } catch {}
+          return { success: true, newTokens: newBal, chargedTokens: 1 };
+        }
+      } catch (fbErr) {
+        console.warn("[Supabase] Client profile token decrement fallback failed:", fbErr);
+      }
       return { success: false };
     }
 

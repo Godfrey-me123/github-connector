@@ -1,3 +1,4 @@
+import { bigstaConfirm } from "../common/BigstaConfirmModal";
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import React, { useEffect, useMemo, useState } from "react";
 import {
@@ -93,7 +94,7 @@ export const TemplatesAdminPanel: React.FC = () => {
   };
 
   const removeRow = async (row: any) => {
-    if (!window.confirm(`Delete template "${row.template_name}"? This cannot be undone.`)) return;
+    if (!(await bigstaConfirm(`Delete template "${row.template_name}"? This cannot be undone.`))) return;
     setBusyId(row.id);
     const { error: err } = await supabase.from("templates").delete().eq("id", row.id);
     if (err) setError(err.message);

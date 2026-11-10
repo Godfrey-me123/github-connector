@@ -180,4 +180,132 @@ describe("Single Source of Truth: Token Balance Synchronization", () => {
     expect(selectEffectiveTokens(useTemplateStore.getState())).toBe(16);
     expect(useTemplateStore.getState().registeredUsers[0].tokens).toBe(16);
   });
+
+  it("Email/Google user with no activePasskeys entry: 7 tokens permits access and DOES NOT open recharge modal", () => {
+    // User signed in with email/Google, but no passkey row exists in activePasskeys
+    useTemplateStore.setState({
+      authRole: "user",
+      currentAuthKey: "google-oauth-sub-99999",
+      userProfile: {
+        email: "citizen@example.com",
+        name: "Test Citizen",
+      },
+      activePasskeys: [], // Empty passkey array
+      registeredUsers: [],
+      userTokens: 7,
+      isRechargeModalOpen: false,
+    });
+
+    const state = useTemplateStore.getState();
+    expect(selectEffectiveTokens(state)).toBe(7);
+
+    // Call service validation for NIDA
+    const validation = state.validateServiceAccess("nida");
+    expect(validation.allowed).toBe(true);
+    expect(validation.remainingUsages).toBe(7);
+    // Recharge modal must NOT be opened!
+    expect(useTemplateStore.getState().isRechargeModalOpen).toBe(false);
+  });
+
+  it("Email/Google user with no activePasskeys entry: 1 token permits access and DOES NOT open recharge modal", () => {
+    useTemplateStore.setState({
+      authRole: "user",
+      currentAuthKey: "google-oauth-sub-99999",
+      userProfile: {
+        email: "citizen@example.com",
+        name: "Test Citizen",
+      },
+      activePasskeys: [],
+      registeredUsers: [],
+      userTokens: 1,
+      isRechargeModalOpen: false,
+    });
+
+    const state = useTemplateStore.getState();
+    expect(selectEffectiveTokens(state)).toBe(1);
+
+    const validation = state.validateServiceAccess("nida");
+    expect(validation.allowed).toBe(true);
+    expect(validation.remainingUsages).toBe(1);
+    expect(useTemplateStore.getState().isRechargeModalOpen).toBe(false);
+  });
+
+  it("Email/Google user with 0 tokens: blocks access and triggers recharge modal", () => {
+    useTemplateStore.setState({
+      authRole: "user",
+      currentAuthKey: "google-oauth-sub-99999",
+      userProfile: {
+        email: "citizen@example.com",
+        name: "Test Citizen",
+      },
+      activePasskeys: [],
+      registeredUsers: [],
+      userTokens: 0,
+      isRechargeModalOpen: false,
+    });
+
+    const state = useTemplateStore.getState();
+    expect(selectEffectiveTokens(state)).toBe(0);
+
+    const validation = state.validateServiceAccess("nida");
+    expect(validation.allowed).toBe(false);
+    expect(validation.reason).toBe("OUT_OF_TOKENS");
+    expect(useTemplateStore.getState().isRechargeModalOpen).toBe(true);
+  });
+
+  it("consumeUsage decrements token count across all mirrored stores immediately", async () => {
+    useTemplateStore.setState({
+      authRole: "user",
+      currentAuthKey: "user-uuid-12345",
+      userTokens: 7,
+      activePasskeys: [
+        {
+          id: "user-uuid-12345",
+          key: "user-uuid-12345",
+          role: "user",
+          active: true,
+          createdDate: "2026-11-10",
+          totalUsages: 10,
+          usedUsages: 3,
+          remainingUsages: 7,
+          paymentStatus: "ACTIVE",
+          packageName: "Standard",
+          packagePrice: "10000",
+          usageHistory: [],
+        },
+      ],
+      registeredUsers: [
+        {
+          id: "user-uuid-12345",
+          fullName: "Godfrey Chris",
+          email: "godfreychris2002@gmail.com",
+          passkey: "user-uuid-12345",
+          passkeyId: "user-uuid-12345",
+          authUserId: "user-uuid-12345",
+          role: "user",
+          tokens: 7,
+          status: "ACTIVE",
+          registeredDate: "2026-11-10 04:00",
+          createdAtTimestamp: Date.now(),
+          lastActive: "Now",
+          lastActiveTimestamp: Date.now(),
+          isOnline: true,
+          currentService: "None",
+          currentActivity: "Active",
+          servicesUsed: [],
+        },
+      ],
+    });
+
+    const res = await useTemplateStore.getState().consumeUsage("NIDA Card Generation", "19900101-12345-00001-20", 1, "test:tx:1");
+    expect(res.success).toBe(true);
+    expect(res.remainingUsages).toBe(6);
+
+    const updated = useTemplateStore.getState();
+    expect(selectEffectiveTokens(updated)).toBe(6);
+    expect(updated.userTokens).toBe(6);
+    expect(updated.activePasskeys[0].remainingUsages).toBe(6);
+    expect(updated.registeredUsers[0].tokens).toBe(6);
+  });
+
 });

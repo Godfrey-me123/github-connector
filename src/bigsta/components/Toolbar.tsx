@@ -1,3 +1,4 @@
+import { bigstaAlert } from "./common/BigstaConfirmModal";
 import React, { useState } from "react";
 import {
   Menu,
@@ -148,9 +149,9 @@ export const Toolbar: React.FC = () => {
         const json = event.target?.result as string;
         const result = await importTemplateJSON(json);
         if (result.success) {
-          alert(result.message);
+          await bigstaAlert(result.message);
         } else {
-          alert("Error: " + result.message);
+          await bigstaAlert("Error: " + result.message);
         }
       };
       reader.readAsText(file);

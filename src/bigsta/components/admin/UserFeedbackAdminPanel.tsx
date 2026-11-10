@@ -1,3 +1,4 @@
+import { bigstaAlert, bigstaConfirm } from "../common/BigstaConfirmModal";
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import { useAutoRefresh } from "../../hooks/useAutoRefresh";
 import React, { useEffect, useState } from "react";
@@ -105,7 +106,7 @@ export const UserFeedbackAdminPanel: React.FC = () => {
 
   const handleSendReply = async (id: string) => {
     const reply = (replyTextMap[id] || "").trim();
-    if (!reply) return alert("Please type a reply message.");
+    if (!reply) { await bigstaAlert("Please type a reply message."); return; }
     setBusyId(id);
     try {
       const { error: err } = await supabase
@@ -117,13 +118,13 @@ export const UserFeedbackAdminPanel: React.FC = () => {
           updated_at: new Date().toISOString(),
         })
         .eq("id", id);
-      if (err) alert("Could not send reply: " + err.message);
+      if (err) await bigstaAlert("Could not send reply: " + err.message);
       else {
         setReplyTextMap({ ...replyTextMap, [id]: "" });
         fetchFeedbacks();
       }
     } catch (e: any) {
-      alert("Error sending reply: " + (e?.message || e));
+      await bigstaAlert("Error sending reply: " + (e?.message || e));
     } finally {
       setBusyId(null);
     }
@@ -155,7 +156,7 @@ export const UserFeedbackAdminPanel: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Delete this feedback entry?")) return;
+    if (!(await bigstaConfirm("Delete this feedback entry?"))) return;
     setBusyId(id);
     try {
       await supabase.from("user_feedback").delete().eq("id", id);
@@ -187,7 +188,7 @@ export const UserFeedbackAdminPanel: React.FC = () => {
           .download(item.attachment_path);
 
         if (downloadErr || !data) {
-          alert(
+          await bigstaAlert(
             "Could not download file from storage bucket: " +
               (downloadErr?.message || "File missing"),
           );
@@ -199,7 +200,7 @@ export const UserFeedbackAdminPanel: React.FC = () => {
           content: data,
         });
       } catch (e: any) {
-        alert("Download error: " + (e?.message || e));
+        await bigstaAlert("Download error: " + (e?.message || e));
       }
     }
   };

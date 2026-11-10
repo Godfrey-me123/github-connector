@@ -1,3 +1,4 @@
+import { bigstaConfirm } from "./common/BigstaConfirmModal";
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import React, { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -208,7 +209,7 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
         ? currentTemplate.active_front_bg_id
         : currentTemplate.active_back_bg_id;
     if (currentActiveBgId && currentActiveBgId !== bg.id) {
-      const confirmed = window.confirm(
+      const confirmed = await bigstaConfirm(
         `An active ${selectedSideTab.toUpperCase()} background is already configured for this template. Do you want to replace it with "${bg.name}"?`
       );
       if (!confirmed) return;
@@ -740,7 +741,7 @@ export const BackgroundsPanel: React.FC<BackgroundsPanelProps> = ({ onBackground
 
                       <button
                         onClick={async () => {
-                          if (confirm(`Delete background "${bg.name}" from library?`)) {
+                          if (await bigstaConfirm(`Delete background "${bg.name}" from library?`)) {
                             await deleteUploadedBackground(bg.id);
                           }
                         }}

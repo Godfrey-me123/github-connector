@@ -109,11 +109,11 @@ export const TemplatesScreen: React.FC = () => {
     await fetchTemplates();
   };
 
-  const handleOpenEdit = (tpl: CardTemplate, e?: React.MouseEvent) => {
+  const handleOpenEdit = async (tpl: CardTemplate, e?: React.MouseEvent) => {
     e?.stopPropagation();
     const docTypeId = resolveDocumentTypeId(tpl, false) || tpl.serviceId;
     if (!docTypeId) {
-      alert(
+      await bigstaAlert(
         `Unable to identify document category for template "${tpl.templateName}". Please check template settings.`,
       );
       return;
@@ -186,10 +186,10 @@ export const TemplatesScreen: React.FC = () => {
             await saveCurrentTemplate();
             await fetchTemplates();
           } else {
-            alert("Invalid JSON template format.");
+            await bigstaAlert("Invalid JSON template format.");
           }
         } catch {
-          alert("Could not parse JSON file.");
+          await bigstaAlert("Could not parse JSON file.");
         }
       };
       reader.readAsText(e.target.files[0]);

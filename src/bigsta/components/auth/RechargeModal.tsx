@@ -489,8 +489,8 @@ export const RechargeModal: React.FC = () => {
                 <span>Malipo Yamethibitishwa! (Payment Approved)</span>
               </div>
               <p className="text-emerald-900 leading-relaxed text-[11px]">
-                Ombi lako la kifurushi cha <strong>{latestRequest.packageName}</strong> limethibitishwa na usages{" "}
-                <strong>{latestRequest.requestedUsages}</strong> zimeongezwa kwenye akaunti yako.
+                Ombi lako la kifurushi cha <strong>{latestRequest.packageName}</strong> ({latestRequest.requestedUsages} Usages) limethibitishwa. Salio lako la sasa ni{" "}
+                <strong>{remainingUsages} {remainingUsages === 1 ? "Usage" : "Usages"}</strong>.
               </p>
             </div>
           )}

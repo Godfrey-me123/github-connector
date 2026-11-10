@@ -1,3 +1,4 @@
+import { bigstaAlert, bigstaConfirm } from "../common/BigstaConfirmModal";
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import { RequestFilterBar, filterRequestRows } from "../common/RequestFilterBar";
 import { useAutoRefresh } from "../../hooks/useAutoRefresh";
@@ -114,8 +115,8 @@ export const NidaRequestsAdminPanel: React.FC = () => {
       })
       .eq("id", r.id);
     setBusy(false);
-    if (error) return alert("Failed: " + error.message);
-    if (r.whatsapp_number && window.confirm("Also send this message on WhatsApp?")) {
+    if (error) { await bigstaAlert("Failed: " + error.message); return; }
+    if (r.whatsapp_number && await bigstaConfirm("Also send this message on WhatsApp?")) {
       window.open(
         waLink(r.whatsapp_number, `BIGsta NIDA request (${r.nida_no}): ${note}`),
         "_blank",
@@ -125,12 +126,12 @@ export const NidaRequestsAdminPanel: React.FC = () => {
   };
 
   const sendResponse = async () => {
-    if (!respondTo || (!file && !file2)) return alert("Choose at least one picture or PDF file.");
+    if (!respondTo || (!file && !file2)) { await bigstaAlert("Choose at least one picture or PDF file."); return; }
     const primaryFile = file || file2;
     if (primaryFile && !/^image\/|application\/pdf/.test(primaryFile.type))
-      return alert("Only pictures or PDFs are allowed.");
+      await bigstaAlert("Only pictures or PDFs are allowed."); return;
     if (file2 && !/^image\/|application\/pdf/.test(file2.type))
-      return alert("Only pictures or PDFs are allowed.");
+      await bigstaAlert("Only pictures or PDFs are allowed."); return;
     setBusy(true);
     try {
       if (respondTo.response_file_path) {
@@ -201,9 +202,9 @@ export const NidaRequestsAdminPanel: React.FC = () => {
       setFile2(null);
       setMessage("");
       fetchRequests();
-      alert("Response with file(s) sent successfully!");
+      await bigstaAlert("Response with file(s) sent successfully!");
     } catch (e: any) {
-      alert("Failed to send response: " + (e?.message || e));
+      await bigstaAlert("Failed to send response: " + (e?.message || e));
     } finally {
       setBusy(false);
     }

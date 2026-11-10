@@ -116,10 +116,10 @@ export const TemplateLibraryModal: React.FC = () => {
             await saveCurrentTemplate();
             setTemplateLibraryOpen(false);
           } else {
-            alert("Invalid JSON template format.");
+            await bigstaAlert("Invalid JSON template format.");
           }
         } catch {
-          alert("Could not parse JSON file.");
+          await bigstaAlert("Could not parse JSON file.");
         }
       };
       reader.readAsText(e.target.files[0]);

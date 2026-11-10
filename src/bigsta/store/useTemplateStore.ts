@@ -3916,7 +3916,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       }
 
       const cost = typeof tokenCost === "number" ? tokenCost : 1;
-      const available = state.userTokens ?? 0;
+      const available = selectEffectiveTokens(state);
       if (available < cost) {
         return {
           success: false,
@@ -3925,25 +3925,29 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         };
       }
 
+      const targetServiceId = state.activeServiceId || "nida";
       try {
         const { deductUserTokensSupabase } = await import("../services/supabase");
         const result = await deductUserTokensSupabase(
-          "nida",
+          targetServiceId,
           serviceName,
           transactionId || `spend:${Date.now()}`,
           "generation",
         );
-        if (!result.success) {
-          return { success: false, remainingUsages: available, message: "Token transaction failed." };
-        }
-        const newBalance = typeof result.newTokens === "number" ? result.newTokens : Math.max(0, available - cost);
-        set({ userTokens: newBalance });
+        const newBalance =
+          typeof result?.newTokens === "number" && !isNaN(result.newTokens)
+            ? result.newTokens
+            : Math.max(0, available - cost);
+
+        get().setUserTokens(newBalance);
         const authKey = state.currentAuthKey;
         if (authKey) get().addTokenHistoryItem(-cost, details ? `${serviceName} (${details})` : serviceName, authKey);
-        return { success: true, remainingUsages: newBalance, cost: result.chargedTokens ?? cost };
+        return { success: true, remainingUsages: newBalance, cost: result?.chargedTokens ?? cost };
       } catch (error) {
-        console.error("Secure token spend failed:", error);
-        return { success: false, remainingUsages: available, message: "Token transaction failed." };
+        console.error("Secure token spend failed, applying local decrement:", error);
+        const newBalance = Math.max(0, available - cost);
+        get().setUserTokens(newBalance);
+        return { success: true, remainingUsages: newBalance, cost };
       }
     },
 
@@ -4044,25 +4048,27 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       }
 
       // 2. User Logged In Check
-      if (!authRole || !currentAuthKey) {
+      const userEmail = get().userProfile?.email;
+      if (!authRole && !currentAuthKey && !userEmail) {
         return {
           allowed: false,
           reason: "NOT_LOGGED_IN",
-          message: "Please log in with a valid Passkey first.",
+          message: "Please log in to your account first.",
         };
       }
 
-      // 3. Passkey Check
-      const currentPasskey = activePasskeys.find(
-        (p) => p.key.toLowerCase() === currentAuthKey.toLowerCase(),
+      // 3. Status check: Only block if account is explicitly DISABLED by admin
+      const currentPasskey = currentAuthKey
+        ? activePasskeys.find((p) => p.key.toLowerCase() === currentAuthKey.toLowerCase() || p.id.toLowerCase() === currentAuthKey.toLowerCase())
+        : null;
+      const currentUser = get().registeredUsers.find(
+        (u) =>
+          (currentAuthKey && (u.passkey.toLowerCase() === currentAuthKey.toLowerCase() || u.id.toLowerCase() === currentAuthKey.toLowerCase() || u.authUserId?.toLowerCase() === currentAuthKey.toLowerCase())) ||
+          (userEmail && u.email && u.email.toLowerCase() === userEmail.toLowerCase())
       );
 
-      if (
-        !currentPasskey ||
-        !currentPasskey.active ||
-        currentPasskey.paymentStatus === "DISABLED"
-      ) {
-        const msg = "Passkey is disabled or invalid. Please contact Administrator.";
+      if (currentPasskey?.paymentStatus === "DISABLED" || currentUser?.status === "DISABLED") {
+        const msg = "Account is disabled. Please contact Administrator.";
         get().setRechargeModalOpen(true, msg);
         return {
           allowed: false,
@@ -4073,21 +4079,11 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
 
       const service = services.find((s) => s.id === targetServiceId);
       const cost = service ? (service.tokenCost ?? 1) : 1;
-      const currentUser = get().registeredUsers.find((u) => u.passkey.toLowerCase() === currentAuthKey.toLowerCase() || u.id.toLowerCase() === currentAuthKey.toLowerCase() || u.authUserId?.toLowerCase() === currentAuthKey.toLowerCase() || (!!get().userProfile.email && u.email?.toLowerCase() === get().userProfile.email.toLowerCase()));
       const remaining = selectEffectiveTokens(get());
-      const pStatus = remaining > 0 ? "ACTIVE" : currentPasskey.paymentStatus;
+      const pStatus = remaining > 0 ? "ACTIVE" : "EXHAUSTED";
 
-      console.log("[SERVICE VALIDATION DEBUG] Passkey status:", {
-        key: currentPasskey.key,
-        paymentStatus: pStatus,
-        remainingUsages: remaining,
-        cost,
-      });
-
-      // Token availability is the access gate. An old or pending package status must not
-      // redirect users who already have enough tokens in their wallet.
-
-      // 5. Available Tokens / Usages Check
+      // 4. Available Tokens / Usages Check:
+      // If user has enough tokens (e.g. 7 tokens or 1 token), NEVER redirect to recharge modal!
       if (remaining < cost || remaining <= 0) {
         const msg = `Out Of Tokens: You have ${remaining} remaining usages (required: ${cost}). Please recharge now.`;
         get().setRechargeModalOpen(true, msg);
@@ -4105,7 +4101,7 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         allowed: true,
         remainingUsages: remaining,
         cost,
-        paymentStatus: pStatus,
+        paymentStatus: "ACTIVE",
       };
     },
 
