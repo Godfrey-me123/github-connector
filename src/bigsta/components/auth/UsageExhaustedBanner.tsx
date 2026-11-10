@@ -1,30 +1,13 @@
 import React from "react";
-import { ShieldAlert, CreditCard } from "lucide-react";
-import { useTemplateStore } from "../../store/useTemplateStore";
+import { CreditCard } from "lucide-react";
+import { useTemplateStore, selectEffectiveTokens } from "../../store/useTemplateStore";
 
 export const UsageExhaustedBanner: React.FC = () => {
-  const { authRole, currentAuthKey, activePasskeys, registeredUsers, userProfile, setRechargeModalOpen } = useTemplateStore();
+  const { authRole, setRechargeModalOpen } = useTemplateStore();
+  const remaining = useTemplateStore(selectEffectiveTokens);
 
   if (authRole !== "user") return null;
 
-  // Find active user passkey / profile tokens
-  const userKey = activePasskeys.find(
-    (p) =>
-      p.role === "user" &&
-      (p.key.toLowerCase() === (currentAuthKey || "").toLowerCase() ||
-        p.id.toLowerCase() === (currentAuthKey || "").toLowerCase() ||
-        (userProfile?.email && p.description?.toLowerCase().includes(userProfile.email.toLowerCase()))),
-  );
-
-  const currentUser = registeredUsers.find(
-    (u) =>
-      (currentAuthKey && u.passkey.toLowerCase() === currentAuthKey.toLowerCase()) ||
-      (currentAuthKey && u.id === currentAuthKey) ||
-      (currentAuthKey && u.authUserId?.toLowerCase() === currentAuthKey.toLowerCase()) ||
-      (userProfile?.email && u.email && u.email.toLowerCase() === userProfile.email.toLowerCase()),
-  );
-
-  const remaining = currentUser?.tokens ?? userKey?.remainingUsages ?? 0;
   const isExhausted = remaining <= 0;
 
   if (!isExhausted) return null;

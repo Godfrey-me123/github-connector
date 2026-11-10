@@ -1,3 +1,4 @@
+import { bigstaConfirm } from "./common/BigstaConfirmModal";
 // @ts-nocheck
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import * as pdfjsLib from "pdfjs-dist";
@@ -364,9 +365,13 @@ export const PDFViewerScreen: React.FC = () => {
       return;
     }
 
-    const confirmDelete = window.confirm(
-      `Are you sure you want to delete Page ${target} of ${numPages} from this document?`
-    );
+    const confirmDelete = await bigstaConfirm({
+      title: "BIGsta",
+      message: `Are you sure you want to delete Page ${target} of ${numPages} from this document?`,
+      confirmLabel: "OK",
+      cancelLabel: "CANCEL",
+      isDestructive: true,
+    });
     if (!confirmDelete) return;
 
     setIsLoading(true);

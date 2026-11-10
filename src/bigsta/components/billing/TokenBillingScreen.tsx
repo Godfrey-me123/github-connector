@@ -31,7 +31,7 @@ import {
   ExternalLink,
   AlertTriangle,
 } from "lucide-react";
-import { useTemplateStore } from "../../store/useTemplateStore";
+import { useTemplateStore, selectEffectiveTokens } from "../../store/useTemplateStore";
 import { UniversalBackButton } from "../common/UniversalBackButton";
 import { ConfigurablePaymentMethod, UserPaymentSubmission } from "../../types";
 import { PaymentMethodsAdminPanel } from "../admin/PaymentMethodsAdminPanel";
@@ -67,7 +67,7 @@ export const TokenBillingScreen: React.FC = () => {
 
   const currentPasskeyObj =
     activePasskeys.find((p) => p.key === currentAuthKey) || activePasskeys[0];
-  const availableTokens = currentPasskeyObj ? currentPasskeyObj.remainingUsages : 0;
+  const availableTokens = useTemplateStore(selectEffectiveTokens);
 
   // Active packages created by admin
   const activePackages = useMemo(() => {

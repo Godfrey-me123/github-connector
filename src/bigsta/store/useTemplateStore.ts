@@ -729,6 +729,7 @@ interface TemplateState {
   // Registered Users & Recharge Management
   userTokens: number;
   setUserTokens: (tokens: number) => void;
+  getEffectiveTokens: () => number;
   registeredUsers: RegisteredUser[];
   paymentRequests: PaymentRequest[];
   manualRequests: ManualRequestItem[];
@@ -1177,6 +1178,38 @@ const persistActiveScreen = (screen: string) => {
   }
 };
 
+export function selectEffectiveTokens(state: {
+  userTokens?: number;
+  registeredUsers?: RegisteredUser[];
+  activePasskeys?: PasskeyItem[];
+  currentAuthKey?: string | null;
+  userProfile?: { email?: string };
+}): number {
+  if (typeof state.userTokens === "number" && !isNaN(state.userTokens)) {
+    return state.userTokens;
+  }
+  const currentAuthKey = (state.currentAuthKey || "").toLowerCase();
+  const email = (state.userProfile?.email || "").toLowerCase();
+  const user = state.registeredUsers?.find(
+    (u) =>
+      (currentAuthKey &&
+        (u.authUserId?.toLowerCase() === currentAuthKey ||
+          u.id?.toLowerCase() === currentAuthKey ||
+          u.passkey?.toLowerCase() === currentAuthKey)) ||
+      (email && u.email && u.email.toLowerCase() === email),
+  );
+  if (typeof user?.tokens === "number" && !isNaN(user.tokens)) {
+    return user.tokens;
+  }
+  const pk = state.activePasskeys?.find(
+    (p) =>
+      (currentAuthKey &&
+        (p.key?.toLowerCase() === currentAuthKey || p.id?.toLowerCase() === currentAuthKey)) ||
+      (email && p.description?.toLowerCase().includes(email)),
+  );
+  return typeof pk?.remainingUsages === "number" && !isNaN(pk.remainingUsages) ? pk.remainingUsages : 0;
+}
+
 export const useTemplateStore = create<TemplateState>((set, get) => {
   const savedDefaultFrontId = null;
   const savedDefaultBackId = null;
@@ -1371,7 +1404,46 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     userPreferences: initialUserPreferences,
     adminSettings: initialAdminSettings,
     userTokens: 0,
-    setUserTokens: (tokens: number) => set({ userTokens: tokens }),
+    getEffectiveTokens: () => selectEffectiveTokens(get()),
+    setUserTokens: (tokens: number) => {
+      const state = get();
+      const currentAuthKey = (state.currentAuthKey || "").toLowerCase();
+      const userEmail = (state.userProfile?.email || "").toLowerCase();
+
+      const updatedPasskeys = state.activePasskeys.map((p) => {
+        const matches =
+          (currentAuthKey && (p.key.toLowerCase() === currentAuthKey || p.id.toLowerCase() === currentAuthKey)) ||
+          (userEmail && p.description?.toLowerCase().includes(userEmail));
+        if (matches) {
+          return {
+            ...p,
+            remainingUsages: tokens,
+            totalUsages: Math.max(p.totalUsages || 0, tokens),
+            paymentStatus: tokens > 0 ? ("ACTIVE" as const) : ("EXHAUSTED" as const),
+          };
+        }
+        return p;
+      });
+
+      const updatedUsers = state.registeredUsers.map((u) => {
+        const matches =
+          (currentAuthKey && (u.passkey.toLowerCase() === currentAuthKey || u.id.toLowerCase() === currentAuthKey || u.authUserId?.toLowerCase() === currentAuthKey)) ||
+          (userEmail && u.email && u.email.toLowerCase() === userEmail);
+        if (matches) {
+          return {
+            ...u,
+            tokens,
+          };
+        }
+        return u;
+      });
+
+      set({
+        userTokens: tokens,
+        activePasskeys: updatedPasskeys,
+        registeredUsers: updatedUsers,
+      });
+    },
     userPaymentSubmissions: initialUserPayments,
     tokenHistory: initialTokenHistory,
     processedDeductionIds: [],
@@ -3548,7 +3620,11 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
             (p.email && p.email.toLowerCase() === currentAuthKey) ||
             (p.passkey && p.passkey.toLowerCase() === currentAuthKey),
         );
-        const myTokens = typeof myProfile?.tokens === "number" ? myProfile.tokens : 0;
+        const existingTokens = selectEffectiveTokens(get());
+        const myTokens = typeof myProfile?.tokens === "number" ? myProfile.tokens : existingTokens;
+        if (typeof myProfile?.tokens === "number") {
+          set({ userTokens: myProfile.tokens });
+        }
 
         if (!hasMyPasskey) {
           finalPasskeys = [
@@ -3591,10 +3667,35 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
 
         set({ activePasskeys: finalPasskeys });
 
-        const currentUser = get().registeredUsers.find(
-          (user) => user.passkey === get().currentAuthKey,
+        const existingUsers = get().registeredUsers;
+        const currentUser = existingUsers.find(
+          (u) =>
+            (u.authUserId && u.authUserId.toLowerCase() === currentAuthKey) ||
+            (u.id && u.id.toLowerCase() === currentAuthKey) ||
+            (u.passkey && u.passkey.toLowerCase() === currentAuthKey) ||
+            (session.user.email && u.email && u.email.toLowerCase() === session.user.email.toLowerCase()),
         );
-        set({ registeredUsers: mappedUsers.length ? mappedUsers : currentUser ? [currentUser] : [] });
+        const fallbackUser: RegisteredUser = currentUser || {
+          id: session.user.id,
+          fullName: session.user.user_metadata?.full_name || session.user.email || "Account",
+          email: session.user.email || "",
+          phone: session.user.user_metadata?.phone || "",
+          passkey: session.user.email || session.user.id,
+          passkeyId: session.user.id,
+          authUserId: session.user.id,
+          role: "user",
+          tokens: myTokens,
+          status: "ACTIVE",
+          registeredDate: new Date().toISOString().replace("T", " ").substring(0, 16),
+          createdAtTimestamp: Date.now(),
+          lastActive: "Recent activity",
+          lastActiveTimestamp: Date.now(),
+          isOnline: true,
+          currentService: "None",
+          currentActivity: "Active",
+          servicesUsed: [],
+        };
+        set({ registeredUsers: mappedUsers.length ? mappedUsers : [fallbackUser] });
 
         // 3. Fetch Payment Methods
         if (dbPaymentMethods && dbPaymentMethods.length > 0) {
@@ -3973,8 +4074,8 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
       const service = services.find((s) => s.id === targetServiceId);
       const cost = service ? (service.tokenCost ?? 1) : 1;
       const currentUser = get().registeredUsers.find((u) => u.passkey.toLowerCase() === currentAuthKey.toLowerCase() || u.id.toLowerCase() === currentAuthKey.toLowerCase() || u.authUserId?.toLowerCase() === currentAuthKey.toLowerCase() || (!!get().userProfile.email && u.email?.toLowerCase() === get().userProfile.email.toLowerCase()));
-      const remaining = typeof currentUser?.tokens === "number" ? currentUser.tokens : (currentPasskey.remainingUsages ?? 0);
-      const pStatus = currentPasskey.paymentStatus;
+      const remaining = selectEffectiveTokens(get());
+      const pStatus = remaining > 0 ? "ACTIVE" : currentPasskey.paymentStatus;
 
       console.log("[SERVICE VALIDATION DEBUG] Passkey status:", {
         key: currentPasskey.key,

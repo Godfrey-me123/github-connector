@@ -41,6 +41,7 @@ import { UnsavedChangesModal } from "./components/common/UnsavedChangesModal";
 import { StartupDisclaimerModal } from "./components/common/StartupDisclaimerModal";
 import { SuccessActivationModal } from "./components/common/SuccessActivationModal";
 import { DownloadProgressBar } from "./components/common/DownloadProgressBar";
+import { BigstaConfirmModal } from "./components/common/BigstaConfirmModal";
 
 import { forceLoadAppFonts } from "./utils/fonts";
 
@@ -318,7 +319,7 @@ export default function App() {
             },
             (payload) => {
               if (typeof payload.new?.tokens === "number") {
-                useTemplateStore.setState({ userTokens: payload.new.tokens });
+                useTemplateStore.getState().setUserTokens(payload.new.tokens);
               }
             }
           )
@@ -868,6 +869,7 @@ export default function App() {
       <SaveTemplateModal />
       <MergeCardModal />
       <DownloadProgressBar />
+      <BigstaConfirmModal />
 
       {/* Global Saving Indicator (PROMPT 51) */}
       {isSaving && (

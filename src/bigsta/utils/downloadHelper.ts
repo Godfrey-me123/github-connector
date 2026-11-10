@@ -1,3 +1,4 @@
+import { bigstaConfirm } from "../components/common/BigstaConfirmModal";
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 /**
  * Universal Safe Download & File Export Utility for BIGsta
@@ -250,12 +251,15 @@ export async function triggerUniversalDownload(
   const { fileName, content, mimeType } = payload;
   const safeFileName = fileName.replace(/[/\\?%*:|"<>]/g, "_");
 
-  // Confirm download or export files whether on web or when in apk
-  const confirmed = window.confirm(
-    `Confirm Download / Export:\n\nDo you want to save "${safeFileName}" to your device (${
+  // Confirm download or export files with in-app BIGsta modal
+  const confirmed = await bigstaConfirm({
+    title: "BIGsta",
+    message: `Confirm Download / Export:\n\nDo you want to save "${safeFileName}" to your device (${
       isAndroidApp() ? "Android APK Storage" : "Web Browser Downloads"
     })?`,
-  );
+    confirmLabel: "OK",
+    cancelLabel: "CANCEL",
+  });
   if (!confirmed) {
     notifyProgress(safeFileName, 100, "Download cancelled by user", true);
     return false;

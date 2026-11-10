@@ -1,3 +1,4 @@
+import { bigstaConfirm } from "./common/BigstaConfirmModal";
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import React, { useEffect, useState, useRef } from "react";
 import {
@@ -56,7 +57,7 @@ export const TemplateLibraryModal: React.FC = () => {
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm("Are you sure you want to delete this template?")) {
+    const shouldDelete = await bigstaConfirm({ title: "BIGsta", message: "Are you sure you want to delete this template?", isDestructive: true }); if (shouldDelete) {
       await deleteSavedTemplate(id);
       const updated = await loadSavedTemplates();
       setTemplates(updated);

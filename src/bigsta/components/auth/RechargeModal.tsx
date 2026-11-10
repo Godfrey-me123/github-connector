@@ -17,7 +17,7 @@ import {
   ExternalLink,
   AlertTriangle,
 } from "lucide-react";
-import { useTemplateStore } from "../../store/useTemplateStore";
+import { useTemplateStore, selectEffectiveTokens } from "../../store/useTemplateStore";
 import { paymentService } from "../../services/paymentService";
 
 export const RechargeModal: React.FC = () => {
@@ -192,7 +192,7 @@ export const RechargeModal: React.FC = () => {
     [registeredUsers, currentAuthKey, userProfile?.email],
   );
 
-  const remainingUsages = currentUser?.tokens ?? currentPasskey?.remainingUsages ?? 0;
+  const remainingUsages = useTemplateStore(selectEffectiveTokens);
 
   // Find user payment requests by AuthKey, Email, or UserId
   const userRequests = useMemo(

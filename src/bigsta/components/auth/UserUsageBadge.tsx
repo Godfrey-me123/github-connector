@@ -1,14 +1,13 @@
 import React from "react";
 import { Ticket, AlertCircle, PlusCircle, CheckCircle } from "lucide-react";
-import { useTemplateStore } from "../../store/useTemplateStore";
+import { useTemplateStore, selectEffectiveTokens } from "../../store/useTemplateStore";
 
 export const UserUsageBadge: React.FC<{ className?: string }> = ({ className = "" }) => {
-  const { authRole, userTokens, paymentRequests, setRechargeModalOpen, userProfile } =
+  const { authRole, paymentRequests, setRechargeModalOpen, userProfile } =
     useTemplateStore();
+  const remaining = useTemplateStore(selectEffectiveTokens);
 
   if (authRole !== "user") return null;
-
-  const remaining = userTokens ?? 0;
 
   const myPending = paymentRequests.some(
     (r) =>
