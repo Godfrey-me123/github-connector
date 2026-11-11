@@ -27,6 +27,7 @@ async function applyAlphaMatting(blob: Blob): Promise<Blob> {
     const url = URL.createObjectURL(blob);
     const img = new Image();
     img.onload = () => {
+      URL.revokeObjectURL(url);
       const canvas = document.createElement("canvas");
       canvas.width = img.width;
       canvas.height = img.height;
@@ -63,7 +64,10 @@ async function applyAlphaMatting(blob: Blob): Promise<Blob> {
         1.0,
       );
     };
-    img.onerror = () => resolve(blob);
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(blob);
+    };
     img.src = url;
   });
 }
@@ -80,9 +84,11 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
   const [showCropModal, setShowCropModal] = useState<boolean>(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const uploadRequestIdRef = useRef<number>(0);
 
   // Validate and read file with optional auto background removal and alpha matting
   const processFile = async (file: File) => {
+    const thisRequestId = ++uploadRequestIdRef.current;
     setError(null);
 
     // Format validation
@@ -117,8 +123,15 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
       }
     }
 
+    if (thisRequestId !== uploadRequestIdRef.current) {
+      return; // A newer upload started; discard this stale background removal result
+    }
+
     const reader = new FileReader();
     reader.onload = (e) => {
+      if (thisRequestId !== uploadRequestIdRef.current) {
+        return; // A newer upload finished; discard stale result
+      }
       const dataUrl = e.target?.result as string;
       if (!dataUrl) {
         setError("Failed to read image file.");
@@ -132,6 +145,7 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
     };
 
     reader.onerror = () => {
+      if (thisRequestId !== uploadRequestIdRef.current) return;
       setError("Error reading file. Please try again.");
       setIsProcessing(false);
     };
@@ -161,6 +175,8 @@ export const PassportPhotoUpload: React.FC<PassportPhotoUploadProps> = ({
   };
 
   const handleRemovePhoto = () => {
+    uploadRequestIdRef.current++;
+    setIsProcessing(false);
     onChange(null);
     setRawImageForCrop(null);
     setError(null);

@@ -554,10 +554,11 @@ export function detectTemplateType(
     return "Business License";
   }
 
-  // Default fallback for ID templates
-  if (cardType === "national id" || cardType === "employee id" || cardType === "student id") {
+  // Explicit National ID fallback
+  if (cardType === "national id") {
     return "NIDA";
   }
 
-  return "NIDA";
+  // All other cards or generic templates resolve to Generic ID rather than contaminating NIDA
+  return "Generic ID";
 }

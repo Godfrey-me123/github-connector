@@ -2521,229 +2521,304 @@ export function sanitizeTemplateForSaving(template: CardTemplate): CardTemplate 
 
   const sanitizedLayers = template.layers.map((layer) => {
     const binding = getLayerBinding(layer, template.layers);
-    if (!binding) return { ...layer };
 
     if (layer.type === "text") {
       const textLayer = layer as TextLayer;
       let text = textLayer.text || "";
 
-      // Non-destructive sanitization: preserve prefixes and case indicators of placeholders
-      switch (binding) {
-        case "FIRST_MIDDLE_NAME": {
-          const isUpper = text.includes("{{FIRST_MIDDLE_NAME") || text === text.toUpperCase();
-          const placeholder = isUpper ? "{{FIRST_MIDDLE_NAME}}" : "{{first_middle_name}}";
-          if (
-            /^(?:first\s*and\s*middle\s*name|first\s*\+\s*middle\s*name|first\s*&\s*middle\s*name)\s*[:：\-]?\s*/i.test(
-              text,
-            )
-          ) {
-            text = text.replace(
-              /^(?:first\s*and\s*middle\s*name|first\s*\+\s*middle\s*name|first\s*&\s*middle\s*name)\s*[:：\-]?\s*.*/i,
-              `FIRST & MIDDLE NAME: ${placeholder}`,
-            );
-          } else if (text.includes("{{")) {
-            // Keep original placeholder token as is
-          } else {
-            text = placeholder;
+      if (binding) {
+        switch (binding) {
+          case "FIRST_MIDDLE_NAME": {
+            const isUpper = text.includes("{{FIRST_MIDDLE_NAME") || text === text.toUpperCase();
+            const placeholder = isUpper ? "{{FIRST_MIDDLE_NAME}}" : "{{first_middle_name}}";
+            if (
+              /^(?:first\s*and\s*middle\s*name|first\s*\+\s*middle\s*name|first\s*&\s*middle\s*name)\s*[:：\-]?\s*/i.test(
+                text,
+              )
+            ) {
+              text = text.replace(
+                /^(?:first\s*and\s*middle\s*name|first\s*\+\s*middle\s*name|first\s*&\s*middle\s*name)\s*[:：\-]?\s*.*/i,
+                `FIRST & MIDDLE NAME: ${placeholder}`,
+              );
+            } else if (text.includes("{{")) {
+              // Keep original placeholder token as is
+            } else {
+              text = placeholder;
+            }
+            break;
           }
-          break;
-        }
-        case "FIRST_NAME": {
-          const isUpper =
-            text.includes("{{FIRST_NAME") ||
-            text.includes("{{FIRSTNAME") ||
-            text === text.toUpperCase();
-          const placeholder = isUpper ? "{{FIRST_NAME}}" : "{{first_name}}";
-          if (/^(?:jina|given\s*name)\s*[:：\-]?\s*/i.test(text)) {
-            text = text.replace(/^(?:jina|given\s*name)\s*[:：\-]?\s*.*/i, `JINA : ${placeholder}`);
-          } else if (text.includes("{{")) {
-            // Keep original placeholder token as is
-          } else {
-            text = placeholder;
+          case "FIRST_NAME": {
+            const isUpper =
+              text.includes("{{FIRST_NAME") ||
+              text.includes("{{FIRSTNAME") ||
+              text === text.toUpperCase();
+            const placeholder = isUpper ? "{{FIRST_NAME}}" : "{{first_name}}";
+            if (/^(?:jina|given\s*name)\s*[:：\-]?\s*/i.test(text)) {
+              text = text.replace(/^(?:jina|given\s*name)\s*[:：\-]?\s*.*/i, `JINA : ${placeholder}`);
+            } else if (text.includes("{{")) {
+              // Keep original placeholder token as is
+            } else {
+              text = placeholder;
+            }
+            break;
           }
-          break;
-        }
-        case "MIDDLE_NAME": {
-          const isUpper =
-            text.includes("{{MIDDLE_NAME") ||
-            text.includes("{{MNAME") ||
-            text === text.toUpperCase();
-          const placeholder = isUpper ? "{{MIDDLE_NAME}}" : "{{middle_name}}";
-          if (/^(?:middle\s*name|la\s+kati)\s*[:：\-]?\s*/i.test(text)) {
-            text = text.replace(
-              /^(?:middle\s*name|la\s+kati)\s*[:：\-]?\s*.*/i,
-              `MIDDLE NAME : ${placeholder}`,
-            );
-          } else if (text.includes("{{")) {
-            // Keep as is
-          } else {
-            text = placeholder;
+          case "MIDDLE_NAME": {
+            const isUpper =
+              text.includes("{{MIDDLE_NAME") ||
+              text.includes("{{MNAME") ||
+              text === text.toUpperCase();
+            const placeholder = isUpper ? "{{MIDDLE_NAME}}" : "{{middle_name}}";
+            if (/^(?:middle\s*name|la\s+kati)\s*[:：\-]?\s*/i.test(text)) {
+              text = text.replace(
+                /^(?:middle\s*name|la\s+kati)\s*[:：\-]?\s*.*/i,
+                `MIDDLE NAME : ${placeholder}`,
+              );
+            } else if (text.includes("{{")) {
+              // Keep as is
+            } else {
+              text = placeholder;
+            }
+            break;
           }
-          break;
-        }
-        case "LAST_NAME": {
-          const isUpper =
-            text.includes("{{LAST_NAME") ||
-            text.includes("{{SURNAME") ||
-            text === text.toUpperCase();
-          const placeholder = isUpper ? "{{LAST_NAME}}" : "{{last_name}}";
-          if (/^(?:jina\s+la\s+(?:mwisho|ukoo)|surname|last\s*name)\s*[:：\-]?\s*/i.test(text)) {
-            text = text.replace(
-              /^(?:jina\s+la\s+(?:mwisho|ukoo)|surname|last\s*name)\s*[:：\-]?\s*.*/i,
-              `JINA LA MWISHO : ${placeholder}`,
-            );
-          } else if (text.includes("{{")) {
-            // Keep as is
-          } else {
-            text = placeholder;
+          case "LAST_NAME": {
+            const isUpper =
+              text.includes("{{LAST_NAME") ||
+              text.includes("{{SURNAME") ||
+              text === text.toUpperCase();
+            const placeholder = isUpper ? "{{LAST_NAME}}" : "{{last_name}}";
+            if (/^(?:jina\s+la\s+(?:mwisho|ukoo)|surname|last\s*name)\s*[:：\-]?\s*/i.test(text)) {
+              text = text.replace(
+                /^(?:jina\s+la\s+(?:mwisho|ukoo)|surname|last\s*name)\s*[:：\-]?\s*.*/i,
+                `JINA LA MWISHO : ${placeholder}`,
+              );
+            } else if (text.includes("{{")) {
+              // Keep as is
+            } else {
+              text = placeholder;
+            }
+            break;
           }
-          break;
-        }
-        case "DOB": {
-          const isUpper =
-            text.includes("{{DOB") || text.includes("{{DATE") || text === text.toUpperCase();
-          const placeholder = isUpper ? "{{DOB}}" : "{{dob}}";
-          if (/^(?:tarehe\s+ya\s+kuzaliwa|date\s+of\s+birth|dob)\s*[:：\-]?\s*/i.test(text)) {
-            text = text.replace(
-              /^(?:tarehe\s+ya\s+kuzaliwa|date\s+of\s+birth|dob)\s*[:：\-]?\s*.*/i,
-              `TAREHE YA KUZALIWA: ${placeholder}`,
-            );
-          } else if (text.includes("{{")) {
-            // Keep as is
-          } else {
-            text = placeholder;
+          case "FULL_NAME":
+          case "NHIF_FULL_NAME": {
+            const isUpper = text.includes("{{FULL_NAME") || text === text.toUpperCase();
+            const placeholder = isUpper ? "{{FULL_NAME}}" : "{{full_name}}";
+            if (/^(?:jina\s*kamili|full\s*name|member\s*name)\s*[:：\-]?\s*/i.test(text)) {
+              text = text.replace(
+                /^(?:jina\s*kamili|full\s*name|member\s*name)\s*[:：\-]?\s*.*/i,
+                `FULL NAME : ${placeholder}`,
+              );
+            } else if (text.includes("{{")) {
+              // Keep as is
+            } else {
+              text = placeholder;
+            }
+            break;
           }
-          break;
-        }
-        case "GENDER": {
-          const isUpper =
-            text.includes("{{GENDER") || text.includes("{{SEX") || text === text.toUpperCase();
-          const placeholder = isUpper ? "{{GENDER}}" : "{{gender}}";
-          if (/^(?:jinsi|jinsia|sex|gender)\s*[:：\-]?\s*/i.test(text)) {
-            text = text.replace(
-              /^(?:jinsi|jinsia|sex|gender)\s*[:：\-]?\s*.*/i,
-              `JINSI : ${placeholder}`,
-            );
-          } else if (text.includes("{{")) {
-            // Keep as is
-          } else {
-            text = placeholder;
+          case "DOB":
+          case "NHIF_DATE_OF_BIRTH": {
+            const isUpper =
+              text.includes("{{DOB") || text.includes("{{DATE") || text === text.toUpperCase();
+            const placeholder = isUpper ? "{{DOB}}" : "{{dob}}";
+            if (/^(?:tarehe\s+ya\s+kuzaliwa|date\s+of\s+birth|dob)\s*[:：\-]?\s*/i.test(text)) {
+              text = text.replace(
+                /^(?:tarehe\s+ya\s+kuzaliwa|date\s+of\s+birth|dob)\s*[:：\-]?\s*.*/i,
+                `TAREHE YA KUZALIWA: ${placeholder}`,
+              );
+            } else if (text.includes("{{")) {
+              // Keep as is
+            } else {
+              text = placeholder;
+            }
+            break;
           }
-          break;
-        }
-        case "NIDA_NUMBER": {
-          const isUpper =
-            text.includes("{{NIDA_NUMBER") || text.includes("{{NIN") || text === text.toUpperCase();
-          const placeholder = isUpper ? "{{NIDA_NUMBER}}" : "{{nida_number}}";
-          if (/^(?:national\s*id\s*no|nambari\s*ya\s*nida|nida\s*no)\s*[:：\-]?\s*/i.test(text)) {
-            text = text.replace(
-              /^(?:national\s*id\s*no|nambari\s*ya\s*nida|nida\s*no)\s*[:：\-]?\s*.*/i,
-              `NATIONAL ID NO: ${placeholder}`,
-            );
-          } else if (text.includes("{{")) {
-            // Keep as is
-          } else {
-            text = placeholder;
+          case "GENDER":
+          case "NHIF_GENDER": {
+            const isUpper =
+              text.includes("{{GENDER") || text.includes("{{SEX") || text === text.toUpperCase();
+            const placeholder = isUpper ? "{{GENDER}}" : "{{gender}}";
+            if (/^(?:jinsi|jinsia|sex|gender)\s*[:：\-]?\s*/i.test(text)) {
+              text = text.replace(
+                /^(?:jinsi|jinsia|sex|gender)\s*[:：\-]?\s*.*/i,
+                `JINSI : ${placeholder}`,
+              );
+            } else if (text.includes("{{")) {
+              // Keep as is
+            } else {
+              text = placeholder;
+            }
+            break;
           }
-          break;
-        }
-        case "LICENCE_NUMBER": {
-          const isUpper =
-            text.includes("{{LICENCE_NUMBER") ||
-            text.includes("{{LICENSE_NUMBER") ||
-            text === text.toUpperCase();
-          const placeholder = isUpper ? "{{LICENCE_NUMBER}}" : "{{licence_number}}";
-          if (text.includes("{{")) {
-            // Keep original placeholder token
-          } else {
-            text = placeholder;
+          case "NIDA_NUMBER": {
+            const isUpper =
+              text.includes("{{NIDA_NUMBER") || text.includes("{{NIN") || text === text.toUpperCase();
+            const placeholder = isUpper ? "{{NIDA_NUMBER}}" : "{{nida_number}}";
+            if (/^(?:national\s*id\s*no|nambari\s*ya\s*nida|nida\s*no)\s*[:：\-]?\s*/i.test(text)) {
+              text = text.replace(
+                /^(?:national\s*id\s*no|nambari\s*ya\s*nida|nida\s*no)\s*[:：\-]?\s*.*/i,
+                `NATIONAL ID NO: ${placeholder}`,
+              );
+            } else if (text.includes("{{")) {
+              // Keep as is
+            } else {
+              text = placeholder;
+            }
+            break;
           }
-          break;
-        }
-        case "PIN_NUMBER": {
-          const isUpper =
-            text.includes("{{PIN_NUMBER") || text.includes("{{PIN") || text === text.toUpperCase();
-          const placeholder = isUpper ? "{{PIN_NUMBER}}" : "{{pin_number}}";
-          if (text.includes("{{")) {
-            // Keep original placeholder token
-          } else {
-            text = placeholder;
+          case "CARD_NO":
+          case "NHIF_CARD_NUMBER": {
+            const isUpper = text.includes("{{CARD_NO") || text === text.toUpperCase();
+            const placeholder = isUpper ? "{{CARD_NO}}" : "{{card_no}}";
+            if (/^(?:card\s*no|kadi\s*namba|card\s*number)\s*[:：\-]?\s*/i.test(text)) {
+              text = text.replace(
+                /^(?:card\s*no|kadi\s*namba|card\s*number)\s*[:：\-]?\s*.*/i,
+                `CARD NO: ${placeholder}`,
+              );
+            } else if (text.includes("{{")) {
+              // Keep as is
+            } else {
+              text = placeholder;
+            }
+            break;
           }
-          break;
-        }
-        case "ISSUE_DATE": {
-          const isUpper =
-            text.includes("{{ISSUE_DATE") ||
-            text.includes("{{DATE_OF_ISSUE") ||
-            text === text.toUpperCase();
-          const placeholder = isUpper ? "{{ISSUE_DATE}}" : "{{issue_date}}";
-          if (text.includes("{{")) {
-            // Keep original placeholder token
-          } else {
-            text = placeholder;
+          case "CARD_STATUS":
+          case "NHIF_CARD_STATUS": {
+            text = text.includes("{{") ? text : "{{card_status}}";
+            break;
           }
-          break;
-        }
-        case "EXPIRY_DATE": {
-          const isUpper =
-            text.includes("{{EXPIRY_DATE") ||
-            text.includes("{{DATE_OF_EXPIRY") ||
-            text === text.toUpperCase();
-          const placeholder = isUpper ? "{{EXPIRY_DATE}}" : "{{expiry_date}}";
-          if (text.includes("{{")) {
-            // Keep original placeholder token
-          } else {
-            text = placeholder;
+          case "LICENCE_NUMBER": {
+            const isUpper =
+              text.includes("{{LICENCE_NUMBER") ||
+              text.includes("{{LICENSE_NUMBER") ||
+              text === text.toUpperCase();
+            const placeholder = isUpper ? "{{LICENCE_NUMBER}}" : "{{licence_number}}";
+            if (text.includes("{{")) {
+              // Keep original placeholder token
+            } else {
+              text = placeholder;
+            }
+            break;
           }
-          break;
-        }
-        case "ISSUING_AUTHORITY": {
-          const isUpper = text.includes("{{ISSUING_AUTHORITY") || text === text.toUpperCase();
-          const placeholder = isUpper ? "{{ISSUING_AUTHORITY}}" : "{{issuing_authority}}";
-          if (text.includes("{{")) {
-            // Keep as is
-          } else {
-            text = placeholder;
+          case "PIN_NUMBER": {
+            const isUpper =
+              text.includes("{{PIN_NUMBER") || text.includes("{{PIN") || text === text.toUpperCase();
+            const placeholder = isUpper ? "{{PIN_NUMBER}}" : "{{pin_number}}";
+            if (text.includes("{{")) {
+              // Keep original placeholder token
+            } else {
+              text = placeholder;
+            }
+            break;
           }
-          break;
-        }
-        case "REGION": {
-          const isUpper = text.includes("{{REGION") || text === text.toUpperCase();
-          const placeholder = isUpper ? "{{REGION}}" : "{{region}}";
-          if (text.includes("{{")) {
-            // Keep as is
-          } else {
-            text = placeholder;
+          case "ISSUE_DATE": {
+            const isUpper =
+              text.includes("{{ISSUE_DATE") ||
+              text.includes("{{DATE_OF_ISSUE") ||
+              text === text.toUpperCase();
+            const placeholder = isUpper ? "{{ISSUE_DATE}}" : "{{issue_date}}";
+            if (text.includes("{{")) {
+              // Keep original placeholder token
+            } else {
+              text = placeholder;
+            }
+            break;
           }
-          break;
-        }
-        case "CATEGORIES_FIELD9": {
-          const isUpper = text.includes("{{CATEGORIES") || text === text.toUpperCase();
-          const placeholder = isUpper ? "{{CATEGORIES_FIELD9}}" : "{{categories_field9}}";
-          if (text.includes("{{")) {
-            // Keep original
-          } else {
-            text = placeholder;
+          case "EXPIRY_DATE": {
+            const isUpper =
+              text.includes("{{EXPIRY_DATE") ||
+              text.includes("{{DATE_OF_EXPIRY") ||
+              text === text.toUpperCase();
+            const placeholder = isUpper ? "{{EXPIRY_DATE}}" : "{{expiry_date}}";
+            if (text.includes("{{")) {
+              // Keep original placeholder token
+            } else {
+              text = placeholder;
+            }
+            break;
           }
-          break;
-        }
-        case "DRIVING_LICENCE_CATEGORIES":
-        case "CLASSES_TABLE": {
-          const isUpper =
-            text.includes("{{DRIVING_LICENCE_CATEGORIES") || text === text.toUpperCase();
-          const placeholder = isUpper
-            ? "{{DRIVING_LICENCE_CATEGORIES}}"
-            : "{{driving_licence_categories}}";
-          if (text.includes("{{")) {
-            // Keep original
-          } else {
-            text = placeholder;
+          case "ISSUING_AUTHORITY": {
+            const isUpper = text.includes("{{ISSUING_AUTHORITY") || text === text.toUpperCase();
+            const placeholder = isUpper ? "{{ISSUING_AUTHORITY}}" : "{{issuing_authority}}";
+            if (text.includes("{{")) {
+              // Keep as is
+            } else {
+              text = placeholder;
+            }
+            break;
           }
-          break;
+          case "REGION": {
+            const isUpper = text.includes("{{REGION") || text === text.toUpperCase();
+            const placeholder = isUpper ? "{{REGION}}" : "{{region}}";
+            if (text.includes("{{")) {
+              // Keep as is
+            } else {
+              text = placeholder;
+            }
+            break;
+          }
+          case "CATEGORIES_FIELD9": {
+            const isUpper = text.includes("{{CATEGORIES") || text === text.toUpperCase();
+            const placeholder = isUpper ? "{{CATEGORIES_FIELD9}}" : "{{categories_field9}}";
+            if (text.includes("{{")) {
+              // Keep original
+            } else {
+              text = placeholder;
+            }
+            break;
+          }
+          case "DRIVING_LICENCE_CATEGORIES":
+          case "CLASSES_TABLE": {
+            const isUpper =
+              text.includes("{{DRIVING_LICENCE_CATEGORIES") || text === text.toUpperCase();
+            const placeholder = isUpper
+              ? "{{DRIVING_LICENCE_CATEGORIES}}"
+              : "{{driving_licence_categories}}";
+            if (text.includes("{{")) {
+              // Keep original
+            } else {
+              text = placeholder;
+            }
+            break;
+          }
+          case "REGISTRATION_NUMBER": {
+            text = text.includes("{{") ? text : "{{registration_number}}";
+            break;
+          }
+          case "REGISTRATION_DATE": {
+            text = text.includes("{{") ? text : "{{registration_date}}";
+            break;
+          }
+          case "DATE_OF_RENUNCIATION": {
+            text = text.includes("{{") ? text : "{{date_of_renunciation}}";
+            break;
+          }
+          case "PARENTS_PLACE_OF_BIRTH": {
+            text = text.includes("{{") ? text : "{{parents_place_of_birth}}";
+            break;
+          }
+          case "PLACE_OF_BIRTH": {
+            text = text.includes("{{") ? text : "{{place_of_birth}}";
+            break;
+          }
+          case "VILLAGE": {
+            text = text.includes("{{") ? text : "{{village}}";
+            break;
+          }
+          case "DISTRICT": {
+            text = text.includes("{{") ? text : "{{district}}";
+            break;
+          }
+          case "CHIEF": {
+            text = text.includes("{{") ? text : "{{chief}}";
+            break;
+          }
+          case "SPECIAL_MARKS": {
+            text = text.includes("{{") ? text : "{{special_marks}}";
+            break;
+          }
         }
       }
 
-      // Check if it's a Group Category Date element or a Licence Categories List
+      // Check if it is a Group Category Date element or a Licence Categories List
       if (textLayer.licenseCategoryGroup !== undefined) {
         text =
           textLayer.licenseCategoryDateType === "expiryDate" ? "{{expiry_date}}" : "{{issue_date}}";
@@ -2757,7 +2832,7 @@ export function sanitizeTemplateForSaving(template: CardTemplate): CardTemplate 
       };
     }
 
-    if (binding === "PHOTO") {
+    if (binding === "PHOTO" || binding === "NHIF_PASSPORT_PHOTO") {
       if (layer.type === "image" || layer.type === "placeholder") {
         const imgLayer = layer as any;
         return {
@@ -2785,12 +2860,61 @@ export function sanitizeTemplateForSaving(template: CardTemplate): CardTemplate 
       }
     }
 
-    if (layer.type === "barcode" && binding === "NIDA_NUMBER") {
+    if (binding === "OFFICER_SIGNATURE") {
+      if (layer.type === "image" || layer.type === "placeholder") {
+        const imgLayer = layer as any;
+        return {
+          ...imgLayer,
+          type: "placeholder",
+          placeholderKey: "officer_signature",
+          placeholderType: "signature",
+          label: "Officer Signature",
+          src: undefined,
+        } as any;
+      }
+    }
+
+    if (binding === "THUMBPRINT") {
+      if (layer.type === "image" || layer.type === "placeholder") {
+        const imgLayer = layer as any;
+        return {
+          ...imgLayer,
+          type: "placeholder",
+          placeholderKey: "thumbprint",
+          placeholderType: "thumbprint",
+          label: "Cardholder Thumbprint",
+          src: undefined,
+        } as any;
+      }
+    }
+
+    // Generic Image Layer Sanitization: Ensure any base64/blob image (which is user uploaded) is converted to a clean placeholder
+    if (layer.type === "image") {
+      const imgLayer = layer as ImageLayer;
+      const isDataOrBlob =
+        typeof imgLayer.src === "string" &&
+        (imgLayer.src.startsWith("data:") || imgLayer.src.startsWith("blob:"));
+      const isUserAsset = /(?:photo|portrait|avatar|face|user|customer|signature|sahihi|thumb|crop)/i.test(
+        `${layer.id} ${layer.name}`,
+      );
+      if (isDataOrBlob || isUserAsset) {
+        return {
+          ...imgLayer,
+          type: "placeholder",
+          placeholderKey: "photo",
+          placeholderType: "photo",
+          label: "Cardholder Photograph",
+          src: undefined,
+        } as any;
+      }
+    }
+
+    if (layer.type === "barcode") {
       const b = layer as BarcodeLayer;
       return { ...b, data: "12345678901234567890" };
     }
 
-    if (layer.type === "qrcode" && binding === "NIDA_NUMBER") {
+    if (layer.type === "qrcode") {
       const q = layer as QRCodeLayer;
       return { ...q, data: "12345678901234567890" };
     }
@@ -2804,7 +2928,6 @@ export function sanitizeTemplateForSaving(template: CardTemplate): CardTemplate 
     updatedAt: new Date().toISOString(),
   };
 }
-
 export interface ValidationIssue {
   layerId: string;
   layerName: string;

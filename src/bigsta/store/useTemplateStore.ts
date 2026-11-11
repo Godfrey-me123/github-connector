@@ -1787,10 +1787,11 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     saveStudioDraft: () => {
       const { currentTemplate, activeServiceId } = get();
       if (typeof window !== "undefined" && currentTemplate) {
-        saveStudioDraftDB(activeServiceId, currentTemplate).catch(() => {});
+        const sanitizedDraft = sanitizeTemplateForSaving(currentTemplate);
+        saveStudioDraftDB(activeServiceId, sanitizedDraft).catch(() => {});
         safeLocalStorageSetItem(
           `bigsta_studio_draft_${activeServiceId}`,
-          JSON.stringify(currentTemplate),
+          JSON.stringify(sanitizedDraft),
         );
         safeLocalStorageSetItem("bigsta_active_service", activeServiceId);
       }
