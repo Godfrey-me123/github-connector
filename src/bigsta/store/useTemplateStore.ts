@@ -4467,10 +4467,24 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         front?.serviceId === "nrc_zambia" ||
         (formData && ("nrcNumber" in formData || "village" in formData || "chief" in formData));
 
+      const serviceId = isDL ? "licence" : isNHIF ? "nhic" : isNRC ? "nrc" : "nida";
+      const sessionId = `sess_${serviceId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const session = formData
+        ? {
+            sessionId,
+            serviceId,
+            templateId: front?.id || back?.id || "",
+            formData,
+            photoUrl: (formData as any)?.photoUrl || null,
+            createdAt: Date.now(),
+          }
+        : null;
+
       if (isDL) {
         set({
           frontPopulatedTemplate: front,
           backPopulatedTemplate: back,
+          currentGenerationSession: session,
           lastDrivingLicenseFormData:
             formData !== undefined ? formData : get().lastDrivingLicenseFormData,
         });
@@ -4478,18 +4492,21 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         set({
           frontPopulatedTemplate: front,
           backPopulatedTemplate: back,
+          currentGenerationSession: session,
           lastNhifFormData: formData !== undefined ? formData : get().lastNhifFormData,
         });
       } else if (isNRC) {
         set({
           frontPopulatedTemplate: front,
           backPopulatedTemplate: back,
+          currentGenerationSession: session,
           lastNrcFormData: formData !== undefined ? formData : get().lastNrcFormData,
         });
       } else {
         set({
           frontPopulatedTemplate: front,
           backPopulatedTemplate: back,
+          currentGenerationSession: session,
           lastNidaFormData: formData !== undefined ? formData : get().lastNidaFormData,
         });
       }

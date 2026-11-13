@@ -75,14 +75,24 @@ export async function renderTemplateToCanvas(
 
   let storeFormData: any = {};
   if (!isSpecificRecordExport) {
+    const session = store.currentGenerationSession;
+    const sessionMatches =
+      session &&
+      ((isNhif && session.serviceId === "nhic") ||
+        (isNrc && session.serviceId === "nrc") ||
+        (isDrivingLicense && session.serviceId === "licence") ||
+        (!isNhif && !isNrc && !isDrivingLicense && session.serviceId === "nida"));
+
     storeFormData =
-      (isNhif
-        ? store.lastNhifFormData
-        : isNrc
-          ? store.lastNrcFormData
-          : isDrivingLicense
-            ? store.lastDrivingLicenseFormData
-            : store.lastNidaFormData) || {};
+      (sessionMatches
+        ? session.formData
+        : isNhif
+          ? store.lastNhifFormData
+          : isNrc
+            ? store.lastNrcFormData
+            : isDrivingLicense
+              ? store.lastDrivingLicenseFormData
+              : store.lastNidaFormData) || {};
   }
 
   const effectiveCardData: CardData = {

@@ -60,11 +60,21 @@ export const CardGeneratorModal: React.FC = () => {
 
   const isDL =
     activeServiceId === "driving_license" || currentTemplate?.cardType === "Driving License";
+  const isNhif = activeServiceId === "nhif";
+  const isNrc = activeServiceId === "nrc_zambia";
 
-  const submittedData: any =
-    activeServiceId === "nhif"
+  const sessionMatches =
+    currentGenerationSession &&
+    ((isNhif && currentGenerationSession.serviceId === "nhic") ||
+      (isNrc && currentGenerationSession.serviceId === "nrc") ||
+      (isDL && currentGenerationSession.serviceId === "licence") ||
+      (!isNhif && !isNrc && !isDL && currentGenerationSession.serviceId === "nida"));
+
+  const submittedData: any = sessionMatches
+    ? currentGenerationSession.formData || {}
+    : isNhif
       ? lastNhifFormData || {}
-      : activeServiceId === "nrc_zambia"
+      : isNrc
         ? lastNrcFormData || {}
         : isDL
           ? lastDrivingLicenseFormData || {}

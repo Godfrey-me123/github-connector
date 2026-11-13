@@ -125,20 +125,26 @@ export const NidaFormScreen: React.FC<NidaFormScreenProps> = ({ onSuccess, onCan
     return frontId && backId ? "form" : "templates";
   });
 
+  const currentGenerationSession = useTemplateStore((s) => s.currentGenerationSession);
+  const activeSessionData =
+    currentGenerationSession && currentGenerationSession.serviceId === "nida"
+      ? (currentGenerationSession.formData as Partial<NidaFormData>)
+      : null;
+
   const [formData, setFormData] = useState<NidaFormData>(() => ({
-    firstName: lastNidaFormData?.firstName || "",
-    middleName: lastNidaFormData?.middleName || "",
-    lastName: lastNidaFormData?.lastName || "",
-    dob: lastNidaFormData?.dob || "",
-    gender: lastNidaFormData?.gender
-      ? lastNidaFormData.gender.toUpperCase().startsWith("F")
+    firstName: activeSessionData?.firstName || "",
+    middleName: activeSessionData?.middleName || "",
+    lastName: activeSessionData?.lastName || "",
+    dob: activeSessionData?.dob || "",
+    gender: activeSessionData?.gender
+      ? activeSessionData.gender.toUpperCase().startsWith("F")
         ? "Female"
         : "Male"
       : "Male",
-    nidaNumber: lastNidaFormData?.nidaNumber || "",
-    photoUrl: lastNidaFormData?.photoUrl || null,
-    signatureUrl: lastNidaFormData?.signatureUrl || null,
-    termsAccepted: lastNidaFormData?.termsAccepted ?? false,
+    nidaNumber: activeSessionData?.nidaNumber || "",
+    photoUrl: activeSessionData?.photoUrl || null,
+    signatureUrl: activeSessionData?.signatureUrl || null,
+    termsAccepted: activeSessionData?.termsAccepted ?? false,
   }));
 
   useEffect(() => {

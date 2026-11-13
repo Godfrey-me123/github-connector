@@ -71,7 +71,14 @@ const DB_VERSION = 6;
 
 let dbPromise: Promise<IDBPDatabase<IDBTemplateStudioDB>> | null = null;
 
-function getDB() {
+function isIndexedDBAvailable(): boolean {
+  return typeof window !== 'undefined' && typeof indexedDB !== 'undefined' && typeof IDBRequest !== 'undefined';
+}
+
+function getDB(): Promise<IDBPDatabase<IDBTemplateStudioDB> | null> {
+  if (!isIndexedDBAvailable()) {
+    return Promise.resolve(null);
+  }
   if (!dbPromise) {
     dbPromise = openDB<IDBTemplateStudioDB>(DB_NAME, DB_VERSION, {
       upgrade(db, oldVersion) {
@@ -112,22 +119,26 @@ function getDB() {
 
 export async function saveTemplateDB(template: CardTemplate): Promise<void> {
   const db = await getDB();
+  if (!db) return;
   await db.put("templates", template);
 }
 
 export async function getAllTemplatesDB(): Promise<CardTemplate[]> {
   const db = await getDB();
+  if (!db) return [];
   const templates = await db.getAllFromIndex("templates", "by-updated");
   return templates.reverse(); // Most recent first
 }
 
 export async function getTemplateByIdDB(id: string): Promise<CardTemplate | undefined> {
   const db = await getDB();
+  if (!db) return undefined;
   return db.get("templates", id);
 }
 
 export async function deleteTemplateDB(id: string): Promise<void> {
   const db = await getDB();
+  if (!db) return;
   await db.delete("templates", id);
 }
 
@@ -140,49 +151,58 @@ export async function saveGeneratedCardDB(cardRecord: {
   previewImage?: string;
 }): Promise<void> {
   const db = await getDB();
+  if (!db) return;
   await db.put("generatedCards", cardRecord);
 }
 
 export async function getAllGeneratedCardsDB() {
   const db = await getDB();
+  if (!db) return [];
   const cards = await db.getAllFromIndex("generatedCards", "by-generated");
   return cards.reverse();
 }
 
 export async function deleteGeneratedCardDB(id: string): Promise<void> {
   const db = await getDB();
+  if (!db) return;
   await db.delete("generatedCards", id);
 }
 
 export async function saveBackgroundDB(bg: UploadedBackground): Promise<void> {
   const db = await getDB();
+  if (!db) return;
   await db.put("backgrounds", bg);
 }
 
 export async function getAllBackgroundsDB(): Promise<UploadedBackground[]> {
   const db = await getDB();
+  if (!db) return [];
   const bgs = await db.getAllFromIndex("backgrounds", "by-created");
   return bgs.reverse();
 }
 
 export async function deleteBackgroundDB(id: string): Promise<void> {
   const db = await getDB();
+  if (!db) return;
   await db.delete("backgrounds", id);
 }
 
 export async function saveMergeLayoutDB(layout: SavedMergeLayout): Promise<void> {
   const db = await getDB();
+  if (!db) return;
   await db.put("mergeLayouts", layout);
 }
 
 export async function getAllMergeLayoutsDB(): Promise<SavedMergeLayout[]> {
   const db = await getDB();
+  if (!db) return [];
   const layouts = await db.getAllFromIndex("mergeLayouts", "by-updated");
   return layouts.reverse();
 }
 
 export async function deleteMergeLayoutDB(id: string): Promise<void> {
   const db = await getDB();
+  if (!db) return;
   await db.delete("mergeLayouts", id);
 }
 
@@ -192,12 +212,14 @@ export async function deleteMergeLayoutDB(id: string): Promise<void> {
 
 export async function saveDownloadRecordDB(record: DownloadRecord): Promise<void> {
   const db = await getDB();
+  if (!db) return;
   await db.put("downloads", record);
 }
 
 export async function getAllDownloadRecordsDB(): Promise<DownloadRecord[]> {
   try {
     const db = await getDB();
+    if (!db) return [];
     const records = await db.getAll("downloads");
     return records.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
   } catch (err) {
@@ -208,6 +230,7 @@ export async function getAllDownloadRecordsDB(): Promise<DownloadRecord[]> {
 
 export async function deleteDownloadRecordDB(id: string): Promise<void> {
   const db = await getDB();
+  if (!db) return;
   await db.delete("downloads", id);
 }
 
@@ -218,6 +241,7 @@ export async function deleteDownloadRecordDB(id: string): Promise<void> {
 export async function saveStudioDraftDB(serviceId: string, template: CardTemplate): Promise<void> {
   try {
     const db = await getDB();
+    if (!db) return;
     await db.put("studioDrafts", {
       serviceId,
       template,
@@ -231,6 +255,7 @@ export async function saveStudioDraftDB(serviceId: string, template: CardTemplat
 export async function getStudioDraftDB(serviceId: string): Promise<CardTemplate | null> {
   try {
     const db = await getDB();
+    if (!db) return null;
     const record = await db.get("studioDrafts", serviceId);
     return record ? record.template : null;
   } catch (err) {
@@ -242,6 +267,7 @@ export async function getStudioDraftDB(serviceId: string): Promise<CardTemplate 
 export async function deleteStudioDraftDB(serviceId: string): Promise<void> {
   try {
     const db = await getDB();
+    if (!db) return;
     await db.delete("studioDrafts", serviceId);
   } catch (err) {
     console.error("Failed to delete studio draft from IndexedDB:", err);

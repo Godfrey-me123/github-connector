@@ -80,41 +80,17 @@ export const Route = createFileRoute("/api/tokens/spend")({
 
           const { data, error } = await (supabaseAdmin as any).rpc(rpc, args);
           if (error) {
-            console.warn("[Tokens] Wallet RPC rejected, falling back to atomic profile update:", error.message);
-            const { data: profile } = await supabaseAdmin
-              .from("profiles")
-              .select("tokens")
-              .eq("auth_user_id", account.user.id)
-              .maybeSingle();
-
-            const current = Number(profile?.tokens ?? 0);
-            if (current < tokenCost) {
+            console.error("[Tokens] Wallet RPC failed:", error);
+            const isInsufficient =
+              error.message?.includes("insufficient_tokens") ||
+              (error.code === "22023" && error.message?.includes("insufficient"));
+            if (isInsufficient) {
               return Response.json({ error: "Insufficient tokens." }, { status: 402 });
             }
-            const newBal = current - tokenCost;
-            await supabaseAdmin
-              .from("profiles")
-              .update({ tokens: newBal, updated_at: new Date().toISOString() })
-              .eq("auth_user_id", account.user.id);
-            try {
-              await supabaseAdmin
-                .from("user_profiles")
-                .update({ tokens: newBal, updated_at: new Date().toISOString() })
-                .eq("auth_user_id", account.user.id);
-            } catch {}
-            try {
-              await (supabaseAdmin.from("token_transactions") as any).insert({
-                user_id: account.user.id,
-                tokens: -tokenCost,
-                transaction_type: "SPEND",
-                description: `${serviceName} (${mode})`,
-              });
-            } catch {}
-            return Response.json({
-              balance: newBal,
-              chargedTokens: tokenCost,
-              alreadyApplied: false,
-            });
+            return Response.json(
+              { error: "Token transaction could not be completed securely." },
+              { status: 500 }
+            );
           }
 
           return Response.json({

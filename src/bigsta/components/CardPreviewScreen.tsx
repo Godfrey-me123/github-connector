@@ -39,6 +39,7 @@ import { FieldMappingInspectorModal } from "./nida/FieldMappingInspectorModal";
 
 export const CardPreviewScreen: React.FC = () => {
   const {
+    currentGenerationSession,
     currentTemplate,
     setCurrentTemplate,
     setActiveScreen,
@@ -161,14 +162,25 @@ export const CardPreviewScreen: React.FC = () => {
     (currentTemplate.cardType as string) === "National Registration Card (NRC)" ||
     currentTemplate.cardType === "NRC Zambia" ||
     currentTemplate.serviceId === "nrc_zambia";
+  const sessionData =
+    currentGenerationSession &&
+    ((isDL && currentGenerationSession.serviceId === "licence") ||
+      (isNHIF && currentGenerationSession.serviceId === "nhic") ||
+      (isNRC && currentGenerationSession.serviceId === "nrc") ||
+      (!isDL && !isNHIF && !isNRC && currentGenerationSession.serviceId === "nida"))
+      ? currentGenerationSession.formData
+      : null;
+
   const activeFormData =
+    sessionData ||
     (isDL
       ? lastDrivingLicenseFormData
       : isNHIF
         ? lastNhifFormData
         : isNRC
           ? lastNrcFormData
-          : lastNidaFormData) || {};
+          : lastNidaFormData) ||
+    {};
 
   // Ensure current template in store is synchronized when side changes
   const handleSideSwitch = (side: "front" | "back") => {
@@ -185,13 +197,14 @@ export const CardPreviewScreen: React.FC = () => {
       const { getUniversalBackTemplate } = useTemplateStore.getState();
       const resolvedBack = getUniversalBackTemplate(activeServiceId);
       const activeData = (
-        isDL
+        sessionData ||
+        (isDL
           ? lastDrivingLicenseFormData
           : isNHIF
             ? lastNhifFormData
             : isNRC
               ? lastNrcFormData
-              : lastNidaFormData
+              : lastNidaFormData)
       ) as any;
       if (resolvedBack && activeData) {
         const result = applyTemplateMapping(resolvedBack, activeData);
@@ -399,43 +412,48 @@ export const CardPreviewScreen: React.FC = () => {
     touchStartDistRef.current = null;
   };
 
+  const activeNidaData = (sessionData && !isDL && !isNHIF && !isNRC ? sessionData : lastNidaFormData) as Partial<NidaFormData> | null;
+  const activeDlData = (sessionData && isDL ? sessionData : lastDrivingLicenseFormData) as Partial<DrivingLicenseFormData> | null;
+  const activeNhifData = (sessionData && isNHIF ? sessionData : lastNhifFormData) as any;
+  const activeNrcData = (sessionData && isNRC ? sessionData : lastNrcFormData) as any;
+
   // Extract meta details for display
-  const holderName = lastNidaFormData
-    ? `${lastNidaFormData.firstName || ""} ${lastNidaFormData.middleName || ""} ${lastNidaFormData.lastName || ""}`.trim()
+  const holderName = activeNidaData
+    ? `${activeNidaData.firstName || ""} ${activeNidaData.middleName || ""} ${activeNidaData.lastName || ""}`.trim()
     : "Identity Document";
-  const nidaNumber = lastNidaFormData?.nidaNumber || "";
-  const gender = lastNidaFormData?.gender
-    ? lastNidaFormData.gender.toUpperCase().startsWith("M")
+  const nidaNumber = activeNidaData?.nidaNumber || "";
+  const gender = activeNidaData?.gender
+    ? activeNidaData.gender.toUpperCase().startsWith("M")
       ? "M"
       : "F"
     : "M";
 
-  const dlName = lastDrivingLicenseFormData
+  const dlName = activeDlData
     ? [
-        lastDrivingLicenseFormData.firstName,
-        lastDrivingLicenseFormData.secondName,
-        lastDrivingLicenseFormData.thirdName,
+        activeDlData.firstName,
+        activeDlData.secondName,
+        activeDlData.thirdName,
       ]
         .filter(Boolean)
         .join(" ")
     : "";
-  const dlLicenceNo = lastDrivingLicenseFormData?.licenceNumber || "";
-  const dlPin = lastDrivingLicenseFormData?.pinNumber || "";
-  const dlCategories = lastDrivingLicenseFormData?.classes
-    ? formatDrivingLicenceCategoriesFront(lastDrivingLicenseFormData.classes)
+  const dlLicenceNo = activeDlData?.licenceNumber || "";
+  const dlPin = activeDlData?.pinNumber || "";
+  const dlCategories = activeDlData?.classes
+    ? formatDrivingLicenceCategoriesFront(activeDlData.classes)
     : "";
 
-  const nhifMemberName = lastNhifFormData?.fullName || lastNhifFormData?.full_name || "";
-  const nhifCardNo = lastNhifFormData?.cardNumber || lastNhifFormData?.card_no || "";
-  const nhifStatus = lastNhifFormData?.cardStatus || lastNhifFormData?.card_status || "Active";
-  const nhifDob = lastNhifFormData?.dob || "";
+  const nhifMemberName = activeNhifData?.fullName || activeNhifData?.full_name || "";
+  const nhifCardNo = activeNhifData?.cardNumber || activeNhifData?.card_no || "";
+  const nhifStatus = activeNhifData?.cardStatus || activeNhifData?.card_status || "Active";
+  const nhifDob = activeNhifData?.dob || "";
 
   const nrcName =
-    lastNrcFormData?.fullName || lastNrcFormData?.full_name || lastNrcFormData?.name || "";
+    activeNrcData?.fullName || activeNrcData?.full_name || activeNrcData?.name || "";
   const nrcNumber =
-    lastNrcFormData?.nrcNumber || lastNrcFormData?.nrc_number || lastNrcFormData?.nrcNo || "";
-  const nrcDob = lastNrcFormData?.dateOfBirth || lastNrcFormData?.dob || "";
-  const nrcDistrict = lastNrcFormData?.district || lastNrcFormData?.village || "";
+    activeNrcData?.nrcNumber || activeNrcData?.nrc_number || activeNrcData?.nrcNo || "";
+  const nrcDob = activeNrcData?.dateOfBirth || activeNrcData?.dob || "";
+  const nrcDistrict = activeNrcData?.district || activeNrcData?.village || "";
 
   const hasBackCounterpart = Boolean(
     backPopulatedTemplate ||

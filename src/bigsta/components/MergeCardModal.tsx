@@ -202,13 +202,23 @@ export const MergeCardModal: React.FC = () => {
     store.currentTemplate?.serviceId === "nrc_zambia" ||
     !!store.lastNrcFormData;
 
-  const submittedFormData = isNHIF
-    ? store.lastNhifFormData || {}
-    : isNRC
-      ? store.lastNrcFormData || {}
-      : isDL
-        ? store.lastDrivingLicenseFormData || {}
-        : store.lastNidaFormData || {};
+  const session = store.currentGenerationSession;
+  const sessionMatches =
+    session &&
+    ((isNHIF && session.serviceId === "nhic") ||
+      (isNRC && session.serviceId === "nrc") ||
+      (isDL && session.serviceId === "licence") ||
+      (!isNHIF && !isNRC && !isDL && session.serviceId === "nida"));
+
+  const submittedFormData = sessionMatches
+    ? session.formData || {}
+    : isNHIF
+      ? store.lastNhifFormData || {}
+      : isNRC
+        ? store.lastNrcFormData || {}
+        : isDL
+          ? store.lastDrivingLicenseFormData || {}
+          : store.lastNidaFormData || {};
 
   const frontTemplate =
     store.frontPopulatedTemplate && store.frontPopulatedTemplate.id === frontTemplateId
@@ -300,13 +310,23 @@ export const MergeCardModal: React.FC = () => {
       storeState.currentTemplate?.serviceId === "nrc_zambia" ||
       !!storeState.lastNrcFormData;
 
-    const formData = isNhifCard
-      ? storeState.lastNhifFormData || {}
-      : isNrcCard
-        ? storeState.lastNrcFormData || {}
-        : isDrivingLicence
-          ? storeState.lastDrivingLicenseFormData || {}
-          : storeState.lastNidaFormData || {};
+    const activeSession = storeState.currentGenerationSession;
+    const sessionMatches =
+      activeSession &&
+      ((isNhifCard && activeSession.serviceId === "nhic") ||
+        (isNrcCard && activeSession.serviceId === "nrc") ||
+        (isDrivingLicence && activeSession.serviceId === "licence") ||
+        (!isNhifCard && !isNrcCard && !isDrivingLicence && activeSession.serviceId === "nida"));
+
+    const formData = sessionMatches
+      ? activeSession.formData || {}
+      : isNhifCard
+        ? storeState.lastNhifFormData || {}
+        : isNrcCard
+          ? storeState.lastNrcFormData || {}
+          : isDrivingLicence
+            ? storeState.lastDrivingLicenseFormData || {}
+            : storeState.lastNidaFormData || {};
 
     setIsExporting(true);
     try {

@@ -1195,9 +1195,15 @@ export const CanvasWorkspace: React.FC = () => {
                       const fmt =
                         (layer as any).dateFormat || (layer as any).display_format || "dd/MM/yyyy";
 
+                      const currentSession = useTemplateStore.getState().currentGenerationSession;
+                      const activeDlFormData =
+                        currentSession && currentSession.serviceId === "licence"
+                          ? currentSession.formData
+                          : lastDrivingLicenseFormData;
+
                       const classes =
-                        lastDrivingLicenseFormData?.classes ||
-                        lastDrivingLicenseFormData?.categories ||
+                        activeDlFormData?.classes ||
+                        activeDlFormData?.categories ||
                         [];
                       const matchedClass = Array.isArray(classes)
                         ? classes.find(
@@ -1216,8 +1222,8 @@ export const CanvasWorkspace: React.FC = () => {
                         );
 
                       if (
-                        lastDrivingLicenseFormData &&
-                        Object.keys(lastDrivingLicenseFormData).length > 0
+                        activeDlFormData &&
+                        Object.keys(activeDlFormData).length > 0
                       ) {
                         if (isEnabled && matchedClass) {
                           if (isLabel) {
@@ -1244,8 +1250,15 @@ export const CanvasWorkspace: React.FC = () => {
                           displayText = formatLicenceDate(sampleRawDate, fmt);
                         }
                       }
-                    } else if (lastNidaFormData && displayText.includes("{{")) {
-                      displayText = replaceTextTokens(displayText, lastNidaFormData);
+                    } else if (displayText.includes("{{")) {
+                      const nidaSession = useTemplateStore.getState().currentGenerationSession;
+                      const activeNidaData =
+                        nidaSession && nidaSession.serviceId === "nida"
+                          ? nidaSession.formData
+                          : lastNidaFormData;
+                      if (activeNidaData) {
+                        displayText = replaceTextTokens(displayText, activeNidaData);
+                      }
                     }
                     const textCase = (layer as any).textCase || "original";
                     if (textCase === "uppercase") {

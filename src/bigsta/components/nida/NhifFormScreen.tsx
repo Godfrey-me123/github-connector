@@ -49,26 +49,32 @@ export const NhifFormScreen: React.FC<NhifFormScreenProps> = ({ onCancel, onSucc
 
   const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState(false);
 
+  const currentGenerationSession = useTemplateStore((s) => s.currentGenerationSession);
+  const activeSessionData =
+    currentGenerationSession && currentGenerationSession.serviceId === "nhic"
+      ? (currentGenerationSession.formData as Partial<NhifFormData>)
+      : null;
+
   const [formData, setFormData] = useState<NhifFormData>(() => {
-    if (lastNhifFormData && typeof lastNhifFormData === "object") {
+    if (activeSessionData && typeof activeSessionData === "object") {
       return {
         cardNumber:
-          typeof lastNhifFormData.cardNumber === "string" ? lastNhifFormData.cardNumber : "",
-        fullName: typeof lastNhifFormData.fullName === "string" ? lastNhifFormData.fullName : "",
+          typeof activeSessionData.cardNumber === "string" ? activeSessionData.cardNumber : "",
+        fullName: typeof activeSessionData.fullName === "string" ? activeSessionData.fullName : "",
         gender:
-          typeof lastNhifFormData.gender === "string" && lastNhifFormData.gender
-            ? lastNhifFormData.gender
+          typeof activeSessionData.gender === "string" && activeSessionData.gender
+            ? activeSessionData.gender
             : "Male",
         dateOfBirth:
-          typeof lastNhifFormData.dateOfBirth === "string" && lastNhifFormData.dateOfBirth
-            ? formatToDdMmYyyy(lastNhifFormData.dateOfBirth)
+          typeof activeSessionData.dateOfBirth === "string" && activeSessionData.dateOfBirth
+            ? formatToDdMmYyyy(activeSessionData.dateOfBirth)
             : "",
         cardStatus:
-          typeof lastNhifFormData.cardStatus === "string" && lastNhifFormData.cardStatus
-            ? lastNhifFormData.cardStatus
+          typeof activeSessionData.cardStatus === "string" && activeSessionData.cardStatus
+            ? activeSessionData.cardStatus
             : "Active",
-        photoUrl: lastNhifFormData.photoUrl || null,
-        termsAccepted: !!lastNhifFormData.termsAccepted,
+        photoUrl: activeSessionData.photoUrl || null,
+        termsAccepted: !!activeSessionData.termsAccepted,
       };
     }
     return {

@@ -119,3 +119,44 @@ describe("Session & Multi-Service State Isolation", () => {
     expect(useTemplateStore.getState().currentGenerationSession).toBeNull();
   });
 });
+
+  it("creates an isolated generation session upon setPopulatedCardPair", () => {
+    const front = { id: "tpl_front_1", templateName: "NIDA Front", cardType: "NIDA Card", layers: [] } as any;
+    const back = { id: "tpl_back_1", templateName: "NIDA Back", cardType: "NIDA Card", layers: [] } as any;
+    const formData = {
+      firstName: "Hawa",
+      lastName: "Moyo",
+      nidaNumber: "19950101-12345-00001-20",
+      photoUrl: "data:image/png;base64,hawa",
+    };
+
+    useTemplateStore.getState().setActiveServiceId("nida");
+    useTemplateStore.getState().setPopulatedCardPair(front, back, formData);
+
+    const session = useTemplateStore.getState().currentGenerationSession;
+    expect(session).not.toBeNull();
+    expect(session?.serviceId).toBe("nida");
+    expect(session?.templateId).toBe("tpl_front_1");
+    expect(session?.formData).toEqual(formData);
+    expect(session?.photoUrl).toBe("data:image/png;base64,hawa");
+    expect(session?.sessionId.startsWith("sess_nida_")).toBe(true);
+  });
+
+  it("isolates Driving License generation session from NIDA session data", () => {
+    const dlFront = { id: "dl_front", templateName: "Driving License Front", cardType: "Driving License", layers: [] } as any;
+    const dlBack = { id: "dl_back", templateName: "Driving License Back", cardType: "Driving License", layers: [] } as any;
+    const dlData = {
+      firstName: "Juma",
+      licenceNumber: "TZ-DL-998877",
+      pinNumber: "123456",
+    };
+
+    useTemplateStore.getState().setActiveServiceId("driving_license");
+    useTemplateStore.getState().setPopulatedCardPair(dlFront, dlBack, dlData);
+
+    const session = useTemplateStore.getState().currentGenerationSession;
+    expect(session).not.toBeNull();
+    expect(session?.serviceId).toBe("licence");
+    expect(session?.formData).toEqual(dlData);
+    expect(session?.sessionId.startsWith("sess_licence_")).toBe(true);
+  });

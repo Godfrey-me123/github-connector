@@ -97,24 +97,30 @@ export const DrivingLicenseFormScreen: React.FC<DrivingLicenseFormScreenProps> =
     loadServiceTemplates,
   } = useTemplateStore();
 
+  const currentGenerationSession = useTemplateStore((s) => s.currentGenerationSession);
+  const activeSessionData =
+    currentGenerationSession && currentGenerationSession.serviceId === "licence"
+      ? (currentGenerationSession.formData as Partial<DrivingLicenseFormData>)
+      : null;
+
   const [formData, setFormData] = useState<DrivingLicenseFormData>(() => {
-    if (lastDrivingLicenseFormData) {
+    if (activeSessionData) {
       return {
-        ...lastDrivingLicenseFormData,
-        dob: lastDrivingLicenseFormData.dob ? formatToDdMmYyyy(lastDrivingLicenseFormData.dob) : "",
-        dateOfIssue: lastDrivingLicenseFormData.dateOfIssue
-          ? formatToDdMmYyyy(lastDrivingLicenseFormData.dateOfIssue)
+        ...activeSessionData,
+        dob: activeSessionData.dob ? formatToDdMmYyyy(activeSessionData.dob) : "",
+        dateOfIssue: activeSessionData.dateOfIssue
+          ? formatToDdMmYyyy(activeSessionData.dateOfIssue)
           : "",
-        dateOfExpiry: lastDrivingLicenseFormData.dateOfExpiry
-          ? formatToDdMmYyyy(lastDrivingLicenseFormData.dateOfExpiry)
+        dateOfExpiry: activeSessionData.dateOfExpiry
+          ? formatToDdMmYyyy(activeSessionData.dateOfExpiry)
           : "",
-        classes: (lastDrivingLicenseFormData.classes || []).map((c) => ({
+        classes: (activeSessionData.classes || []).map((c) => ({
           ...c,
           issueDate: c.issueDate ? formatToDdMmYyyy(c.issueDate) : "",
           expiryDate: c.expiryDate ? formatToDdMmYyyy(c.expiryDate) : "",
         })),
-        includeStickers: lastDrivingLicenseFormData.includeStickers || false,
-      };
+        includeStickers: activeSessionData.includeStickers || false,
+      } as DrivingLicenseFormData;
     }
     return {
       firstName: "",

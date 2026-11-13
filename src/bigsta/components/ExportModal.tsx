@@ -85,15 +85,24 @@ export const ExportModal: React.FC = () => {
         currentTemplate.cardType === "NRC Zambia" ||
         store.activeServiceId === "nrc_zambia";
 
+      const session = store.currentGenerationSession;
+      const sessionMatches =
+        session &&
+        ((isNhif && session.serviceId === "nhic") ||
+          (isDrivingLicense && session.serviceId === "licence") ||
+          (isNrc && session.serviceId === "nrc") ||
+          (!isNhif && !isDrivingLicense && !isNrc && session.serviceId === "nida"));
+
       let formData = {};
-      if (isNhif) {
+      if (sessionMatches) {
+        formData = session.formData || {};
+      } else if (isNhif) {
         formData = store.lastNhifFormData || {};
       } else if (isDrivingLicense) {
         formData = store.lastDrivingLicenseFormData || {};
       } else if (isNrc) {
         formData = store.lastNrcFormData || {};
       } else {
-        // Fallback to NIDA for general cards, but prefer NIDA data only if it looks like a NIDA card
         formData = store.lastNidaFormData || {};
       }
 
@@ -433,14 +442,24 @@ export const ExportModal: React.FC = () => {
                     currentTemplate.cardType === "NRC Zambia" ||
                     store.activeServiceId === "nrc_zambia";
 
+                  const session = store.currentGenerationSession;
+                  const sessionMatches =
+                    session &&
+                    ((isNhif && session.serviceId === "nhic") ||
+                      (isDrivingLicense && session.serviceId === "licence") ||
+                      (isNrc && session.serviceId === "nrc") ||
+                      (!isNhif && !isDrivingLicense && !isNrc && session.serviceId === "nida"));
+
                   const formData =
-                    (isNhif
-                      ? store.lastNhifFormData
-                      : isDrivingLicense
-                        ? store.lastDrivingLicenseFormData
-                        : isNrc
-                          ? store.lastNrcFormData
-                          : store.lastNidaFormData) || {};
+                    (sessionMatches
+                      ? session.formData
+                      : isNhif
+                        ? store.lastNhifFormData
+                        : isDrivingLicense
+                          ? store.lastDrivingLicenseFormData
+                          : isNrc
+                            ? store.lastNrcFormData
+                            : store.lastNidaFormData) || {};
 
                   setIsExporting(true);
                   try {

@@ -87,55 +87,61 @@ export const NrcZambiaFormScreen: React.FC<NrcZambiaFormScreenProps> = ({
 
   const [isMenuDrawerOpen, setIsMenuDrawerOpen] = useState(false);
 
+  const currentGenerationSession = useTemplateStore((s) => s.currentGenerationSession);
+  const activeSessionData =
+    currentGenerationSession && currentGenerationSession.serviceId === "nrc"
+      ? (currentGenerationSession.formData as Partial<NrcZambiaFormData>)
+      : null;
+
   const [formData, setFormData] = useState<NrcZambiaFormData>(() => {
-    if (lastNrcFormData && typeof lastNrcFormData === "object") {
+    if (activeSessionData && typeof activeSessionData === "object") {
       return {
-        nrcNumber: typeof lastNrcFormData.nrcNumber === "string" ? lastNrcFormData.nrcNumber : "",
+        nrcNumber: typeof activeSessionData.nrcNumber === "string" ? activeSessionData.nrcNumber : "",
         cardNumber:
-          typeof lastNrcFormData.cardNumber === "string" ? lastNrcFormData.cardNumber : "",
+          typeof activeSessionData.cardNumber === "string" ? activeSessionData.cardNumber : "",
         registrationNumber:
-          typeof lastNrcFormData.registrationNumber === "string"
-            ? lastNrcFormData.registrationNumber
+          typeof activeSessionData.registrationNumber === "string"
+            ? activeSessionData.registrationNumber
             : "",
-        fullName: typeof lastNrcFormData.fullName === "string" ? lastNrcFormData.fullName : "",
+        fullName: typeof activeSessionData.fullName === "string" ? activeSessionData.fullName : "",
         dateOfBirth:
-          typeof lastNrcFormData.dateOfBirth === "string"
-            ? formatToDdMmYy(lastNrcFormData.dateOfBirth)
+          typeof activeSessionData.dateOfBirth === "string"
+            ? formatToDdMmYy(activeSessionData.dateOfBirth)
             : "",
         placeOfBirth:
-          typeof lastNrcFormData.placeOfBirth === "string" ? lastNrcFormData.placeOfBirth : "",
+          typeof activeSessionData.placeOfBirth === "string" ? activeSessionData.placeOfBirth : "",
         parentsPlaceOfBirth:
-          typeof lastNrcFormData.parentsPlaceOfBirth === "string"
-            ? lastNrcFormData.parentsPlaceOfBirth
+          typeof activeSessionData.parentsPlaceOfBirth === "string"
+            ? activeSessionData.parentsPlaceOfBirth
             : "",
         district:
-          typeof lastNrcFormData.district === "string" ? lastNrcFormData.district : "Lusaka",
-        village: typeof lastNrcFormData.village === "string" ? lastNrcFormData.village : "",
-        chief: typeof lastNrcFormData.chief === "string" ? lastNrcFormData.chief : "",
+          typeof activeSessionData.district === "string" ? activeSessionData.district : "Lusaka",
+        village: typeof activeSessionData.village === "string" ? activeSessionData.village : "",
+        chief: typeof activeSessionData.chief === "string" ? activeSessionData.chief : "",
         registrationDate:
-          typeof lastNrcFormData.registrationDate === "string"
-            ? formatToDdMmYy(lastNrcFormData.registrationDate)
+          typeof activeSessionData.registrationDate === "string"
+            ? formatToDdMmYy(activeSessionData.registrationDate)
             : "",
         specialMarks:
-          typeof lastNrcFormData.specialMarks === "string" ? lastNrcFormData.specialMarks : "",
+          typeof activeSessionData.specialMarks === "string" ? activeSessionData.specialMarks : "",
         dateOfRenunciation:
-          typeof lastNrcFormData.dateOfRenunciation === "string"
-            ? formatToDdMmYy(lastNrcFormData.dateOfRenunciation)
+          typeof activeSessionData.dateOfRenunciation === "string"
+            ? formatToDdMmYy(activeSessionData.dateOfRenunciation)
             : "",
         dateOfIssue:
-          typeof lastNrcFormData.dateOfIssue === "string"
-            ? formatToDdMmYy(lastNrcFormData.dateOfIssue)
+          typeof activeSessionData.dateOfIssue === "string"
+            ? formatToDdMmYy(activeSessionData.dateOfIssue)
             : "",
         gender:
-          typeof lastNrcFormData.gender === "string" && lastNrcFormData.gender
-            ? lastNrcFormData.gender.toUpperCase().startsWith("F")
+          typeof activeSessionData.gender === "string" && activeSessionData.gender
+            ? activeSessionData.gender.toUpperCase().startsWith("F")
               ? "Female"
               : "Male"
             : "Male",
-        photoUrl: lastNrcFormData.photoUrl || null,
-        signatureUrl: lastNrcFormData.signatureUrl || null,
-        officerSignatureUrl: lastNrcFormData.officerSignatureUrl || null,
-        termsAccepted: !!lastNrcFormData.termsAccepted,
+        photoUrl: activeSessionData.photoUrl || null,
+        signatureUrl: activeSessionData.signatureUrl || null,
+        officerSignatureUrl: activeSessionData.officerSignatureUrl || null,
+        termsAccepted: !!activeSessionData.termsAccepted,
       };
     }
     return {
