@@ -567,6 +567,9 @@ interface TemplateState {
   activePdf: any | null;
   setActivePdf: (pdf: any | null) => void;
   lastNidaFormData: any | null;
+  currentGenerationSession: any | null;
+  setCurrentGenerationSession: (session: any | null) => void;
+  clearGenerationSession: () => void;
   lastDrivingLicenseFormData: any | null;
   lastNhifFormData: any | null;
   lastNrcFormData: any | null;
@@ -1388,6 +1391,9 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     frontPopulatedTemplate: null,
     backPopulatedTemplate: null,
     lastNidaFormData: null,
+    currentGenerationSession: null,
+    setCurrentGenerationSession: (session: any | null) => set({ currentGenerationSession: session }),
+    clearGenerationSession: () => set({ currentGenerationSession: null }),
     lastDrivingLicenseFormData: null,
     lastNhifFormData: null,
     lastNrcFormData: null,
@@ -1868,6 +1874,17 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
     },
 
     setActiveServiceId: (serviceId: string) => {
+      const prevServiceId = get().activeServiceId;
+      if (prevServiceId && prevServiceId !== serviceId) {
+        // Clear active session and legacy form caches on service switch to guarantee isolation
+        set({
+          currentGenerationSession: null,
+          lastNidaFormData: null,
+          lastDrivingLicenseFormData: null,
+          lastNhifFormData: null,
+          lastNrcFormData: null,
+        });
+      }
       get().saveStudioDraft();
       const savedDraft =
         typeof window !== "undefined"
