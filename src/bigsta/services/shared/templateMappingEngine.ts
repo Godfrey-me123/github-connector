@@ -161,6 +161,156 @@ export function isBackSideTemplate(template: CardTemplate | null | undefined): b
  * Ensures a template has explicit fieldId, fieldName, bindingKey, and fieldType attributes on all variable layers.
  * Guarantees persistent 1-to-1 mapping across environments and cached stores.
  */
+/**
+ * Strict service verification for card templates.
+ * Enforces cross-service disqualification to prevent misclassified templates
+ * (e.g. NHIF cards accidentally categorized or saved under NIDA) from contaminating the generation flow.
+ */
+export function isTemplateForService(
+  template: CardTemplate | null | undefined,
+  targetService: string,
+): boolean {
+  if (!template) return false;
+  const sId = (targetService || "").toLowerCase().trim();
+  const tServ = (template.serviceId || "").toLowerCase().trim();
+  const tId = (template.id || "").toLowerCase().trim();
+  const tType = (template.cardType || "").toLowerCase().trim();
+  const tName = (template.templateName || (template as any).name || "").toLowerCase().trim();
+
+  // Inspect layer field keys for strong service signatures
+  const layerIds = (template.layers || []).map((l) => (l.id || "").toLowerCase());
+  const hasNhifLayers = layerIds.some((id) => id.startsWith("nhif_"));
+  const hasDlLayers = layerIds.some(
+    (id) => id.startsWith("dl_") || id.startsWith("licence_") || id.startsWith("license_"),
+  );
+  const hasNrcLayers = layerIds.some((id) => id.startsWith("nrc_"));
+  const hasNidaLayers = layerIds.some((id) => id.startsWith("nida_"));
+
+  if (sId === "nida") {
+    // Cross-service contamination guards: NEVER match if clearly NHIF, DL, or NRC
+    if (tName.includes("nhif") || tId.includes("nhif") || tServ === "nhif" || hasNhifLayers) {
+      return false;
+    }
+    if (
+      tName.includes("driving") ||
+      tId.includes("driving") ||
+      tServ.includes("driving") ||
+      tType.includes("driving") ||
+      hasDlLayers
+    ) {
+      return false;
+    }
+    if (tName.includes("nrc") || tId.includes("nrc") || tServ.includes("nrc") || hasNrcLayers) {
+      return false;
+    }
+
+    return (
+      tServ === "nida" ||
+      tId.includes("nida") ||
+      tType.includes("nida") ||
+      tName.includes("nida") ||
+      hasNidaLayers ||
+      tType === "national id"
+    );
+  }
+
+  if (sId === "nhif") {
+    // If it has strong NIDA, DL or NRC signatures and no NHIF signatures, reject
+    if (hasNidaLayers && !hasNhifLayers) return false;
+    if (hasDlLayers && !hasNhifLayers) return false;
+    if (hasNrcLayers && !hasNhifLayers) return false;
+    if ((tName.includes("nida") || tId.includes("nida")) && !tName.includes("nhif")) {
+      return false;
+    }
+    if (
+      (tName.includes("driving") || tId.includes("driving") || tType.includes("driving")) &&
+      !tName.includes("nhif")
+    ) {
+      return false;
+    }
+    if ((tName.includes("nrc") || tId.includes("nrc")) && !tName.includes("nhif")) {
+      return false;
+    }
+
+    return (
+      tServ === "nhif" ||
+      tId.includes("nhif") ||
+      tType.includes("nhif") ||
+      tName.includes("nhif") ||
+      tType.includes("health") ||
+      hasNhifLayers
+    );
+  }
+
+  if (sId === "driving_license" || sId === "driving_licence" || sId === "licence") {
+    if (tName.includes("nhif") || tId.includes("nhif") || tServ === "nhif" || hasNhifLayers) {
+      return false;
+    }
+    if (tName.includes("nida") || tId.includes("nida") || tServ === "nida" || hasNidaLayers) {
+      return false;
+    }
+    if (tName.includes("nrc") || tId.includes("nrc") || tServ.includes("nrc") || hasNrcLayers) {
+      return false;
+    }
+
+    return (
+      tServ === "driving_license" ||
+      tServ === "driving_licence" ||
+      tServ === "licence" ||
+      tId.includes("driving") ||
+      tType.includes("driving") ||
+      tName.includes("driving") ||
+      tType.includes("license") ||
+      tType.includes("licence") ||
+      hasDlLayers
+    );
+  }
+
+  if (sId === "nrc_zambia" || sId === "nrc card-zambia" || sId === "nrc") {
+    if (tName.includes("nhif") || tId.includes("nhif") || tServ === "nhif" || hasNhifLayers) {
+      return false;
+    }
+    if (tName.includes("nida") || tId.includes("nida") || tServ === "nida" || hasNidaLayers) {
+      return false;
+    }
+    if (
+      tName.includes("driving") ||
+      tId.includes("driving") ||
+      tServ.includes("driving") ||
+      hasDlLayers
+    ) {
+      return false;
+    }
+
+    return (
+      tServ === "nrc_zambia" ||
+      tServ === "nrc card-zambia" ||
+      tServ === "nrc" ||
+      tId.includes("nrc") ||
+      tType.includes("nrc") ||
+      tName.includes("nrc") ||
+      tType.includes("national registration") ||
+      hasNrcLayers
+    );
+  }
+
+  if (sId === "birth_certificate") {
+    return (
+      tServ === "birth_certificate" ||
+      tId.includes("birth") ||
+      tType.includes("birth") ||
+      tName.includes("birth")
+    );
+  }
+
+  return (
+    tServ === sId ||
+    tId.includes(sId) ||
+    tType.includes(sId.replace("_", " ")) ||
+    tName.includes(sId.replace("_", " "))
+  );
+}
+
 export function ensureTemplateFieldIds(template: CardTemplate): CardTemplate {
   if (!template || !Array.isArray(template.layers)) return template;
 

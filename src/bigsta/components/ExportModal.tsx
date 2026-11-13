@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useTemplateStore } from "../store/useTemplateStore";
 import { playNotificationSound } from "../utils/audioHandler";
+import { isTemplateForService, isBackSideTemplate } from "../utils/templateMappingEngine";
 import {
   downloadPNG,
   downloadJPG,
@@ -23,6 +24,59 @@ import {
   renderTemplateToCanvas,
   CropRegion,
 } from "../utils/export";
+
+
+function getExportContext(template: any) {
+  const store = useTemplateStore.getState();
+  const isBack = isBackSideTemplate(template);
+  const effectiveTemplate = isBack
+    ? (store.backPopulatedTemplate || template)
+    : (store.frontPopulatedTemplate || template);
+
+  const isDrivingLicense =
+    isTemplateForService(effectiveTemplate, "driving_license") ||
+    (!isTemplateForService(effectiveTemplate, "nida") &&
+      !isTemplateForService(effectiveTemplate, "nhif") &&
+      !isTemplateForService(effectiveTemplate, "nrc_zambia") &&
+      (store.currentGenerationSession?.serviceId === "licence" ||
+        store.activeServiceId === "driving_license"));
+
+  const isNhif =
+    isTemplateForService(effectiveTemplate, "nhif") ||
+    (!isTemplateForService(effectiveTemplate, "nida") &&
+      !isTemplateForService(effectiveTemplate, "driving_license") &&
+      !isTemplateForService(effectiveTemplate, "nrc_zambia") &&
+      (store.currentGenerationSession?.serviceId === "nhic" || store.activeServiceId === "nhif"));
+
+  const isNrc =
+    isTemplateForService(effectiveTemplate, "nrc_zambia") ||
+    (!isTemplateForService(effectiveTemplate, "nida") &&
+      !isTemplateForService(effectiveTemplate, "driving_license") &&
+      !isTemplateForService(effectiveTemplate, "nhif") &&
+      (store.currentGenerationSession?.serviceId === "nrc" ||
+        store.activeServiceId === "nrc_zambia"));
+
+  const session = store.currentGenerationSession;
+  const sessionMatches =
+    session &&
+    ((isNhif && session.serviceId === "nhic") ||
+      (isDrivingLicense && session.serviceId === "licence") ||
+      (isNrc && session.serviceId === "nrc") ||
+      (!isNhif && !isDrivingLicense && !isNrc && session.serviceId === "nida"));
+
+  const formData =
+    (sessionMatches
+      ? session.formData
+      : isNhif
+        ? store.lastNhifFormData
+        : isDrivingLicense
+          ? store.lastDrivingLicenseFormData
+          : isNrc
+            ? store.lastNrcFormData
+            : store.lastNidaFormData) || {};
+
+  return { effectiveTemplate, formData };
+}
 
 export const ExportModal: React.FC = () => {
   const { isExportModalOpen, setExportModalOpen, currentTemplate, setMergeModalOpen } =
@@ -56,57 +110,9 @@ export const ExportModal: React.FC = () => {
 
   // Generate card preview image
   useEffect(() => {
-    if (isExportModalOpen) {
-      const store = useTemplateStore.getState();
-
-      // Strict data association to prevent leaks between card types
-      const templateName = (currentTemplate.templateName || "").toLowerCase();
-      const templateId = (currentTemplate.id || "").toLowerCase();
-      const serviceId = (currentTemplate.serviceId || "").toLowerCase();
-
-      const isDrivingLicense =
-        currentTemplate.cardType === "Driving License" ||
-        serviceId === "driving_license" ||
-        templateName.includes("driving") ||
-        templateId.includes("dl_") ||
-        store.activeServiceId === "driving_license";
-
-      const isNhif =
-        serviceId === "nhif" ||
-        templateName.includes("nhif") ||
-        templateId.includes("nhif") ||
-        store.activeServiceId === "nhif";
-
-      const isNrc =
-        serviceId === "nrc_zambia" ||
-        templateName.includes("nrc") ||
-        templateId.includes("nrc") ||
-        currentTemplate.cardType === "National Registration Card (NRC)" ||
-        currentTemplate.cardType === "NRC Zambia" ||
-        store.activeServiceId === "nrc_zambia";
-
-      const session = store.currentGenerationSession;
-      const sessionMatches =
-        session &&
-        ((isNhif && session.serviceId === "nhic") ||
-          (isDrivingLicense && session.serviceId === "licence") ||
-          (isNrc && session.serviceId === "nrc") ||
-          (!isNhif && !isDrivingLicense && !isNrc && session.serviceId === "nida"));
-
-      let formData = {};
-      if (sessionMatches) {
-        formData = session.formData || {};
-      } else if (isNhif) {
-        formData = store.lastNhifFormData || {};
-      } else if (isDrivingLicense) {
-        formData = store.lastDrivingLicenseFormData || {};
-      } else if (isNrc) {
-        formData = store.lastNrcFormData || {};
-      } else {
-        formData = store.lastNidaFormData || {};
-      }
-
-      renderTemplateToCanvas(currentTemplate, formData, 150).then((canvas) => {
+    if (isExportModalOpen && currentTemplate) {
+      const { effectiveTemplate, formData } = getExportContext(currentTemplate);
+      renderTemplateToCanvas(effectiveTemplate, formData, 150).then((canvas) => {
         setPreviewSrc(canvas.toDataURL("image/png"));
       });
     }
@@ -386,8 +392,9 @@ export const ExportModal: React.FC = () => {
                   if (!val.allowed) return;
                   setIsExporting(true);
                   try {
-                    await downloadJSON(currentTemplate);
-                    await store.consumeUsage("JSON Template Export", undefined, 1, `export:json:${currentTemplate.id}:${Date.now()}`);
+                    const { effectiveTemplate } = getExportContext(currentTemplate);
+                    await downloadJSON(effectiveTemplate);
+                    await store.consumeUsage("JSON Template Export", undefined, 1, `export:json:${effectiveTemplate.id}:${Date.now()}`);
                     playNotificationSound();
                   } catch (e) {
                     console.error("JSON export failed", e);
@@ -421,54 +428,16 @@ export const ExportModal: React.FC = () => {
                   if (!val.allowed) return;
 
                   // Strict data association to prevent leaks
-                  const isDrivingLicense =
-                    currentTemplate.cardType === "Driving License" ||
-                    (currentTemplate.serviceId || "").toLowerCase() === "driving_license" ||
-                    (currentTemplate.templateName || "").toLowerCase().includes("driving") ||
-                    (currentTemplate.id || "").toLowerCase().includes("dl_") ||
-                    store.activeServiceId === "driving_license";
-
-                  const isNhif =
-                    (currentTemplate.serviceId || "").toLowerCase() === "nhif" ||
-                    (currentTemplate.templateName || "").toLowerCase().includes("nhif") ||
-                    (currentTemplate.id || "").toLowerCase().includes("nhif") ||
-                    store.activeServiceId === "nhif";
-
-                  const isNrc =
-                    (currentTemplate.serviceId || "").toLowerCase() === "nrc_zambia" ||
-                    (currentTemplate.templateName || "").toLowerCase().includes("nrc") ||
-                    (currentTemplate.id || "").toLowerCase().includes("nrc") ||
-                    currentTemplate.cardType === "National Registration Card (NRC)" ||
-                    currentTemplate.cardType === "NRC Zambia" ||
-                    store.activeServiceId === "nrc_zambia";
-
-                  const session = store.currentGenerationSession;
-                  const sessionMatches =
-                    session &&
-                    ((isNhif && session.serviceId === "nhic") ||
-                      (isDrivingLicense && session.serviceId === "licence") ||
-                      (isNrc && session.serviceId === "nrc") ||
-                      (!isNhif && !isDrivingLicense && !isNrc && session.serviceId === "nida"));
-
-                  const formData =
-                    (sessionMatches
-                      ? session.formData
-                      : isNhif
-                        ? store.lastNhifFormData
-                        : isDrivingLicense
-                          ? store.lastDrivingLicenseFormData
-                          : isNrc
-                            ? store.lastNrcFormData
-                            : store.lastNidaFormData) || {};
+                  const { effectiveTemplate, formData } = getExportContext(currentTemplate);
 
                   setIsExporting(true);
                   try {
-                    await downloadPDF(currentTemplate, formData, undefined, cropPayload);
+                    await downloadPDF(effectiveTemplate, formData, undefined, cropPayload);
                     await store.consumeUsage(
-                      `${currentTemplate.templateName || "Card"} PDF Export`,
+                      `${effectiveTemplate.templateName || "Card"} PDF Export`,
                       undefined,
                       1,
-                      `export:pdf:${currentTemplate.id}:${Date.now()}`,
+                      `export:pdf:${effectiveTemplate.id}:${Date.now()}`,
                     );
                     playNotificationSound();
                   } catch (e) {
@@ -502,44 +471,16 @@ export const ExportModal: React.FC = () => {
                   const val = store.validateExportAccess("png");
                   if (!val.allowed) return;
 
-                  const isDrivingLicense =
-                    currentTemplate.cardType === "Driving License" ||
-                    (currentTemplate.serviceId || "").toLowerCase() === "driving_license" ||
-                    (currentTemplate.templateName || "").toLowerCase().includes("driving") ||
-                    (currentTemplate.id || "").toLowerCase().includes("dl_") ||
-                    store.activeServiceId === "driving_license";
-
-                  const isNhif =
-                    (currentTemplate.serviceId || "").toLowerCase() === "nhif" ||
-                    (currentTemplate.templateName || "").toLowerCase().includes("nhif") ||
-                    (currentTemplate.id || "").toLowerCase().includes("nhif") ||
-                    store.activeServiceId === "nhif";
-
-                  const isNrc =
-                    (currentTemplate.serviceId || "").toLowerCase() === "nrc_zambia" ||
-                    (currentTemplate.templateName || "").toLowerCase().includes("nrc") ||
-                    (currentTemplate.id || "").toLowerCase().includes("nrc") ||
-                    currentTemplate.cardType === "National Registration Card (NRC)" ||
-                    currentTemplate.cardType === "NRC Zambia" ||
-                    store.activeServiceId === "nrc_zambia";
-
-                  const formData =
-                    (isNhif
-                      ? store.lastNhifFormData
-                      : isDrivingLicense
-                        ? store.lastDrivingLicenseFormData
-                        : isNrc
-                          ? store.lastNrcFormData
-                          : store.lastNidaFormData) || {};
+                  const { effectiveTemplate, formData } = getExportContext(currentTemplate);
 
                   setIsExporting(true);
                   try {
-                    await downloadPNG(currentTemplate, formData, undefined, cropPayload);
+                    await downloadPNG(effectiveTemplate, formData, undefined, cropPayload);
                     await store.consumeUsage(
-                      `${currentTemplate.templateName || "Card"} PNG Export`,
+                      `${effectiveTemplate.templateName || "Card"} PNG Export`,
                       undefined,
                       1,
-                      `export:png:${currentTemplate.id}:${Date.now()}`,
+                      `export:png:${effectiveTemplate.id}:${Date.now()}`,
                     );
                     playNotificationSound();
                   } catch (e) {
@@ -573,44 +514,16 @@ export const ExportModal: React.FC = () => {
                   const val = store.validateExportAccess("jpg");
                   if (!val.allowed) return;
 
-                  const isDrivingLicense =
-                    currentTemplate.cardType === "Driving License" ||
-                    (currentTemplate.serviceId || "").toLowerCase() === "driving_license" ||
-                    (currentTemplate.templateName || "").toLowerCase().includes("driving") ||
-                    (currentTemplate.id || "").toLowerCase().includes("dl_") ||
-                    store.activeServiceId === "driving_license";
-
-                  const isNhif =
-                    (currentTemplate.serviceId || "").toLowerCase() === "nhif" ||
-                    (currentTemplate.templateName || "").toLowerCase().includes("nhif") ||
-                    (currentTemplate.id || "").toLowerCase().includes("nhif") ||
-                    store.activeServiceId === "nhif";
-
-                  const isNrc =
-                    (currentTemplate.serviceId || "").toLowerCase() === "nrc_zambia" ||
-                    (currentTemplate.templateName || "").toLowerCase().includes("nrc") ||
-                    (currentTemplate.id || "").toLowerCase().includes("nrc") ||
-                    currentTemplate.cardType === "National Registration Card (NRC)" ||
-                    currentTemplate.cardType === "NRC Zambia" ||
-                    store.activeServiceId === "nrc_zambia";
-
-                  const formData =
-                    (isNhif
-                      ? store.lastNhifFormData
-                      : isDrivingLicense
-                        ? store.lastDrivingLicenseFormData
-                        : isNrc
-                          ? store.lastNrcFormData
-                          : store.lastNidaFormData) || {};
+                  const { effectiveTemplate, formData } = getExportContext(currentTemplate);
 
                   setIsExporting(true);
                   try {
-                    await downloadJPG(currentTemplate, formData, undefined, cropPayload);
+                    await downloadJPG(effectiveTemplate, formData, undefined, cropPayload);
                     await store.consumeUsage(
-                      `${currentTemplate.templateName || "Card"} JPG Export`,
+                      `${effectiveTemplate.templateName || "Card"} JPG Export`,
                       undefined,
                       1,
-                      `export:jpg:${currentTemplate.id}:${Date.now()}`,
+                      `export:jpg:${effectiveTemplate.id}:${Date.now()}`,
                     );
                     playNotificationSound();
                   } catch (e) {

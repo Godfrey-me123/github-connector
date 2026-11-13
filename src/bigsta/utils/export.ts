@@ -7,6 +7,7 @@ import {
   applyTemplateMapping,
   NidaFormData,
   isBackSideTemplate,
+  isTemplateForService,
   formatDrivingLicenceCategoriesFront,
   formatDrivingLicenceCategoriesBack,
   getLayerBinding,
@@ -53,17 +54,29 @@ export async function renderTemplateToCanvas(
 ): Promise<HTMLCanvasElement> {
   const store = useTemplateStore.getState();
 
-  // 1. Determine effective card data (fallback to store's lastNidaFormData, etc. only for fresh exports)
+  // 1. Determine effective card data (strictly derived from template identity to prevent cross-service bleed)
   const isDrivingLicense =
-    template.cardType === "Driving License" ||
-    store.activeServiceId === "driving_license" ||
-    template.serviceId === "driving_license";
-  const isNhif = template.serviceId === "nhif" || store.activeServiceId === "nhif";
+    isTemplateForService(template, "driving_license") ||
+    (!isTemplateForService(template, "nida") &&
+      !isTemplateForService(template, "nhif") &&
+      !isTemplateForService(template, "nrc_zambia") &&
+      (store.currentGenerationSession?.serviceId === "licence" ||
+        store.activeServiceId === "driving_license"));
+
+  const isNhif =
+    isTemplateForService(template, "nhif") ||
+    (!isTemplateForService(template, "nida") &&
+      !isTemplateForService(template, "driving_license") &&
+      !isTemplateForService(template, "nrc_zambia") &&
+      (store.currentGenerationSession?.serviceId === "nhic" || store.activeServiceId === "nhif"));
+
   const isNrc =
-    template.serviceId === "nrc_zambia" ||
-    store.activeServiceId === "nrc_zambia" ||
-    template.cardType === "National Registration Card (NRC)" ||
-    template.cardType === "NRC Zambia";
+    isTemplateForService(template, "nrc_zambia") ||
+    (!isTemplateForService(template, "nida") &&
+      !isTemplateForService(template, "driving_license") &&
+      !isTemplateForService(template, "nhif") &&
+      (store.currentGenerationSession?.serviceId === "nrc" ||
+        store.activeServiceId === "nrc_zambia"));
 
   // ELIMINATE DATA LEAKAGE: When specific cardData is provided (e.g. from a saved record in Downloads),
   // we MUST NOT merge it with the last filled form in the store.
@@ -100,11 +113,24 @@ export async function renderTemplateToCanvas(
     ...cardData,
   };
 
-  // 2. Determine effective template: prefer store's populated front/back template if available and IDs match exactly
-  if (store.frontPopulatedTemplate && template.id === store.frontPopulatedTemplate.id) {
-    template = store.frontPopulatedTemplate;
-  } else if (store.backPopulatedTemplate && template.id === store.backPopulatedTemplate.id) {
-    template = store.backPopulatedTemplate;
+  // 2. Determine effective template: prefer store's populated front/back template if available and matching
+  const isBack = isBackSideTemplate(template);
+  if (!isBack && store.frontPopulatedTemplate) {
+    if (
+      template.id === store.frontPopulatedTemplate.id ||
+      !template.id ||
+      template.id === "default_template"
+    ) {
+      template = store.frontPopulatedTemplate;
+    }
+  } else if (isBack && store.backPopulatedTemplate) {
+    if (
+      template.id === store.backPopulatedTemplate.id ||
+      !template.id ||
+      template.id === "default_template"
+    ) {
+      template = store.backPopulatedTemplate;
+    }
   }
 
   // 3. Apply mapping engine pass if form data exists

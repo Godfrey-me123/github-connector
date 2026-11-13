@@ -58,6 +58,7 @@ import {
   sanitizeTemplateForSaving,
   SupportedBinding,
   isBackSideTemplate,
+  isTemplateForService,
 } from "../utils/templateMappingEngine";
 import {
   resolveDocumentTypeId,
@@ -2123,57 +2124,10 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
 
     getUniversalFrontTemplate: (serviceId: string) => {
       const customTemplates = get().customTemplates;
-      const sId = (serviceId || "").toLowerCase().trim();
 
-      const isServiceMatch = (t: CardTemplate) => {
-        const tServ = (t.serviceId || "").toLowerCase().trim();
-        const tId = (t.id || "").toLowerCase().trim();
-        const tType = (t.cardType || "").toLowerCase().trim();
-
-        if (sId === "driving_license" || sId === "driving_licence") {
-          return (
-            tServ === "driving_license" ||
-            tServ === "driving_licence" ||
-            tId.includes("driving") ||
-            tType.includes("driving") ||
-            tType.includes("license") ||
-            tType.includes("licence")
-          );
-        }
-        if (sId === "nida") {
-          return (
-            tServ === "nida" ||
-            tId.includes("nida") ||
-            tType.includes("nida") ||
-            tType.includes("national")
-          );
-        }
-        if (sId === "nhif") {
-          return (
-            tServ === "nhif" ||
-            tId.includes("nhif") ||
-            tType.includes("nhif") ||
-            tType.includes("health")
-          );
-        }
-        if (sId === "nrc_zambia" || sId === "nrc card-zambia" || sId === "nrc") {
-          return (
-            tServ === "nrc_zambia" ||
-            tServ === "nrc card-zambia" ||
-            tId.includes("nrc") ||
-            tType.includes("nrc") ||
-            tType.includes("national registration")
-          );
-        }
-        if (sId === "birth_certificate") {
-          return tServ === "birth_certificate" || tId.includes("birth") || tType.includes("birth");
-        }
-        return tServ === sId || tId.includes(sId) || tType.includes(sId.replace("_", " "));
-      };
-
-      // 1. PRIMARY RULE: Fetch cloud/custom template matching service and side
+      // 1. PRIMARY RULE: Fetch cloud/custom template strictly matching service and side (guarded against cross-service contamination)
       const frontCandidates = customTemplates.filter(
-        (t) => isServiceMatch(t) && t.isActive !== false && !isBackSideTemplate(t),
+        (t) => isTemplateForService(t, serviceId) && t.isActive !== false && !isBackSideTemplate(t),
       );
       const activeCustom = frontCandidates.find((t) => t.isUniversal) || frontCandidates[0];
       if (activeCustom) {
@@ -2186,14 +2140,21 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         serviceId,
       );
 
-      // 2. Fallback to localStorage for explicit JSON object override (Legacy support)
+      // 2. Fallback to localStorage for explicit JSON object override (Legacy support, validated)
       if (typeof window !== "undefined") {
         const rawObj = localStorage.getItem(`universal_front_obj_${serviceId}`);
         if (rawObj) {
           try {
             const parsed = JSON.parse(rawObj);
-            if (parsed && parsed.layers && !isBackSideTemplate(parsed)) {
+            if (
+              parsed &&
+              parsed.layers &&
+              !isBackSideTemplate(parsed) &&
+              isTemplateForService(parsed, serviceId)
+            ) {
               return ensureTemplateFieldIds(parsed);
+            } else {
+              localStorage.removeItem(`universal_front_obj_${serviceId}`);
             }
           } catch (e) {
             console.warn("Error parsing universal front object from localStorage:", e);
@@ -2201,25 +2162,30 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         }
       }
 
-      // 3. Fallback to saved ID in localStorage (Legacy support)
+      // 3. Fallback to saved ID in localStorage (Legacy support, validated)
       const savedId =
         typeof window !== "undefined" ? localStorage.getItem(`universal_front_${serviceId}`) : null;
       if (savedId) {
-        const foundCustom = customTemplates.find((t) => t.id === savedId && !isBackSideTemplate(t));
+        const foundCustom = customTemplates.find(
+          (t) => t.id === savedId && !isBackSideTemplate(t) && isTemplateForService(t, serviceId),
+        );
         if (foundCustom) return ensureTemplateFieldIds(foundCustom);
         const foundSample = SAMPLE_TEMPLATES.find(
-          (t) => t.id === savedId && !isBackSideTemplate(t),
+          (t) => t.id === savedId && !isBackSideTemplate(t) && isTemplateForService(t, serviceId),
         );
         if (foundSample) return ensureTemplateFieldIds(foundSample);
+        localStorage.removeItem(`universal_front_${serviceId}`);
       }
 
       // 4. Fallback to sample templates specifically matching serviceId
-      const sampleMatch = SAMPLE_TEMPLATES.find((t) => isServiceMatch(t) && !isBackSideTemplate(t));
+      const sampleMatch = SAMPLE_TEMPLATES.find(
+        (t) => isTemplateForService(t, serviceId) && !isBackSideTemplate(t),
+      );
       if (sampleMatch) return ensureTemplateFieldIds(sampleMatch);
 
-      // 5. Final Fallback ONLY to default front template if serviceId match is not found
+      // 5. Final Fallback ONLY to sample template matching serviceId
       const fallbackSample = SAMPLE_TEMPLATES.find(
-        (t) => isServiceMatch(t) && !isBackSideTemplate(t),
+        (t) => isTemplateForService(t, serviceId) && !isBackSideTemplate(t),
       );
       if (fallbackSample) return ensureTemplateFieldIds(fallbackSample);
 
@@ -2228,69 +2194,29 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
 
     getUniversalBackTemplate: (serviceId: string) => {
       const customTemplates = get().customTemplates;
-      const sId = (serviceId || "").toLowerCase().trim();
 
-      const isServiceMatch = (t: CardTemplate) => {
-        const tServ = (t.serviceId || "").toLowerCase().trim();
-        const tId = (t.id || "").toLowerCase().trim();
-        const tType = (t.cardType || "").toLowerCase().trim();
-
-        if (sId === "driving_license" || sId === "driving_licence") {
-          return (
-            tServ === "driving_license" ||
-            tServ === "driving_licence" ||
-            tId.includes("driving") ||
-            tType.includes("driving") ||
-            tType.includes("license") ||
-            tType.includes("licence")
-          );
-        }
-        if (sId === "nida") {
-          return (
-            tServ === "nida" ||
-            tId.includes("nida") ||
-            tType.includes("nida") ||
-            tType.includes("national")
-          );
-        }
-        if (sId === "nhif") {
-          return (
-            tServ === "nhif" ||
-            tId.includes("nhif") ||
-            tType.includes("nhif") ||
-            tType.includes("health")
-          );
-        }
-        if (sId === "nrc_zambia" || sId === "nrc card-zambia" || sId === "nrc") {
-          return (
-            tServ === "nrc_zambia" ||
-            tServ === "nrc card-zambia" ||
-            tId.includes("nrc") ||
-            tType.includes("nrc") ||
-            tType.includes("national registration")
-          );
-        }
-        if (sId === "birth_certificate") {
-          return tServ === "birth_certificate" || tId.includes("birth") || tType.includes("birth");
-        }
-        return tServ === sId || tId.includes(sId) || tType.includes(sId.replace("_", " "));
-      };
-
-      // 1. PRIMARY RULE: Fetch cloud/custom template matching service and side
+      // 1. PRIMARY RULE: Fetch cloud/custom template strictly matching service and side (guarded against cross-service contamination)
       const backCandidates = customTemplates.filter(
-        (t) => isServiceMatch(t) && t.isActive !== false && isBackSideTemplate(t),
+        (t) => isTemplateForService(t, serviceId) && t.isActive !== false && isBackSideTemplate(t),
       );
       const activeCustom = backCandidates.find((t) => t.isUniversal) || backCandidates[0];
       if (activeCustom) return ensureTemplateFieldIds(activeCustom);
 
-      // 2. Fallback to localStorage for explicit JSON object override (Legacy support)
+      // 2. Fallback to localStorage for explicit JSON object override (Legacy support, validated)
       if (typeof window !== "undefined") {
         const rawObj = localStorage.getItem(`universal_back_obj_${serviceId}`);
         if (rawObj) {
           try {
             const parsed = JSON.parse(rawObj);
-            if (parsed && parsed.layers && isBackSideTemplate(parsed)) {
+            if (
+              parsed &&
+              parsed.layers &&
+              isBackSideTemplate(parsed) &&
+              isTemplateForService(parsed, serviceId)
+            ) {
               return ensureTemplateFieldIds(parsed);
+            } else {
+              localStorage.removeItem(`universal_back_obj_${serviceId}`);
             }
           } catch (e) {
             console.warn("Error parsing universal back object from localStorage:", e);
@@ -2298,22 +2224,29 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
         }
       }
 
-      // 3. Fallback to saved ID in localStorage (Legacy support)
+      // 3. Fallback to saved ID in localStorage (Legacy support, validated)
       const savedId =
         typeof window !== "undefined" ? localStorage.getItem(`universal_back_${serviceId}`) : null;
       if (savedId) {
-        const foundCustom = customTemplates.find((t) => t.id === savedId && isBackSideTemplate(t));
+        const foundCustom = customTemplates.find(
+          (t) => t.id === savedId && isBackSideTemplate(t) && isTemplateForService(t, serviceId),
+        );
         if (foundCustom) return ensureTemplateFieldIds(foundCustom);
-        const foundSample = SAMPLE_TEMPLATES.find((t) => t.id === savedId && isBackSideTemplate(t));
+        const foundSample = SAMPLE_TEMPLATES.find(
+          (t) => t.id === savedId && isBackSideTemplate(t) && isTemplateForService(t, serviceId),
+        );
         if (foundSample) return ensureTemplateFieldIds(foundSample);
+        localStorage.removeItem(`universal_back_${serviceId}`);
       }
 
       // 4. Fallback to sample templates specifically matching serviceId
-      const sampleMatch = SAMPLE_TEMPLATES.find((t) => isServiceMatch(t) && isBackSideTemplate(t));
+      const sampleMatch = SAMPLE_TEMPLATES.find(
+        (t) => isTemplateForService(t, serviceId) && isBackSideTemplate(t),
+      );
       if (sampleMatch) return ensureTemplateFieldIds(sampleMatch);
 
       const fallbackSample = SAMPLE_TEMPLATES.find(
-        (t) => isServiceMatch(t) && isBackSideTemplate(t),
+        (t) => isTemplateForService(t, serviceId) && isBackSideTemplate(t),
       );
       if (fallbackSample) return ensureTemplateFieldIds(fallbackSample);
 
@@ -4450,22 +4383,40 @@ export const useTemplateStore = create<TemplateState>((set, get) => {
 
     setPopulatedCardPair: (front, back, formData) => {
       const activeService = get().activeServiceId;
+      const hasNidaData = formData && ("nidaNumber" in formData || "nin" in formData);
+      const hasNhifData =
+        formData && ("cardNumber" in formData || "cardStatus" in formData || "card_no" in formData);
+      const hasDlData = formData && ("licenceNumber" in formData || "pinNumber" in formData);
+      const hasNrcData =
+        formData && ("nrcNumber" in formData || "village" in formData || "chief" in formData);
+
       const isDL =
-        activeService === "driving_license" ||
-        front?.cardType === "Driving License" ||
-        (formData && ("licenceNumber" in formData || "pinNumber" in formData));
+        hasDlData ||
+        (!hasNidaData &&
+          !hasNhifData &&
+          !hasNrcData &&
+          (activeService === "driving_license" ||
+            front?.cardType === "Driving License" ||
+            front?.serviceId === "driving_license"));
+
       const isNHIF =
-        activeService === "nhif" ||
-        (front?.cardType as string) === "NHIF Card" ||
-        front?.cardType === "NHIF Membership Card" ||
-        front?.serviceId === "nhif" ||
-        (formData &&
-          ("cardNumber" in formData || "cardStatus" in formData || "card_no" in formData));
+        hasNhifData ||
+        (!hasNidaData &&
+          !hasDlData &&
+          !hasNrcData &&
+          (activeService === "nhif" ||
+            (front?.cardType as string) === "NHIF Card" ||
+            front?.cardType === "NHIF Membership Card" ||
+            front?.serviceId === "nhif"));
+
       const isNRC =
-        activeService === "nrc_zambia" ||
-        front?.cardType === "National Registration Card (NRC)" ||
-        front?.serviceId === "nrc_zambia" ||
-        (formData && ("nrcNumber" in formData || "village" in formData || "chief" in formData));
+        hasNrcData ||
+        (!hasNidaData &&
+          !hasDlData &&
+          !hasNhifData &&
+          (activeService === "nrc_zambia" ||
+            front?.cardType === "National Registration Card (NRC)" ||
+            front?.serviceId === "nrc_zambia"));
 
       const serviceId = isDL ? "licence" : isNHIF ? "nhic" : isNRC ? "nrc" : "nida";
       const sessionId = `sess_${serviceId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;

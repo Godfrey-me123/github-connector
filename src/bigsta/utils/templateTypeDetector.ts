@@ -504,18 +504,33 @@ export function detectTemplateType(
     return "Driving License";
   }
 
-  // 2. NIDA Detection
+  // 2. NIDA Detection (Guarded against NHIF, Driving License, and NRC cross-contamination)
+  const hasNhifSignatures =
+    name.includes("nhif") ||
+    layerText.includes("nhif") ||
+    (template.layers || []).some((l) => (l.id || "").toLowerCase().startsWith("nhif_"));
+  const hasDlSignatures =
+    name.includes("driving") ||
+    cardType === "driving license" ||
+    (template.layers || []).some((l) => (l.id || "").toLowerCase().startsWith("dl_"));
+  const hasNrcSignatures =
+    name.includes("nrc") ||
+    (template.layers || []).some((l) => (l.id || "").toLowerCase().startsWith("nrc_"));
+
   if (
-    cardType === "national id" ||
-    name.includes("nida") ||
-    name.includes("national id") ||
-    name.includes("tanzania") ||
-    name.includes("citizen") ||
-    name.includes("kitambulisho") ||
-    layerText.includes("nida") ||
-    layerText.includes("national identification") ||
-    layerText.includes("republic identity") ||
-    layerText.includes("nida_number")
+    !hasNhifSignatures &&
+    !hasDlSignatures &&
+    !hasNrcSignatures &&
+    (cardType === "national id" ||
+      name.includes("nida") ||
+      name.includes("national id") ||
+      name.includes("tanzania") ||
+      name.includes("citizen") ||
+      name.includes("kitambulisho") ||
+      layerText.includes("nida") ||
+      layerText.includes("national identification") ||
+      layerText.includes("republic identity") ||
+      layerText.includes("nida_number"))
   ) {
     return "NIDA";
   }
@@ -555,7 +570,7 @@ export function detectTemplateType(
   }
 
   // Explicit National ID fallback
-  if (cardType === "national id") {
+  if (cardType === "national id" && !hasNhifSignatures && !hasDlSignatures && !hasNrcSignatures) {
     return "NIDA";
   }
 

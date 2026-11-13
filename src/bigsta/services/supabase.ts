@@ -1,3 +1,4 @@
+import { isTemplateForService } from "./shared/templateMappingEngine";
 // @ts-nocheck -- imported legacy BIGsta code; typed incrementally during audit
 import { supabase as connectedSupabase } from "@/integrations/supabase/client";
 
@@ -1439,6 +1440,10 @@ export async function fetchActiveTemplatesForService(
 
     for (const row of data) {
       const parsed = parseRow(row);
+      if (!isTemplateForService(parsed, normalized)) {
+        console.warn(`[Supabase] Skipping misclassified template ${parsed.id} (${parsed.templateName}) for service ${normalized}`);
+        continue;
+      }
       const isBack =
         parsed.side === "Back Side" ||
         row.template_json?.side === "Back Side" ||

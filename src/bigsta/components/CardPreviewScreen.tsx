@@ -29,6 +29,7 @@ import { SAMPLE_TEMPLATES } from "../utils/sampleTemplates";
 import {
   applyTemplateMapping,
   isBackSideTemplate,
+  isTemplateForService,
   matchLayerToBinding,
   SupportedBinding,
   formatDrivingLicenceCategoriesFront,
@@ -148,20 +149,27 @@ export const CardPreviewScreen: React.FC = () => {
     return currentTemplate;
   }, [activeSide, frontPopulatedTemplate, backPopulatedTemplate, currentTemplate]);
 
-  // Determine service and templates
+  // Determine service and templates strictly derived from active template to prevent bleed
   const isDL =
-    activeServiceId === "driving_license" || currentTemplate.cardType === "Driving License";
+    isTemplateForService(activeTemplate, "driving_license") ||
+    (!isTemplateForService(activeTemplate, "nida") &&
+      !isTemplateForService(activeTemplate, "nhif") &&
+      !isTemplateForService(activeTemplate, "nrc_zambia") &&
+      (activeServiceId === "driving_license" || currentGenerationSession?.serviceId === "licence"));
+
   const isNHIF =
-    activeServiceId === "nhif" ||
-    (currentTemplate.cardType as string) === "NHIF Card" ||
-    currentTemplate.cardType === "NHIF Membership Card" ||
-    currentTemplate.serviceId === "nhif";
+    isTemplateForService(activeTemplate, "nhif") ||
+    (!isTemplateForService(activeTemplate, "nida") &&
+      !isTemplateForService(activeTemplate, "driving_license") &&
+      !isTemplateForService(activeTemplate, "nrc_zambia") &&
+      (activeServiceId === "nhif" || currentGenerationSession?.serviceId === "nhic"));
+
   const isNRC =
-    activeServiceId === "nrc_zambia" ||
-    (currentTemplate.cardType as string) === "NRC Card" ||
-    (currentTemplate.cardType as string) === "National Registration Card (NRC)" ||
-    currentTemplate.cardType === "NRC Zambia" ||
-    currentTemplate.serviceId === "nrc_zambia";
+    isTemplateForService(activeTemplate, "nrc_zambia") ||
+    (!isTemplateForService(activeTemplate, "nida") &&
+      !isTemplateForService(activeTemplate, "driving_license") &&
+      !isTemplateForService(activeTemplate, "nhif") &&
+      (activeServiceId === "nrc_zambia" || currentGenerationSession?.serviceId === "nrc"));
   const sessionData =
     currentGenerationSession &&
     ((isDL && currentGenerationSession.serviceId === "licence") ||
